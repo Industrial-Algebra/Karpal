@@ -19,6 +19,9 @@ formal verification.
   `Max<T>` following Haskell convention — no orphan rule conflicts
 - **Composition over completeness**: each phase delivers a usable, self-contained
   layer before the next begins
+- **Structured emptiness**: zeros carry provenance — *why* something is empty
+  matters as much as *that* it is empty. See [Structured Emptiness](#structured-emptiness-zero-intersection-semantics)
+  below.
 
 ## Current State
 
@@ -272,6 +275,105 @@ pioneered in [amari-flynn](https://github.com/Industrial-Algebra/amari-flynn).
 | Enriched categories | Categories where hom-sets carry algebraic structure (monoids, lattices, metric spaces) |
 | Bicategories | Weakened 2-categories where composition is associative only up to isomorphism — relevant for profunctor composition |
 | FFunctor / FMonad | Functor and Monad at the functor-category level; maps natural transformations |
+
+---
+
+## Structured Emptiness: Zero-Intersection Semantics
+
+A cross-cutting design insight discovered during
+[ShaperOS](https://github.com/Industrial-Algebra/ShaperOS) development.
+
+### The Problem
+
+Standard algebraic libraries treat zero as a single concept — `Monoid::empty()`
+returns one value and that's that. But in geometric computation (and many other
+domains), there are fundamentally different *kinds* of emptiness:
+
+| Kind | Example (Schubert calculus) | Meaning |
+|------|---------------------------|---------|
+| **Structural zero** | codim 10 > dim 4 | The question cannot even be posed |
+| **Geometric zero** | codim 4 = dim 4, but LR coeff = 0 | The question is well-posed; the answer is zero |
+| **Positive** | codim 4 = dim 4, LR coeff = 2 | Two solutions exist |
+| **Underdetermined** | codim 2 < dim 4 | Infinitely many solutions |
+
+ShaperOS encodes this as a type-level distinction:
+
+```rust
+enum EnumerationResult {
+    Empty,                  // structural impossibility
+    Finite(0),              // geometric zero — well-posed but unsatisfiable
+    Finite(n),              // n solutions
+    PositiveDimensional,    // infinite solutions
+}
+```
+
+This distinction propagates through the entire system: capability grants,
+memory recall, fallback strategies, and audit logging all behave differently
+for structural vs geometric zeros.
+
+### Why This Matters for Karpal
+
+This pattern is not specific to Schubert calculus. It appears anywhere
+"why is this empty?" carries information:
+
+- **Type inference**: unification failure (structural) vs inhabitation
+  failure (the type exists but has no values)
+- **Constraint solving**: inconsistent constraints vs consistent but
+  unsatisfiable
+- **Database queries**: malformed query vs valid query with zero results
+- **Effect systems**: impossible effect combination vs permitted but
+  vacuous effect
+
+No widely-used programming language or algebraic library formalizes this
+distinction. Karpal can be the first.
+
+### Categorical Foundations
+
+**Heyting-valued truth (Phase 8).** The enumeration result forms a
+bounded lattice that serves as a multi-valued subobject classifier — a
+generalization of `bool` from topos theory. Where standard logic has
+`{true, false}`, structured emptiness has:
+
+```
+Ω = { Denied, Granted(0), Granted(n), Granted(∞) }
+```
+
+This is a Heyting algebra with `join`, `meet`, and an implication
+operator, encodable as a `BoundedLattice` in Phase 8.
+
+**Graded monoids and graded monads (Phases 8, 10).** When zeros carry
+provenance, monoidal operations must preserve that provenance. A
+`GradedMonoid<G>` where `G` is a grade lattice tracks *how* a value
+became empty through `combine` operations. The fidelity-tracking
+contraction fallback in ShaperOS is a graded writer monad:
+
+```rust
+// Conceptually:
+type Recall<A> = Graded<FidelityGrade, Option<A>>
+// where FidelityGrade: Monoid (worst degradation wins)
+```
+
+**Enriched categories (Phase 14).** The deepest connection. Standard
+categories have hom-*sets* — morphisms either exist or don't. But when
+hom-objects carry richer structure (the enumeration lattice), you get
+a category *enriched* over that lattice. Composition must respect the
+lattice structure: composing a geometric zero with a positive result
+follows the Littlewood-Richardson rule, not simple boolean AND.
+
+This means Karpal's enriched category encoding isn't just an abstract
+exercise — it's the formalism that makes structured emptiness compose
+correctly through chains of operations.
+
+### Impact on Roadmap Phases
+
+| Phase | Impact |
+|-------|--------|
+| **8 — Abstract Algebra** | `BoundedLattice` for enumeration results; `GradedMonoid` trait; Heyting algebra |
+| **9 — Adjunctions** | Galois connections between lattices of structured truth values |
+| **10 — Effects** | Graded monads tracking fidelity/degradation through monad transformer stacks |
+| **11 — Proof** | Witnesses distinguishing structural impossibility from geometric vanishing |
+| **13 — Diagrams** | String diagrams where wires carry lattice-valued annotations |
+| **14 — Enriched categories** | Categories enriched over enumeration lattices; composition via LR-style rules |
 
 ---
 
