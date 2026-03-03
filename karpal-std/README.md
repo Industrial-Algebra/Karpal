@@ -1,6 +1,6 @@
 # karpal-std
 
-Standard prelude for the Karpal ecosystem.
+Standard prelude for Karpal.
 
 This crate will re-export the most commonly used types and traits from
 `karpal-core`, `karpal-profunctor`, and `karpal-optics` for ergonomic

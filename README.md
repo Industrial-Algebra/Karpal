@@ -1,10 +1,11 @@
 # Karpal
 
-Higher-Kinded Type (HKT) library for the **Industrial Algebra** ecosystem.
+A comprehensive algebraic structures library for Rust, built on
+Higher-Kinded Types (HKTs) via GATs.
 
-Karpal provides the algebraic foundations — HKT encoding, core typeclasses,
-profunctor hierarchy, and profunctor optics — that power downstream crates
-like Orlando (optics), Cliffy (FRP), and Amari (math).
+Karpal provides HKT encoding, core typeclasses (Functor, Semigroup, Monoid),
+a full profunctor hierarchy (Profunctor, Strong, Choice), and profunctor
+optics (Lens) — with `no_std` support and property-based law verification.
 
 ## Workspace
 

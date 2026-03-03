@@ -1,6 +1,7 @@
 # karpal-profunctor
 
-Profunctor hierarchy for the Karpal ecosystem.
+A complete profunctor hierarchy for Rust: Profunctor, Strong, Choice, and the
+canonical function-arrow instance.
 
 ## What's inside
 

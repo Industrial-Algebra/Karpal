@@ -1,6 +1,7 @@
 # karpal-optics
 
-Profunctor optics for the Karpal ecosystem.
+Profunctor optics for Rust: composable, type-safe accessors for nested data
+structures.
 
 ## What's inside
 

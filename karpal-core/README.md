@@ -1,6 +1,6 @@
 # karpal-core
 
-Core algebraic structures for the Karpal ecosystem.
+Core algebraic structures for Rust: HKT encoding, Functor, Semigroup, and Monoid.
 
 ## What's inside
 
