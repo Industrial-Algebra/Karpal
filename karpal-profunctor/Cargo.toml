@@ -1,0 +1,14 @@
+[package]
+name = "karpal-profunctor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Profunctor hierarchy (Profunctor, Strong, Choice) for the Industrial Algebra ecosystem"
+
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
+[dev-dependencies]
+proptest.workspace = true

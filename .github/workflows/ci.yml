@@ -16,11 +16,17 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: cargo fmt --check
-        run: cargo fmt --check
+      - name: cargo fmt --check --all
+        run: cargo fmt --check --all
 
-      - name: cargo clippy
-        run: cargo clippy -- -D warnings
+      - name: cargo clippy --workspace
+        run: cargo clippy --workspace -- -D warnings
 
-      - name: cargo test
-        run: cargo test
+      - name: cargo test --workspace
+        run: cargo test --workspace
+
+      - name: no_std check (karpal-core)
+        run: cargo build --no-default-features -p karpal-core
+
+      - name: no_std check (karpal-profunctor)
+        run: cargo build --no-default-features -p karpal-profunctor

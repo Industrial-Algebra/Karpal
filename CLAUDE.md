@@ -2,6 +2,21 @@
 
 Karpal is a Higher-Kinded Type (HKT) library for the Industrial Algebra ecosystem.
 
+## Workspace Structure
+
+```
+karpal/
+├── karpal-core/         # HKT encoding, Functor, Semigroup, Monoid (no_std compatible)
+├── karpal-profunctor/   # Profunctor, Strong, Choice, FnP (no_std compatible)
+├── karpal-optics/       # Profunctor optics: Lens (Phase 1), Prism (Phase 2)
+└── karpal-std/          # Standard prelude re-exports (stub, Phase 2)
+```
+
+## HKT Encoding
+
+GAT-based marker types: `trait HKT { type Of<T>; }` — stable since Rust 1.65, zero dependencies.
+Two-parameter variant: `trait HKT2 { type P<A, B>; }` for profunctors.
+
 ## Toolchain
 
 - **Nightly Rust** (edition 2024) is required — pinned via `rust-toolchain.toml`
@@ -26,9 +41,9 @@ Karpal is a Higher-Kinded Type (HKT) library for the Industrial Algebra ecosyste
 ## Pre-commit Hooks
 
 Local hooks run (in order, fail-fast):
-1. `cargo fmt --check`
-2. `cargo clippy -- -D warnings`
-3. `cargo test`
+1. `cargo fmt --check --all`
+2. `cargo clippy --workspace -- -D warnings`
+3. `cargo test --workspace`
 
 Shareable hooks live in `.githooks/`. After cloning, run:
 ```sh
@@ -38,6 +53,7 @@ Shareable hooks live in `.githooks/`. After cloning, run:
 ## CI/CD
 
 GitHub Actions CI (`.github/workflows/ci.yml`) runs on all pushes and PRs to `develop`/`main`:
-- `cargo fmt --check`
-- `cargo clippy -- -D warnings`
-- `cargo test`
+- `cargo fmt --check --all`
+- `cargo clippy --workspace -- -D warnings`
+- `cargo test --workspace`
+- `cargo build --no-default-features -p karpal-core -p karpal-profunctor` (no_std verification)

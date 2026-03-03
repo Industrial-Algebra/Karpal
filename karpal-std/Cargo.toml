@@ -1,0 +1,11 @@
+[package]
+name = "karpal-std"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Standard prelude re-exports for the Karpal ecosystem (Phase 2)"
+
+[dependencies]
+karpal-core.workspace = true
+karpal-profunctor.workspace = true
+karpal-optics.workspace = true

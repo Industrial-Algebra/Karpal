@@ -3,13 +3,13 @@ set -euo pipefail
 
 echo "Running pre-commit checks..."
 
-echo ":: cargo fmt --check"
-cargo fmt --check || { echo "FAILED: cargo fmt"; exit 1; }
+echo ":: cargo fmt --check --all"
+cargo fmt --check --all || { echo "FAILED: cargo fmt"; exit 1; }
 
-echo ":: cargo clippy -- -D warnings"
-cargo clippy -- -D warnings || { echo "FAILED: cargo clippy"; exit 1; }
+echo ":: cargo clippy --workspace -- -D warnings"
+cargo clippy --workspace -- -D warnings || { echo "FAILED: cargo clippy"; exit 1; }
 
-echo ":: cargo test"
-cargo test || { echo "FAILED: cargo test"; exit 1; }
+echo ":: cargo test --workspace"
+cargo test --workspace || { echo "FAILED: cargo test"; exit 1; }
 
 echo "All pre-commit checks passed."
