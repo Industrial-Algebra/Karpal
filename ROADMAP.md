@@ -306,7 +306,9 @@ karpal/
 | Compile-time cost | Feature-gate advanced modules, keep core lean |
 | Proofs beyond Rust's type system | Export to external provers (SMT, Lean 4), import trust via phantom types |
 
-## References
+## Research References
+
+### Specifications & Textbooks
 
 - [Fantasy Land Specification](https://github.com/fantasyland/fantasy-land)
 - [Static Land Specification](https://github.com/fantasyland/static-land)
@@ -315,6 +317,111 @@ karpal/
 - [Edward Kmett's Haskell ecosystem](https://github.com/ekmett) (profunctors, kan-extensions, recursion-schemes, free, adjunctions)
 - [Fantastic Morphisms and Where to Find Them](https://yangzhixuan.github.io/pdf/fantastic-morphisms.pdf)
 - [Category Theory for Programmers](https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/) — Bartosz Milewski
+- Conal Elliott, "Compiling to Categories" (2018) — categorical semantics as compilation targets
+
+### Papers — Rust Formal Verification (Phases 11-12)
+
+- **REM2.0: Refactoring and Equivalence in Rust** — Britton, Pak, Potanin
+  [arXiv:2601.19207](https://arxiv.org/abs/2601.19207v1).
+  Rust → CHARON/AENEAS → Coq equivalence proofs. Directly applicable to
+  verifying that Karpal's algebraic law implementations preserve semantics
+  across refactorings.
+
+- **RustyDL: A Program Logic for Rust**
+  [arXiv:2602.22075](https://arxiv.org/abs/2602.22075v1).
+  Source-level deductive verification for Rust without translation to
+  intermediate languages. Could prove algebraic laws directly on Karpal
+  trait implementations.
+
+### Papers — Type Theory & HKT Foundations (Phases 1-3, 9, 14)
+
+- **The ∞-category of ∞-categories in simplicial type theory** —
+  Gratzer, Weinberger, Buchholtz
+  [arXiv:2602.02218](https://arxiv.org/abs/2602.02218v1).
+  Higher category theory done purely type-theoretically. Informs
+  2-category and enriched category encoding in Phase 14.
+
+- **The Leibniz adjunction in HoTT** — de Jong, Kraus, Ljungstrom
+  [arXiv:2601.21843](https://arxiv.org/abs/2601.21843v1).
+  Adjunctions formalized in Cubical Agda. Directly relevant to Phase 9
+  adjunction design.
+
+- **For Generalised Algebraic Theories, Two Sorts Are Enough** —
+  Avrillon, Kaposi, Lafont, Najmaei, Rosain
+  [arXiv:2601.19426](https://arxiv.org/abs/2601.19426v1).
+  Any GAT reduces to two sorts via section-retraction. Theoretical
+  validation of our GAT-based HKT encoding approach.
+
+- **Impredicativity in Linear Dependent Type Theory** — Speight, van der Weide
+  [arXiv:2602.08846](https://arxiv.org/abs/2602.08846v1).
+  Linear + dependent types with cartesian and linear decodings. Informs
+  ownership-aware algebraic abstractions in Rust.
+
+- **Generalized Decidability via Brouwer Trees** — de Jong, Kraus et al.
+  [arXiv:2602.10844](https://arxiv.org/abs/2602.10844v1).
+  Decidability framework in HoTT using Brouwer ordinals. Relevant to
+  constructive foundations underlying algebraic structure design.
+
+### Papers — String Diagrams & Monoidal Categories (Phase 13)
+
+- **Towards Term-based Verification of Diagrammatic Equivalence** —
+  Cailler, Delorme, Perdrix, Tourret
+  [arXiv:2602.11035](https://arxiv.org/abs/2602.11035v1).
+  Automated reasoning about string diagram equivalence. Core to
+  `karpal-diagram` design.
+
+- **Simpler Presentations for Fragments of Quantum Circuits** — Blake
+  [arXiv:2602.09874](https://arxiv.org/abs/2602.09874v1).
+  Quantum circuits as symmetric monoidal categories (PROPs). Demonstrates
+  the monoidal category abstractions Karpal should encode.
+
+### Papers — Optics, Arrows & Functional Patterns (Phases 4, 7)
+
+- **Lenses for Agent Introspection** — Hutton, Gibbons, Mehl
+  [arXiv:2601.31746](https://arxiv.org/abs/2601.31746).
+  Formalizes self-modification safety via lens laws. Validates the exact
+  optic patterns Karpal encodes.
+
+- **Programming Backpropagation with Reverse Handlers for Arrows** —
+  Sanada, Hirai, Hoshino
+  [arXiv:2602.18090](https://arxiv.org/abs/2602.18090v1).
+  Arrows + reverse handlers for backpropagation. Validates arrow
+  abstractions in Phase 4.
+
+### Papers — Proof Theory & Recursion (Phase 6)
+
+- **Making progress: Cut Elimination in the Ill-founded Realm** —
+  Curzi, Leigh
+  [arXiv:2602.01299](https://arxiv.org/abs/2602.01299v1).
+  Cut elimination for mu-MALL with recursive/corecursive types. Directly
+  relevant to recursion schemes (Fix/Nu) in Phase 6.
+
+- **Proof Complexity of Linear Logics** — Tabatabai, Jalali
+  [arXiv:2601.22393](https://arxiv.org/abs/2601.22393v1).
+  Linear logic proof-size bounds. Informs resource-aware type reasoning.
+
+### Papers — Formal Verification at Scale (Phase 12)
+
+- **AMBER: Construction-Verification Benchmark for Lean 4** — Yang et al.
+  [arXiv:2602.01291](https://arxiv.org/abs/2602.01291v1).
+  Lean 4 benchmark spanning convex analysis, optimization, numerical
+  algebra. Relevant to Lean bridge design.
+
+- **M2F: Automated Formalization at Scale** — Wang et al.
+  [arXiv:2602.17016](https://arxiv.org/abs/2602.17016v1).
+  Agentic framework converting textbooks → Lean with 96% proof success.
+  Could automate formalization of algebraic properties.
+
+### Papers — Effect Systems & Program Logic (Phase 10)
+
+- **Handling Scope Checks (Extended)** — Lee, Xie, Kiselyov, Yallop
+  [arXiv:2601.18793](https://arxiv.org/abs/2601.18793v1).
+  Lambda-op calculus with effect handlers. Relevant to how HKT
+  abstractions compose with effectful computations.
+
+- **A Program Logic for Abstract (Hyper)Properties** — Baldan et al.
+  [arXiv:2601.20370](https://arxiv.org/abs/2601.20370v1).
+  Unifying Hoare-style logic for program correctness verification.
 
 ## License
 
