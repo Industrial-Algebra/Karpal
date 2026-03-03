@@ -1,0 +1,12 @@
+[package]
+name = "karpal-optics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Profunctor optics (Lens, Prism) for the Industrial Algebra ecosystem"
+
+[dependencies]
+karpal-profunctor.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

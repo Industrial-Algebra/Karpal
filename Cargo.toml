@@ -1,6 +1,14 @@
-[package]
-name = "karpal"
+[workspace]
+members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-std"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
 
-[dependencies]
+[workspace.dependencies]
+karpal-core = { path = "karpal-core" }
+karpal-profunctor = { path = "karpal-profunctor" }
+karpal-optics = { path = "karpal-optics" }
+proptest = "1"
