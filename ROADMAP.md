@@ -396,6 +396,81 @@ karpal/
 └── karpal-higher/         # Phase 14: 2-categories, enriched categories
 ```
 
+## Syntax & Ergonomics
+
+Karpal uses Haskell/PureScript typeclass semantics (Static Land: associated
+functions on marker types), which is more natural for categorical reasoning
+than Rust's method-on-value convention. Three macro families provide
+ergonomic sugar on top of this foundation:
+
+### Monadic sugar — `do!`, `ado!`, `free!` (Phases 2, 5, 10)
+
+```rust
+// do! — monadic bind (PureScript-style do notation)
+let result = do_! {
+    u <- get_user(id);
+    a <- get_address(u);
+    get_city(a)
+};
+
+// ado! — applicative do (PureScript's ado)
+let area = ado! {
+    w <- get_width();
+    h <- get_height();
+    yield w * h
+};
+
+// free! — free monad DSL
+let program = free! {
+    x <- GetLine;
+    PutLine(format!("You said: {x}"));
+    Pure(x)
+};
+```
+
+### Compositional sugar — `.then()`, `>>>`, `diagram!` (Phases 4, 7, 13)
+
+```rust
+// Optic composition (already converging with Cliffy/Orlando)
+let city_name = person_lens.then(address_lens).then(city_lens);
+
+// Arrow pipelines
+let pipeline = arr(parse) >>> arr(validate) >>> arr(save);
+
+// String diagram DSL
+let circuit = diagram! {
+    f: A -> B,
+    g: B -> C,
+    h: A -> D,
+    ---
+    (f >>> g) *** h  // parallel + sequential composition
+};
+```
+
+### Declarative sugar — `cata!`, `#[enriched]`, `prove!` (Phases 6, 8, 11, 14)
+
+```rust
+// Recursion scheme sugar
+let eval = cata!(ExprF, |node| match node {
+    Lit(n) => n,
+    Add(a, b) => a + b,
+});
+
+// Enriched category declaration
+#[enriched(over = "EnumerationLattice")]
+trait MyCategory { /* hom(A, B) carries lattice structure */ }
+
+// Proof witnesses
+let v: Proven<Associative, MyOp> = prove!(MyOp is Associative);
+```
+
+### Syntax review checkpoints
+
+These macro designs are provisional. Each phase should pause to
+reconsider syntax when the actual type constraints become concrete —
+decisions are best made when staring at real trait bounds, not in the
+abstract.
+
 ## Rust-Specific Design Challenges
 
 | Challenge | Strategy |
