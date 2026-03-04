@@ -3,15 +3,17 @@
 A comprehensive algebraic structures library for Rust, built on
 Higher-Kinded Types (HKTs) via GATs.
 
-Karpal provides HKT encoding, core typeclasses (Functor, Semigroup, Monoid),
-a full profunctor hierarchy (Profunctor, Strong, Choice), and profunctor
-optics (Lens) — with `no_std` support and property-based law verification.
+Karpal provides HKT encoding, a full functor hierarchy (Functor through Monad,
+Alt/Plus/Alternative, Foldable, Traversable, and more), algebraic typeclasses
+(Semigroup, Monoid), a profunctor hierarchy (Profunctor, Strong, Choice),
+profunctor optics (Lens), and `do_!`/`ado_!` notation macros — all with
+`no_std` support and property-based law verification.
 
 ## Workspace
 
 | Crate | Description |
 |-------|-------------|
-| [`karpal-core`](karpal-core/) | HKT encoding, Functor, Semigroup, Monoid |
+| [`karpal-core`](karpal-core/) | HKT encoding, functor hierarchy, Semigroup, Monoid, macros |
 | [`karpal-profunctor`](karpal-profunctor/) | Profunctor, Strong, Choice, FnP |
 | [`karpal-optics`](karpal-optics/) | Profunctor optics (Lens) |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports (stub) |
@@ -37,6 +39,47 @@ assert_eq!(combined, vec![1, 2, 3, 4]);
 let empty = Vec::<i32>::empty();
 assert_eq!(empty, vec![]);
 ```
+
+### Applicative and Monad
+
+```rust
+use karpal_core::{Applicative, Chain};
+use karpal_core::hkt::OptionF;
+
+// Applicative
+let result = OptionF::ap(Some(|x: i32| x + 1), Some(41));
+assert_eq!(result, Some(42));
+
+// Chain (flatMap)
+let result = OptionF::chain(Some(3), |x| if x > 0 { Some(x * 2) } else { None });
+assert_eq!(result, Some(6));
+```
+
+### do! / ado! macros
+
+```rust
+use karpal_core::{do_, ado_};
+use karpal_core::hkt::OptionF;
+use karpal_core::Applicative;
+
+// Monadic do-notation
+let result = do_! { OptionF;
+    x = Some(1);
+    y = Some(x + 1);
+    OptionF::pure(x + y)
+};
+assert_eq!(result, Some(3));
+
+// Applicative do-notation
+let result = ado_! { OptionF;
+    x = Some(10);
+    y = Some(20);
+    yield x + y
+};
+assert_eq!(result, Some(30));
+```
+
+### Profunctor optics
 
 ```rust
 use karpal_optics::Lens;

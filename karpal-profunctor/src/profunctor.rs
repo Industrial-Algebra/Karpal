@@ -1,7 +1,4 @@
-/// Two-parameter type constructor (HKT for bifunctors / profunctors).
-pub trait HKT2 {
-    type P<A, B>;
-}
+pub use karpal_core::hkt::HKT2;
 
 /// A profunctor is contravariant in its first argument and covariant in its second.
 ///

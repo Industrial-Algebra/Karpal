@@ -7,7 +7,8 @@ canonical function-arrow instance.
 
 ### HKT2
 
-Two-parameter type constructor for profunctors:
+Two-parameter type constructor for profunctors (defined in `karpal-core`,
+re-exported here):
 
 ```rust
 use karpal_profunctor::HKT2;
