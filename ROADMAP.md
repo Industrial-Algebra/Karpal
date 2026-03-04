@@ -1,7 +1,7 @@
 # Karpal Roadmap
 
 Karpal aims to be the definitive algebraic structures and category theory
-library for Rust — a comprehensive "Rust Fantasyland" covering everything
+library for Rust — a comprehensive "Rust Static Land" covering everything
 from basic typeclasses through profunctor optics, recursion schemes, and
 formal verification.
 
