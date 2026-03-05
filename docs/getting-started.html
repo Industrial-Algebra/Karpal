@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started - Karpal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="getting-started.html" class="active">Getting Started</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="reference/functor-family.html">Functor Family</a></li>
+          <li><a href="reference/alt-family.html">Alt Family</a></li>
+          <li><a href="reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="reference/macros.html">Macros</a></li>
+          <li><a href="reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="reference/invariant.html">Invariant</a></li>
+          <li><a href="reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="index.html">Home</a> &gt; <span>Getting Started</span>
+    </nav>
+
+    <h1>Getting Started</h1>
+    <p>This guide walks you through adding Karpal to your Rust project, understanding its HKT encoding, and using the core abstractions: Functor, Monad, and the ergonomic <code>do_!</code> and <code>ado_!</code> macros.</p>
+
+    <h2 id="installation">1. Installation</h2>
+
+    <p>The easiest way to use Karpal is through the <code>karpal-std</code> crate, which re-exports everything from the other workspace crates in a single prelude.</p>
+
+    <p>Add it to your <code>Cargo.toml</code>:</p>
+
+<pre><code class="language-rust">[dependencies]
+karpal-std = "0.1"</code></pre>
+
+    <p>Then import the prelude at the top of any module that uses Karpal types and traits:</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;</code></pre>
+
+    <p>This single import brings in all type constructors (<code>OptionF</code>, <code>VecF</code>, <code>ResultF</code>, etc.), all traits (<code>Functor</code>, <code>Applicative</code>, <code>Monad</code>, <code>Foldable</code>, etc.), and the <code>do_!</code> and <code>ado_!</code> macros.</p>
+
+    <h3>Toolchain requirements</h3>
+
+    <p>Karpal requires <strong>nightly Rust</strong> because it uses edition 2024 features. The repository includes a <code>rust-toolchain.toml</code> that pins the exact nightly version, so if you are working within the Karpal workspace, Cargo and rustup will select the correct toolchain automatically.</p>
+
+    <p>If you are consuming Karpal as a dependency in your own project, make sure your project also uses a nightly toolchain. You can create a <code>rust-toolchain.toml</code> in your project root:</p>
+
+<pre><code class="language-rust">[toolchain]
+channel = "nightly"</code></pre>
+
+    <h2 id="your-first-hkt">2. Your First HKT</h2>
+
+    <p>Higher-Kinded Types (HKTs) let you abstract over <em>type constructors</em> &mdash; not just concrete types like <code>Option&lt;i32&gt;</code>, but the <code>Option</code> constructor itself. Rust does not natively support HKTs, but Karpal encodes them using Generic Associated Types (GATs), which have been stable since Rust 1.65.</p>
+
+    <p>The core trait is:</p>
+
+<pre><code class="language-rust">trait HKT {
+    type Of&lt;T&gt;;
+}</code></pre>
+
+    <p>A type that implements <code>HKT</code> is a <strong>type constructor</strong> &mdash; a marker type that, given a parameter <code>T</code>, produces a concrete type. Karpal provides several built-in constructors:</p>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Marker type</th><th><code>Of&lt;T&gt;</code> resolves to</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>OptionF</code></td><td><code>Option&lt;T&gt;</code></td></tr>
+        <tr><td><code>VecF</code></td><td><code>Vec&lt;T&gt;</code></td></tr>
+        <tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Result&lt;T, E&gt;</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>So <code>&lt;OptionF as HKT&gt;::Of&lt;i32&gt;</code> is simply <code>Option&lt;i32&gt;</code>. Nothing new at the value level &mdash; the magic is at the <em>type</em> level. You can now write functions that are generic over the <em>shape</em> of the container, not just its contents:</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+/// Wraps a value in any container that supports `Applicative::pure`.
+fn wrap&lt;F: Applicative&gt;(value: i32) -&gt; F::Of&lt;i32&gt; {
+    F::pure(value)
+}
+
+let opt: Option&lt;i32&gt; = wrap::&lt;OptionF&gt;(42);   // Some(42)
+let vec: Vec&lt;i32&gt;    = wrap::&lt;VecF&gt;(42);      // vec![42]</code></pre>
+
+    <p>The caller chooses the container by supplying a type constructor as a generic parameter. The function body stays the same regardless of which container is selected.</p>
+
+    <h2 id="your-first-functor">3. Your First Functor</h2>
+
+    <p>A <strong>Functor</strong> is any type constructor that supports mapping a function over its contents. If you have used <code>Option::map</code> or <code>Iterator::map</code>, you already know the idea &mdash; Karpal just gives it a uniform interface.</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = OptionF::fmap(Some(2), |x| x * 3);
+assert_eq!(result, Some(6));
+
+let result = VecF::fmap(vec![1, 2, 3], |x| x + 10);
+assert_eq!(result, vec![11, 12, 13]);</code></pre>
+
+    <p>This looks similar to calling <code>.map()</code> directly, and at the concrete level it behaves identically. The difference is that <code>Functor::fmap</code> is a trait method on the <em>type constructor</em>, which means you can write functions that work with any functor:</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+fn double_inner&lt;F: Functor&gt;(fa: F::Of&lt;i32&gt;) -&gt; F::Of&lt;i32&gt; {
+    F::fmap(fa, |x| x * 2)
+}
+
+// Works with Option
+assert_eq!(double_inner::&lt;OptionF&gt;(Some(5)), Some(10));
+assert_eq!(double_inner::&lt;OptionF&gt;(None), None);
+
+// Works with Vec
+assert_eq!(double_inner::&lt;VecF&gt;(vec![1, 2, 3]), vec![2, 4, 6]);</code></pre>
+
+    <p>One function, multiple container types, zero code duplication.</p>
+
+    <h3>Functor laws</h3>
+
+    <p>Every <code>Functor</code> implementation must satisfy two laws. Karpal verifies these with property-based tests, but they are worth knowing informally:</p>
+
+    <ul>
+      <li><strong>Identity:</strong> mapping the identity function changes nothing. <code>F::fmap(fa, |x| x) == fa</code></li>
+      <li><strong>Composition:</strong> mapping <code>f</code> then <code>g</code> is the same as mapping <code>|x| g(f(x))</code>. <code>F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))</code></li>
+    </ul>
+
+    <p>These laws guarantee that <code>fmap</code> only transforms values &mdash; it never adds, removes, or reorders elements in the container.</p>
+
+    <h2 id="monadic-do">4. Monadic Notation with <code>do_!</code></h2>
+
+    <p>Monadic computations in Rust quickly turn into deeply nested <code>.and_then()</code> chains. Each step that depends on the previous value adds another level of indentation:</p>
+
+<pre><code class="language-rust">// The nesting problem: every step pushes the code further right
+fn fetch_dashboard(user_id: &amp;str) -&gt; Option&lt;Dashboard&gt; {
+    lookup_user(user_id).and_then(|user| {
+        load_preferences(&amp;user).and_then(|prefs| {
+            fetch_activity(&amp;user).and_then(|activity| {
+                build_dashboard(&amp;user, &amp;prefs, &amp;activity)
+            })
+        })
+    })
+}</code></pre>
+
+    <p>With three steps this is manageable; with six or seven it becomes painful to read. The <code>do_!</code> macro flattens this into a top-to-bottom sequence of bindings:</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+fn fetch_dashboard(user_id: &amp;str) -&gt; Option&lt;Dashboard&gt; {
+    do_! { OptionF;
+        user     = lookup_user(user_id);
+        prefs    = load_preferences(&amp;user);
+        activity = fetch_activity(&amp;user);
+        build_dashboard(&amp;user, &amp;prefs, &amp;activity)
+    }
+}</code></pre>
+
+    <p>Each <code>name = expr</code> line binds the unwrapped value from the monadic expression on the right. If any step returns <code>None</code> (or <code>Err</code> for <code>ResultF</code>), the entire block short-circuits immediately. The final expression (without a binding) is the return value of the block.</p>
+
+    <h3>Syntax reference</h3>
+
+<pre><code class="language-rust">do_! { TypeConstructor;
+    binding1 = monadic_expr1;
+    binding2 = monadic_expr2;
+    // ... more bindings ...
+    final_monadic_expr
+}</code></pre>
+
+    <ul>
+      <li>The first token is the type constructor (<code>OptionF</code>, <code>VecF</code>, <code>ResultF&lt;E&gt;</code>, etc.), followed by a semicolon.</li>
+      <li>Each binding uses <code>=</code>, not <code>&lt;-</code>. Rust edition 2024 reserves <code>&lt;-</code> as a token, so the arrow syntax is not available.</li>
+      <li>The final line must be an expression of type <code>F::Of&lt;T&gt;</code> &mdash; it is the value returned by the whole <code>do_!</code> block.</li>
+      <li>Bindings can reference earlier bindings &mdash; each step has access to all names bound above it.</li>
+    </ul>
+
+    <h3>A concrete example</h3>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+fn safe_divide(a: f64, b: f64) -&gt; Option&lt;f64&gt; {
+    if b == 0.0 { None } else { Some(a / b) }
+}
+
+let result = do_! { OptionF;
+    x = safe_divide(100.0, 4.0);   // Some(25.0)
+    y = safe_divide(x, 5.0);       // Some(5.0)
+    z = safe_divide(y, 2.0);       // Some(2.5)
+    Some(z + 1.0)                   // Some(3.5)
+};
+
+assert_eq!(result, Some(3.5));</code></pre>
+
+    <h2 id="applicative-ado">5. Applicative Notation with <code>ado_!</code></h2>
+
+    <p>When your computations are <em>independent</em> &mdash; none of them need the result of a previous step &mdash; you do not need the full power of <code>do_!</code>. The <code>ado_!</code> macro expresses this pattern and makes the independence explicit:</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+fn load_host() -&gt; Option&lt;&amp;'static str&gt; { Some("localhost") }
+fn load_port() -&gt; Option&lt;u16&gt;           { Some(8080) }
+fn load_workers() -&gt; Option&lt;usize&gt;      { Some(4) }
+
+let config = ado_! { OptionF;
+    host    = load_host();
+    port    = load_port();
+    workers = load_workers();
+    yield format!("{}:{} ({} workers)", host, port, workers)
+};
+
+assert_eq!(config, Some("localhost:8080 (4 workers)".to_string()));</code></pre>
+
+    <p>The <code>yield</code> line combines all the bound values into a final result. Unlike <code>do_!</code>, the bindings in <code>ado_!</code> cannot reference each other &mdash; they are all evaluated independently, and the results are combined at the end.</p>
+
+    <h3>Syntax reference</h3>
+
+<pre><code class="language-rust">ado_! { TypeConstructor;
+    binding1 = applicative_expr1;
+    binding2 = applicative_expr2;
+    // ... more bindings ...
+    yield combining_expression
+}</code></pre>
+
+    <ul>
+      <li>Same first-token convention as <code>do_!</code>: the type constructor, then a semicolon.</li>
+      <li>Each binding uses <code>=</code>. Bindings are independent and must not reference each other.</li>
+      <li>The <code>yield</code> line combines all bound values into the final result. The expression after <code>yield</code> is a <em>pure</em> function of the bound names &mdash; it is automatically lifted into the applicative context.</li>
+      <li>If any binding evaluates to <code>None</code> (or <code>Err</code>), the whole block short-circuits.</li>
+    </ul>
+
+    <h3>When to use <code>ado_!</code> vs <code>do_!</code></h3>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Use this</th><th>When</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>do_!</code></td><td>Later steps depend on earlier results (sequential)</td></tr>
+        <tr><td><code>ado_!</code></td><td>All steps are independent (parallel-safe)</td></tr>
+      </tbody>
+    </table>
+
+    <p>In practice, <code>ado_!</code> documents intent: it tells the reader that the computations have no data dependencies. For types where order does not matter (like <code>Option</code>), the runtime behavior is identical, but the semantic clarity is valuable.</p>
+
+    <h2 id="next-steps">6. Next Steps</h2>
+
+    <p>Now that you can install Karpal, map over containers generically, and flatten monadic chains, here is where to go next:</p>
+
+    <ul>
+      <li><a href="architecture.html"><strong>Architecture</strong></a> &mdash; understand the full functor hierarchy, from <code>Functor</code> through <code>Monad</code>, and the Alt/Alternative branch. See how the traits relate and which type constructors implement each one.</li>
+      <li><a href="reference/functor-family.html"><strong>Functor Family reference</strong></a> &mdash; detailed documentation for <code>Functor</code>, <code>Apply</code>, <code>Applicative</code>, <code>Chain</code>, and <code>Monad</code>, including all method signatures and implementation notes.</li>
+      <li><a href="reference/macros.html"><strong>Macros reference</strong></a> &mdash; the full syntax and edge cases for <code>do_!</code> and <code>ado_!</code>, including usage with <code>ResultF</code> and <code>VecF</code>.</li>
+      <li><a href="reference/optics.html"><strong>Optics</strong></a> &mdash; profunctor-based Lens and Prism for composable, first-class field access and pattern matching.</li>
+      <li><a href="examples/config-pipeline.html"><strong>Config Pipeline example</strong></a> &mdash; a realistic end-to-end example combining Functor, Applicative, and monadic chaining to build a configuration loader.</li>
+      <li><a href="examples/data-transformation.html"><strong>Data Transformation example</strong></a> &mdash; using Foldable, Traversable, and FunctorFilter to process collections generically.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

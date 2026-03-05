@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Transformation - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="../reference/functor-family.html">Functor Family</a></li>
+          <li><a href="../reference/alt-family.html">Alt Family</a></li>
+          <li><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="../reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="../reference/macros.html">Macros</a></li>
+          <li><a href="../reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="../reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="../reference/invariant.html">Invariant</a></li>
+          <li><a href="../reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="../reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="../reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="data-transformation.html" class="active">Data Transformation</a></li>
+          <li><a href="cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="config-pipeline.html">Examples</a> &gt; <span>Data Transformation</span>
+    </nav>
+
+    <h1>Data Transformation</h1>
+    <p>ETL pipeline: parse records, transform fields, aggregate stats using Functor, Chain, Lens, Foldable, and Monoid.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <p>This example builds a small ETL (Extract, Transform, Load) pipeline that processes raw string records into typed transactions, applies transformations via lenses, and aggregates results using monoidal folding. It demonstrates how several Karpal abstractions compose naturally into a real-world data processing workflow:</p>
+
+    <ul>
+      <li><strong>Domain types</strong> &mdash; raw input records and typed output structs, with a <code>Summary</code> type that implements <code>Semigroup</code> and <code>Monoid</code> for aggregation.</li>
+      <li><strong><code>do_!</code> and Chain</strong> &mdash; monadic parsing that short-circuits on the first invalid field.</li>
+      <li><strong>Lens</strong> &mdash; composable getters and setters for individual struct fields.</li>
+      <li><strong>Functor</strong> &mdash; mapping transformations over collections of transactions.</li>
+      <li><strong>Traversable</strong> &mdash; all-or-nothing batch parsing that fails if any single record is invalid.</li>
+      <li><strong>Foldable + Monoid</strong> &mdash; aggregating transactions into summaries, including grouped-by-category breakdowns.</li>
+    </ul>
+
+    <h2 id="domain-types">1. Domain Types</h2>
+
+    <p>The pipeline starts with <code>RawRecord</code>, where every field is a <code>String</code> (as you might receive from a CSV parser or HTTP request). The goal is to parse these into strongly-typed <code>Transaction</code> values.</p>
+
+<pre><code class="language-rust">#[derive(Debug, Clone)]
+struct RawRecord {
+    id: String,
+    name: String,
+    amount: String,
+    category: String,
+}
+
+#[derive(Debug, Clone)]
+struct Transaction {
+    id: u32,
+    name: String,
+    amount_cents: i64,
+    category: String,
+}</code></pre>
+
+    <p>For aggregation, we define a <code>Summary</code> type that tracks the number of transactions and their total value in cents. By implementing <code>Semigroup</code> and <code>Monoid</code>, we can combine summaries using <code>fold_map</code> without writing any manual accumulation logic.</p>
+
+<pre><code class="language-rust">#[derive(Debug, Clone)]
+struct Summary {
+    count: i64,
+    total_cents: i64,
+}
+
+impl Semigroup for Summary {
+    fn combine(self, other: Self) -&gt; Self {
+        Summary {
+            count: self.count + other.count,
+            total_cents: self.total_cents + other.total_cents,
+        }
+    }
+}
+
+impl Monoid for Summary {
+    fn empty() -&gt; Self {
+        Summary {
+            count: 0,
+            total_cents: 0,
+        }
+    }
+}</code></pre>
+
+    <p>The <code>Semigroup::combine</code> implementation adds counts and totals together. The <code>Monoid::empty</code> value is the identity element &mdash; zero transactions with zero total &mdash; which serves as the starting point for any fold.</p>
+
+    <h2 id="parsing">2. Parsing with <code>do_!</code> (Chain)</h2>
+
+    <p>Each raw record needs two fields parsed: <code>id</code> (a <code>u32</code>) and <code>amount</code> (a floating-point dollar value converted to cents). If either parse fails, the whole record is invalid. The <code>do_!</code> macro makes this sequential validation read top-to-bottom, with automatic short-circuiting on <code>None</code>:</p>
+
+<pre><code class="language-rust">fn parse_record(raw: RawRecord) -&gt; Option&lt;Transaction&gt; {
+    let name = raw.name.clone();
+    let category = raw.category.clone();
+    do_! { OptionF;
+        id = raw.id.parse::&lt;u32&gt;().ok();
+        amount = raw.amount.parse::&lt;f64&gt;().ok();
+        Some(Transaction {
+            id,
+            name: name.clone(),
+            amount_cents: (amount * 100.0) as i64,
+            category: category.clone(),
+        })
+    }
+}</code></pre>
+
+    <p>Each <code>name = expr</code> line unwraps the <code>Option</code> returned by the right-hand side. If <code>raw.id.parse::&lt;u32&gt;().ok()</code> returns <code>None</code>, the entire block immediately evaluates to <code>None</code> without attempting to parse the amount. This is the <code>Chain</code> (monadic bind) behavior provided by <code>OptionF</code>.</p>
+
+    <p>To parse an entire batch of records with all-or-nothing semantics, we use <code>Traversable</code>:</p>
+
+<pre><code class="language-rust">fn parse_all(records: Vec&lt;RawRecord&gt;) -&gt; Option&lt;Vec&lt;Transaction&gt;&gt; {
+    VecF::traverse::&lt;OptionF, _, _, _&gt;(records, parse_record)
+}</code></pre>
+
+    <p><code>VecF::traverse</code> applies <code>parse_record</code> to every element in the vector and collects the results. If all records parse successfully, you get <code>Some(vec_of_transactions)</code>. If any single record fails, the entire result is <code>None</code>. This is the "all-or-nothing" guarantee of <code>Traversable</code>.</p>
+
+    <h2 id="lens-access">3. Lens Field Access</h2>
+
+    <p>To modify individual fields of a <code>Transaction</code> without manually destructuring the struct, we define lenses. A <code>SimpleLens&lt;S, A&gt;</code> provides a getter (<code>S -&gt; A</code>) and a setter (<code>(S, A) -&gt; S</code>) for a single field:</p>
+
+<pre><code class="language-rust">fn amount_lens() -&gt; SimpleLens&lt;Transaction, i64&gt; {
+    Lens::new(
+        |t: &amp;Transaction| t.amount_cents,
+        |t, amount_cents| Transaction {
+            amount_cents,
+            ..t
+        },
+    )
+}
+
+fn name_lens() -&gt; SimpleLens&lt;Transaction, String&gt; {
+    Lens::new(
+        |t: &amp;Transaction| t.name.clone(),
+        |t, name| Transaction { name, ..t },
+    )
+}</code></pre>
+
+    <p>The getter closure reads the field; the setter closure returns a new <code>Transaction</code> with that one field replaced, using Rust's struct update syntax (<code>..t</code>) to copy the remaining fields. Lenses are first-class values &mdash; you can store them, pass them to functions, and compose them with <code>.then()</code>.</p>
+
+    <h2 id="functor-transforms">4. Functor Transforms</h2>
+
+    <p>With lenses in hand, we can define transformation functions that modify a specific field across an entire collection. <code>VecF::fmap</code> applies a function to every element of a <code>Vec</code>, and the lens's <code>.over()</code> method applies a function to the focused field:</p>
+
+<pre><code class="language-rust">/// Apply a discount: reduce amount by a percentage.
+fn apply_discount(transactions: Vec&lt;Transaction&gt;, pct: f64) -&gt; Vec&lt;Transaction&gt; {
+    let lens = amount_lens();
+    VecF::fmap(transactions, |t| {
+        lens.over(t, |a| (a as f64 * (1.0 - pct / 100.0)) as i64)
+    })
+}
+
+/// Normalize names to uppercase.
+fn normalize_names(transactions: Vec&lt;Transaction&gt;) -&gt; Vec&lt;Transaction&gt; {
+    let lens = name_lens();
+    VecF::fmap(transactions, |t| {
+        lens.over(t, |n| n.to_uppercase())
+    })
+}</code></pre>
+
+    <p><code>apply_discount</code> uses <code>amount_lens</code> to reach into each transaction and scale the <code>amount_cents</code> field. <code>normalize_names</code> uses <code>name_lens</code> to uppercase the <code>name</code> field. Neither function needs to know about the other fields in <code>Transaction</code> &mdash; the lens handles the boilerplate of reading, modifying, and writing back.</p>
+
+    <h2 id="aggregation">5. Foldable + Monoid Aggregation</h2>
+
+    <p>The final stage of the pipeline aggregates transactions into summaries. Because <code>Summary</code> implements <code>Monoid</code>, we can use <code>VecF::fold_map</code> to convert each transaction into a single-element summary and then combine them all:</p>
+
+<pre><code class="language-rust">fn summarize(transactions: &amp;[Transaction]) -&gt; Summary {
+    VecF::fold_map(transactions.to_vec(), |t| Summary {
+        count: 1,
+        total_cents: t.amount_cents,
+    })
+}</code></pre>
+
+    <p><code>fold_map</code> maps each element to a <code>Summary</code> (with count 1 and that transaction's amount), then combines all the summaries using <code>Semigroup::combine</code>, starting from <code>Monoid::empty()</code>. For an empty collection, it returns the identity summary (0 transactions, 0 total).</p>
+
+    <p>For grouped aggregation, we partition by category and summarize each group independently:</p>
+
+<pre><code class="language-rust">fn summarize_by_category(transactions: &amp;[Transaction]) -&gt; Vec&lt;(String, Summary)&gt; {
+    let mut categories: Vec&lt;String&gt; = transactions.iter().map(|t| t.category.clone()).collect();
+    categories.sort();
+    categories.dedup();
+
+    categories
+        .into_iter()
+        .map(|cat| {
+            let filtered: Vec&lt;Transaction&gt; = transactions
+                .iter()
+                .filter(|t| t.category == cat)
+                .cloned()
+                .collect();
+            (cat, summarize(&amp;filtered))
+        })
+        .collect()
+}</code></pre>
+
+    <p>Each category gets its own <code>Summary</code>, computed by the same <code>summarize</code> function. The monoidal structure means the aggregation logic is defined once (in <code>Semigroup</code> and <code>Monoid</code>) and reused everywhere.</p>
+
+    <h2 id="main-pipeline">6. The Complete Pipeline</h2>
+
+    <p>The <code>main</code> function ties everything together. It creates sample data, parses it, applies transformations, and prints aggregate results:</p>
+
+<pre><code class="language-rust">fn main() {
+    // Sample data
+    let records = vec![
+        RawRecord { id: "1".into(), name: "Alice".into(),
+                     amount: "99.99".into(), category: "electronics".into() },
+        RawRecord { id: "2".into(), name: "Bob".into(),
+                     amount: "24.50".into(), category: "books".into() },
+        RawRecord { id: "3".into(), name: "Carol".into(),
+                     amount: "149.00".into(), category: "electronics".into() },
+        RawRecord { id: "4".into(), name: "Dave".into(),
+                     amount: "12.75".into(), category: "books".into() },
+    ];
+
+    // 1. Parse all records (Traversable)
+    let transactions = parse_all(records).expect("All records should parse");
+
+    // 2. Transform with Functor + Lens
+    let discounted = apply_discount(transactions.clone(), 10.0);
+    let normalized = normalize_names(transactions.clone());
+
+    // 3. Aggregate with Foldable + Monoid
+    let summary = summarize(&amp;transactions);
+    let by_category = summarize_by_category(&amp;transactions);
+
+    // 4. Demonstrate failed parse
+    let bad_records = vec![
+        RawRecord { id: "5".into(), name: "Eve".into(),
+                     amount: "50.00".into(), category: "food".into() },
+        RawRecord { id: "bad".into(), name: "Frank".into(),
+                     amount: "30.00".into(), category: "food".into() },
+    ];
+    let result = parse_all(bad_records); // None -- "bad" is not a valid u32
+}</code></pre>
+
+    <p>The pipeline flows in a clear sequence: raw strings are parsed into typed values, transformed using lenses, and aggregated using monoidal folds. Each stage uses a different Karpal abstraction, but they compose seamlessly because they all operate on the same standard types.</p>
+
+    <h2 id="run-it">Run It</h2>
+
+    <p>From the workspace root:</p>
+
+<pre><code class="language-rust">cargo run -p karpal-std --example data_transformation</code></pre>
+
+    <p>Expected output:</p>
+
+<pre><code>=== Data Transformation Example ===
+
+--- Parse records (Traversable) ---
+  #1: Alice - $99.99 (electronics)
+  #2: Bob - $24.50 (books)
+  #3: Carol - $149.00 (electronics)
+  #4: Dave - $12.75 (books)
+
+--- Apply 10% discount (Functor + Lens) ---
+  #1: $89.99
+  #2: $22.05
+  #3: $134.10
+  #4: $11.47
+
+--- Normalize names (Functor + Lens) ---
+  #1: ALICE
+  #2: BOB
+  #3: CAROL
+  #4: DAVE
+
+--- Overall summary (Foldable + Monoid) ---
+  4 transactions, total: $286.24
+
+--- By category ---
+  books: 2 transactions, total: $37.25
+  electronics: 2 transactions, total: $248.99
+
+--- Failed parse (bad data) ---
+  parse_all result: None</code></pre>
+
+    <h2 id="traits-used">Traits Used</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Trait</th><th>Role in this example</th><th>Reference</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Semigroup</code></td>
+          <td>Combines two <code>Summary</code> values by adding counts and totals</td>
+          <td><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></td>
+        </tr>
+        <tr>
+          <td><code>Monoid</code></td>
+          <td>Provides the identity <code>Summary</code> (zero count, zero total) for folding</td>
+          <td><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></td>
+        </tr>
+        <tr>
+          <td><code>Functor</code></td>
+          <td><code>VecF::fmap</code> applies discount and name normalization across transactions</td>
+          <td><a href="../reference/functor-family.html">Functor Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Chain</code></td>
+          <td>Powers the <code>do_!</code> macro for sequential parsing with short-circuit on failure</td>
+          <td><a href="../reference/functor-family.html">Functor Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Foldable</code></td>
+          <td><code>VecF::fold_map</code> aggregates transactions into monoidal summaries</td>
+          <td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td>
+        </tr>
+        <tr>
+          <td><code>Traversable</code></td>
+          <td><code>VecF::traverse</code> parses all records with all-or-nothing semantics</td>
+          <td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td>
+        </tr>
+        <tr>
+          <td><code>Lens</code></td>
+          <td>Provides composable getters/setters for <code>amount_cents</code> and <code>name</code> fields</td>
+          <td><a href="../reference/optics.html">Optics</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>
