@@ -9,3 +9,4 @@ description = "Standard prelude re-exports for the Karpal ecosystem (Phase 2)"
 karpal-core.workspace = true
 karpal-profunctor.workspace = true
 karpal-optics.workspace = true
+karpal-arrow.workspace = true

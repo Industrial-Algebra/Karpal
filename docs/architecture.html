@@ -33,6 +33,7 @@
           <li><a href="reference/invariant.html">Invariant</a></li>
           <li><a href="reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
           <li><a href="reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="reference/arrow-family.html">Arrow Family</a></li>
           <li><a href="reference/optics.html">Optics</a></li>
         </ul>
       </li>
@@ -140,9 +141,9 @@ impl HKT2 for TupleF {
     <!-- ================================================================== -->
     <h2 id="trait-hierarchy">Trait Hierarchy</h2>
 
-    <p>The diagram below shows the full trait hierarchy implemented in <code>karpal-core</code> and <code>karpal-profunctor</code>. Arrows point from supertrait to subtrait. Dashed borders indicate blanket implementations (no manual impl needed).</p>
+    <p>The diagram below shows the full trait hierarchy implemented in <code>karpal-core</code>, <code>karpal-profunctor</code>, and <code>karpal-arrow</code>. Arrows point from supertrait to subtrait. Dashed borders indicate blanket implementations (no manual impl needed).</p>
 
-    <svg viewBox="0 0 800 620" xmlns="http://www.w3.org/2000/svg" style="max-width: 800px; width: 100%; height: auto; font-family: 'Inter', sans-serif;">
+    <svg viewBox="0 0 800 780" xmlns="http://www.w3.org/2000/svg" style="max-width: 800px; width: 100%; height: auto; font-family: 'Inter', sans-serif;">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-muted, #8b949e)" />
@@ -305,6 +306,41 @@ impl HKT2 for TupleF {
 
       <line class="edge" x1="102" y1="570" x2="140" y2="570" />
       <line class="edge" x1="102" y1="580" x2="140" y2="610" />
+
+      <!-- === Arrow family (HKT2) === -->
+      <text x="350" y="548" class="section-label">Arrow family (HKT2)</text>
+
+      <rect class="node" x="350" y="560" width="100" height="30" />
+      <text class="node-label" x="400" y="575">Semigroupoid</text>
+
+      <rect class="node" x="490" y="560" width="72" height="30" />
+      <text class="node-label" x="526" y="575">Category</text>
+
+      <rect class="node" x="602" y="560" width="56" height="30" />
+      <text class="node-label" x="630" y="575">Arrow</text>
+
+      <rect class="node" x="700" y="540" width="92" height="26" />
+      <text class="node-label" x="746" y="553">ArrowChoice</text>
+
+      <rect class="node" x="700" y="570" width="86" height="26" />
+      <text class="node-label" x="743" y="583">ArrowApply</text>
+
+      <rect class="node" x="700" y="600" width="86" height="26" />
+      <text class="node-label" x="743" y="613">ArrowLoop</text>
+
+      <rect class="node" x="540" y="610" width="82" height="26" />
+      <text class="node-label" x="581" y="623">ArrowZero</text>
+
+      <rect class="node" x="660" y="640" width="82" height="26" />
+      <text class="node-label" x="701" y="653">ArrowPlus</text>
+
+      <line class="edge" x1="450" y1="575" x2="488" y2="575" />
+      <line class="edge" x1="562" y1="575" x2="600" y2="575" />
+      <line class="edge" x1="658" y1="568" x2="698" y2="555" />
+      <line class="edge" x1="658" y1="575" x2="698" y2="580" />
+      <line class="edge" x1="658" y1="582" x2="698" y2="610" />
+      <line class="edge" x1="630" y1="590" x2="570" y2="608" />
+      <line class="edge" x1="622" y1="636" x2="658" y2="648" />
     </svg>
 
     <p><strong>Key:</strong> Solid borders are standard traits. <strong style="border-bottom: 1.5px dashed var(--text-muted, #8b949e);">Dashed borders</strong> indicate blanket implementations &mdash; <code>Monad</code> is automatically derived for any type that implements both <code>Applicative</code> and <code>Chain</code>, and <code>Alternative</code> for <code>Applicative + Plus</code>.</p>
@@ -358,7 +394,7 @@ let result = OptionF::fmap(Some(42), |x| x + 1);
     <h2 id="design-decisions">Design Decisions</h2>
 
     <h3><code>no_std</code> first</h3>
-    <p><code>karpal-core</code> and <code>karpal-profunctor</code> compile without <code>std</code>. Types that require heap allocation &mdash; <code>VecF</code>, <code>NonEmptyVecF</code>, <code>PredicateF</code>, <code>StoreF</code>, <code>TracedF</code> &mdash; are gated behind the <code>alloc</code> or <code>std</code> feature flags. This makes Karpal usable in embedded and <code>no_std</code> environments.</p>
+    <p><code>karpal-core</code>, <code>karpal-profunctor</code>, and <code>karpal-arrow</code> compile without <code>std</code>. Types that require heap allocation &mdash; <code>VecF</code>, <code>NonEmptyVecF</code>, <code>PredicateF</code>, <code>StoreF</code>, <code>TracedF</code> &mdash; are gated behind the <code>alloc</code> or <code>std</code> feature flags. This makes Karpal usable in embedded and <code>no_std</code> environments.</p>
 
     <h3>Nightly edition 2024</h3>
     <p>The toolchain is pinned to nightly via <code>rust-toolchain.toml</code>. While GATs themselves stabilized in Rust 1.65, Karpal also relies on <code>use&lt;&gt;</code> precise-capture syntax (edition 2024) and the <code>alloc</code> feature gate for <code>no_std</code> builds. The nightly pin ensures all contributors use the same compiler.</p>
@@ -374,7 +410,7 @@ let result = OptionF::fmap(Some(42), |x| x + 1);
     <p>This keeps <code>Lens</code> <code>Copy</code>-able and avoids lifetime complications. When lenses are composed via <code>Lens::then()</code>, the result is a <code>ComposedLens</code> that uses <code>Box&lt;dyn Fn&gt;</code> closures instead, since closure composition cannot produce <code>fn</code> pointers.</p>
 
     <h3><code>'static</code> bounds on <code>Box&lt;dyn Fn&gt;</code></h3>
-    <p>Types whose inner representation is a boxed closure &mdash; <code>PredicateF</code>, <code>FnP</code>, <code>StoreF</code>, <code>TracedF</code> &mdash; require <code>'static</code> bounds. This is an inherent limitation of <code>Box&lt;dyn Fn&gt;</code> in Rust. As a consequence, <code>StoreF</code> and <code>TracedF</code> cannot implement the generic <code>Functor</code> trait (whose signature does not carry a <code>'static</code> bound); they provide their own <code>fmap</code> through the <code>Extend</code>/<code>Comonad</code> implementation instead.</p>
+    <p>Types whose inner representation is a boxed closure &mdash; <code>PredicateF</code>, <code>FnP</code>, <code>FnA</code>, <code>KleisliF</code>, <code>CokleisliF</code>, <code>StoreF</code>, <code>TracedF</code> &mdash; require <code>'static</code> bounds. This is an inherent limitation of <code>Box&lt;dyn Fn&gt;</code> in Rust. As a consequence, <code>StoreF</code> and <code>TracedF</code> cannot implement the generic <code>Functor</code> trait (whose signature does not carry a <code>'static</code> bound); they provide their own <code>fmap</code> through the <code>Extend</code>/<code>Comonad</code> implementation instead.</p>
 
     <h3>Blanket implementations</h3>
     <p>Where the theory permits, Karpal uses blanket impls to eliminate boilerplate:</p>
