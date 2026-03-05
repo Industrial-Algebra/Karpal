@@ -5,10 +5,13 @@ edition.workspace = true
 license.workspace = true
 description = "Profunctor hierarchy (Profunctor, Strong, Choice) for the Industrial Algebra ecosystem"
 
+[dependencies]
+karpal-core = { path = "../karpal-core", default-features = false }
+
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "karpal-core/std"]
+alloc = ["karpal-core/alloc"]
 
 [dev-dependencies]
 proptest.workspace = true

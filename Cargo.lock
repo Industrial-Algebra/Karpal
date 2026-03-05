@@ -164,6 +164,7 @@ dependencies = [
 name = "karpal-profunctor"
 version = "0.1.0"
 dependencies = [
+ "karpal-core",
  "proptest",
 ]
 
