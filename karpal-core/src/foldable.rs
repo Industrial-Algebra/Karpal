@@ -40,6 +40,23 @@ impl Foldable for VecF {
     }
 }
 
+impl Foldable for crate::hkt::IdentityF {
+    fn fold_right<A, B>(fa: A, init: B, f: impl Fn(A, B) -> B) -> B {
+        f(fa, init)
+    }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl Foldable for crate::hkt::NonEmptyVecF {
+    fn fold_right<A, B>(fa: crate::hkt::NonEmptyVec<A>, init: B, f: impl Fn(A, B) -> B) -> B {
+        let mut acc = init;
+        for a in fa.tail.into_iter().rev() {
+            acc = f(a, acc);
+        }
+        f(fa.head, acc)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

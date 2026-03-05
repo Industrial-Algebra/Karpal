@@ -33,6 +33,18 @@ impl Alt for VecF {
     }
 }
 
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl Alt for crate::hkt::NonEmptyVecF {
+    fn alt<A>(
+        mut fa1: crate::hkt::NonEmptyVec<A>,
+        fa2: crate::hkt::NonEmptyVec<A>,
+    ) -> crate::hkt::NonEmptyVec<A> {
+        fa1.tail.push(fa2.head);
+        fa1.tail.extend(fa2.tail);
+        fa1
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

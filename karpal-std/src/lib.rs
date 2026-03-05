@@ -3,23 +3,51 @@
 // Re-exports the most commonly used types and traits from
 // `karpal-core`, `karpal-profunctor`, and `karpal-optics`.
 
+/// Prelude module — `use karpal_std::prelude::*` to import everything.
 pub mod prelude {
     // HKT encoding
-    pub use karpal_core::hkt::{HKT, HKT2, OptionF, ResultBF, ResultF, TupleF, VecF};
+    pub use karpal_core::hkt::{
+        EnvF, HKT, HKT2, IdentityF, NonEmptyVec, NonEmptyVecF, OptionF, ResultBF, ResultF, StoreF,
+        TracedF, TupleF, VecF,
+    };
 
     // Functor hierarchy
     pub use karpal_core::{
-        Alt, Alternative, Applicative, Apply, Bifunctor, Chain, Contravariant, Foldable, Functor,
-        FunctorFilter, Monad, Monoid, NaturalTransformation, Plus, Selective, Semigroup,
-        Traversable,
+        Alt, Alternative, Applicative, Apply, Chain, Functor, FunctorFilter, Monad,
     };
+
+    // Foldable / Traversable
+    pub use karpal_core::{Foldable, Traversable};
+
+    // Comonad hierarchy
+    pub use karpal_core::{Comonad, ComonadEnv, ComonadStore, ComonadTraced, Extend};
+
+    // Bifunctor, Selective, NaturalTransformation
+    pub use karpal_core::{Bifunctor, NaturalTransformation, Selective};
+
+    // Invariant
+    pub use karpal_core::Invariant;
+
+    // Contravariant hierarchy
+    pub use karpal_core::{Conclude, Contravariant, Decide, Divide, Divisible, PredicateF};
+
+    // Plus
+    pub use karpal_core::Plus;
+
+    // Algebraic typeclasses
+    pub use karpal_core::{Monoid, Semigroup};
 
     // Profunctor
     pub use karpal_profunctor::{Choice, FnP, Profunctor, Strong};
 
     // Optics
     pub use karpal_optics::lens::ComposedLens;
-    pub use karpal_optics::{Lens, Prism, SimpleLens, SimplePrism};
+    pub use karpal_optics::lens::{Lens, SimpleLens};
+    pub use karpal_optics::optic::Optic;
+    pub use karpal_optics::{Prism, SimplePrism};
+
+    // Macros
+    pub use karpal_core::{ado_, do_};
 }
 
 // Crate re-exports for qualified access
@@ -37,7 +65,6 @@ mod tests {
 
     #[test]
     fn prelude_hkt_accessible() {
-        // Verify key HKT types are accessible
         let _: <OptionF as HKT>::Of<i32> = Some(42);
         let _: <VecF as HKT>::Of<i32> = vec![1, 2, 3];
         let _: <ResultF<String> as HKT>::Of<i32> = Ok(42);

@@ -59,6 +59,42 @@ impl Apply for VecF {
     }
 }
 
+impl Apply for crate::hkt::IdentityF {
+    fn ap<A, B, F>(ff: F, fa: A) -> B
+    where
+        A: Clone,
+        F: Fn(A) -> B,
+    {
+        ff(fa)
+    }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl Apply for crate::hkt::NonEmptyVecF {
+    fn ap<A, B, F>(
+        ff: crate::hkt::NonEmptyVec<F>,
+        fa: crate::hkt::NonEmptyVec<A>,
+    ) -> crate::hkt::NonEmptyVec<B>
+    where
+        A: Clone,
+        F: Fn(A) -> B,
+    {
+        // Apply each function to each value (cartesian product)
+        let head = (ff.head)(fa.head.clone());
+        let mut tail = Vec::new();
+        for a in &fa.tail {
+            tail.push((ff.head)(a.clone()));
+        }
+        for f in &ff.tail {
+            tail.push(f(fa.head.clone()));
+            for a in &fa.tail {
+                tail.push(f(a.clone()));
+            }
+        }
+        crate::hkt::NonEmptyVec::new(head, tail)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
