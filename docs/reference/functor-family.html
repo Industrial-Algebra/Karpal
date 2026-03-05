@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Functor Family - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html" class="active">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="../index.html">Reference</a> &gt; <span>Functor Family</span>
+    </nav>
+
+    <h1>Functor Family</h1>
+    <p>The covariant functor hierarchy: Functor through Monad.</p>
+
+    <h2 id="hierarchy">Hierarchy</h2>
+
+    <p>The Functor family forms a linear chain of increasingly powerful abstractions. Each trait extends the one above it:</p>
+
+<pre><code class="language-rust">Functor           // fmap: lift A -&gt; B into F&lt;A&gt; -&gt; F&lt;B&gt;
+  |
+  v
+Apply             // ap: apply F&lt;A -&gt; B&gt; to F&lt;A&gt;, producing F&lt;B&gt;
+  |
+  v
+Applicative       // pure: lift a value A into F&lt;A&gt;
+  |
+  +--- Chain      // chain: monadic bind (flatMap)
+  |      |
+  v      v
+  Monad           // Applicative + Chain (blanket impl, no extra methods)</code></pre>
+
+    <p><code>Monad</code> is provided as a blanket implementation: any type that implements both <code>Applicative</code> and <code>Chain</code> automatically implements <code>Monad</code>. There is no need to write an explicit <code>impl Monad for ...</code> block.</p>
+
+    <!-- ================================================================ -->
+    <!-- FUNCTOR -->
+    <!-- ================================================================ -->
+
+    <div class="trait-card" id="functor">
+      <div class="trait-card-header">
+        <h3>Functor</h3>
+        <p class="trait-desc">Covariant functor: lifts a function <code>A -&gt; B</code> into <code>F&lt;A&gt; -&gt; F&lt;B&gt;</code>.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Functor: HKT {
+    fn fmap&lt;A, B&gt;(fa: Self::Of&lt;A&gt;, f: impl Fn(A) -&gt; B) -&gt; Self::Of&lt;B&gt;;
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <strong>Identity:</strong> Mapping the identity function is a no-op.<br>
+          <code>F::fmap(fa, |x| x) == fa</code>
+        </div>
+
+        <div class="law-box">
+          <strong>Composition:</strong> Mapping two functions sequentially is the same as mapping their composition.<br>
+          <code>F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))</code>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td>Delegates to <code>Option::map</code></td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td>Delegates to <code>Result::map</code></td></tr>
+            <tr><td><code>VecF</code></td><td>Requires <code>alloc</code> or <code>std</code> feature</td></tr>
+            <tr><td><code>IdentityF</code></td><td>Applies <code>f</code> directly: <code>f(fa)</code></td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td>Requires <code>alloc</code> or <code>std</code> feature</td></tr>
+            <tr><td><code>EnvF&lt;E&gt;</code></td><td>Maps over the second element of the tuple <code>(E, A)</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Concrete usage
+let doubled = OptionF::fmap(Some(5), |x| x * 2);
+assert_eq!(doubled, Some(10));
+
+let lengths = VecF::fmap(vec!["hello", "world"], |s| s.len());
+assert_eq!(lengths, vec![5, 5]);
+
+// Generic over any Functor
+fn increment&lt;F: Functor&gt;(fa: F::Of&lt;i32&gt;) -&gt; F::Of&lt;i32&gt; {
+    F::fmap(fa, |x| x + 1)
+}
+
+assert_eq!(increment::&lt;OptionF&gt;(Some(9)), Some(10));
+assert_eq!(increment::&lt;VecF&gt;(vec![1, 2]), vec![2, 3]);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- APPLY -->
+    <!-- ================================================================ -->
+
+    <div class="trait-card" id="apply">
+      <div class="trait-card-header">
+        <h3>Apply</h3>
+        <p class="trait-desc">A Functor that can apply a wrapped function to a wrapped value.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Apply: Functor {
+    fn ap&lt;A, B, F&gt;(ff: Self::Of&lt;F&gt;, fa: Self::Of&lt;A&gt;) -&gt; Self::Of&lt;B&gt;
+    where
+        A: Clone,
+        F: Fn(A) -&gt; B;
+}</code></pre>
+
+        <p>The <code>A: Clone</code> bound is required because some instances (such as <code>VecF</code>) apply multiple functions to each value, consuming the value more than once.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <strong>Associative composition:</strong> Applying composed functions is the same as composing applications.<br>
+          <code>ap(ap(fmap(compose, f), g), x) == ap(f, ap(g, x))</code>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td>Applies function if both are <code>Some</code>; otherwise <code>None</code></td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td>Applies function if both are <code>Ok</code>; first <code>Err</code> wins</td></tr>
+            <tr><td><code>VecF</code></td><td>Cartesian product: each function applied to each value</td></tr>
+            <tr><td><code>IdentityF</code></td><td>Direct application: <code>ff(fa)</code></td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td>Cartesian product (requires <code>alloc</code> or <code>std</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Apply a wrapped function to a wrapped value
+let f: Option&lt;fn(i32) -&gt; i32&gt; = Some(|x| x * 2);
+let result = OptionF::ap(f, Some(21));
+assert_eq!(result, Some(42));
+
+// Vec: cartesian product of functions and values
+let fs: Vec&lt;fn(i32) -&gt; i32&gt; = vec![|x| x + 1, |x| x * 10];
+let result = VecF::ap(fs, vec![1, 2, 3]);
+assert_eq!(result, vec![2, 3, 4, 10, 20, 30]);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- APPLICATIVE -->
+    <!-- ================================================================ -->
+
+    <div class="trait-card" id="applicative">
+      <div class="trait-card-header">
+        <h3>Applicative</h3>
+        <p class="trait-desc">An Apply that can lift a pure value into the functor.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Applicative: Apply {
+    fn pure&lt;A&gt;(a: A) -&gt; Self::Of&lt;A&gt;;
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <strong>Identity:</strong> Applying a pure identity function is a no-op.<br>
+          <code>ap(pure(id), v) == v</code>
+        </div>
+
+        <div class="law-box">
+          <strong>Homomorphism:</strong> Lifting a function and a value, then applying, is the same as lifting the result directly.<br>
+          <code>ap(pure(f), pure(x)) == pure(f(x))</code>
+        </div>
+
+        <div class="law-box">
+          <strong>Interchange:</strong> The order of lifting does not matter when the value is pure.<br>
+          <code>ap(u, pure(y)) == ap(pure(|f| f(y)), u)</code>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>pure(a)</code> returns</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td><code>Some(a)</code></td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Ok(a)</code></td></tr>
+            <tr><td><code>VecF</code></td><td><code>vec![a]</code></td></tr>
+            <tr><td><code>IdentityF</code></td><td><code>a</code></td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec::singleton(a)</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Lift a value into any Applicative context
+let opt: Option&lt;i32&gt; = OptionF::pure(42);
+assert_eq!(opt, Some(42));
+
+let v: Vec&lt;i32&gt; = VecF::pure(42);
+assert_eq!(v, vec![42]);
+
+// Generic lifting
+fn wrap&lt;F: Applicative&gt;(x: i32) -&gt; F::Of&lt;i32&gt; {
+    F::pure(x)
+}
+
+assert_eq!(wrap::&lt;OptionF&gt;(7), Some(7));
+assert_eq!(wrap::&lt;VecF&gt;(7), vec![7]);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- CHAIN -->
+    <!-- ================================================================ -->
+
+    <div class="trait-card" id="chain">
+      <div class="trait-card-header">
+        <h3>Chain</h3>
+        <p class="trait-desc">An Apply with monadic bind (flatMap). Enables sequential computations where each step depends on the previous result.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Chain: Apply {
+    fn chain&lt;A, B&gt;(fa: Self::Of&lt;A&gt;, f: impl Fn(A) -&gt; Self::Of&lt;B&gt;) -&gt; Self::Of&lt;B&gt;;
+}</code></pre>
+
+        <p>Note that the function <code>f</code> returns <code>Self::Of&lt;B&gt;</code>, not just <code>B</code>. This is what distinguishes <code>chain</code> from <code>fmap</code>: the callback itself produces a wrapped value, and <code>chain</code> flattens the result.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <strong>Associativity:</strong> Chaining is associative -- nesting does not matter.<br>
+          <code>chain(chain(m, f), g) == chain(m, |x| chain(f(x), g))</code>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td>Delegates to <code>Option::and_then</code></td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td>Delegates to <code>Result::and_then</code></td></tr>
+            <tr><td><code>VecF</code></td><td><code>flat_map</code>: each element produces a Vec, results are concatenated</td></tr>
+            <tr><td><code>IdentityF</code></td><td>Direct application: <code>f(fa)</code></td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td>Concatenates non-empty results (requires <code>alloc</code> or <code>std</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Option: short-circuits on None
+fn safe_sqrt(x: f64) -&gt; Option&lt;f64&gt; {
+    if x &gt;= 0.0 { Some(x.sqrt()) } else { None }
+}
+
+let result = OptionF::chain(Some(16.0), safe_sqrt);
+assert_eq!(result, Some(4.0));
+
+let result = OptionF::chain(Some(-1.0), safe_sqrt);
+assert_eq!(result, None);
+
+// Vec: flatMap (each element expands into a list)
+let result = VecF::chain(vec![1, 2, 3], |x| vec![x, x * 10]);
+assert_eq!(result, vec![1, 10, 2, 20, 3, 30]);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- MONAD -->
+    <!-- ================================================================ -->
+
+    <div class="trait-card" id="monad">
+      <div class="trait-card-header">
+        <h3>Monad</h3>
+        <p class="trait-desc">Applicative + Chain. A blanket implementation with no extra methods.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Monad: Applicative + Chain {}
+
+impl&lt;F: Applicative + Chain&gt; Monad for F {}</code></pre>
+
+        <p><code>Monad</code> is a <strong>marker trait</strong>. It adds no new methods; it simply certifies that a type implements both <code>Applicative</code> (for <code>pure</code>) and <code>Chain</code> (for <code>chain</code>). The blanket <code>impl</code> means you never write <code>impl Monad for MyType</code> -- just implement <code>Applicative</code> and <code>Chain</code>, and <code>Monad</code> comes for free.</p>
+
+        <h4>Laws</h4>
+
+        <p>In addition to the Applicative and Chain laws, a Monad must satisfy:</p>
+
+        <div class="law-box">
+          <strong>Left identity:</strong> Lifting a value with <code>pure</code> then chaining is the same as calling the function directly.<br>
+          <code>chain(pure(a), f) == f(a)</code>
+        </div>
+
+        <div class="law-box">
+          <strong>Right identity:</strong> Chaining with <code>pure</code> is a no-op.<br>
+          <code>chain(m, pure) == m</code>
+        </div>
+
+        <h4>Instances</h4>
+
+        <p>Every type that implements both <code>Applicative</code> and <code>Chain</code> is automatically a <code>Monad</code>:</p>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td>Blanket impl</td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td>Blanket impl</td></tr>
+            <tr><td><code>VecF</code></td><td>Blanket impl (requires <code>alloc</code> or <code>std</code>)</td></tr>
+            <tr><td><code>IdentityF</code></td><td>Blanket impl</td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td>Blanket impl (requires <code>alloc</code> or <code>std</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Use Monad as a trait bound to require both pure and chain
+fn bind_and_wrap&lt;M: Monad&gt;(x: i32) -&gt; M::Of&lt;String&gt;
+where
+    M::Of&lt;i32&gt;: Clone,
+{
+    M::chain(M::pure(x), |n| M::pure(format!("value: {}", n)))
+}
+
+assert_eq!(bind_and_wrap::&lt;OptionF&gt;(42), Some("value: 42".to_string()));
+
+// The do_! macro desugars into chain calls, so it requires Monad
+let result = do_! { OptionF;
+    x = Some(10);
+    y = Some(x + 20);
+    Some(x + y)
+};
+assert_eq!(result, Some(40));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SEE ALSO -->
+    <!-- ================================================================ -->
+
+    <h2 id="see-also">See Also</h2>
+
+    <ul>
+      <li><a href="alt-family.html"><strong>Alt Family</strong></a> -- the Alt / Plus / Alternative branch, which extends Functor in a different direction (choice and failure).</li>
+      <li><a href="macros.html"><strong>Macros</strong></a> -- the <code>do_!</code> and <code>ado_!</code> macros that provide ergonomic syntax for Chain and Applicative computations.</li>
+      <li><a href="foldable-traversable.html"><strong>Foldable &amp; Traversable</strong></a> -- folding and traversing structures, which combine naturally with Applicative.</li>
+      <li><a href="../getting-started.html"><strong>Getting Started</strong></a> -- a tutorial introduction to HKTs, Functor, and monadic notation.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

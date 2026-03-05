@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optics - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="optics.html" class="active">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="optics.html">Reference</a> &gt; <span>Optics</span>
+    </nav>
+
+    <h1>Optics</h1>
+    <p>Profunctor optics: first-class field accessors and pattern matchers.</p>
+
+    <p>Optics let you focus on parts of a data structure -- reading, writing, and transforming nested fields or enum variants -- without breaking encapsulation. Karpal provides two concrete optic types: <code>Lens</code> for product types (structs) and <code>Prism</code> for sum types (enums). Both connect to the profunctor hierarchy, enabling generic transformations through <code>Strong</code> and <code>Choice</code> respectively.</p>
+
+    <p>All optic types live in the <code>karpal-optics</code> crate and implement the <a href="#optic-trait"><code>Optic</code></a> marker trait.</p>
+
+    <!-- ================================================================== -->
+    <!-- Optic trait                                                        -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="optic-trait">Optic</h3>
+        <p class="trait-desc">Marker trait for the optic family.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Marker trait for all optics.
+///
+/// This trait exists to unify the optic family under a single taxonomy.
+/// Concrete optic types (Lens, Prism, etc.) implement this trait.
+pub trait Optic {}</code></pre>
+
+        <p><code>Optic</code> carries no methods. It exists solely to classify types as optics, which is useful for trait bounds and documentation. <code>Lens</code>, <code>ComposedLens</code>, and <code>Prism</code> all implement <code>Optic</code>.</p>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Lens                                                               -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="lens">Lens</h3>
+        <p class="trait-desc">A first-class getter/setter pair for focusing on a field inside a product type.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Struct definition</h4>
+
+<pre><code class="language-rust">/// A van Laarhoven-style lens encoded with getter/setter function pointers.
+///
+/// `S` -- source type, `T` -- modified source type,
+/// `A` -- focus type, `B` -- replacement type.
+pub struct Lens&lt;S, T, A, B&gt; {
+    getter: fn(&amp;S) -&gt; A,
+    setter: fn(S, B) -&gt; T,
+}
+
+/// A simple (monomorphic) lens where `S == T` and `A == B`.
+pub type SimpleLens&lt;S, A&gt; = Lens&lt;S, S, A, A&gt;;</code></pre>
+
+        <p>The four type parameters support <strong>polymorphic update</strong>: you can replace a field of type <code>A</code> with a value of type <code>B</code>, changing the source from <code>S</code> to <code>T</code>. In practice, most lenses are <em>simple</em> (monomorphic), where <code>S == T</code> and <code>A == B</code>. The <code>SimpleLens</code> type alias covers this common case.</p>
+
+        <h4>Methods</h4>
+
+<pre><code class="language-rust">impl&lt;S, T, A, B&gt; Lens&lt;S, T, A, B&gt; {
+    /// Create a new lens from a getter and setter.
+    pub fn new(getter: fn(&amp;S) -&gt; A, setter: fn(S, B) -&gt; T) -&gt; Self;
+
+    /// Extract the focus from the source.
+    pub fn get(&amp;self, s: &amp;S) -&gt; A;
+
+    /// Replace the focus, producing a new source.
+    pub fn set(&amp;self, s: S, b: B) -&gt; T;
+
+    /// Chain another lens to focus deeper, producing a ComposedLens.
+    /// Requires all type parameters to be `'static`.
+    pub fn then&lt;X, Y&gt;(self, inner: Lens&lt;A, B, X, Y&gt;) -&gt; ComposedLens&lt;S, T, X, Y&gt;
+    where
+        S: 'static, T: 'static, A: 'static, B: 'static,
+        X: 'static, Y: 'static;
+}
+
+impl&lt;S: Clone, T, A, B&gt; Lens&lt;S, T, A, B&gt; {
+    /// Modify the focus by applying a function. Requires `S: Clone`.
+    pub fn over(&amp;self, s: S, f: impl FnOnce(A) -&gt; B) -&gt; T;
+
+    /// Profunctor encoding: transform a `P&lt;A, B&gt;` into a `P&lt;S, T&gt;`.
+    /// Requires `S: Clone` and `Strong` profunctor `P`.
+    /// All type parameters must be `'static`.
+    pub fn transform&lt;P: Strong&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
+    where
+        S: 'static, T: 'static, A: 'static, B: 'static;
+}</code></pre>
+
+        <h4>How <code>transform</code> works (Strong)</h4>
+
+        <p>The <code>transform</code> method connects a concrete lens to the profunctor hierarchy through the <a href="profunctor-family.html"><code>Strong</code></a> trait. Given any <code>Strong</code> profunctor <code>P</code> and a value <code>pab: P&lt;A, B&gt;</code>, it produces <code>P&lt;S, T&gt;</code> by:</p>
+
+        <ol>
+          <li><code>P::first(pab)</code> lifts to <code>P&lt;(A, S), (B, S)&gt;</code></li>
+          <li><code>P::dimap</code> pre-composes with <code>|s| (get(s), s)</code> and post-composes with <code>|(b, s)| set(s, b)</code></li>
+        </ol>
+
+<pre><code class="language-rust">pub fn transform&lt;P: Strong&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
+where
+    S: 'static, T: 'static, A: 'static, B: 'static,
+{
+    let getter = self.getter;
+    let setter = self.setter;
+    let first_pab = P::first::&lt;A, B, S&gt;(pab);
+    P::dimap(
+        move |s: S| {
+            let a = getter(&amp;s);
+            (a, s)
+        },
+        move |(b, s)| setter(s, b),
+        first_pab,
+    )
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <p>A well-behaved lens must satisfy three laws:</p>
+
+        <div class="law-box">
+          <span class="law-name">GetSet</span>
+          <p>Setting a value you just got changes nothing:</p>
+<pre><code class="language-rust">lens.set(s.clone(), lens.get(&amp;s)) == s</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">SetGet</span>
+          <p>Getting after setting yields the value you set:</p>
+<pre><code class="language-rust">lens.get(&amp;lens.set(s, b)) == b</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">SetSet</span>
+          <p>Setting twice is the same as setting once with the second value:</p>
+<pre><code class="language-rust">lens.set(lens.set(s.clone(), b1), b2) == lens.set(s, b2)</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_optics::{Lens, SimpleLens};
+
+#[derive(Debug, Clone, PartialEq)]
+struct Person {
+    name: String,
+    age: u32,
+}
+
+let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
+    |p: &amp;Person| p.age,
+    |p, age| Person { age, ..p },
+);
+
+let alice = Person { name: "Alice".into(), age: 30 };
+
+// get
+assert_eq!(age_lens.get(&amp;alice), 30);
+
+// set
+let updated = age_lens.set(alice.clone(), 31);
+assert_eq!(updated.age, 31);
+
+// over -- modify the focus with a function
+let updated = age_lens.over(alice.clone(), |a| a + 1);
+assert_eq!(updated.age, 31);</code></pre>
+
+        <h4>Profunctor usage with FnP</h4>
+
+<pre><code class="language-rust">use karpal_optics::{Lens, SimpleLens};
+use karpal_profunctor::FnP;
+
+let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
+    |p: &amp;Person| p.age,
+    |p, age| Person { age, ..p },
+);
+
+let increment: Box&lt;dyn Fn(u32) -&gt; u32&gt; = Box::new(|age| age + 1);
+let transform_fn = age_lens.transform::&lt;FnP&gt;(increment);
+
+let result = transform_fn(Person { name: "Alice".into(), age: 30 });
+assert_eq!(result.age, 31);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ComposedLens                                                       -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="composed-lens">ComposedLens</h3>
+        <p class="trait-desc">A lens built by chaining two or more lenses for deep field access.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Struct definition</h4>
+
+<pre><code class="language-rust">/// A composed lens built from two lenses chained together.
+///
+/// Unlike `Lens`, which stores `fn` pointers, a composed lens stores
+/// boxed closures because closure composition cannot produce `fn` pointers.
+pub struct ComposedLens&lt;S, T, X, Y&gt; {
+    getter: Box&lt;dyn Fn(&amp;S) -&gt; X&gt;,
+    setter: Box&lt;dyn Fn(S, Y) -&gt; T&gt;,
+}
+
+/// A simple (monomorphic) composed lens where `S == T` and `X == Y`.
+pub type SimpleComposedLens&lt;S, X&gt; = ComposedLens&lt;S, S, X, X&gt;;</code></pre>
+
+        <p><code>ComposedLens</code> is produced by calling <code>Lens::then()</code> or <code>ComposedLens::then()</code>. It stores <code>Box&lt;dyn Fn&gt;</code> closures instead of <code>fn</code> pointers because closure composition captures the outer lens's getter and setter, which cannot be represented as bare function pointers.</p>
+
+        <h4>Methods</h4>
+
+<pre><code class="language-rust">impl&lt;S, T, X, Y&gt; ComposedLens&lt;S, T, X, Y&gt; {
+    /// Extract the deeply-nested focus from the source.
+    pub fn get(&amp;self, s: &amp;S) -&gt; X;
+
+    /// Replace the deeply-nested focus, producing a new source.
+    pub fn set(&amp;self, s: S, y: Y) -&gt; T;
+}
+
+impl&lt;S: Clone, T, X, Y&gt; ComposedLens&lt;S, T, X, Y&gt; {
+    /// Modify the deeply-nested focus by applying a function. Requires `S: Clone`.
+    pub fn over(&amp;self, s: S, f: impl FnOnce(X) -&gt; Y) -&gt; T;
+
+    /// Chain another lens to focus even deeper.
+    /// All type parameters must be `'static`.
+    pub fn then&lt;U, V&gt;(self, inner: Lens&lt;X, Y, U, V&gt;) -&gt; ComposedLens&lt;S, T, U, V&gt;
+    where
+        S: 'static, T: 'static, X: 'static, Y: 'static,
+        U: 'static, V: 'static;
+}</code></pre>
+
+        <h4>No <code>transform</code> on ComposedLens</h4>
+
+        <p><code>ComposedLens</code> does <strong>not</strong> provide a <code>transform</code> method. For profunctor-level composition, use nested <code>Lens::transform</code> calls on the original lenses instead:</p>
+
+<pre><code class="language-rust">// Instead of composed_lens.transform::&lt;P&gt;(pab), write:
+let result = outer.transform::&lt;P&gt;(inner.transform::&lt;P&gt;(pab));</code></pre>
+
+        <p>This avoids the need for <code>Rc</code>/<code>Arc</code> to share closures at the profunctor level and preserves the clean semantics of the profunctor encoding.</p>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_optics::{Lens, SimpleLens};
+
+#[derive(Debug, Clone, PartialEq)]
+struct Company {
+    name: String,
+    ceo: Person,
+}
+
+let ceo_lens: SimpleLens&lt;Company, Person&gt; = Lens::new(
+    |c: &amp;Company| c.ceo.clone(),
+    |c, ceo| Company { ceo, ..c },
+);
+
+let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
+    |p: &amp;Person| p.age,
+    |p, age| Person { age, ..p },
+);
+
+// Compose: Company -&gt; ceo -&gt; age
+let ceo_age = ceo_lens.then(age_lens);
+
+let acme = Company {
+    name: "Acme".into(),
+    ceo: Person { name: "Alice".into(), age: 30 },
+};
+
+assert_eq!(ceo_age.get(&amp;acme), 30);
+
+let updated = ceo_age.set(acme.clone(), 31);
+assert_eq!(updated.ceo.age, 31);
+
+let updated = ceo_age.over(acme, |age| age + 1);
+assert_eq!(updated.ceo.age, 31);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Prism                                                              -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="prism">Prism</h3>
+        <p class="trait-desc">A first-class pattern matcher for focusing on one variant of a sum type.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Struct definition</h4>
+
+<pre><code class="language-rust">/// A prism focuses on one variant of a sum type.
+///
+/// `S` -- source type, `T` -- modified source type,
+/// `A` -- focus type (the variant's inner value), `B` -- replacement type.
+///
+/// Where a Lens uses Strong to decompose products, a Prism uses Choice
+/// to decompose coproducts.
+pub struct Prism&lt;S, T, A, B&gt; {
+    /// Attempt to match. `Ok(a)` = matched, `Err(t)` = didn't match (pass-through).
+    match_: fn(S) -&gt; Result&lt;A, T&gt;,
+    /// Construct a `T` from the replacement value.
+    build: fn(B) -&gt; T,
+}
+
+/// A simple (monomorphic) prism where `S == T` and `A == B`.
+pub type SimplePrism&lt;S, A&gt; = Prism&lt;S, S, A, A&gt;;</code></pre>
+
+        <p>A <code>Prism</code> is the dual of a <code>Lens</code>. Where a lens focuses on a field that is always present (product types), a prism focuses on a variant that may or may not be present (sum types). The <code>match_</code> function returns <code>Ok(a)</code> if the variant matches and <code>Err(t)</code> if it does not, allowing the original value to pass through unchanged.</p>
+
+        <h4>Methods</h4>
+
+<pre><code class="language-rust">impl&lt;S, T, A, B&gt; Prism&lt;S, T, A, B&gt; {
+    /// Create a new prism from a match function and a build function.
+    pub fn new(match_: fn(S) -&gt; Result&lt;A, T&gt;, build: fn(B) -&gt; T) -&gt; Self;
+
+    /// Try to extract the focus. Returns `Some(a)` if the variant matches.
+    /// Requires `S: Clone`.
+    pub fn preview(&amp;self, s: &amp;S) -&gt; Option&lt;A&gt;
+    where
+        S: Clone;
+
+    /// Construct a `T` from a replacement value (inject/construct).
+    pub fn review(&amp;self, b: B) -&gt; T;
+
+    /// Replace the focus if the variant matches; otherwise pass through.
+    pub fn set(&amp;self, s: S, b: B) -&gt; T;
+
+    /// Modify the focus if the variant matches; otherwise pass through.
+    pub fn over(&amp;self, s: S, f: impl FnOnce(A) -&gt; B) -&gt; T;
+
+    /// Profunctor encoding: transform a `P&lt;A, B&gt;` into a `P&lt;S, T&gt;`.
+    /// Requires `Choice` profunctor `P`.
+    /// All type parameters must be `'static`.
+    pub fn transform&lt;P: Choice&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
+    where
+        S: 'static, T: 'static, A: 'static, B: 'static;
+}</code></pre>
+
+        <h4>How <code>transform</code> works (Choice)</h4>
+
+        <p>The <code>transform</code> method connects a concrete prism to the profunctor hierarchy through the <a href="profunctor-family.html"><code>Choice</code></a> trait. Given any <code>Choice</code> profunctor <code>P</code> and a value <code>pab: P&lt;A, B&gt;</code>, it produces <code>P&lt;S, T&gt;</code> by:</p>
+
+        <ol>
+          <li><code>P::right(pab)</code> lifts to <code>P&lt;Result&lt;T, A&gt;, Result&lt;T, B&gt;&gt;</code></li>
+          <li><code>P::dimap</code> pre-composes with <code>match_</code> (swapping <code>Ok</code>/<code>Err</code> arms) and post-composes with <code>build</code> (reassembling)</li>
+        </ol>
+
+        <p>The arm-swapping (<code>Ok</code> to <code>Err</code>, <code>Err</code> to <code>Ok</code> in pre-composition) is necessary because <code>Choice::right</code> acts on the <code>Err</code> branch of <code>Result</code>.</p>
+
+<pre><code class="language-rust">pub fn transform&lt;P: Choice&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
+where
+    S: 'static, T: 'static, A: 'static, B: 'static,
+{
+    let match_ = self.match_;
+    let build = self.build;
+    let right_pab = P::right::&lt;A, B, T&gt;(pab);
+    P::dimap(
+        move |s: S| match match_(s) {
+            Ok(a) =&gt; Err(a),  // focus found -- Err arm for Choice::right
+            Err(t) =&gt; Ok(t),  // no match -- Ok arm passes through
+        },
+        move |result: Result&lt;T, B&gt;| match result {
+            Ok(t) =&gt; t,          // passed through unchanged
+            Err(b) =&gt; build(b),  // transformed, rebuild
+        },
+        right_pab,
+    )
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <p>A well-behaved prism must satisfy two laws:</p>
+
+        <div class="law-box">
+          <span class="law-name">PreviewReview</span>
+          <p>If a preview succeeds, reviewing the result reconstructs the original:</p>
+<pre><code class="language-rust">if let Some(a) = prism.preview(&amp;s) {
+    assert_eq!(prism.review(a), s);
+}</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">ReviewPreview</span>
+          <p>Previewing a value built with review always succeeds and returns the original value:</p>
+<pre><code class="language-rust">assert_eq!(prism.preview(&amp;prism.review(b)), Some(b));</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_optics::{Prism, SimplePrism};
+
+#[derive(Debug, Clone, PartialEq)]
+enum Shape {
+    Circle(f64),
+    Rectangle(f64, f64),
+}
+
+let circle: SimplePrism&lt;Shape, f64&gt; = Prism::new(
+    |s| match s {
+        Shape::Circle(r) =&gt; Ok(r),
+        Shape::Rectangle(w, h) =&gt; Err(Shape::Rectangle(w, h)),
+    },
+    Shape::Circle,
+);
+
+// preview -- extract if the variant matches
+assert_eq!(circle.preview(&amp;Shape::Circle(5.0)), Some(5.0));
+assert_eq!(circle.preview(&amp;Shape::Rectangle(3.0, 4.0)), None);
+
+// review -- construct the variant
+assert_eq!(circle.review(10.0), Shape::Circle(10.0));
+
+// set -- replace the focus if matched
+assert_eq!(circle.set(Shape::Circle(5.0), 10.0), Shape::Circle(10.0));
+assert_eq!(
+    circle.set(Shape::Rectangle(3.0, 4.0), 10.0),
+    Shape::Rectangle(3.0, 4.0),
+);
+
+// over -- modify the focus if matched
+assert_eq!(
+    circle.over(Shape::Circle(5.0), |r| r * 2.0),
+    Shape::Circle(10.0),
+);</code></pre>
+
+        <h4>Profunctor usage with FnP</h4>
+
+<pre><code class="language-rust">use karpal_optics::{Prism, SimplePrism};
+use karpal_profunctor::FnP;
+
+let circle: SimplePrism&lt;Shape, f64&gt; = Prism::new(
+    |s| match s {
+        Shape::Circle(r) =&gt; Ok(r),
+        Shape::Rectangle(w, h) =&gt; Err(Shape::Rectangle(w, h)),
+    },
+    Shape::Circle,
+);
+
+let double: Box&lt;dyn Fn(f64) -&gt; f64&gt; = Box::new(|r| r * 2.0);
+let transform_fn = circle.transform::&lt;FnP&gt;(double);
+
+// Matching variant is transformed
+assert_eq!(transform_fn(Shape::Circle(5.0)), Shape::Circle(10.0));
+
+// Non-matching variant passes through unchanged
+assert_eq!(
+    transform_fn(Shape::Rectangle(3.0, 4.0)),
+    Shape::Rectangle(3.0, 4.0),
+);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Composition example                                                -->
+    <!-- ================================================================== -->
+
+    <h2 id="composition">Composing Lenses with <code>.then()</code></h2>
+
+    <p>Lenses compose naturally via the <code>.then()</code> method. Each call to <code>then</code> produces a <code>ComposedLens</code> that focuses one level deeper. You can chain as many lenses as needed for deep access into nested structures.</p>
+
+<pre><code class="language-rust">use karpal_optics::{Lens, SimpleLens};
+
+#[derive(Debug, Clone, PartialEq)]
+struct Address {
+    street: String,
+    city: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Employee {
+    name: String,
+    addr: Address,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Org {
+    title: String,
+    lead: Employee,
+}
+
+let lead_lens: SimpleLens&lt;Org, Employee&gt; = Lens::new(
+    |o: &amp;Org| o.lead.clone(),
+    |o, lead| Org { lead, ..o },
+);
+
+let addr_lens: SimpleLens&lt;Employee, Address&gt; = Lens::new(
+    |e: &amp;Employee| e.addr.clone(),
+    |e, addr| Employee { addr, ..e },
+);
+
+let city_lens: SimpleLens&lt;Address, String&gt; = Lens::new(
+    |a: &amp;Address| a.city.clone(),
+    |a, city| Address { city, ..a },
+);
+
+// Three-deep composition: Org -&gt; lead -&gt; addr -&gt; city
+let org_city = lead_lens.then(addr_lens).then(city_lens);
+
+let org = Org {
+    title: "R&amp;D".into(),
+    lead: Employee {
+        name: "Alice".into(),
+        addr: Address {
+            street: "123 Main St".into(),
+            city: "Springfield".into(),
+        },
+    },
+};
+
+// Read a deeply nested field
+assert_eq!(org_city.get(&amp;org), "Springfield");
+
+// Update a deeply nested field
+let updated = org_city.set(org.clone(), "Shelbyville".into());
+assert_eq!(updated.lead.addr.city, "Shelbyville");
+assert_eq!(updated.lead.addr.street, "123 Main St");
+
+// Modify a deeply nested field with a function
+let updated = org_city.over(org, |c| c.to_uppercase());
+assert_eq!(updated.lead.addr.city, "SPRINGFIELD");</code></pre>
+
+    <p>For profunctor-level composition (where you need <code>transform</code>), nest the original lens transforms instead of using the composed lens:</p>
+
+<pre><code class="language-rust">use karpal_profunctor::FnP;
+
+let ceo_lens: SimpleLens&lt;Company, Person&gt; = /* ... */;
+let age_lens: SimpleLens&lt;Person, u32&gt; = /* ... */;
+
+let increment: Box&lt;dyn Fn(u32) -&gt; u32&gt; = Box::new(|age| age + 1);
+
+// Nested transform: equivalent to composed_lens.over(company, |age| age + 1)
+let transform_fn = ceo_lens.transform::&lt;FnP&gt;(age_lens.transform::&lt;FnP&gt;(increment));</code></pre>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

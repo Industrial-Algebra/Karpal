@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Config Pipeline - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="../reference/functor-family.html">Functor Family</a></li>
+          <li><a href="../reference/alt-family.html">Alt Family</a></li>
+          <li><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="../reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="../reference/macros.html">Macros</a></li>
+          <li><a href="../reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="../reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="../reference/invariant.html">Invariant</a></li>
+          <li><a href="../reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="../reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="../reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="config-pipeline.html" class="active">Config Pipeline</a></li>
+          <li><a href="data-transformation.html">Data Transformation</a></li>
+          <li><a href="cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="../index.html">Examples</a> &gt; <span>Config Pipeline</span>
+    </nav>
+
+    <h1>Config Pipeline</h1>
+    <p>Load application config from multiple sources using Alt, Traversable, Foldable, and Monoid.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <p>Real applications rarely load configuration from a single source. Environment variables, config files, and hardcoded defaults each provide a partial picture. This example builds a configuration pipeline that:</p>
+
+    <ul>
+      <li>Uses <strong>Alt</strong> to create fallback chains across multiple config sources (env, file, defaults).</li>
+      <li>Uses <strong><code>do_!</code></strong> to sequence dependent lookups into a connection string.</li>
+      <li>Uses <strong>Traversable</strong> for all-or-nothing batch validation of port numbers.</li>
+      <li>Uses <strong>Foldable</strong> with <strong>Monoid</strong> to aggregate a human-readable config summary.</li>
+    </ul>
+
+    <p>The full source is at <code>karpal-std/examples/config_pipeline.rs</code>.</p>
+
+    <h2 id="domain-types">1. Domain Types</h2>
+
+    <p>The example defines a simple <code>AppConfig</code> struct representing a database connection configuration:</p>
+
+<pre><code class="language-rust">#[derive(Debug, Clone, PartialEq)]
+struct AppConfig {
+    db_host: String,
+    db_port: u16,
+    db_name: String,
+    max_connections: u16,
+    timeout_ms: u64,
+}</code></pre>
+
+    <h2 id="config-sources">2. Simulated Config Sources</h2>
+
+    <p>Three functions simulate different configuration sources. Each takes a key and returns <code>Option&lt;String&gt;</code> &mdash; <code>Some</code> if the source knows about that key, <code>None</code> otherwise.</p>
+
+<pre><code class="language-rust">fn from_env(key: &amp;str) -&gt; Option&lt;String&gt; {
+    // Simulate environment variables (only DB_HOST and DB_PORT are set)
+    match key {
+        "DB_HOST" =&gt; Some("prod-db.example.com".into()),
+        "DB_PORT" =&gt; Some("5432".into()),
+        _ =&gt; None,
+    }
+}
+
+fn from_file(key: &amp;str) -&gt; Option&lt;String&gt; {
+    // Simulate a config file (has DB_NAME and MAX_CONNECTIONS)
+    match key {
+        "DB_NAME" =&gt; Some("myapp".into()),
+        "MAX_CONNECTIONS" =&gt; Some("20".into()),
+        _ =&gt; None,
+    }
+}
+
+fn from_default(key: &amp;str) -&gt; Option&lt;String&gt; {
+    // Hardcoded defaults for everything
+    match key {
+        "DB_HOST" =&gt; Some("localhost".into()),
+        "DB_PORT" =&gt; Some("5432".into()),
+        "DB_NAME" =&gt; Some("app".into()),
+        "MAX_CONNECTIONS" =&gt; Some("10".into()),
+        "TIMEOUT_MS" =&gt; Some("5000".into()),
+        _ =&gt; None,
+    }
+}</code></pre>
+
+    <p>No single source has every key. Environment variables provide the host and port; the config file provides the database name and connection pool size; defaults fill in anything still missing, including the timeout.</p>
+
+    <h2 id="alt-fallback">3. Alt Fallback Chains</h2>
+
+    <p>The <a href="../reference/alt-family.html">Alt</a> trait provides an associative "or" operation on type constructors. For <code>Option</code>, <code>Alt::alt</code> returns the first <code>Some</code> value, falling through to the next source if the current one returns <code>None</code>.</p>
+
+<pre><code class="language-rust">/// Try env first, then file, then defaults.
+fn resolve(key: &amp;str) -&gt; Option&lt;String&gt; {
+    OptionF::alt(OptionF::alt(from_env(key), from_file(key)), from_default(key))
+}</code></pre>
+
+    <p>This reads inside-out: try <code>from_env</code>, fall back to <code>from_file</code>, then fall back to <code>from_default</code>. Because <code>Alt</code> is associative, the grouping does not matter &mdash; only the left-to-right priority order.</p>
+
+    <p>For example, <code>resolve("DB_HOST")</code> returns <code>Some("prod-db.example.com")</code> from the environment, while <code>resolve("TIMEOUT_MS")</code> skips both env and file (neither has it) and returns <code>Some("5000")</code> from defaults.</p>
+
+    <h2 id="loading-config">4. Loading the Full Config</h2>
+
+    <p>With <code>resolve</code> in hand, loading the full <code>AppConfig</code> is straightforward. String fields are resolved directly; numeric fields are resolved and then parsed:</p>
+
+<pre><code class="language-rust">fn load_config() -&gt; Option&lt;AppConfig&gt; {
+    // Resolve each key independently via Alt fallback chains
+    let db_host = resolve("DB_HOST")?;
+    let db_name = resolve("DB_NAME")?;
+
+    // For numeric fields, resolve then parse
+    let db_port = resolve("DB_PORT").and_then(parse_u16)?;
+    let max_connections = resolve("MAX_CONNECTIONS").and_then(parse_u16)?;
+    let timeout_ms = resolve("TIMEOUT_MS").and_then(parse_u64)?;
+
+    Some(AppConfig {
+        db_host,
+        db_port,
+        db_name,
+        max_connections,
+        timeout_ms,
+    })
+}</code></pre>
+
+    <p>The <code>?</code> operator short-circuits the entire function if any key cannot be resolved or any parse fails, returning <code>None</code>.</p>
+
+    <h2 id="do-macro">5. Connection String with <code>do_!</code></h2>
+
+    <p>The <a href="../reference/macros.html"><code>do_!</code> macro</a> provides monadic sequencing. Here it combines three resolved values into a formatted connection string:</p>
+
+<pre><code class="language-rust">fn load_connection_string() -&gt; Option&lt;String&gt; {
+    do_! { OptionF;
+        host = resolve("DB_HOST");
+        port = resolve("DB_PORT");
+        name = resolve("DB_NAME");
+        Some(format!("postgres://{}:{}/{}", host, port, name))
+    }
+}</code></pre>
+
+    <p>Each <code>name = expr</code> line unwraps the <code>Option</code>. If any call to <code>resolve</code> returns <code>None</code>, the entire block short-circuits. The final expression produces the connection string wrapped in <code>Some</code>.</p>
+
+    <h2 id="traversable-validation">6. Batch Validation with Traversable</h2>
+
+    <p><a href="../reference/foldable-traversable.html">Traversable</a> provides all-or-nothing semantics: apply a fallible function to every element in a collection, and if any element fails, the entire result is <code>None</code>.</p>
+
+<pre><code class="language-rust">fn parse_u16(s: String) -&gt; Option&lt;u16&gt; {
+    s.parse().ok()
+}
+
+fn validate_ports(ports: Vec&lt;&amp;str&gt;) -&gt; Option&lt;Vec&lt;u16&gt;&gt; {
+    VecF::traverse::&lt;OptionF, _, _, _&gt;(
+        ports.into_iter().map(String::from).collect(),
+        parse_u16,
+    )
+}</code></pre>
+
+    <p><code>VecF::traverse</code> maps <code>parse_u16</code> over each element and collects the results. If every element parses successfully, the result is <code>Some(vec![...])</code>. If any element fails, the result is <code>None</code>:</p>
+
+<pre><code class="language-rust">let good = validate_ports(vec!["80", "443", "8080"]);
+// =&gt; Some([80, 443, 8080])
+
+let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
+// =&gt; None</code></pre>
+
+    <p>This is strictly stronger than filtering out failures &mdash; it guarantees that either <em>all</em> values are valid or the caller knows something went wrong.</p>
+
+    <h2 id="foldable-monoid">7. Config Summary with Foldable and Monoid</h2>
+
+    <p><a href="../reference/foldable-traversable.html">Foldable</a> provides structural traversal, and <a href="../reference/algebraic.html">Monoid</a> provides an identity element and associative combination. Together, <code>fold_map</code> transforms each element and concatenates the results:</p>
+
+<pre><code class="language-rust">fn summarize_keys(keys: Vec&lt;&amp;str&gt;) -&gt; String {
+    VecF::fold_map(
+        keys.into_iter().map(String::from).collect::&lt;Vec&lt;_&gt;&gt;(),
+        |key| {
+            match resolve(&amp;key) {
+                Some(val) =&gt; format!("  {} = {}\n", key, val),
+                None =&gt; format!("  {} = &lt;missing&gt;\n", key),
+            }
+        },
+    )
+}</code></pre>
+
+    <p>For <code>String</code>, the Monoid instance uses the empty string as the identity and string concatenation as the combining operation. The result is a single string summarizing all resolved (or missing) configuration keys.</p>
+
+    <h2 id="main">8. The <code>main</code> Function</h2>
+
+    <p>The <code>main</code> function exercises each section and prints the results:</p>
+
+<pre><code class="language-rust">fn main() {
+    println!("=== Config Pipeline Example ===\n");
+
+    // 1. Alt fallback chains
+    println!("--- Resolving individual keys (Alt fallback) ---");
+    println!("DB_HOST:         {:?}", resolve("DB_HOST"));
+    println!("DB_PORT:         {:?}", resolve("DB_PORT"));
+    println!("DB_NAME:         {:?}", resolve("DB_NAME"));
+    println!("MAX_CONNECTIONS: {:?}", resolve("MAX_CONNECTIONS"));
+    println!("TIMEOUT_MS:      {:?}", resolve("TIMEOUT_MS"));
+    println!("UNKNOWN_KEY:     {:?}", resolve("UNKNOWN_KEY"));
+
+    // 2. Full config loading
+    println!("\n--- Loading full config ---");
+    match load_config() {
+        Some(config) =&gt; println!("{:#?}", config),
+        None =&gt; println!("Failed to load config!"),
+    }
+
+    // 3. do_! for independent lookups
+    println!("\n--- Connection string (do_!) ---");
+    println!("{:?}", load_connection_string());
+
+    // 4. Traversable: all-or-nothing validation
+    println!("\n--- Batch port validation (Traversable) ---");
+    let good_ports = vec!["80", "443", "8080"];
+    let good_result = validate_ports(good_ports.clone());
+    println!("Valid ports {:?}: {:?}", good_ports, good_result);
+
+    let bad_ports = vec!["80", "not_a_port", "8080"];
+    let bad_result = validate_ports(bad_ports.clone());
+    println!("Mixed ports {:?}: {:?}", bad_ports, bad_result);
+
+    // 5. Foldable + Monoid: summarize
+    println!("\n--- Config summary (Foldable + Monoid) ---");
+    let summary = summarize_keys(vec![
+        "DB_HOST", "DB_PORT", "DB_NAME", "MAX_CONNECTIONS", "TIMEOUT_MS", "MISSING",
+    ]);
+    print!("{}", summary);
+}</code></pre>
+
+    <h2 id="run-it">Run It</h2>
+
+    <p>From the workspace root:</p>
+
+<pre><code class="language-rust">cargo run -p karpal-std --example config_pipeline</code></pre>
+
+    <h2 id="traits-used">Traits Used</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Trait</th><th>Purpose in this example</th><th>Reference</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Alt</code></td>
+          <td>Fallback chains across config sources</td>
+          <td><a href="../reference/alt-family.html">Alt Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Monad</code> (via <code>do_!</code>)</td>
+          <td>Sequential composition of dependent lookups</td>
+          <td><a href="../reference/functor-family.html">Functor Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Traversable</code></td>
+          <td>All-or-nothing batch validation</td>
+          <td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td>
+        </tr>
+        <tr>
+          <td><code>Foldable</code></td>
+          <td>Structural traversal with <code>fold_map</code></td>
+          <td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td>
+        </tr>
+        <tr>
+          <td><code>Monoid</code></td>
+          <td>String concatenation as the combining operation for <code>fold_map</code></td>
+          <td><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

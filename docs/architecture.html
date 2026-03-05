@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture - Karpal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="getting-started.html">Getting Started</a></li>
+      <li><a href="architecture.html" class="active">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="reference/functor-family.html">Functor Family</a></li>
+          <li><a href="reference/alt-family.html">Alt Family</a></li>
+          <li><a href="reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="reference/macros.html">Macros</a></li>
+          <li><a href="reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="reference/invariant.html">Invariant</a></li>
+          <li><a href="reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <p class="breadcrumb"><a href="index.html">Home</a> &gt; Architecture</p>
+
+    <h1>Architecture</h1>
+    <p>This page explains the core design decisions behind Karpal: how it encodes higher-kinded types in Rust, the full trait hierarchy, and the Static Land pattern that makes it all work within Rust's type system.</p>
+
+    <!-- ================================================================== -->
+    <h2 id="hkt-encoding">HKT Encoding</h2>
+
+    <h3>The problem</h3>
+    <p>Rust has no native higher-kinded types. You cannot write a trait that is generic over a <em>type constructor</em> like <code>Option</code> or <code>Vec</code> &mdash; only over concrete types like <code>Option&lt;i32&gt;</code>. This means there is no built-in way to express "for any container <code>F</code>, give me an <code>fmap</code> that works on <code>F&lt;A&gt;</code>."</p>
+
+    <h3>The GAT solution</h3>
+    <p>Karpal encodes type constructors as <strong>marker types</strong> that implement a trait with a Generic Associated Type (GAT). The <code>HKT</code> trait acts as a type-level function: given a type <code>T</code>, it produces <code>Self::Of&lt;T&gt;</code>.</p>
+
+<pre><code class="language-rust">/// Higher-Kinded Type encoding via GATs.
+///
+/// A type implementing `HKT` acts as a type-level function:
+/// given a type `T`, it produces `Self::Of&lt;T&gt;`.
+pub trait HKT {
+    type Of&lt;T&gt;;
+}</code></pre>
+
+    <p>Each standard container gets a zero-sized marker type that maps <code>Of&lt;T&gt;</code> to the real type:</p>
+
+<pre><code class="language-rust">/// Type constructor for `Option&lt;T&gt;`.
+pub struct OptionF;
+
+impl HKT for OptionF {
+    type Of&lt;T&gt; = Option&lt;T&gt;;
+}
+
+/// Type constructor for `Result&lt;T, E&gt;` (fixed error type `E`).
+pub struct ResultF&lt;E&gt; {
+    _marker: PhantomData&lt;E&gt;,
+}
+
+impl&lt;E&gt; HKT for ResultF&lt;E&gt; {
+    type Of&lt;T&gt; = Result&lt;T, E&gt;;
+}
+
+/// Type constructor for `Vec&lt;T&gt;` (alloc-gated).
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub struct VecF;
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl HKT for VecF {
+    type Of&lt;T&gt; = Vec&lt;T&gt;;
+}</code></pre>
+
+    <h3>Two-parameter HKT</h3>
+    <p>For types with two type parameters &mdash; bifunctors and profunctors &mdash; Karpal provides <code>HKT2</code>:</p>
+
+<pre><code class="language-rust">/// Two-parameter type constructor (HKT for bifunctors / profunctors).
+pub trait HKT2 {
+    type P&lt;A, B&gt;;
+}
+
+/// Result as a bifunctor (both parameters vary).
+pub struct ResultBF;
+
+impl HKT2 for ResultBF {
+    type P&lt;A, B&gt; = Result&lt;B, A&gt;;
+}
+
+/// Tuple as a bifunctor.
+pub struct TupleF;
+
+impl HKT2 for TupleF {
+    type P&lt;A, B&gt; = (A, B);
+}</code></pre>
+
+    <h3>Tradeoffs</h3>
+    <table class="instance-table">
+      <thead>
+        <tr><th>Property</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Runtime cost</td><td>Zero. Marker types are ZSTs; all dispatch is monomorphized at compile time.</td></tr>
+        <tr><td>Dependencies</td><td>None. Pure Rust with no external crates for the encoding itself.</td></tr>
+        <tr><td>Toolchain</td><td>Requires nightly Rust (edition 2024). GATs are stable since 1.65, but Karpal also uses <code>use&lt;&gt;</code> precise-capture syntax.</td></tr>
+        <tr><td>Ergonomics</td><td>Callers write <code>OptionF::fmap(...)</code> instead of <code>value.fmap(...)</code>. This is the Static Land style (see below).</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ================================================================== -->
+    <h2 id="trait-hierarchy">Trait Hierarchy</h2>
+
+    <p>The diagram below shows the full trait hierarchy implemented in <code>karpal-core</code> and <code>karpal-profunctor</code>. Arrows point from supertrait to subtrait. Dashed borders indicate blanket implementations (no manual impl needed).</p>
+
+    <svg viewBox="0 0 800 620" xmlns="http://www.w3.org/2000/svg" style="max-width: 800px; width: 100%; height: auto; font-family: 'Inter', sans-serif;">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-muted, #8b949e)" />
+        </marker>
+        <style>
+          .node { fill: var(--bg-card, #161b22); stroke: var(--border, #30363d); stroke-width: 1.5; rx: 6; ry: 6; }
+          .node-blanket { fill: var(--bg-card, #161b22); stroke: var(--border, #30363d); stroke-width: 1.5; stroke-dasharray: 5 3; rx: 6; ry: 6; }
+          .node-label { fill: var(--text-primary, #e6edf3); font-size: 11px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+          .edge { stroke: var(--text-muted, #8b949e); stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
+          .section-label { fill: var(--text-muted, #8b949e); font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
+        </style>
+      </defs>
+
+      <!-- Section labels -->
+      <text x="16" y="18" class="section-label">Covariant (Functor family)</text>
+      <text x="16" y="298" class="section-label">Comonad family</text>
+      <text x="430" y="298" class="section-label">Contravariant family</text>
+      <text x="16" y="448" class="section-label">Algebraic</text>
+      <text x="250" y="448" class="section-label">Foldable / Traversable</text>
+      <text x="16" y="548" class="section-label">Profunctor family (HKT2)</text>
+
+      <!-- === Covariant row 1: Functor -> Apply -> Applicative -> Alternative (blanket) === -->
+      <rect class="node" x="16" y="30" width="72" height="30" />
+      <text class="node-label" x="52" y="45">Functor</text>
+
+      <rect class="node" x="128" y="30" width="60" height="30" />
+      <text class="node-label" x="158" y="45">Apply</text>
+
+      <rect class="node" x="228" y="30" width="90" height="30" />
+      <text class="node-label" x="273" y="45">Applicative</text>
+
+      <rect class="node-blanket" x="358" y="30" width="90" height="30" />
+      <text class="node-label" x="403" y="45">Alternative</text>
+
+      <line class="edge" x1="88" y1="45" x2="126" y2="45" />
+      <line class="edge" x1="188" y1="45" x2="226" y2="45" />
+      <line class="edge" x1="318" y1="45" x2="356" y2="45" />
+
+      <!-- === Covariant row 2: Chain, Selective === -->
+      <rect class="node" x="128" y="80" width="60" height="30" />
+      <text class="node-label" x="158" y="95">Chain</text>
+
+      <rect class="node" x="228" y="80" width="90" height="30" />
+      <text class="node-label" x="273" y="95">Selective</text>
+
+      <line class="edge" x1="158" y1="60" x2="158" y2="78" />
+      <line class="edge" x1="273" y1="60" x2="273" y2="78" />
+
+      <!-- === Covariant row 3: Monad (blanket) === -->
+      <rect class="node-blanket" x="168" y="130" width="70" height="30" />
+      <text class="node-label" x="203" y="145">Monad</text>
+
+      <!-- Lines from Applicative and Chain to Monad -->
+      <line class="edge" x1="273" y1="60" x2="230" y2="128" />
+      <line class="edge" x1="158" y1="110" x2="185" y2="128" />
+
+      <!-- === Alt row: Functor -> Alt -> Plus === -->
+      <rect class="node" x="128" y="185" width="48" height="30" />
+      <text class="node-label" x="152" y="200">Alt</text>
+
+      <rect class="node" x="216" y="185" width="52" height="30" />
+      <text class="node-label" x="242" y="200">Plus</text>
+
+      <line class="edge" x1="62" y1="60" x2="140" y2="183" />
+      <line class="edge" x1="176" y1="200" x2="214" y2="200" />
+
+      <!-- Plus -> Alternative -->
+      <line class="edge" x1="268" y1="200" x2="403" y2="62" />
+
+      <!-- === FunctorFilter === -->
+      <rect class="node" x="500" y="30" width="105" height="30" />
+      <text class="node-label" x="552" y="45">FunctorFilter</text>
+
+      <line class="edge" x1="88" y1="38" x2="498" y2="38" />
+
+      <!-- === Invariant === -->
+      <rect class="node" x="650" y="30" width="76" height="30" />
+      <text class="node-label" x="688" y="45">Invariant</text>
+
+      <line class="edge" x1="88" y1="52" x2="648" y2="52" />
+
+      <!-- === Bifunctor (HKT2) === -->
+      <rect class="node" x="560" y="80" width="80" height="30" />
+      <text class="node-label" x="600" y="95">Bifunctor</text>
+
+      <!-- NaturalTransformation standalone -->
+      <rect class="node" x="560" y="130" width="145" height="30" />
+      <text class="node-label" x="632" y="145">NaturalTransformation</text>
+
+      <!-- === Comonad family === -->
+      <rect class="node" x="16" y="310" width="68" height="30" />
+      <text class="node-label" x="50" y="325">Extend</text>
+
+      <rect class="node" x="124" y="310" width="78" height="30" />
+      <text class="node-label" x="163" y="325">Comonad</text>
+
+      <rect class="node" x="242" y="310" width="90" height="30" />
+      <text class="node-label" x="287" y="325">ComonadEnv</text>
+
+      <rect class="node" x="242" y="355" width="98" height="30" />
+      <text class="node-label" x="291" y="370">ComonadStore</text>
+
+      <rect class="node" x="242" y="400" width="100" height="30" />
+      <text class="node-label" x="292" y="415">ComonadTraced</text>
+
+      <line class="edge" x1="62" y1="60" x2="40" y2="308" />
+      <line class="edge" x1="84" y1="325" x2="122" y2="325" />
+      <line class="edge" x1="202" y1="325" x2="240" y2="325" />
+      <line class="edge" x1="202" y1="330" x2="240" y2="365" />
+      <line class="edge" x1="202" y1="335" x2="240" y2="405" />
+
+      <!-- === Contravariant family === -->
+      <rect class="node" x="430" y="310" width="100" height="30" />
+      <text class="node-label" x="480" y="325">Contravariant</text>
+
+      <rect class="node" x="570" y="310" width="64" height="30" />
+      <text class="node-label" x="602" y="325">Divide</text>
+
+      <rect class="node" x="674" y="310" width="72" height="30" />
+      <text class="node-label" x="710" y="325">Divisible</text>
+
+      <rect class="node" x="570" y="355" width="64" height="30" />
+      <text class="node-label" x="602" y="370">Decide</text>
+
+      <rect class="node" x="674" y="355" width="78" height="30" />
+      <text class="node-label" x="713" y="370">Conclude</text>
+
+      <line class="edge" x1="530" y1="325" x2="568" y2="325" />
+      <line class="edge" x1="634" y1="325" x2="672" y2="325" />
+      <line class="edge" x1="530" y1="335" x2="568" y2="365" />
+      <line class="edge" x1="634" y1="370" x2="672" y2="370" />
+
+      <!-- === Algebraic === -->
+      <rect class="node" x="16" y="460" width="82" height="30" />
+      <text class="node-label" x="57" y="475">Semigroup</text>
+
+      <rect class="node" x="138" y="460" width="68" height="30" />
+      <text class="node-label" x="172" y="475">Monoid</text>
+
+      <line class="edge" x1="98" y1="475" x2="136" y2="475" />
+
+      <!-- === Foldable / Traversable === -->
+      <rect class="node" x="280" y="460" width="72" height="30" />
+      <text class="node-label" x="316" y="475">Foldable</text>
+
+      <rect class="node" x="392" y="460" width="90" height="30" />
+      <text class="node-label" x="437" y="475">Traversable</text>
+
+      <line class="edge" x1="352" y1="475" x2="390" y2="475" />
+
+      <!-- === Profunctor family === -->
+      <rect class="node" x="16" y="560" width="86" height="30" />
+      <text class="node-label" x="59" y="575">Profunctor</text>
+
+      <rect class="node" x="142" y="560" width="64" height="30" />
+      <text class="node-label" x="174" y="575">Strong</text>
+
+      <rect class="node" x="142" y="600" width="64" height="30" />
+      <text class="node-label" x="174" y="615">Choice</text>
+
+      <line class="edge" x1="102" y1="570" x2="140" y2="570" />
+      <line class="edge" x1="102" y1="580" x2="140" y2="610" />
+    </svg>
+
+    <p><strong>Key:</strong> Solid borders are standard traits. <strong style="border-bottom: 1.5px dashed var(--text-muted, #8b949e);">Dashed borders</strong> indicate blanket implementations &mdash; <code>Monad</code> is automatically derived for any type that implements both <code>Applicative</code> and <code>Chain</code>, and <code>Alternative</code> for <code>Applicative + Plus</code>.</p>
+
+    <!-- ================================================================== -->
+    <h2 id="static-land-pattern">The Static Land Pattern</h2>
+
+    <p>Karpal uses <strong>associated functions on marker types</strong>, not methods on values. Instead of calling <code>some_value.fmap(f)</code>, you write:</p>
+
+<pre><code class="language-rust">// Karpal's Static Land style
+let result = OptionF::fmap(Some(42), |x| x + 1);
+
+// NOT the method-on-value style (not possible in Karpal)
+// let result = Some(42).fmap(|x| x + 1);</code></pre>
+
+    <h3>Why this approach?</h3>
+    <p>Rust's <strong>trait coherence rules</strong> (the orphan rule) prevent you from implementing a foreign trait on a foreign type. Since <code>Option</code> is defined in <code>std</code> and <code>Functor</code> is defined in Karpal, you cannot write <code>impl Functor for Option&lt;T&gt;</code> directly.</p>
+
+    <p>The marker-type approach sidesteps this entirely. <code>OptionF</code> is <em>owned by Karpal</em>, so Karpal can freely implement any trait on it. The <code>HKT</code> GAT bridges the gap back to the actual container type via the <code>Of&lt;T&gt;</code> associated type.</p>
+
+    <h3>Comparison with other ecosystems</h3>
+    <table class="instance-table">
+      <thead>
+        <tr><th>Ecosystem</th><th>Approach</th><th>Tradeoff</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Haskell</td>
+          <td>Native typeclasses with HKT support</td>
+          <td>Ideal ergonomics; not available in Rust</td>
+        </tr>
+        <tr>
+          <td>Scala</td>
+          <td>Implicits / given instances with <code>Kind</code> projections</td>
+          <td>Powerful but complex; relies on JVM runtime</td>
+        </tr>
+        <tr>
+          <td>fp-ts (TypeScript)</td>
+          <td>Static Land &mdash; functions in module namespaces (<code>O.map</code>, <code>A.map</code>)</td>
+          <td>Closest analogue to Karpal's design; same ergonomic tradeoff</td>
+        </tr>
+        <tr>
+          <td><strong>Karpal (Rust)</strong></td>
+          <td>Static Land &mdash; associated functions on marker types</td>
+          <td>Zero-cost, type-safe, but verbose call syntax</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ================================================================== -->
+    <h2 id="design-decisions">Design Decisions</h2>
+
+    <h3><code>no_std</code> first</h3>
+    <p><code>karpal-core</code> and <code>karpal-profunctor</code> compile without <code>std</code>. Types that require heap allocation &mdash; <code>VecF</code>, <code>NonEmptyVecF</code>, <code>PredicateF</code>, <code>StoreF</code>, <code>TracedF</code> &mdash; are gated behind the <code>alloc</code> or <code>std</code> feature flags. This makes Karpal usable in embedded and <code>no_std</code> environments.</p>
+
+    <h3>Nightly edition 2024</h3>
+    <p>The toolchain is pinned to nightly via <code>rust-toolchain.toml</code>. While GATs themselves stabilized in Rust 1.65, Karpal also relies on <code>use&lt;&gt;</code> precise-capture syntax (edition 2024) and the <code>alloc</code> feature gate for <code>no_std</code> builds. The nightly pin ensures all contributors use the same compiler.</p>
+
+    <h3><code>fn</code> pointers in optics</h3>
+    <p>The <code>Lens</code> struct stores plain function pointers rather than closures:</p>
+
+<pre><code class="language-rust">pub struct Lens&lt;S, T, A, B&gt; {
+    getter: fn(&amp;S) -&gt; A,
+    setter: fn(S, B) -&gt; T,
+}</code></pre>
+
+    <p>This keeps <code>Lens</code> <code>Copy</code>-able and avoids lifetime complications. When lenses are composed via <code>Lens::then()</code>, the result is a <code>ComposedLens</code> that uses <code>Box&lt;dyn Fn&gt;</code> closures instead, since closure composition cannot produce <code>fn</code> pointers.</p>
+
+    <h3><code>'static</code> bounds on <code>Box&lt;dyn Fn&gt;</code></h3>
+    <p>Types whose inner representation is a boxed closure &mdash; <code>PredicateF</code>, <code>FnP</code>, <code>StoreF</code>, <code>TracedF</code> &mdash; require <code>'static</code> bounds. This is an inherent limitation of <code>Box&lt;dyn Fn&gt;</code> in Rust. As a consequence, <code>StoreF</code> and <code>TracedF</code> cannot implement the generic <code>Functor</code> trait (whose signature does not carry a <code>'static</code> bound); they provide their own <code>fmap</code> through the <code>Extend</code>/<code>Comonad</code> implementation instead.</p>
+
+    <h3>Blanket implementations</h3>
+    <p>Where the theory permits, Karpal uses blanket impls to eliminate boilerplate:</p>
+
+<pre><code class="language-rust">/// Monad: Applicative + Chain with no extra methods (blanket impl).
+pub trait Monad: Applicative + Chain {}
+
+impl&lt;F: Applicative + Chain&gt; Monad for F {}</code></pre>
+
+    <p>Any marker type that implements both <code>Applicative</code> and <code>Chain</code> is automatically a <code>Monad</code>. The same pattern applies to <code>Alternative</code> (= <code>Applicative + Plus</code>). Implementors only need to provide the primitive operations; the composed abstractions come for free.</p>
+
+    <h3>Property-based law testing</h3>
+    <p>Every algebraic trait in Karpal has <a href="https://crates.io/crates/proptest">proptest</a>-based law tests that verify the required algebraic identities hold. For example, the Functor laws:</p>
+
+<pre><code class="language-rust">proptest! {
+    #[test]
+    fn option_identity(x in any::&lt;Option&lt;i32&gt;&gt;()) {
+        // Identity law: fmap(id, fa) == fa
+        let result = OptionF::fmap(x.clone(), |a| a);
+        prop_assert_eq!(result, x);
+    }
+
+    #[test]
+    fn option_composition(x in any::&lt;Option&lt;i32&gt;&gt;()) {
+        // Composition law: fmap(g . f, fa) == fmap(g, fmap(f, fa))
+        let f = |a: i32| a.wrapping_add(1);
+        let g = |a: i32| a.wrapping_mul(2);
+        let left = OptionF::fmap(x.clone(), |a| g(f(a)));
+        let right = OptionF::fmap(OptionF::fmap(x, f), g);
+        prop_assert_eq!(left, right);
+    }
+}</code></pre>
+
+    <p>This approach catches subtle bugs that unit tests miss &mdash; such as associativity violations in <code>Semigroup</code> implementations or distributivity failures in <code>Alternative</code>.</p>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>
