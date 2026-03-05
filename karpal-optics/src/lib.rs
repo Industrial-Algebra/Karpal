@@ -1,4 +1,6 @@
 pub mod lens;
 pub mod optic;
+pub mod prism;
 
-pub use lens::{Lens, SimpleLens};
+pub use lens::{ComposedLens, Lens, SimpleComposedLens, SimpleLens};
+pub use prism::{Prism, SimplePrism};

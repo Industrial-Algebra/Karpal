@@ -6,7 +6,7 @@ Higher-Kinded Types (HKTs) via GATs.
 Karpal provides HKT encoding, a full functor hierarchy (Functor through Monad,
 Alt/Plus/Alternative, Foldable, Traversable, and more), algebraic typeclasses
 (Semigroup, Monoid), a profunctor hierarchy (Profunctor, Strong, Choice),
-profunctor optics (Lens), and `do_!`/`ado_!` notation macros — all with
+profunctor optics (Lens, Prism, composition), and `do_!`/`ado_!` notation macros — all with
 `no_std` support and property-based law verification.
 
 ## Workspace
@@ -15,8 +15,8 @@ profunctor optics (Lens), and `do_!`/`ado_!` notation macros — all with
 |-------|-------------|
 | [`karpal-core`](karpal-core/) | HKT encoding, functor hierarchy, Semigroup, Monoid, macros |
 | [`karpal-profunctor`](karpal-profunctor/) | Profunctor, Strong, Choice, FnP |
-| [`karpal-optics`](karpal-optics/) | Profunctor optics (Lens) |
-| [`karpal-std`](karpal-std/) | Standard prelude re-exports (stub) |
+| [`karpal-optics`](karpal-optics/) | Profunctor optics (Lens, Prism, composition) |
+| [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core` and `karpal-profunctor` are `no_std` compatible with optional
 `std`/`alloc` feature gates.
@@ -191,6 +191,71 @@ let s = Sensor { id: 2, reading: 50.0, location: "Lab B".into() };
 assert_eq!(reading_lens.get(&s), 50.0);
 let zeroed = reading_lens.set(s, 0.0);
 assert_eq!(zeroed.reading, 0.0);
+```
+
+### Prism — pattern-matching as a value
+
+A `Prism` focuses on one variant of an enum, the dual of `Lens` for sum types:
+
+```rust
+use karpal_optics::Prism;
+
+#[derive(Debug, Clone, PartialEq)]
+enum Shape {
+    Circle(f64),
+    Rectangle(f64, f64),
+}
+
+let circle = Prism::new(
+    |s| match s {
+        Shape::Circle(r) => Ok(r),
+        Shape::Rectangle(w, h) => Err(Shape::Rectangle(w, h)),
+    },
+    Shape::Circle,
+);
+
+// preview — extract focus if variant matches
+assert_eq!(circle.preview(&Shape::Circle(5.0)), Some(5.0));
+assert_eq!(circle.preview(&Shape::Rectangle(3.0, 4.0)), None);
+
+// over — modify focus only if matched, pass through otherwise
+let doubled = circle.over(Shape::Circle(5.0), |r| r * 2.0);
+assert_eq!(doubled, Shape::Circle(10.0));
+
+// review — construct the variant
+assert_eq!(circle.review(7.0), Shape::Circle(7.0));
+```
+
+### Lens composition — focus deep into nested structs
+
+Chain lenses with `.then()` to focus multiple levels deep:
+
+```rust
+use karpal_optics::Lens;
+
+struct Company { name: String, ceo: Person }
+struct Person  { name: String, age: u32 }
+
+let ceo = Lens::new(
+    |c: &Company| c.ceo.clone(),
+    |c, ceo| Company { ceo, ..c },
+);
+let age = Lens::new(
+    |p: &Person| p.age,
+    |p, age| Person { age, ..p },
+);
+
+// Compose: Company → ceo → age
+let ceo_age = ceo.then(age);
+
+let co = Company {
+    name: "Acme".into(),
+    ceo: Person { name: "Alice".into(), age: 30 },
+};
+
+assert_eq!(ceo_age.get(&co), 30);
+let updated = ceo_age.over(co, |a| a + 1);
+assert_eq!(updated.ceo.age, 31);
 ```
 
 ## Requirements
