@@ -33,6 +33,19 @@ impl Applicative for VecF {
     }
 }
 
+impl Applicative for crate::hkt::IdentityF {
+    fn pure<A>(a: A) -> A {
+        a
+    }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl Applicative for crate::hkt::NonEmptyVecF {
+    fn pure<A>(a: A) -> crate::hkt::NonEmptyVec<A> {
+        crate::hkt::NonEmptyVec::singleton(a)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

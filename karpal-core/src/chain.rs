@@ -31,6 +31,29 @@ impl Chain for VecF {
     }
 }
 
+impl Chain for crate::hkt::IdentityF {
+    fn chain<A, B>(fa: A, f: impl Fn(A) -> B) -> B {
+        f(fa)
+    }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl Chain for crate::hkt::NonEmptyVecF {
+    fn chain<A, B>(
+        fa: crate::hkt::NonEmptyVec<A>,
+        f: impl Fn(A) -> crate::hkt::NonEmptyVec<B>,
+    ) -> crate::hkt::NonEmptyVec<B> {
+        let first = f(fa.head);
+        let mut tail = first.tail;
+        for a in fa.tail {
+            let result = f(a);
+            tail.push(result.head);
+            tail.extend(result.tail);
+        }
+        crate::hkt::NonEmptyVec::new(first.head, tail)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

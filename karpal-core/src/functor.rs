@@ -1,4 +1,6 @@
-use crate::hkt::{HKT, OptionF, ResultF};
+use crate::hkt::{EnvF, HKT, IdentityF, OptionF, ResultF};
+#[cfg(any(feature = "std", feature = "alloc"))]
+use crate::hkt::{NonEmptyVec, NonEmptyVecF};
 
 /// Covariant functor: lifts a function `A -> B` into `F<A> -> F<B>`.
 pub trait Functor: HKT {
@@ -23,6 +25,29 @@ impl Functor for crate::hkt::VecF {
         fa.into_iter().map(f).collect()
     }
 }
+
+impl Functor for IdentityF {
+    fn fmap<A, B>(fa: A, f: impl Fn(A) -> B) -> B {
+        f(fa)
+    }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl Functor for NonEmptyVecF {
+    fn fmap<A, B>(fa: NonEmptyVec<A>, f: impl Fn(A) -> B) -> NonEmptyVec<B> {
+        NonEmptyVec::new(f(fa.head), fa.tail.into_iter().map(&f).collect())
+    }
+}
+
+impl<E> Functor for EnvF<E> {
+    fn fmap<A, B>(fa: (E, A), f: impl Fn(A) -> B) -> (E, B) {
+        (fa.0, f(fa.1))
+    }
+}
+
+// Note: StoreF and TracedF cannot implement the generic Functor trait because
+// Box<dyn Fn> requires 'static bounds that the trait signature doesn't allow.
+// They get their own fmap via the Extend/Comonad implementation.
 
 #[cfg(test)]
 mod tests {
