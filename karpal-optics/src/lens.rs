@@ -156,6 +156,7 @@ impl<S: Clone, T, A, B> Lens<S, T, A, B> {
 mod tests {
     use super::*;
     use karpal_profunctor::FnP;
+    use proptest::prelude::*;
 
     #[derive(Debug, Clone, PartialEq)]
     struct Person {
@@ -381,32 +382,46 @@ mod tests {
         assert_eq!(updated.lead.addr.street, "123 MAIN ST");
     }
 
-    // Law tests on composed lens
-    #[test]
-    fn composed_law_get_put() {
-        let lens = company_ceo_lens().then(person_name_lens());
-        let c = sample_company();
-        let result = lens.set(c.clone(), lens.get(&c));
-        assert_eq!(result, c);
-    }
+    // Composed lens law tests (proptest)
+    // Testing company_ceo().then(person_age()) since age is easy to generate.
 
-    #[test]
-    fn composed_law_put_get() {
-        let lens = company_ceo_lens().then(person_name_lens());
-        let result = lens.set(sample_company(), "Bob".to_string());
-        assert_eq!(lens.get(&result), "Bob");
-    }
+    proptest! {
+        // GetPut: set(s, get(s)) == s
+        #[test]
+        fn composed_law_get_put(name in "[a-z]{1,8}", co_name in "[a-z]{1,8}", age in 0u32..1000) {
+            let lens = company_ceo_lens().then(person_age_lens());
+            let c = Company {
+                name: co_name,
+                ceo: Person { name, age },
+            };
+            let result = lens.set(c.clone(), lens.get(&c));
+            prop_assert_eq!(result, c);
+        }
 
-    #[test]
-    fn composed_law_put_put() {
-        let lens = company_ceo_lens().then(person_name_lens());
-        let c = sample_company();
-        let left = lens.set(
-            lens.set(c.clone(), "Bob".to_string()),
-            "Charlie".to_string(),
-        );
-        let right = lens.set(c, "Charlie".to_string());
-        assert_eq!(left, right);
+        // PutGet: get(set(s, b)) == b
+        #[test]
+        fn composed_law_put_get(name in "[a-z]{1,8}", co_name in "[a-z]{1,8}", age in 0u32..1000, new_age in 0u32..1000) {
+            let lens = company_ceo_lens().then(person_age_lens());
+            let c = Company {
+                name: co_name,
+                ceo: Person { name, age },
+            };
+            let result = lens.set(c, new_age);
+            prop_assert_eq!(lens.get(&result), new_age);
+        }
+
+        // PutPut: set(set(s, b1), b2) == set(s, b2)
+        #[test]
+        fn composed_law_put_put(name in "[a-z]{1,8}", co_name in "[a-z]{1,8}", age in 0u32..1000, b1 in 0u32..1000, b2 in 0u32..1000) {
+            let lens = company_ceo_lens().then(person_age_lens());
+            let c = Company {
+                name: co_name,
+                ceo: Person { name, age },
+            };
+            let left = lens.set(lens.set(c.clone(), b1), b2);
+            let right = lens.set(c, b2);
+            prop_assert_eq!(left, right);
+        }
     }
 
     // Profunctor equivalence: outer.transform(inner.transform(f)) matches composed.over
