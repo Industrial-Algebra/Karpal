@@ -6,6 +6,7 @@ Higher-Kinded Types (HKTs) via GATs.
 Karpal provides HKT encoding, a full functor hierarchy (Functor through Monad,
 Alt/Plus/Alternative, Foldable, Traversable, and more), algebraic typeclasses
 (Semigroup, Monoid), a profunctor hierarchy (Profunctor, Strong, Choice),
+a category/arrow hierarchy (Semigroupoid, Category, Arrow, ArrowChoice, and more),
 profunctor optics (Lens, Prism, composition), and `do_!`/`ado_!` notation macros — all with
 `no_std` support and property-based law verification.
 
@@ -15,11 +16,12 @@ profunctor optics (Lens, Prism, composition), and `do_!`/`ado_!` notation macros
 |-------|-------------|
 | [`karpal-core`](karpal-core/) | HKT encoding, functor hierarchy, Semigroup, Monoid, macros |
 | [`karpal-profunctor`](karpal-profunctor/) | Profunctor, Strong, Choice, FnP |
+| [`karpal-arrow`](karpal-arrow/) | Category/Arrow hierarchy, FnA, KleisliF, CokleisliF |
 | [`karpal-optics`](karpal-optics/) | Profunctor optics (Lens, Prism, composition) |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
-`karpal-core` and `karpal-profunctor` are `no_std` compatible with optional
-`std`/`alloc` feature gates.
+`karpal-core`, `karpal-profunctor`, and `karpal-arrow` are `no_std` compatible
+with optional `std`/`alloc` feature gates.
 
 ## Why Karpal?
 
@@ -224,6 +226,69 @@ assert_eq!(doubled, Shape::Circle(10.0));
 
 // review — construct the variant
 assert_eq!(circle.review(7.0), Shape::Circle(7.0));
+```
+
+### Compose computations with Arrows
+
+Arrows generalize functions into composable computation pipelines.
+`FnA` wraps plain functions; `KleisliF` wraps effectful functions like
+`A -> Option<B>`:
+
+```rust
+use karpal_arrow::{Arrow, ArrowChoice, Semigroupoid, FnA};
+
+// Build a processing pipeline from small, composable pieces
+let parse_int = FnA::arr(|s: String| s.parse::<i32>().unwrap_or(0));
+let double = FnA::arr(|n: i32| n * 2);
+let to_string = FnA::arr(|n: i32| format!("result: {}", n));
+
+// Compose: parse → double → format
+let pipeline = FnA::compose(to_string, FnA::compose(double, parse_int));
+assert_eq!(pipeline("21".into()), "result: 42");
+
+// fanout: feed one input to two arrows, collect both results
+let bounds = FnA::fanout(
+    FnA::arr(|n: i32| n - 5),
+    FnA::arr(|n: i32| n + 5),
+);
+assert_eq!(bounds(100), (95, 105));
+
+// ArrowChoice: route through sum types
+let handle: Box<dyn Fn(Result<i32, String>) -> String> = FnA::fanin(
+    FnA::arr(|n: i32| format!("ok: {}", n)),
+    FnA::arr(|e: String| format!("err: {}", e)),
+);
+assert_eq!(handle(Ok(42)), "ok: 42");
+assert_eq!(handle(Err("bad".into())), "err: bad");
+```
+
+Kleisli arrows lift monadic functions into the same Arrow interface,
+so you get composition with short-circuiting for free:
+
+```rust
+use karpal_arrow::{Arrow, ArrowZero, ArrowPlus, Semigroupoid, KleisliF};
+use karpal_core::hkt::OptionF;
+
+type KOpt = KleisliF<OptionF>;
+
+let safe_div = |d: i32| -> Box<dyn Fn(i32) -> Option<i32>> {
+    Box::new(move |n| if d != 0 { Some(n / d) } else { None })
+};
+let add_one: Box<dyn Fn(i32) -> Option<i32>> = Box::new(|n| Some(n + 1));
+
+// Compose: divide by 2, then add 1 — short-circuits on None
+let pipeline = KOpt::compose(add_one, safe_div(2));
+assert_eq!(pipeline(10), Some(6));  // 10/2 + 1
+assert_eq!(KOpt::compose(Box::new(|n| Some(n + 1)), safe_div(0))(10), None);
+
+// ArrowPlus: try first arrow, fall back to second
+let try_parse: Box<dyn Fn(String) -> Option<i32>> =
+    Box::new(|s| s.parse().ok());
+let fallback: Box<dyn Fn(String) -> Option<i32>> =
+    Box::new(|_| Some(0));
+let with_fallback = KOpt::plus(try_parse, fallback);
+assert_eq!(with_fallback("42".into()), Some(42));
+assert_eq!(with_fallback("bad".into()), Some(0));
 ```
 
 ### Lens composition — focus deep into nested structs
