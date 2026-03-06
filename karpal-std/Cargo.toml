@@ -3,7 +3,12 @@ name = "karpal-std"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Standard prelude re-exports for the Karpal ecosystem (Phase 2)"
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Standard prelude re-exports for the Karpal ecosystem"
 
 [dependencies]
 karpal-core.workspace = true

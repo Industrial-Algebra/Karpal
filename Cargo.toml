@@ -6,10 +6,14 @@ resolver = "3"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/Industrial-Algebra/Karpal"
+homepage = "https://github.com/Industrial-Algebra/Karpal"
+keywords = ["hkt", "functor", "algebraic", "category-theory", "fp"]
+categories = ["no-std", "rust-patterns"]
 
 [workspace.dependencies]
-karpal-core = { path = "karpal-core" }
-karpal-profunctor = { path = "karpal-profunctor" }
-karpal-optics = { path = "karpal-optics" }
-karpal-arrow = { path = "karpal-arrow" }
+karpal-core = { version = "0.1.0", path = "karpal-core" }
+karpal-profunctor = { version = "0.1.0", path = "karpal-profunctor" }
+karpal-optics = { version = "0.1.0", path = "karpal-optics" }
+karpal-arrow = { version = "0.1.0", path = "karpal-arrow" }
 proptest = "1"

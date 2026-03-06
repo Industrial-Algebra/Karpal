@@ -3,6 +3,11 @@ name = "karpal-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
 description = "HKT encoding, Functor, Semigroup, Monoid for the Industrial Algebra ecosystem"
 
 [features]

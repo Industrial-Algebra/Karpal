@@ -1,21 +1,26 @@
 /* Karpal Documentation — Design Tokens & Styles */
+/* Industrial Algebra branding: dark-first, cyan accents, monospace headings */
 
 :root {
-  --color-bg: #ffffff;
-  --color-bg-alt: #f8f9fa;
-  --color-bg-code: #282c34;
-  --color-text: #1a1a2e;
-  --color-text-muted: #6c757d;
-  --color-accent: #4263eb;
-  --color-accent-hover: #3b5bdb;
-  --color-accent-light: #e7ecff;
-  --color-border: #dee2e6;
-  --color-sidebar-bg: #f8f9fa;
-  --color-sidebar-active: #e7ecff;
-  --color-law-bg: #fff8e1;
-  --color-law-border: #ffca28;
-  --color-hero-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  --color-bg: #0a0a0f;
+  --color-bg-alt: #111118;
+  --color-bg-code: #08080d;
+  --color-text: #e0e0e8;
+  --color-text-muted: #888898;
+  --color-accent: #00cccc;
+  --color-accent-hover: #00ffff;
+  --color-accent-light: rgba(0, 204, 204, 0.1);
+  --color-border: #1a1a25;
+  --color-sidebar-bg: #08080d;
+  --color-sidebar-active: rgba(0, 204, 204, 0.08);
+  --color-law-bg: rgba(212, 160, 23, 0.08);
+  --color-law-border: #d4a017;
+  --color-hero-bg: radial-gradient(ellipse at center, #111118 0%, #0a0a0f 70%);
+  --color-accent-glow: rgba(0, 255, 255, 0.3);
+  --color-card-bg: rgba(255, 255, 255, 0.02);
+  --color-card-border: rgba(0, 204, 204, 0.15);
 
+  --font-heading: 'JetBrains Mono', monospace;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-code: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   --font-size-base: 1rem;
@@ -40,22 +45,48 @@
   --transition: 0.2s ease;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --color-bg: #1a1a2e;
-    --color-bg-alt: #16213e;
-    --color-bg-code: #0d1117;
-    --color-text: #e2e8f0;
-    --color-text-muted: #a0aec0;
-    --color-accent: #748ffc;
-    --color-accent-hover: #91a7ff;
-    --color-accent-light: #1e2d5a;
-    --color-border: #2d3748;
-    --color-sidebar-bg: #16213e;
-    --color-sidebar-active: #1e2d5a;
-    --color-law-bg: #2d2a1e;
+    --color-bg: #f8f9fc;
+    --color-bg-alt: #ffffff;
+    --color-bg-code: #282c34;
+    --color-text: #1a1a2e;
+    --color-text-muted: #6c757d;
+    --color-accent: #008888;
+    --color-accent-hover: #006666;
+    --color-accent-light: rgba(0, 136, 136, 0.1);
+    --color-border: #dee2e6;
+    --color-sidebar-bg: #f0f2f5;
+    --color-sidebar-active: rgba(0, 136, 136, 0.08);
+    --color-law-bg: rgba(212, 160, 23, 0.06);
     --color-law-border: #d4a017;
+    --color-hero-bg: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 70%);
+    --color-accent-glow: transparent;
+    --color-card-bg: #ffffff;
+    --color-card-border: #dee2e6;
   }
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 204, 204, 0.3);
+  color: #ffffff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #333340;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #44444f;
 }
 
 /* Reset */
@@ -107,12 +138,18 @@ a:hover { color: var(--color-accent-hover); text-decoration: underline; }
 }
 
 .sidebar-header .logo {
+  font-family: var(--font-heading);
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--color-text);
   text-decoration: none;
+  transition: color var(--transition), text-shadow var(--transition);
 }
-.sidebar-header .logo:hover { color: var(--color-accent); text-decoration: none; }
+.sidebar-header .logo:hover {
+  color: var(--color-accent);
+  text-shadow: 0 0 8px var(--color-accent-glow);
+  text-decoration: none;
+}
 
 .sidebar-header .version {
   font-size: var(--font-size-xs);
@@ -193,13 +230,20 @@ a:hover { color: var(--color-accent-hover); text-decoration: underline; }
 
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
   .sidebar-toggle { display: flex; }
   .content { margin-left: 0; padding: var(--space-xl) var(--space-md); padding-top: calc(var(--space-2xl) + 40px); }
 }
 
 /* Typography */
-h1 { font-size: var(--font-size-h1); font-weight: 700; margin-bottom: var(--space-lg); line-height: 1.3; }
+h1, h2, h3 { font-family: var(--font-heading); }
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: 700;
+  margin-bottom: var(--space-lg);
+  line-height: 1.3;
+  text-shadow: 0 0 10px var(--color-accent-glow);
+}
 h2 { font-size: var(--font-size-h2); font-weight: 600; margin-top: var(--space-2xl); margin-bottom: var(--space-md); line-height: 1.3; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-sm); }
 h3 { font-size: var(--font-size-h3); font-weight: 600; margin-top: var(--space-xl); margin-bottom: var(--space-sm); }
 p { margin-bottom: var(--space-md); }
@@ -210,22 +254,30 @@ li { margin-bottom: var(--space-xs); }
 code:not([class*="language-"]) {
   font-family: var(--font-code);
   font-size: 0.9em;
+  color: var(--color-accent);
   background: var(--color-bg-alt);
   padding: 0.15em 0.4em;
   border-radius: 3px;
   border: 1px solid var(--color-border);
 }
 
-/* Code blocks */
+/* Code blocks — Prism overrides */
 pre[class*="language-"] {
   border-radius: var(--border-radius);
   margin-bottom: var(--space-lg);
   font-size: var(--font-size-sm);
+  background: var(--color-bg-code) !important;
+  border: 1px solid var(--color-border);
+}
+
+pre[class*="language-"] code {
+  text-shadow: none !important;
 }
 
 /* Trait card */
 .trait-card {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-card-border);
+  border-left: 3px solid var(--color-accent);
   border-radius: var(--border-radius);
   margin-bottom: var(--space-xl);
   overflow: hidden;
@@ -297,7 +349,13 @@ pre[class*="language-"] {
   margin-bottom: var(--space-2xl);
   text-align: center;
 }
-.hero h1 { font-size: 2.5rem; margin-bottom: var(--space-sm); color: #ffffff; border: none; }
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-sm);
+  color: #ffffff;
+  border: none;
+  text-shadow: 0 0 20px var(--color-accent-glow), 0 0 40px rgba(0, 204, 204, 0.15);
+}
 .hero .tagline { font-size: var(--font-size-lg); color: rgba(255,255,255,0.85); margin-bottom: var(--space-xl); }
 .hero-links { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; }
 .hero-links a {
@@ -306,12 +364,26 @@ pre[class*="language-"] {
   border-radius: var(--border-radius);
   font-weight: 500;
   text-decoration: none;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
 }
-.hero-links .btn-primary { background: #ffffff; color: var(--color-accent); }
-.hero-links .btn-primary:hover { background: #f0f0f0; text-decoration: none; }
-.hero-links .btn-secondary { border: 1px solid rgba(255,255,255,0.5); color: #ffffff; }
-.hero-links .btn-secondary:hover { background: rgba(255,255,255,0.1); text-decoration: none; }
+.hero-links .btn-primary {
+  background: var(--color-accent);
+  color: #0a0a0f;
+}
+.hero-links .btn-primary:hover {
+  background: var(--color-accent-hover);
+  text-decoration: none;
+  box-shadow: 0 0 15px var(--color-accent-glow);
+}
+.hero-links .btn-secondary {
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+}
+.hero-links .btn-secondary:hover {
+  background: rgba(0, 204, 204, 0.1);
+  text-decoration: none;
+  box-shadow: 0 0 10px rgba(0, 204, 204, 0.15);
+}
 
 /* Feature cards (landing page) */
 .features {
@@ -322,8 +394,14 @@ pre[class*="language-"] {
 }
 .feature-card {
   padding: var(--space-lg);
-  border: 1px solid var(--color-border);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
   border-radius: var(--border-radius);
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+.feature-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(0, 204, 204, 0.1);
 }
 .feature-card h3 { margin-top: 0; font-size: var(--font-size-base); }
 .feature-card p { color: var(--color-text-muted); font-size: var(--font-size-sm); margin-bottom: 0; }
