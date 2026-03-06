@@ -1,5 +1,5 @@
 [workspace]
-members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-std"]
+members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-std"]
 resolver = "3"
 
 [workspace.package]
@@ -16,4 +16,5 @@ karpal-core = { version = "0.1.0", path = "karpal-core" }
 karpal-profunctor = { version = "0.1.0", path = "karpal-profunctor" }
 karpal-optics = { version = "0.1.0", path = "karpal-optics" }
 karpal-arrow = { version = "0.1.0", path = "karpal-arrow" }
+karpal-free = { version = "0.1.0", path = "karpal-free" }
 proptest = "1"
