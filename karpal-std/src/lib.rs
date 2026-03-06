@@ -46,11 +46,21 @@ pub mod prelude {
     pub use karpal_optics::optic::Optic;
     pub use karpal_optics::{Prism, SimplePrism};
 
+    // Arrow hierarchy
+    pub use karpal_arrow::{
+        Arrow, ArrowApply, ArrowChoice, ArrowLoop, ArrowPlus, ArrowZero, Category, CokleisliF, FnA,
+        KleisliF, Semigroupoid,
+    };
+
+    // Arrow macros
+    pub use karpal_arrow::{impl_cokleisli, impl_cokleisli_env};
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
 
 // Crate re-exports for qualified access
+pub use karpal_arrow;
 pub use karpal_core;
 pub use karpal_optics;
 pub use karpal_profunctor;
@@ -99,5 +109,13 @@ mod tests {
     fn prelude_profunctor_accessible() {
         let f: <FnP as HKT2>::P<i32, i32> = Box::new(|x| x + 1);
         assert_eq!(f(1), 2);
+    }
+
+    #[test]
+    fn prelude_arrow_accessible() {
+        let double = <FnA as Arrow>::arr(|x: i32| x * 2);
+        let inc = <FnA as Arrow>::arr(|x: i32| x + 1);
+        let composed = <FnA as Semigroupoid>::compose(inc, double);
+        assert_eq!(composed(5), 11); // (5 * 2) + 1
     }
 }

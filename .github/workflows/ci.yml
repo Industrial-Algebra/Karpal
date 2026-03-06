@@ -30,3 +30,6 @@ jobs:
 
       - name: no_std check (karpal-profunctor)
         run: cargo build --no-default-features -p karpal-profunctor
+
+      - name: no_std check (karpal-arrow)
+        run: cargo build --no-default-features -p karpal-arrow

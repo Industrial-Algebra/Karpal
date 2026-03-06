@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arrow Family - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html" class="active">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Arrow Family</span>
+    </nav>
+
+    <h1>Arrow Family</h1>
+    <p>Arrows generalize functions to computations with structured inputs and outputs. They extend the <a href="profunctor-family.html">Profunctor</a> idea -- a two-parameter type constructor with composition -- into a full algebra of composable pipelines with product routing, sum routing, application, looping, and failure.</p>
+
+    <p>The arrow family lives in the <code>karpal-arrow</code> crate and builds on the <code>HKT2</code> encoding from <code>karpal-core</code>.</p>
+
+    <h2 id="hierarchy">Trait Hierarchy</h2>
+
+<pre><code class="language-rust">HKT2
+ +-> Semigroupoid          compose(f, g)
+     +-> Category           id()
+         +-> Arrow           arr(f), first, second, split, fanout
+              |-> ArrowChoice    left, right, splat, fanin
+              |-> ArrowApply     app  (~ Monad)
+              |-> ArrowLoop      loop_arrow  (D: Default)
+              +-> ArrowZero      zero_arrow
+                   +-> ArrowPlus  plus(f, g)</code></pre>
+
+    <ul>
+      <li><strong>Semigroupoid</strong> -- composable morphisms (associative composition).</li>
+      <li><strong>Category</strong> -- adds an identity morphism.</li>
+      <li><strong>Arrow</strong> -- lifts pure functions and routes through products (tuples).</li>
+      <li><strong>ArrowChoice</strong> -- routes through sum types (<code>Result</code>).</li>
+      <li><strong>ArrowApply</strong> -- first-class arrow application, equivalent in power to Monad.</li>
+      <li><strong>ArrowLoop</strong> -- feedback/fixpoint combinator using <code>D: Default</code> for strict evaluation.</li>
+      <li><strong>ArrowZero</strong> -- a failing/empty arrow.</li>
+      <li><strong>ArrowPlus</strong> -- associative choice between arrows.</li>
+    </ul>
+
+    <!-- ================================================================== -->
+    <!-- Semigroupoid                                                       -->
+    <!-- ================================================================== -->
+
+    <h2 id="traits">Traits</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="semigroupoid">Semigroupoid</h3>
+        <p class="trait-desc">Morphisms that can be composed associatively.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Semigroupoid: morphisms that can be composed.
+///
+/// Laws:
+/// - Associativity: compose(f, compose(g, h)) == compose(compose(f, g), h)
+pub trait Semigroupoid: HKT2 {
+    fn compose&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        f: Self::P&lt;B, C&gt;,
+        g: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;A, C&gt;;
+}</code></pre>
+
+        <p><code>compose</code> chains two morphisms: given <code>g: A -&gt; B</code> and <code>f: B -&gt; C</code>, produce <code>f . g: A -&gt; C</code>. Note the argument order -- <code>f</code> comes first, matching mathematical convention (<code>f</code> after <code>g</code>).</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Associativity</span>
+          <p>Composition is associative:</p>
+<pre><code class="language-rust">P::compose(f, P::compose(g, h)) == P::compose(P::compose(f, g), h)</code></pre>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Category                                                           -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="category">Category</h3>
+        <p class="trait-desc">A Semigroupoid with an identity morphism.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Category: a Semigroupoid with an identity morphism.
+///
+/// Laws:
+/// - Left identity:  compose(id(), f) == f
+/// - Right identity: compose(f, id()) == f
+pub trait Category: Semigroupoid {
+    fn id&lt;A: Clone + 'static&gt;() -&gt; Self::P&lt;A, A&gt;;
+}</code></pre>
+
+        <p><code>id</code> produces the identity morphism that, when composed with any other morphism, yields that morphism unchanged.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Identity</span>
+<pre><code class="language-rust">P::compose(P::id(), f) == f</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Identity</span>
+<pre><code class="language-rust">P::compose(f, P::id()) == f</code></pre>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Arrow                                                              -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="arrow">Arrow</h3>
+        <p class="trait-desc">A Category that can lift pure functions and operate on products (tuples).</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Arrow: a Category that can lift pure functions and operate on products.
+///
+/// Laws:
+/// - arr(id) == id()
+/// - arr(|a| g(f(a))) == compose(arr(g), arr(f))
+/// - first(arr(f)) == arr(|(a, c)| (f(a), c))
+/// - first(compose(f, g)) == compose(first(f), first(g))
+pub trait Arrow: Category {
+    /// Lift a pure function into an arrow.
+    fn arr&lt;A: Clone + 'static, B: Clone + 'static&gt;(
+        f: impl Fn(A) -&gt; B + 'static,
+    ) -&gt; Self::P&lt;A, B&gt;;
+
+    /// Apply an arrow to the first component of a pair, passing the second through.
+    fn first&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        pab: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;(A, C), (B, C)&gt;;
+
+    /// Apply an arrow to the second component of a pair.
+    fn second&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        pab: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;(C, A), (C, B)&gt; { ... }
+
+    /// `***`: apply two arrows in parallel on a product.
+    fn split&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static, D: Clone + 'static&gt;(
+        f: Self::P&lt;A, B&gt;,
+        g: Self::P&lt;C, D&gt;,
+    ) -&gt; Self::P&lt;(A, C), (B, D)&gt; { ... }
+
+    /// `&amp;&amp;&amp;`: feed input to two arrows and collect results as a pair.
+    fn fanout&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        f: Self::P&lt;A, B&gt;,
+        g: Self::P&lt;A, C&gt;,
+    ) -&gt; Self::P&lt;A, (B, C)&gt; { ... }
+}</code></pre>
+
+        <p><code>arr</code> lifts any pure function into the arrow. <code>first</code> applies an arrow to the first component of a tuple, passing the second through unchanged. <code>second</code>, <code>split</code>, and <code>fanout</code> have default implementations built from <code>first</code>, <code>compose</code>, and <code>arr</code>.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">arr preserves identity</span>
+<pre><code class="language-rust">P::arr(|a| a) == P::id()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">arr preserves composition</span>
+<pre><code class="language-rust">P::arr(|a| g(f(a))) == P::compose(P::arr(g), P::arr(f))</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">first/arr coherence</span>
+<pre><code class="language-rust">P::first(P::arr(f)) == P::arr(|(a, c)| (f(a), c))</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">first distributes over compose</span>
+<pre><code class="language-rust">P::first(P::compose(f, g)) == P::compose(P::first(f), P::first(g))</code></pre>
+        </div>
+
+        <h4>Derived Operations</h4>
+
+        <ul>
+          <li><code>second(pab)</code> -- default implementation swaps the tuple components, applies <code>first</code>, and swaps back.</li>
+          <li><code>split(f, g)</code> -- Haskell's <code>***</code> operator. Applies <code>f</code> to the first component and <code>g</code> to the second: <code>compose(second(g), first(f))</code>.</li>
+          <li><code>fanout(f, g)</code> -- Haskell's <code>&amp;&amp;&amp;</code> operator. Duplicates the input and applies <code>f</code> and <code>g</code> in parallel: <code>compose(split(f, g), arr(|a| (a.clone(), a)))</code>.</li>
+        </ul>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ArrowChoice                                                        -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="arrow-choice">ArrowChoice</h3>
+        <p class="trait-desc">An Arrow that can route through sum types (<code>Result</code>).</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// ArrowChoice: an Arrow that can route through sum types.
+///
+/// Uses `Result&lt;L, R&gt;` as the sum type, consistent with karpal-profunctor's Choice.
+///
+/// Laws:
+/// - left(arr(f)) == arr(|r| r.map(f))
+/// - left(compose(f, g)) == compose(left(f), left(g))
+/// - compose(arr(Ok), f) == compose(left(f), arr(Ok))
+pub trait ArrowChoice: Arrow {
+    /// Route the Ok branch through the arrow, passing Err through.
+    fn left&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        pab: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;Result&lt;A, C&gt;, Result&lt;B, C&gt;&gt;;
+
+    /// Route the Err branch through the arrow, passing Ok through.
+    fn right&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        pab: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;Result&lt;C, A&gt;, Result&lt;C, B&gt;&gt; { ... }
+
+    /// `+++`: apply f on Ok, g on Err.
+    fn splat&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static, D: Clone + 'static&gt;(
+        f: Self::P&lt;A, B&gt;,
+        g: Self::P&lt;C, D&gt;,
+    ) -&gt; Self::P&lt;Result&lt;A, C&gt;, Result&lt;B, D&gt;&gt; { ... }
+
+    /// `|||`: merge two arrows, one for each branch of Result.
+    fn fanin&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
+        f: Self::P&lt;A, C&gt;,
+        g: Self::P&lt;B, C&gt;,
+    ) -&gt; Self::P&lt;Result&lt;A, B&gt;, C&gt; { ... }
+}</code></pre>
+
+        <p><code>left</code> routes the <code>Ok</code> branch through the arrow, passing the <code>Err</code> branch through unchanged. <code>right</code>, <code>splat</code>, and <code>fanin</code> have default implementations. Karpal uses <code>Result&lt;L, R&gt;</code> as the sum type, consistent with <a href="profunctor-family.html#choice">Choice</a> in <code>karpal-profunctor</code>.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">left/arr coherence</span>
+<pre><code class="language-rust">P::left(P::arr(f)) == P::arr(|r| r.map(f))</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">left distributes over compose</span>
+<pre><code class="language-rust">P::left(P::compose(f, g)) == P::compose(P::left(f), P::left(g))</code></pre>
+        </div>
+
+        <h4>Derived Operations</h4>
+
+        <ul>
+          <li><code>right(pab)</code> -- mirrors the <code>Result</code>, applies <code>left</code>, and mirrors back.</li>
+          <li><code>splat(f, g)</code> -- Haskell's <code>+++</code> operator. Applies <code>f</code> to <code>Ok</code> and <code>g</code> to <code>Err</code>: <code>compose(right(g), left(f))</code>.</li>
+          <li><code>fanin(f, g)</code> -- Haskell's <code>|||</code> operator. Merges both branches into a single output: <code>compose(merge, splat(f, g))</code>.</li>
+        </ul>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ArrowApply                                                         -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="arrow-apply">ArrowApply</h3>
+        <p class="trait-desc">An Arrow that can apply arrows from within the computation. Equivalent in power to Monad.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// ArrowApply: an Arrow that can apply arrows from within the computation.
+///
+/// Equivalent in power to Monad (ArrowApply ~ Monad via Kleisli).
+pub trait ArrowApply: Arrow {
+    fn app&lt;A: Clone + 'static, B: Clone + 'static&gt;()
+        -&gt; Self::P&lt;(Self::P&lt;A, B&gt;, A), B&gt;;
+}</code></pre>
+
+        <p><code>app</code> takes a pair of an arrow and an input value, and applies the arrow to the value. This gives arrows the ability to choose which arrow to run at runtime, making <code>ArrowApply</code> equivalent in power to <code>Monad</code> (via the Kleisli correspondence).</p>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ArrowLoop                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="arrow-loop">ArrowLoop</h3>
+        <p class="trait-desc">An Arrow with a loop/fixpoint combinator.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// ArrowLoop: an Arrow with a loop/fixpoint combinator.
+///
+/// Takes an arrow from `(A, D)` to `(B, D)` and produces an arrow from `A` to `B`,
+/// where `D` is the "feedback" type threaded through the loop.
+///
+/// In Haskell, `loop` relies on laziness to tie the knot. Rust is strict, so
+/// `D: Default` provides the initial feedback seed and the implementation uses
+/// single-pass evaluation.
+pub trait ArrowLoop: Arrow {
+    fn loop_arrow&lt;A: Clone + 'static, B: Clone + 'static, D: Default + Clone + 'static&gt;(
+        f: Self::P&lt;(A, D), (B, D)&gt;,
+    ) -&gt; Self::P&lt;A, B&gt;;
+}</code></pre>
+
+        <p><code>loop_arrow</code> takes an arrow from <code>(A, D)</code> to <code>(B, D)</code> and produces an arrow from <code>A</code> to <code>B</code>, where <code>D</code> is the feedback type. In Haskell, <code>loop</code> relies on laziness to tie the knot. Since Rust is strict, the <code>D: Default</code> bound provides the initial feedback seed and the implementation uses single-pass evaluation.</p>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ArrowZero                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="arrow-zero">ArrowZero</h3>
+        <p class="trait-desc">An Arrow with a zero (failing/empty) morphism.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// ArrowZero: an Arrow with a zero (failing/empty) morphism.
+///
+/// Laws:
+/// - compose(zero_arrow(), f) == zero_arrow()  (left absorption)
+pub trait ArrowZero: Arrow {
+    fn zero_arrow&lt;A: Clone + 'static, B: Clone + 'static&gt;() -&gt; Self::P&lt;A, B&gt;;
+}</code></pre>
+
+        <p><code>zero_arrow</code> produces an arrow that always fails or returns empty. It absorbs any composition from the left: composing anything after a <code>zero_arrow</code> still yields <code>zero_arrow</code>.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Absorption</span>
+<pre><code class="language-rust">P::compose(P::zero_arrow(), f) == P::zero_arrow()</code></pre>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ArrowPlus                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="arrow-plus">ArrowPlus</h3>
+        <p class="trait-desc">An ArrowZero with an associative choice operation.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// ArrowPlus: an ArrowZero with an associative choice operation.
+///
+/// Laws:
+/// - Associativity: plus(plus(f, g), h) == plus(f, plus(g, h))
+/// - Left identity:  plus(zero_arrow(), f) == f
+/// - Right identity: plus(f, zero_arrow()) == f
+pub trait ArrowPlus: ArrowZero {
+    fn plus&lt;A: Clone + 'static, B: Clone + 'static&gt;(
+        f: Self::P&lt;A, B&gt;,
+        g: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;A, B&gt;;
+}</code></pre>
+
+        <p><code>plus</code> combines two arrows: if the first succeeds, use its result; otherwise fall back to the second. Together with <code>zero_arrow</code>, this forms a monoid over arrows.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Associativity</span>
+<pre><code class="language-rust">P::plus(P::plus(f, g), h) == P::plus(f, P::plus(g, h))</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Left Identity</span>
+<pre><code class="language-rust">P::plus(P::zero_arrow(), f) == f</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Identity</span>
+<pre><code class="language-rust">P::plus(f, P::zero_arrow()) == f</code></pre>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Concrete Implementations                                           -->
+    <!-- ================================================================== -->
+
+    <h2 id="implementations">Concrete Implementations</h2>
+
+    <!-- FnA -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="fna">FnA (Function Arrow)</h3>
+        <p class="trait-desc">Marker type whose <code>P&lt;A, B&gt;</code> is <code>Box&lt;dyn Fn(A) -&gt; B&gt;</code> -- the canonical function arrow.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct FnA;
+
+impl HKT2 for FnA {
+    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; B&gt;;
+}</code></pre>
+
+        <p><code>FnA</code> is a zero-sized marker type equivalent to <code>FnP</code> in <code>karpal-profunctor</code> but independent (no cross-crate dependency). It is the most natural arrow: a boxed function from <code>A</code> to <code>B</code>.</p>
+
+        <h4>Implemented traits</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Method</th><th>Implementation</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Semigroupoid</code></td>
+              <td><code>compose(f, g)</code></td>
+              <td><code>Box::new(move |a| f(g(a)))</code></td>
+            </tr>
+            <tr>
+              <td><code>Category</code></td>
+              <td><code>id()</code></td>
+              <td><code>Box::new(|a| a)</code></td>
+            </tr>
+            <tr>
+              <td><code>Arrow</code></td>
+              <td><code>arr(f)</code></td>
+              <td><code>Box::new(f)</code></td>
+            </tr>
+            <tr>
+              <td><code>Arrow</code></td>
+              <td><code>first(pab)</code></td>
+              <td><code>Box::new(move |(a, c)| (pab(a), c))</code></td>
+            </tr>
+            <tr>
+              <td><code>Arrow</code></td>
+              <td><code>second(pab)</code></td>
+              <td><code>Box::new(move |(c, a)| (c, pab(a)))</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowChoice</code></td>
+              <td><code>left(pab)</code></td>
+              <td><code>Box::new(move |r| match r { Ok(a) =&gt; Ok(pab(a)), Err(c) =&gt; Err(c) })</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowChoice</code></td>
+              <td><code>right(pab)</code></td>
+              <td><code>Box::new(move |r| match r { Ok(c) =&gt; Ok(c), Err(a) =&gt; Err(pab(a)) })</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowApply</code></td>
+              <td><code>app()</code></td>
+              <td><code>Box::new(|(f, a)| f(a))</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowLoop</code></td>
+              <td><code>loop_arrow(f)</code></td>
+              <td><code>Box::new(move |a| { let (b, _) = f((a, D::default())); b })</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><code>FnA</code> does <strong>not</strong> implement <code>ArrowZero</code> or <code>ArrowPlus</code> because a plain function <code>A -&gt; B</code> has no notion of failure or empty result.</p>
+
+        <h4>Feature gate</h4>
+
+        <p><code>FnA</code> requires the <code>alloc</code> feature because <code>Box&lt;dyn Fn&gt;</code> requires heap allocation.</p>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_arrow::{Arrow, ArrowChoice, Category, Semigroupoid, FnA};
+
+// Lift pure functions into arrows
+let double = FnA::arr(|x: i32| x * 2);
+let add_one = FnA::arr(|x: i32| x + 1);
+
+// Compose: (x * 2) then (+ 1)
+let pipeline = FnA::compose(add_one, double);
+assert_eq!(pipeline(5), 11); // (5 * 2) + 1
+
+// fanout: feed the same input to two arrows
+let double = FnA::arr(|x: i32| x * 2);
+let negate = FnA::arr(|x: i32| -x);
+let both = FnA::fanout(double, negate);
+assert_eq!(both(5), (10, -5));
+
+// split: apply two arrows in parallel on a tuple
+let to_str = FnA::arr(|x: i32| x.to_string());
+let double = FnA::arr(|x: i32| x * 2);
+let par = FnA::split(to_str, double);
+assert_eq!(par((42, 5)), ("42".to_string(), 10));
+
+// ArrowChoice: route through Result branches
+let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
+let routed = FnA::left::&lt;i32, i32, &amp;str&gt;(double);
+assert_eq!(routed(Ok(5)), Ok(10));
+assert_eq!(routed(Err("nope")), Err("nope"));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- KleisliF -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="kleislif">KleisliF&lt;M&gt; (Kleisli Arrow)</h3>
+        <p class="trait-desc">Kleisli arrow for a Monad <code>M</code>: <code>P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; M::Of&lt;B&gt;&gt;</code>.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct KleisliF&lt;M: HKT&gt;(PhantomData&lt;M&gt;);
+
+impl&lt;M: HKT&gt; HKT2 for KleisliF&lt;M&gt; {
+    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; M::Of&lt;B&gt;&gt;;
+}</code></pre>
+
+        <p><code>KleisliF&lt;M&gt;</code> wraps effectful functions <code>A -&gt; M&lt;B&gt;</code> as arrows. It implements the full Arrow hierarchy when <code>M: Chain + Applicative + Functor</code>, and additionally implements <code>ArrowZero</code> and <code>ArrowPlus</code> when <code>M: Plus</code>.</p>
+
+        <h4>Implemented traits</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Constraint on <code>M</code></th><th>Key operation</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Semigroupoid</code></td>
+              <td><code>Chain + Applicative</code></td>
+              <td><code>compose(f, g) = |a| M::chain(g(a), &amp;f)</code></td>
+            </tr>
+            <tr>
+              <td><code>Category</code></td>
+              <td><code>Chain + Applicative</code></td>
+              <td><code>id() = |a| M::pure(a)</code></td>
+            </tr>
+            <tr>
+              <td><code>Arrow</code></td>
+              <td><code>Chain + Applicative + Functor</code></td>
+              <td><code>arr(f) = |a| M::pure(f(a))</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowChoice</code></td>
+              <td><code>Chain + Applicative + Functor</code></td>
+              <td><code>left(pab) = |Ok(a)| M::fmap(pab(a), Ok)</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowApply</code></td>
+              <td><code>Chain + Applicative + Functor</code></td>
+              <td><code>app() = |(f, a)| f(a)</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowZero</code></td>
+              <td><code>+ Plus</code></td>
+              <td><code>zero_arrow() = |_| M::zero()</code></td>
+            </tr>
+            <tr>
+              <td><code>ArrowPlus</code></td>
+              <td><code>+ Plus</code></td>
+              <td><code>plus(f, g) = |a| M::alt(f(a.clone()), g(a))</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_arrow::{Arrow, ArrowZero, ArrowPlus, Semigroupoid, KleisliF};
+use karpal_core::hkt::OptionF;
+
+type KOpt = KleisliF&lt;OptionF&gt;;
+
+// Kleisli arrows: functions returning Option
+let safe_double: Box&lt;dyn Fn(i32) -&gt; Option&lt;i32&gt;&gt; = Box::new(|x| Some(x * 2));
+let safe_add_one: Box&lt;dyn Fn(i32) -&gt; Option&lt;i32&gt;&gt; = Box::new(|x| Some(x + 1));
+
+// Compose: chains through the monad (short-circuits on None)
+let pipeline = KOpt::compose(safe_add_one, safe_double);
+assert_eq!(pipeline(5), Some(11)); // Some(10) -> Some(11)
+
+// Short-circuit on failure
+let fail: Box&lt;dyn Fn(i32) -&gt; Option&lt;i32&gt;&gt; = Box::new(|_| None);
+let after_fail = KOpt::compose(safe_add_one, fail);
+assert_eq!(after_fail(5), None);
+
+// ArrowZero: an arrow that always returns None
+let z = KOpt::zero_arrow::&lt;i32, i32&gt;();
+assert_eq!(z(42), None);
+
+// ArrowPlus: try the first arrow, fall back to the second
+let attempt = KOpt::plus(fail, safe_double);
+assert_eq!(attempt(5), Some(10)); // first fails, second succeeds</code></pre>
+
+      </div>
+    </div>
+
+    <!-- CokleisliF -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="cokleislif">CokleisliF&lt;W&gt; (Cokleisli Arrow)</h3>
+        <p class="trait-desc">Cokleisli arrow for a Comonad <code>W</code>: <code>P&lt;A, B&gt; = Box&lt;dyn Fn(W::Of&lt;A&gt;) -&gt; B&gt;</code>.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct CokleisliF&lt;W: HKT&gt;(PhantomData&lt;W&gt;);
+
+impl&lt;W: HKT&gt; HKT2 for CokleisliF&lt;W&gt; {
+    type P&lt;A, B&gt; = Box&lt;dyn Fn(W::Of&lt;A&gt;) -&gt; B&gt;;
+}</code></pre>
+
+        <p><code>CokleisliF&lt;W&gt;</code> wraps context-consuming functions <code>W&lt;A&gt; -&gt; B</code> as arrows. Composition requires <code>W::Of&lt;A&gt;: Clone</code>, which cannot be expressed generically with GATs. Instead, the <code>impl_cokleisli!</code> macro generates <code>Semigroupoid</code> and <code>Category</code> impls for specific comonads.</p>
+
+        <h4>The <code>impl_cokleisli!</code> macro</h4>
+
+<pre><code class="language-rust">/// Generate Semigroupoid + Category impls for `CokleisliF&lt;$W&gt;` where
+/// `$W::Of&lt;A&gt;` is known to be `Clone` for `A: Clone`.
+///
+/// Usage: `impl_cokleisli!(IdentityF, OptionF, NonEmptyVecF, EnvF&lt;E&gt;);`
+#[macro_export]
+macro_rules! impl_cokleisli {
+    ($W:ty) =&gt; { /* generates Semigroupoid + Category impls */ };
+}</code></pre>
+
+        <p>Pre-generated instances are provided for <code>IdentityF</code>, <code>OptionF</code>, and <code>NonEmptyVecF</code>. A separate <code>impl_cokleisli_env!</code> macro handles <code>EnvF&lt;E&gt;</code> with specific environment types (pre-generated for <code>i32</code> and <code>String</code>).</p>
+
+        <h4>Implemented traits</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Key operation</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Semigroupoid</code></td>
+              <td><code>compose(f, g) = |wa| f(W::extend(wa, |wa| g(wa.clone())))</code></td>
+            </tr>
+            <tr>
+              <td><code>Category</code></td>
+              <td><code>id() = |wa| W::extract(&amp;wa)</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><code>CokleisliF</code> only implements <code>Semigroupoid</code> and <code>Category</code>. It does not implement the full <code>Arrow</code> hierarchy because lifting a pure function <code>A -&gt; B</code> into <code>W&lt;A&gt; -&gt; B</code> would require <code>Comonad::extract</code> in <code>arr</code>, but the product-routing operations (<code>first</code>, <code>second</code>) would need <code>W&lt;(A, C)&gt;</code> to be decomposable, which is not generally possible for all comonads.</p>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Design Notes                                                       -->
+    <!-- ================================================================== -->
+
+    <h2 id="design-notes">Design Notes</h2>
+
+    <h3><code>Clone + 'static</code> bounds</h3>
+
+    <p>All type parameters in the arrow hierarchy require <code>Clone + 'static</code> bounds. The <code>'static</code> bound is necessary because all concrete implementations use <code>Box&lt;dyn Fn&gt;</code>, which requires captured closures (and the types they close over) to be <code>'static</code>. The <code>Clone</code> bound is needed for operations like <code>fanout</code> (which duplicates the input) and Kleisli composition (which needs to clone values threaded through monadic binds).</p>
+
+    <h3>ArrowLoop and <code>D: Default</code></h3>
+
+    <p>In Haskell, <code>ArrowLoop</code>'s <code>loop</code> relies on laziness to "tie the knot" -- the feedback value <code>d</code> is defined in terms of itself. Rust is strict, so this is not possible. Instead, Karpal's <code>loop_arrow</code> requires <code>D: Default</code> to provide an initial seed for the feedback channel. The implementation performs a single pass: it feeds <code>(a, D::default())</code> into the arrow and returns the <code>B</code> component of the output, discarding the feedback.</p>
+
+    <h3>CokleisliF and <code>impl_cokleisli!</code></h3>
+
+    <p>The challenge with <code>CokleisliF&lt;W&gt;</code> is that composition requires <code>W::Of&lt;A&gt;: Clone</code>, but this bound cannot be expressed generically with GATs -- you cannot write <code>where W::Of&lt;A&gt;: Clone</code> in a blanket impl because the compiler cannot verify this for all possible <code>W</code>. The <code>impl_cokleisli!</code> macro solves this by generating implementations for each specific comonad where the <code>Clone</code> bound is known to hold.</p>
+
+    <h3>Operator naming</h3>
+
+    <p>Haskell uses symbolic operators for several arrow combinators. Since Rust does not support custom operators, Karpal uses descriptive names:</p>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Haskell operator</th><th>Karpal name</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>&gt;&gt;&gt;</code></td><td><code>compose</code></td><td>Sequential composition (reversed argument order)</td></tr>
+        <tr><td><code>***</code></td><td><code>split</code></td><td>Apply two arrows in parallel on a product</td></tr>
+        <tr><td><code>&amp;&amp;&amp;</code></td><td><code>fanout</code></td><td>Feed one input to two arrows, collect results</td></tr>
+        <tr><td><code>+++</code></td><td><code>splat</code></td><td>Apply two arrows to the two branches of a sum</td></tr>
+        <tr><td><code>|||</code></td><td><code>fanin</code></td><td>Merge two arrows from sum branches into one output</td></tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

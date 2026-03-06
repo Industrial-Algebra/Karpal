@@ -3,10 +3,15 @@ name = "karpal-profunctor"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
 description = "Profunctor hierarchy (Profunctor, Strong, Choice) for the Industrial Algebra ecosystem"
 
 [dependencies]
-karpal-core = { path = "../karpal-core", default-features = false }
+karpal-core = { version = "0.1.0", path = "../karpal-core", default-features = false }
 
 [features]
 default = ["std"]

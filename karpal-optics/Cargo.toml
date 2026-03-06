@@ -3,6 +3,11 @@ name = "karpal-optics"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
 description = "Profunctor optics (Lens, Prism) for the Industrial Algebra ecosystem"
 
 [dependencies]
