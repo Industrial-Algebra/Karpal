@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Macros - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html" class="active">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="../index.html">Reference</a> &gt; <span>Macros</span>
+    </nav>
+
+    <h1>Macros</h1>
+    <p>Monadic and applicative notation macros.</p>
+
+    <p>Karpal provides two macros that flatten nested monadic and applicative computations into a readable, top-to-bottom sequence of bindings. Both macros use <code>=</code> for binding (not <code>&lt;-</code>, which is reserved in Rust edition 2024).</p>
+
+    <!-- do_! ----------------------------------------------------------- -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3><code>do_!</code></h3>
+        <p class="trait-desc">Monadic do-notation. Desugars sequential bindings into nested <code>Chain::chain</code> calls.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Syntax</h4>
+
+<pre><code class="language-rust">do_! { F;
+    x = monadic_expr_1;
+    y = monadic_expr_2;   // can reference x
+    // ... more bindings ...
+    final_monadic_expr     // bare expression, no binding
+}</code></pre>
+
+        <ul>
+          <li>The first token <code>F</code> is the type constructor (<code>OptionF</code>, <code>VecF</code>, <code>ResultF&lt;E&gt;</code>, etc.), followed by a semicolon.</li>
+          <li>Each binding uses <code>=</code>. Later bindings can reference names bound earlier -- the steps are sequential.</li>
+          <li>The final line is a bare expression of type <code>F::Of&lt;T&gt;</code>. It is the value returned by the whole <code>do_!</code> block.</li>
+          <li>If any step produces a short-circuiting value (<code>None</code>, <code>Err(_)</code>), the entire block short-circuits immediately.</li>
+        </ul>
+
+        <h4>Expansion</h4>
+
+        <p>Each <code>x = expr;</code> binding desugars into a <code>Chain::chain</code> call. The macro expands recursively:</p>
+
+<pre><code class="language-rust">// This:
+do_! { F;
+    x = expr_a;
+    y = expr_b;
+    expr_c
+}
+
+// Expands to:
+&lt;F as Chain&gt;::chain(expr_a, |x| {
+    &lt;F as Chain&gt;::chain(expr_b, |y| {
+        expr_c
+    })
+})</code></pre>
+
+        <p>A single bare expression (no bindings) is returned as-is:</p>
+
+<pre><code class="language-rust">do_! { F; some_expr }
+// Expands to:
+some_expr</code></pre>
+
+        <h4>Requirements</h4>
+
+        <p>The type constructor <code>F</code> must implement <code>Chain</code> (and therefore <code>Apply</code> and <code>Functor</code>). In practice, any type that implements <code>Monad</code> satisfies this requirement, since <code>Monad</code> is a blanket trait over <code>Applicative + Chain</code>.</p>
+
+        <h4>Examples</h4>
+
+        <h5>OptionF -- sequential computation with short-circuiting</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = do_! { OptionF;
+    x = Some(1);
+    y = Some(x + 1);       // y depends on x
+    OptionF::pure(x + y)   // final expression wraps in Some
+};
+assert_eq!(result, Some(3));</code></pre>
+
+        <h5>OptionF -- short-circuiting on None</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result: Option&lt;i32&gt; = do_! { OptionF;
+    x = Some(1);
+    _y = None::&lt;i32&gt;;     // short-circuits here
+    OptionF::pure(x)       // never reached
+};
+assert_eq!(result, None);</code></pre>
+
+        <h5>OptionF -- single expression (no bindings)</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = do_! { OptionF;
+    Some(42)
+};
+assert_eq!(result, Some(42));</code></pre>
+
+        <h5>ResultF -- chaining fallible operations</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+fn parse_port(s: &amp;str) -&gt; Result&lt;u16, String&gt; {
+    s.parse::&lt;u16&gt;().map_err(|e| e.to_string())
+}
+
+let result = do_! { ResultF&lt;String&gt;;
+    port = parse_port("8080");
+    validated = if port &gt; 0 { Ok(port) } else { Err("invalid".into()) };
+    Ok(format!("port={}", validated))
+};
+assert_eq!(result, Ok("port=8080".to_string()));</code></pre>
+
+        <h5>VecF -- list comprehension (cartesian product)</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = do_! { VecF;
+    x = vec![1, 2];
+    y = vec![10, 20];
+    VecF::pure(x + y)
+};
+assert_eq!(result, vec![11, 21, 12, 22]);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ado_! ---------------------------------------------------------- -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3><code>ado_!</code></h3>
+        <p class="trait-desc">Applicative do-notation. Collects independent bindings and combines them with <code>Apply::ap</code> and <code>Functor::fmap</code>.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Syntax</h4>
+
+<pre><code class="language-rust">ado_! { F;
+    x = applicative_expr_1;
+    y = applicative_expr_2;
+    // ... up to 4 bindings ...
+    yield combining_expression
+}</code></pre>
+
+        <ul>
+          <li>Same first-token convention as <code>do_!</code>: the type constructor, then a semicolon.</li>
+          <li>Each binding uses <code>=</code>. Bindings are <strong>independent</strong> and must not reference each other.</li>
+          <li>The <code>yield</code> keyword introduces the combining expression. This expression is a pure function of the bound names -- it is automatically lifted into the applicative context.</li>
+          <li>Supports 1 to 4 bindings.</li>
+          <li>If any binding evaluates to a short-circuiting value (<code>None</code>, <code>Err(_)</code>), the whole block short-circuits.</li>
+        </ul>
+
+        <h4>Expansion</h4>
+
+        <p>The expansion depends on the number of bindings. With one binding, the macro uses <code>Functor::fmap</code>. With two or more, it builds a curried closure and applies it with <code>Apply::ap</code>:</p>
+
+        <h5>1 binding</h5>
+
+<pre><code class="language-rust">// This:
+ado_! { F; x = expr; yield body }
+
+// Expands to:
+&lt;F as Functor&gt;::fmap(expr, |x| body)</code></pre>
+
+        <h5>2 bindings</h5>
+
+<pre><code class="language-rust">// This:
+ado_! { F; x = e1; y = e2; yield body }
+
+// Expands to:
+&lt;F as Apply&gt;::ap(
+    &lt;F as Functor&gt;::fmap(e1, |x| move |y| body),
+    e2,
+)</code></pre>
+
+        <h5>3 bindings</h5>
+
+<pre><code class="language-rust">// This:
+ado_! { F; x = e1; y = e2; z = e3; yield body }
+
+// Expands to:
+&lt;F as Apply&gt;::ap(
+    &lt;F as Apply&gt;::ap(
+        &lt;F as Functor&gt;::fmap(e1, |x| move |y| move |z| body),
+        e2,
+    ),
+    e3,
+)</code></pre>
+
+        <h5>4 bindings</h5>
+
+<pre><code class="language-rust">// This:
+ado_! { F; a = e1; b = e2; c = e3; d = e4; yield body }
+
+// Expands to:
+&lt;F as Apply&gt;::ap(
+    &lt;F as Apply&gt;::ap(
+        &lt;F as Apply&gt;::ap(
+            &lt;F as Functor&gt;::fmap(e1, |a| move |b| move |c| move |d| body),
+            e2,
+        ),
+        e3,
+    ),
+    e4,
+)</code></pre>
+
+        <h4>Requirements</h4>
+
+        <p>The type constructor <code>F</code> must implement <code>Applicative</code> (and therefore <code>Apply</code> and <code>Functor</code>). Unlike <code>do_!</code>, it does <strong>not</strong> require <code>Chain</code> -- applicative computations are strictly less powerful than monadic ones, which is the point: they express the absence of sequential dependencies.</p>
+
+        <h4>Examples</h4>
+
+        <h5>OptionF -- single binding (fmap)</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { OptionF;
+    x = Some(5);
+    yield x * 2
+};
+assert_eq!(result, Some(10));</code></pre>
+
+        <h5>OptionF -- combining two independent values</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { OptionF;
+    x = Some(1);
+    y = Some(2);
+    yield x + y
+};
+assert_eq!(result, Some(3));</code></pre>
+
+        <h5>OptionF -- short-circuiting on None</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { OptionF;
+    x = Some(1);
+    y = None::&lt;i32&gt;;
+    yield x + y
+};
+assert_eq!(result, None);</code></pre>
+
+        <h5>OptionF -- combining three values</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { OptionF;
+    x = Some(1);
+    y = Some(2);
+    z = Some(3);
+    yield x + y + z
+};
+assert_eq!(result, Some(6));</code></pre>
+
+        <h5>OptionF -- combining four values</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { OptionF;
+    a = Some(1);
+    b = Some(2);
+    c = Some(3);
+    d = Some(4);
+    yield a + b + c + d
+};
+assert_eq!(result, Some(10));</code></pre>
+
+        <h5>VecF -- cartesian product with applicative</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { VecF;
+    x = vec![1, 2];
+    y = vec![10, 20];
+    yield x + y
+};
+assert_eq!(result, vec![11, 21, 12, 22]);</code></pre>
+
+        <h5>ResultF -- combining independent fallible lookups</h5>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let result = ado_! { ResultF&lt;String&gt;;
+    host = Ok::&lt;&amp;str, String&gt;("localhost");
+    port = Ok::&lt;u16, String&gt;(3000);
+    yield format!("{}:{}", host, port)
+};
+assert_eq!(result, Ok("localhost:3000".to_string()));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- Comparison ------------------------------------------------------ -->
+
+    <h2 id="comparison">Choosing Between <code>do_!</code> and <code>ado_!</code></h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Macro</th><th>Trait required</th><th>Bindings</th><th>Use when</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>do_!</code></td>
+          <td><code>Chain</code> (Monad)</td>
+          <td>Sequential -- later bindings can depend on earlier ones</td>
+          <td>Steps have data dependencies</td>
+        </tr>
+        <tr>
+          <td><code>ado_!</code></td>
+          <td><code>Applicative</code></td>
+          <td>Independent -- bindings must not reference each other</td>
+          <td>Steps are independent; documents the absence of dependencies</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="binding-syntax">Why <code>=</code> Instead of <code>&lt;-</code>?</h2>
+
+    <p>Languages like Haskell and PureScript use <code>&lt;-</code> for monadic bindings. Karpal uses <code>=</code> instead because Rust edition 2024 reserves the <code>&lt;-</code> token, making it unavailable inside macros. The <code>=</code> syntax integrates naturally with Rust's existing patterns and avoids any conflict with reserved tokens.</p>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

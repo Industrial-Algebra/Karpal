@@ -43,6 +43,15 @@ impl<T: Semigroup> Semigroup for Option<T> {
     }
 }
 
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl<T> Semigroup for crate::hkt::NonEmptyVec<T> {
+    fn combine(mut self, other: Self) -> Self {
+        self.tail.push(other.head);
+        self.tail.extend(other.tail);
+        self
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

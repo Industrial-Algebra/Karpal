@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karpal - Algebraic Structures for Rust</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="getting-started.html">Getting Started</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="reference/functor-family.html">Functor Family</a></li>
+          <li><a href="reference/alt-family.html">Alt Family</a></li>
+          <li><a href="reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="reference/macros.html">Macros</a></li>
+          <li><a href="reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="reference/invariant.html">Invariant</a></li>
+          <li><a href="reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="reference/arrow-family.html">Arrow Family</a></li>
+          <li><a href="reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <div class="hero">
+      <h1>Karpal</h1>
+      <p class="tagline">Higher-Kinded Types and algebraic structures for Rust</p>
+      <div class="hero-links">
+        <a href="getting-started.html" class="btn-primary">Get Started</a>
+        <a href="reference/functor-family.html" class="btn-secondary">Browse Reference</a>
+        <a href="https://github.com/Industrial-Algebra/Karpal" class="btn-secondary">GitHub</a>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature-card">
+        <h3>Type-Safe Abstractions</h3>
+        <p>HKT encoding via GATs lets you write functions generic over <code>Option</code>, <code>Result</code>, <code>Vec</code>, and any container that supports mapping, sequencing, or folding.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Complete Hierarchy</h3>
+        <p>Functor through Monad, Alt through Alternative, Foldable, Traversable, Comonad, and contravariant duals &mdash; all with property-based law verification.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Profunctor Optics</h3>
+        <p>Lens, Prism, and composition powered by the profunctor hierarchy. Build reusable, first-class field accessors and pattern matchers.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Ergonomic Macros</h3>
+        <p><code>do_!</code> flattens nested <code>.and_then()</code> chains. <code>ado_!</code> combines independent computations. Both work with any Monad or Applicative.</p>
+      </div>
+    </div>
+
+    <h2>Quick Example</h2>
+    <p>Flatten nested error handling with <code>do_!</code>:</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Without do_! — rightward drift with every step
+fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
+    parse_id(input).and_then(|id| {
+        lookup_user(id).and_then(|user| {
+            check_permissions(&amp;user).and_then(|role| {
+                Some(format!("{} logged in as {:?}", user.name, role))
+            })
+        })
+    })
+}
+
+// With do_! — reads top-to-bottom
+fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
+    do_! { OptionF;
+        id = parse_id(input);
+        user = lookup_user(id);
+        role = check_permissions(&amp;user);
+        Some(format!("{} logged in as {:?}", user.name, role))
+    }
+}</code></pre>
+
+    <h2>Workspace</h2>
+    <table class="instance-table">
+      <thead>
+        <tr><th>Crate</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>karpal-core</code></td><td>HKT encoding, functor hierarchy, Semigroup, Monoid, macros</td></tr>
+        <tr><td><code>karpal-profunctor</code></td><td>Profunctor, Strong, Choice, FnP</td></tr>
+        <tr><td><code>karpal-optics</code></td><td>Profunctor optics: Lens, Prism, composition</td></tr>
+        <tr><td><code>karpal-std</code></td><td>Standard prelude re-exports</td></tr>
+      </tbody>
+    </table>
+
+    <p><code>karpal-core</code> and <code>karpal-profunctor</code> are <code>no_std</code> compatible with optional <code>std</code>/<code>alloc</code> feature gates.</p>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

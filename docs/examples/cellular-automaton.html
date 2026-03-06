@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cellular Automaton - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="../reference/functor-family.html">Functor Family</a></li>
+          <li><a href="../reference/alt-family.html">Alt Family</a></li>
+          <li><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="../reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="../reference/macros.html">Macros</a></li>
+          <li><a href="../reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="../reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="../reference/invariant.html">Invariant</a></li>
+          <li><a href="../reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="../reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="../reference/arrow-family.html">Arrow Family</a></li>
+          <li><a href="../reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="data-transformation.html">Data Transformation</a></li>
+          <li><a href="cellular-automaton.html" class="active">Cellular Automaton</a></li>
+          <li><a href="domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="config-pipeline.html">Examples</a> &gt; <span>Cellular Automaton</span>
+    </nav>
+
+    <h1>Cellular Automaton</h1>
+    <p>1D cellular automaton using Extend (Comonad) over NonEmptyVec.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <p>A <strong>cellular automaton</strong> is a grid of cells that evolves in discrete steps. At each step, every cell updates its value based on a <em>rule</em> that inspects the cell and its neighbors. The classic approach in functional programming is to model this with a <strong>comonad</strong>.</p>
+
+    <p>The key insight is that a comonad provides two operations that map directly onto the cellular automaton pattern:</p>
+
+    <ul>
+      <li><strong><code>extract</code></strong> reads the "focused" cell &mdash; the current position in the grid.</li>
+      <li><strong><code>extend</code></strong> takes a function that computes a new value from a focused context, and applies it at <em>every</em> position in the grid. This is exactly how a cellular automaton rule works: the rule sees the neighborhood around a position, and <code>extend</code> runs it everywhere.</li>
+    </ul>
+
+    <p>In Karpal, <code>NonEmptyVec</code> implements <code>Extend</code> and <code>Comonad</code>. The <code>extend</code> method generates all possible focused views of the grid (via <code>tails</code>) and applies the rule function to each one, producing the next generation in a single call.</p>
+
+    <h2 id="rule-functions">Rule Functions</h2>
+
+    <p>Each rule receives the entire grid as a <code>&amp;NonEmptyVec&lt;u8&gt;</code>, with the <em>head</em> of the vector acting as the current cell. The rule inspects neighbors by looking at adjacent positions and returns the new value for that cell.</p>
+
+    <h3>Rule 90 (XOR of neighbors)</h3>
+
+    <p>A cell becomes alive (<code>1</code>) if exactly one of its two neighbors is alive, otherwise it dies (<code>0</code>). This produces the classic Sierpinski triangle pattern when started from a single seed cell.</p>
+
+<pre><code class="language-rust">fn rule_90(grid: &amp;NonEmptyVec&lt;u8&gt;) -&gt; u8 {
+    let tails = grid.tails();
+    let current = &lt;NonEmptyVecF as Comonad&gt;::extract(grid);
+    let len = grid.len();
+
+    // Get left neighbor (wrapping)
+    let left = if len &gt; 1 {
+        *tails.tail.last().map(|t| &amp;t.head).unwrap_or(&amp;grid.head)
+    } else {
+        current
+    };
+
+    // Get right neighbor
+    let right = if grid.tail.is_empty() {
+        grid.head // wrap around
+    } else {
+        grid.tail[0]
+    };
+
+    // XOR of neighbors
+    left ^ right
+}</code></pre>
+
+    <h3>Majority rule</h3>
+
+    <p>A simpler rule: the cell is alive if two or more of (left, current, right) are alive. This tends to smooth out noise and converge toward uniform regions.</p>
+
+<pre><code class="language-rust">fn rule_majority(grid: &amp;NonEmptyVec&lt;u8&gt;) -&gt; u8 {
+    let current = &lt;NonEmptyVecF as Comonad&gt;::extract(grid);
+    let len = grid.len();
+
+    let left = if len &gt; 1 {
+        let tails = grid.tails();
+        *tails.tail.last().map(|t| &amp;t.head).unwrap_or(&amp;grid.head)
+    } else {
+        current
+    };
+
+    let right = if grid.tail.is_empty() {
+        grid.head
+    } else {
+        grid.tail[0]
+    };
+
+    let sum = left as u16 + current as u16 + right as u16;
+    if sum &gt;= 2 { 1 } else { 0 }
+}</code></pre>
+
+    <h2 id="evolution">Evolution via Extend</h2>
+
+    <p>The <code>step</code> function is the core of the automaton. It calls <code>NonEmptyVecF::extend</code> with the grid and a rule, producing the next generation. Extend applies the rule at every position by generating all focused views of the grid and mapping the rule over each one.</p>
+
+<pre><code class="language-rust">fn step(grid: NonEmptyVec&lt;u8&gt;, rule: fn(&amp;NonEmptyVec&lt;u8&gt;) -&gt; u8) -&gt; NonEmptyVec&lt;u8&gt; {
+    NonEmptyVecF::extend(grid, rule)
+}</code></pre>
+
+    <p>The <code>evolve</code> function iterates <code>step</code> for a given number of generations, collecting the full history so it can be displayed as a space-time diagram.</p>
+
+<pre><code class="language-rust">fn evolve(
+    initial: NonEmptyVec&lt;u8&gt;,
+    rule: fn(&amp;NonEmptyVec&lt;u8&gt;) -&gt; u8,
+    steps: usize,
+) -&gt; Vec&lt;NonEmptyVec&lt;u8&gt;&gt; {
+    let mut history = vec![initial.clone()];
+    let mut current = initial;
+    for _ in 0..steps {
+        current = step(current, rule);
+        history.push(current.clone());
+    }
+    history
+}</code></pre>
+
+    <h2 id="display">Display</h2>
+
+    <p>The display helper renders each generation as a string of <code>#</code> (alive) and <code>.</code> (dead) characters, making the pattern visible in the terminal.</p>
+
+<pre><code class="language-rust">fn display_grid(grid: &amp;NonEmptyVec&lt;u8&gt;) -&gt; String {
+    let mut s = String::new();
+    for cell in grid.iter() {
+        s.push(if *cell == 1 { '#' } else { '.' });
+    }
+    s
+}</code></pre>
+
+    <h2 id="main">Putting It Together</h2>
+
+    <p>The <code>main</code> function sets up an initial grid with a single seed cell in the center, runs Rule 90 for 10 generations, then demonstrates the majority rule on a more complex pattern. It also shows <code>Comonad::extract</code> and <code>Extend::duplicate</code> directly.</p>
+
+<pre><code class="language-rust">fn main() {
+    // Initial state: single cell in the middle of a 21-cell grid
+    let width = 21;
+    let mid = width / 2;
+    let mut cells: Vec&lt;u8&gt; = vec![0; width];
+    cells[mid] = 1;
+    let initial = NonEmptyVec::new(cells[0], cells[1..].to_vec());
+
+    // Rule 90 (XOR of neighbors)
+    let history = evolve(initial.clone(), rule_90, 10);
+    for (i, grid) in history.iter().enumerate() {
+        println!("  {:&gt;2}: {}", i, display_grid(grid));
+    }
+
+    // Comonad::extract reads the focused cell
+    let head = &lt;NonEmptyVecF as Comonad&gt;::extract(&amp;initial);
+
+    // Majority rule on a different pattern
+    let pattern = NonEmptyVec::new(1, vec![0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0]);
+    let history = evolve(pattern, rule_majority, 8);
+
+    // Extend::duplicate shows all focused views
+    let small = NonEmptyVec::new(1, vec![2, 3]);
+    let duplicated: NonEmptyVec&lt;NonEmptyVec&lt;u8&gt;&gt; = NonEmptyVecF::duplicate(small);
+}</code></pre>
+
+    <h2 id="run-it">Run It</h2>
+
+    <p>From the workspace root, run:</p>
+
+<pre><code class="language-rust">cargo run -p karpal-std --example cellular_automaton</code></pre>
+
+    <p>You will see the Rule 90 Sierpinski triangle pattern growing from a single seed, followed by the majority rule smoothing a random-looking pattern into stable regions.</p>
+
+    <h2 id="traits-used">Traits Used</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Trait</th><th>Role in this example</th><th>Reference</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Comonad</code></td>
+          <td>Provides <code>extract</code> to read the focused cell value from a <code>NonEmptyVec</code>.</td>
+          <td><a href="../reference/comonad-family.html">Comonad Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Extend</code></td>
+          <td>Provides <code>extend</code> to apply a rule at every position, producing the next generation. Also provides <code>duplicate</code> to view all focused positions.</td>
+          <td><a href="../reference/comonad-family.html">Comonad Family</a></td>
+        </tr>
+        <tr>
+          <td><code>HKT</code></td>
+          <td><code>NonEmptyVecF</code> is the type constructor marker that implements <code>Extend</code> and <code>Comonad</code>.</td>
+          <td><a href="../reference/functor-family.html">Functor Family</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

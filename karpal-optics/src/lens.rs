@@ -1,5 +1,67 @@
+use std::rc::Rc;
+
 use crate::optic::Optic;
 use karpal_profunctor::strong::Strong;
+
+/// A composed lens built from two lenses chained together.
+///
+/// Unlike [`Lens`], which stores `fn` pointers, a composed lens stores
+/// boxed closures because closure composition cannot produce `fn` pointers.
+///
+/// For profunctor-level composition, use nested [`Lens::transform`] calls
+/// instead: `outer.transform::<P>(inner.transform::<P>(pab))`. This avoids
+/// the need for `Rc`/`Arc` to share closures.
+pub struct ComposedLens<S, T, X, Y> {
+    getter: Box<dyn Fn(&S) -> X>,
+    setter: Box<dyn Fn(S, Y) -> T>,
+}
+
+/// A simple (monomorphic) composed lens where `S == T` and `X == Y`.
+pub type SimpleComposedLens<S, X> = ComposedLens<S, S, X, X>;
+
+impl<S, T, X, Y> Optic for ComposedLens<S, T, X, Y> {}
+
+impl<S, T, X, Y> ComposedLens<S, T, X, Y> {
+    pub fn get(&self, s: &S) -> X {
+        (self.getter)(s)
+    }
+
+    pub fn set(&self, s: S, y: Y) -> T {
+        (self.setter)(s, y)
+    }
+}
+
+impl<S: Clone, T, X, Y> ComposedLens<S, T, X, Y> {
+    pub fn over(&self, s: S, f: impl FnOnce(X) -> Y) -> T {
+        let x = (self.getter)(&s);
+        (self.setter)(s, f(x))
+    }
+
+    /// Chain another lens to focus deeper.
+    pub fn then<U, V>(self, inner: Lens<X, Y, U, V>) -> ComposedLens<S, T, U, V>
+    where
+        S: 'static,
+        T: 'static,
+        X: 'static,
+        Y: 'static,
+        U: 'static,
+        V: 'static,
+    {
+        let outer_getter: Rc<dyn Fn(&S) -> X> = self.getter.into();
+        let outer_setter = self.setter;
+        let inner_getter = inner.getter;
+        let inner_setter = inner.setter;
+        let og = Rc::clone(&outer_getter);
+        ComposedLens {
+            getter: Box::new(move |s: &S| inner_getter(&outer_getter(s))),
+            setter: Box::new(move |s: S, v: V| {
+                let x = og(&s);
+                let y = inner_setter(x, v);
+                (outer_setter)(s, y)
+            }),
+        }
+    }
+}
 
 /// A van Laarhoven–style lens encoded with getter/setter function pointers.
 ///
@@ -28,6 +90,30 @@ impl<S, T, A, B> Lens<S, T, A, B> {
 
     pub fn set(&self, s: S, b: B) -> T {
         (self.setter)(s, b)
+    }
+
+    /// Chain another lens to focus deeper, producing a [`ComposedLens`].
+    pub fn then<X, Y>(self, inner: Lens<A, B, X, Y>) -> ComposedLens<S, T, X, Y>
+    where
+        S: 'static,
+        T: 'static,
+        A: 'static,
+        B: 'static,
+        X: 'static,
+        Y: 'static,
+    {
+        let outer_getter = self.getter;
+        let outer_setter = self.setter;
+        let inner_getter = inner.getter;
+        let inner_setter = inner.setter;
+        ComposedLens {
+            getter: Box::new(move |s: &S| inner_getter(&outer_getter(s))),
+            setter: Box::new(move |s: S, y: Y| {
+                let a = outer_getter(&s);
+                let b = inner_setter(a, y);
+                outer_setter(s, b)
+            }),
+        }
     }
 }
 
@@ -70,6 +156,7 @@ impl<S: Clone, T, A, B> Lens<S, T, A, B> {
 mod tests {
     use super::*;
     use karpal_profunctor::FnP;
+    use proptest::prelude::*;
 
     #[derive(Debug, Clone, PartialEq)]
     struct Person {
@@ -164,5 +251,192 @@ mod tests {
         let result = transform_fn(sample_person());
         assert_eq!(result.name, "ALICE");
         assert_eq!(result.age, 30);
+    }
+
+    // --- Composition tests ---
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct Address {
+        street: String,
+        city: String,
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct Company {
+        name: String,
+        ceo: Person,
+    }
+
+    fn company_ceo_lens() -> SimpleLens<Company, Person> {
+        Lens::new(|c: &Company| c.ceo.clone(), |c, ceo| Company { ceo, ..c })
+    }
+
+    fn address_city_lens() -> SimpleLens<Address, String> {
+        Lens::new(
+            |a: &Address| a.city.clone(),
+            |a, city| Address { city, ..a },
+        )
+    }
+
+    fn address_street_lens() -> SimpleLens<Address, String> {
+        Lens::new(
+            |a: &Address| a.street.clone(),
+            |a, street| Address { street, ..a },
+        )
+    }
+
+    fn sample_company() -> Company {
+        Company {
+            name: "Acme".to_string(),
+            ceo: sample_person(),
+        }
+    }
+
+    // Two-deep composition: Company → ceo → name
+    #[test]
+    fn composed_get() {
+        let lens = company_ceo_lens().then(person_name_lens());
+        assert_eq!(lens.get(&sample_company()), "Alice");
+    }
+
+    #[test]
+    fn composed_set() {
+        let lens = company_ceo_lens().then(person_name_lens());
+        let updated = lens.set(sample_company(), "Bob".to_string());
+        assert_eq!(updated.ceo.name, "Bob");
+        assert_eq!(updated.ceo.age, 30);
+        assert_eq!(updated.name, "Acme");
+    }
+
+    #[test]
+    fn composed_over() {
+        let lens = company_ceo_lens().then(person_age_lens());
+        let updated = lens.over(sample_company(), |age| age + 1);
+        assert_eq!(updated.ceo.age, 31);
+        assert_eq!(updated.ceo.name, "Alice");
+    }
+
+    // Three-deep: use a PersonWithAddr for a longer chain.
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct PersonWithAddr {
+        name: String,
+        addr: Address,
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct Org {
+        title: String,
+        lead: PersonWithAddr,
+    }
+
+    fn org_lead_lens() -> SimpleLens<Org, PersonWithAddr> {
+        Lens::new(|o: &Org| o.lead.clone(), |o, lead| Org { lead, ..o })
+    }
+
+    fn pwa_addr_lens() -> SimpleLens<PersonWithAddr, Address> {
+        Lens::new(
+            |p: &PersonWithAddr| p.addr.clone(),
+            |p, addr| PersonWithAddr { addr, ..p },
+        )
+    }
+
+    fn sample_org() -> Org {
+        Org {
+            title: "R&D".to_string(),
+            lead: PersonWithAddr {
+                name: "Alice".to_string(),
+                addr: Address {
+                    street: "123 Main St".to_string(),
+                    city: "Springfield".to_string(),
+                },
+            },
+        }
+    }
+
+    #[test]
+    fn three_deep_get() {
+        let lens = org_lead_lens()
+            .then(pwa_addr_lens())
+            .then(address_city_lens());
+        assert_eq!(lens.get(&sample_org()), "Springfield");
+    }
+
+    #[test]
+    fn three_deep_set() {
+        let lens = org_lead_lens()
+            .then(pwa_addr_lens())
+            .then(address_city_lens());
+        let updated = lens.set(sample_org(), "Shelbyville".to_string());
+        assert_eq!(updated.lead.addr.city, "Shelbyville");
+        assert_eq!(updated.lead.addr.street, "123 Main St");
+        assert_eq!(updated.lead.name, "Alice");
+    }
+
+    #[test]
+    fn three_deep_over() {
+        let lens = org_lead_lens()
+            .then(pwa_addr_lens())
+            .then(address_street_lens());
+        let updated = lens.over(sample_org(), |s| s.to_uppercase());
+        assert_eq!(updated.lead.addr.street, "123 MAIN ST");
+    }
+
+    // Composed lens law tests (proptest)
+    // Testing company_ceo().then(person_age()) since age is easy to generate.
+
+    proptest! {
+        // GetPut: set(s, get(s)) == s
+        #[test]
+        fn composed_law_get_put(name in "[a-z]{1,8}", co_name in "[a-z]{1,8}", age in 0u32..1000) {
+            let lens = company_ceo_lens().then(person_age_lens());
+            let c = Company {
+                name: co_name,
+                ceo: Person { name, age },
+            };
+            let result = lens.set(c.clone(), lens.get(&c));
+            prop_assert_eq!(result, c);
+        }
+
+        // PutGet: get(set(s, b)) == b
+        #[test]
+        fn composed_law_put_get(name in "[a-z]{1,8}", co_name in "[a-z]{1,8}", age in 0u32..1000, new_age in 0u32..1000) {
+            let lens = company_ceo_lens().then(person_age_lens());
+            let c = Company {
+                name: co_name,
+                ceo: Person { name, age },
+            };
+            let result = lens.set(c, new_age);
+            prop_assert_eq!(lens.get(&result), new_age);
+        }
+
+        // PutPut: set(set(s, b1), b2) == set(s, b2)
+        #[test]
+        fn composed_law_put_put(name in "[a-z]{1,8}", co_name in "[a-z]{1,8}", age in 0u32..1000, b1 in 0u32..1000, b2 in 0u32..1000) {
+            let lens = company_ceo_lens().then(person_age_lens());
+            let c = Company {
+                name: co_name,
+                ceo: Person { name, age },
+            };
+            let left = lens.set(lens.set(c.clone(), b1), b2);
+            let right = lens.set(c, b2);
+            prop_assert_eq!(left, right);
+        }
+    }
+
+    // Profunctor equivalence: outer.transform(inner.transform(f)) matches composed.over
+    #[test]
+    fn profunctor_composition_equivalence() {
+        let outer = company_ceo_lens();
+        let inner = person_age_lens();
+        let composed = company_ceo_lens().then(person_age_lens());
+
+        let increment: Box<dyn Fn(u32) -> u32> = Box::new(|age| age + 1);
+        let transform_fn = outer.transform::<FnP>(inner.transform::<FnP>(increment));
+
+        let c = sample_company();
+        let via_profunctor = transform_fn(c.clone());
+        let via_composed = composed.over(c, |age| age + 1);
+        assert_eq!(via_profunctor, via_composed);
     }
 }

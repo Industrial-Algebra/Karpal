@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alt Family - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html" class="active">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="../index.html">Reference</a> &gt; <span>Alt Family</span>
+    </nav>
+
+    <h1>Alt Family</h1>
+    <p class="page-desc">Fallback and choice combinators: Alt, Plus, Alternative.</p>
+
+    <h2 id="hierarchy">Hierarchy</h2>
+
+    <div class="hierarchy">
+      <span class="node">Functor</span>
+      <span class="arrow"> &rarr; </span>
+      <span class="node">Alt</span>
+      <span class="arrow"> &rarr; </span>
+      <span class="node">Plus</span>
+      <span class="arrow"> &rarr; </span>
+      <span class="arrow">(+ </span><span class="node">Applicative</span><span class="arrow">) &rarr; </span>
+      <span class="node">Alternative</span>
+      <span class="arrow"> (blanket)</span>
+    </div>
+
+    <p>The Alt branch of the functor hierarchy provides combinators for expressing fallback and choice. <code>Alt</code> gives an associative choice operation, <code>Plus</code> adds an identity element (zero/empty), and <code>Alternative</code> combines <code>Plus</code> with <code>Applicative</code> via a blanket impl.</p>
+
+    <!-- ================================================================ -->
+    <!-- Alt -->
+    <!-- ================================================================ -->
+
+    <h2 id="alt">Alt</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>Alt</h3>
+        <div class="trait-desc">A Functor with an associative choice operation.</div>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Alt: Functor {
+    fn alt&lt;A&gt;(fa1: Self::Of&lt;A&gt;, fa2: Self::Of&lt;A&gt;) -&gt; Self::Of&lt;A&gt;;
+}</code></pre>
+
+        <p><code>alt</code> takes two values of the same functor type and returns one, preferring the first when both are "successful." The exact semantics depend on the instance: for <code>OptionF</code> it is <code>.or()</code>, for <code>VecF</code> it is concatenation.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <div class="law-name">Associativity</div>
+          alt(alt(a, b), c) == alt(a, alt(b, c))
+        </div>
+
+        <div class="law-box">
+          <div class="law-name">Distributivity</div>
+          fmap(f, alt(a, b)) == alt(fmap(f, a), fmap(f, b))
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Behaviour of <code>alt</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td><code>fa1.or(fa2)</code> &mdash; returns the first <code>Some</code>, or <code>None</code> if both are <code>None</code></td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td><code>fa1.or(fa2)</code> &mdash; returns the first <code>Ok</code>, or the second value if the first is <code>Err</code></td></tr>
+            <tr><td><code>VecF</code></td><td>Concatenation &mdash; extends <code>fa1</code> with all elements of <code>fa2</code></td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td>Concatenation &mdash; appends the head and tail of <code>fa2</code> onto <code>fa1</code></td></tr>
+          </tbody>
+        </table>
+
+        <p><code>VecF</code> and <code>NonEmptyVecF</code> require the <code>alloc</code> or <code>std</code> feature.</p>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Fallback: try the first source, fall back to the second
+let primary: Option&lt;i32&gt; = None;
+let fallback: Option&lt;i32&gt; = Some(42);
+
+let result = OptionF::alt(primary, fallback);
+assert_eq!(result, Some(42));
+
+// When both are present, the first wins
+let result = OptionF::alt(Some(1), Some(2));
+assert_eq!(result, Some(1));
+
+// Vec: concatenation
+let combined = VecF::alt(vec![1, 2], vec![3, 4]);
+assert_eq!(combined, vec![1, 2, 3, 4]);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Plus -->
+    <!-- ================================================================ -->
+
+    <h2 id="plus">Plus</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>Plus</h3>
+        <div class="trait-desc">An Alt with a zero/empty element.</div>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Plus: Alt {
+    fn zero&lt;A&gt;() -&gt; Self::Of&lt;A&gt;;
+}</code></pre>
+
+        <p><code>zero</code> produces the identity element for <code>alt</code>. Combined with the Alt laws, this gives a monoid structure over the functor type.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <div class="law-name">Left identity</div>
+          alt(zero(), a) == a
+        </div>
+
+        <div class="law-box">
+          <div class="law-name">Right identity</div>
+          alt(a, zero()) == a
+        </div>
+
+        <div class="law-box">
+          <div class="law-name">Annihilation</div>
+          fmap(f, zero()) == zero()
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>zero()</code> returns</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td><code>None</code></td></tr>
+            <tr><td><code>VecF</code></td><td><code>Vec::new()</code> (empty vector)</td></tr>
+          </tbody>
+        </table>
+
+        <p><code>ResultF&lt;E&gt;</code> does <strong>not</strong> implement <code>Plus</code> because there is no way to produce a <code>Result&lt;A, E&gt;</code> without an <code>E</code> value. <code>NonEmptyVecF</code> also lacks an instance because a non-empty vector cannot be empty by definition.</p>
+
+        <p><code>VecF</code> requires the <code>alloc</code> or <code>std</code> feature.</p>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// zero() for Option is None
+let empty: Option&lt;i32&gt; = OptionF::zero();
+assert_eq!(empty, None);
+
+// zero() for Vec is an empty vector
+let empty_vec: Vec&lt;i32&gt; = VecF::zero();
+assert_eq!(empty_vec, Vec::&lt;i32&gt;::new());
+
+// Left identity: alt(zero(), a) == a
+let a = Some(10);
+assert_eq!(OptionF::alt(OptionF::zero(), a), a);
+
+// Right identity: alt(a, zero()) == a
+assert_eq!(OptionF::alt(a, OptionF::zero()), a);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Alternative -->
+    <!-- ================================================================ -->
+
+    <h2 id="alternative">Alternative</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>Alternative</h3>
+        <div class="trait-desc">Applicative + Plus with no extra methods (blanket impl).</div>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Alternative: Applicative + Plus {}
+
+impl&lt;F: Applicative + Plus&gt; Alternative for F {}</code></pre>
+
+        <p><code>Alternative</code> is a marker trait that combines <code>Applicative</code> and <code>Plus</code>. It introduces no new methods &mdash; any type that implements both <code>Applicative</code> and <code>Plus</code> automatically implements <code>Alternative</code> via the blanket impl.</p>
+
+        <h4>Laws</h4>
+
+        <p>Alternative inherits all laws from Alt, Plus, and Applicative, and adds two of its own:</p>
+
+        <div class="law-box">
+          <div class="law-name">Distributivity</div>
+          ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
+        </div>
+
+        <div class="law-box">
+          <div class="law-name">Annihilation</div>
+          ap(zero(), x) == zero()
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td>Implements both <code>Applicative</code> and <code>Plus</code>, so <code>Alternative</code> is provided automatically</td></tr>
+            <tr><td><code>VecF</code></td><td>Implements both <code>Applicative</code> and <code>Plus</code>, so <code>Alternative</code> is provided automatically (requires <code>alloc</code> or <code>std</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Alternative lets you combine choice (Alt/Plus) with
+// applicative computation (Applicative).
+
+// Distributivity: ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
+let f: Option&lt;fn(i32) -&gt; i32&gt; = Some(|a| a + 1);
+let g: Option&lt;fn(i32) -&gt; i32&gt; = Some(|a| a * 2);
+let x = Some(10);
+
+let left  = OptionF::ap(OptionF::alt(f, g), x);
+let right = OptionF::alt(OptionF::ap(f, x), OptionF::ap(g, x));
+assert_eq!(left, right);  // Both are Some(11)
+
+// Annihilation: ap(zero(), x) == zero()
+let no_fn: Option&lt;fn(i32) -&gt; i32&gt; = OptionF::zero();
+let result = OptionF::ap(no_fn, Some(5));
+assert_eq!(result, None);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- See also -->
+    <!-- ================================================================ -->
+
+    <h2 id="see-also">See Also</h2>
+
+    <ul>
+      <li><a href="functor-family.html"><strong>Functor Family</strong></a> &mdash; the Functor &rarr; Apply &rarr; Applicative &rarr; Chain &rarr; Monad branch that Alt builds upon.</li>
+      <li><a href="algebraic.html"><strong>Semigroup &amp; Monoid</strong></a> &mdash; the value-level analogue: Semigroup provides an associative <code>combine</code>, Monoid adds an <code>empty</code> identity, mirroring the Alt/Plus relationship at the functor level.</li>
+      <li><a href="foldable-traversable.html"><strong>Foldable &amp; Traversable</strong></a> &mdash; traits for collapsing and sequencing containers, which compose naturally with Alt and Plus.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

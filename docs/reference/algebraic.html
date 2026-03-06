@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semigroup &amp; Monoid - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html" class="active">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Semigroup &amp; Monoid</span>
+    </nav>
+
+    <h1>Semigroup &amp; Monoid</h1>
+    <p>Algebraic typeclasses for combining values.</p>
+
+    <p>Semigroup and Monoid are the foundational algebraic abstractions in Karpal. A <code>Semigroup</code> provides an associative binary operation for combining two values of the same type. A <code>Monoid</code> extends <code>Semigroup</code> with an identity element, enabling operations like folding an empty collection to a default value.</p>
+
+    <!-- ================================================================== -->
+    <!-- Semigroup                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="semigroup">Semigroup</h3>
+        <p class="trait-desc">A type with an associative binary operation.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// A type with an associative binary operation.
+pub trait Semigroup {
+    fn combine(self, other: Self) -&gt; Self;
+}</code></pre>
+
+        <p>The <code>combine</code> method takes ownership of both values and produces a new value of the same type. Because it consumes <code>self</code>, there is no hidden aliasing -- the implementation is free to reuse allocations (and Karpal's <code>String</code> and <code>Vec</code> implementations do exactly that).</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Associativity</span>
+          <p>For all <code>a</code>, <code>b</code>, <code>c</code> of type <code>T: Semigroup</code>:</p>
+<pre><code class="language-rust">a.combine(b).combine(c) == a.combine(b.combine(c))</code></pre>
+          <p>The grouping of operations does not matter. This is the only law a <code>Semigroup</code> must satisfy.</p>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th>Behavior of <code>combine</code></th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td>Addition (<code>self + other</code>)</td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code></td><td>Addition (<code>self + other</code>)</td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>f32</code>, <code>f64</code></td><td>Addition (<code>self + other</code>)</td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>String</code></td><td>Concatenation (<code>push_str</code>)</td><td><code>std</code> or <code>alloc</code></td></tr>
+            <tr><td><code>Vec&lt;T&gt;</code></td><td>Concatenation (<code>extend</code>)</td><td><code>std</code> or <code>alloc</code></td></tr>
+            <tr><td><code>Option&lt;T: Semigroup&gt;</code></td><td>Combines inner values if both are <code>Some</code>; keeps the <code>Some</code> side otherwise</td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>NonEmptyVec&lt;T&gt;</code></td><td>Concatenation (head + tails merged)</td><td><code>std</code> or <code>alloc</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::semigroup::Semigroup;
+
+// Numeric addition
+assert_eq!(3i32.combine(4), 7);
+
+// String concatenation
+assert_eq!(
+    "hello ".to_string().combine("world".to_string()),
+    "hello world"
+);
+
+// Vec concatenation
+assert_eq!(vec![1, 2].combine(vec![3, 4]), vec![1, 2, 3, 4]);
+
+// Option lifts the inner Semigroup
+assert_eq!(Some(3i32).combine(Some(4)), Some(7));
+assert_eq!(Some(3i32).combine(None), Some(3));
+assert_eq!(None::&lt;i32&gt;.combine(Some(4)), Some(4));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Monoid                                                             -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="monoid">Monoid</h3>
+        <p class="trait-desc">A Semigroup with an identity element.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">use crate::semigroup::Semigroup;
+
+/// A `Semigroup` with an identity element.
+pub trait Monoid: Semigroup {
+    fn empty() -&gt; Self;
+}</code></pre>
+
+        <p>The <code>empty</code> method returns the identity element for the type's <code>combine</code> operation. Combining any value with <code>empty()</code> (on either side) must return that value unchanged.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Identity</span>
+          <p>For all <code>a</code> of type <code>T: Monoid</code>:</p>
+<pre><code class="language-rust">T::empty().combine(a) == a</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Identity</span>
+          <p>For all <code>a</code> of type <code>T: Monoid</code>:</p>
+<pre><code class="language-rust">a.combine(T::empty()) == a</code></pre>
+        </div>
+
+        <p>Together with the <code>Semigroup</code> associativity law, these two laws make <code>(T, combine, empty)</code> a monoid in the algebraic sense.</p>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>empty()</code> value</th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td><code>0</code></td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code></td><td><code>0</code></td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>f32</code>, <code>f64</code></td><td><code>0.0</code></td><td>none (<code>no_std</code>)</td></tr>
+            <tr><td><code>String</code></td><td><code>String::new()</code> (empty string)</td><td><code>std</code> or <code>alloc</code></td></tr>
+            <tr><td><code>Vec&lt;T&gt;</code></td><td><code>Vec::new()</code> (empty vec)</td><td><code>std</code> or <code>alloc</code></td></tr>
+            <tr><td><code>Option&lt;T: Semigroup&gt;</code></td><td><code>None</code></td><td>none (<code>no_std</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <p>Note that <code>NonEmptyVec&lt;T&gt;</code> implements <code>Semigroup</code> but <strong>not</strong> <code>Monoid</code> -- by definition it always contains at least one element, so there is no valid identity value.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::semigroup::Semigroup;
+use karpal_core::monoid::Monoid;
+
+// Numeric identity
+assert_eq!(i32::empty(), 0);
+assert_eq!(i32::empty().combine(42), 42);
+assert_eq!(42i32.combine(i32::empty()), 42);
+
+// String identity
+assert_eq!(String::empty(), "");
+
+// Vec identity
+assert_eq!(Vec::&lt;i32&gt;::empty(), Vec::&lt;i32&gt;::new());
+
+// Option identity
+assert_eq!(Option::&lt;i32&gt;::empty(), None);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Foldable and Monoid                                                -->
+    <!-- ================================================================== -->
+
+    <h2 id="foldable-and-monoid">Foldable and Monoid</h2>
+
+    <p>The <code>Monoid</code> trait plays a central role in the <a href="foldable-traversable.html">Foldable</a> typeclass. <code>Foldable</code> defines <code>fold_map</code>, which maps each element of a structure through a function that returns a <code>Monoid</code>, then combines all the results using <code>combine</code> and <code>empty</code>:</p>
+
+<pre><code class="language-rust">pub trait Foldable: HKT {
+    fn fold_right&lt;A, B&gt;(fa: Self::Of&lt;A&gt;, init: B, f: impl Fn(A, B) -&gt; B) -&gt; B;
+
+    fn fold_map&lt;A, M: Monoid&gt;(fa: Self::Of&lt;A&gt;, f: impl Fn(A) -&gt; M) -&gt; M {
+        Self::fold_right(fa, M::empty(), |a, acc| f(a).combine(acc))
+    }
+}</code></pre>
+
+    <p>The default implementation of <code>fold_map</code> starts with <code>M::empty()</code> as the initial accumulator and folds right, combining each mapped element with the accumulator. Because <code>Monoid</code> guarantees associativity and identity, the result is well-defined regardless of the folding direction.</p>
+
+    <h4>Example: summing a collection</h4>
+
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+// fold_map with the identity function sums the elements,
+// because i32's Semigroup instance uses addition.
+let total = VecF::fold_map(vec![1, 2, 3], |a: i32| a);
+assert_eq!(total, 6);</code></pre>
+
+    <h4>Example: collecting strings</h4>
+
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+// Map each number to its string representation, then combine.
+// String's Semigroup concatenates, and its Monoid starts from "".
+let result = VecF::fold_map(vec![1, 2, 3], |a: i32| a.to_string());
+assert_eq!(result, "123".to_string());</code></pre>
+
+    <p>This pattern -- map then combine -- is the essence of <code>fold_map</code> and is the reason <code>Monoid</code> is so important in functional programming. Any time you need to reduce a collection to a single summary value, <code>Monoid</code> provides the structure to do it generically.</p>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

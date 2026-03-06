@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bifunctor &amp; NaturalTransformation - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html" class="active">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Bifunctor &amp; Natural</span>
+    </nav>
+
+    <h1>Bifunctor &amp; NaturalTransformation</h1>
+    <p>Two-parameter functors and structure-preserving transformations.</p>
+
+    <p>These two abstractions sit alongside the main Functor hierarchy but address different concerns. <code>Bifunctor</code> generalizes mapping over type constructors with <em>two</em> type parameters (using <code>HKT2</code>), while <code>NaturalTransformation</code> provides a way to convert between two single-parameter type constructors without inspecting the contained values.</p>
+
+    <!-- ================================================================== -->
+    <!-- Bifunctor                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="bifunctor">Bifunctor</h3>
+        <p class="trait-desc">Maps over both type parameters of a two-parameter type constructor.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Bifunctor: maps over both type parameters of a two-parameter type constructor.
+///
+/// Laws:
+/// - Identity: `bimap(id, id, fab) == fab`
+/// - Composition: `bimap(f . g, h . i, fab) == bimap(f, h, bimap(g, i, fab))`
+pub trait Bifunctor: HKT2 {
+    fn bimap&lt;A, B, C, D&gt;(
+        fab: Self::P&lt;A, B&gt;,
+        f: impl Fn(A) -&gt; C,
+        g: impl Fn(B) -&gt; D,
+    ) -&gt; Self::P&lt;C, D&gt;;
+
+    fn first&lt;A, B, C&gt;(fab: Self::P&lt;A, B&gt;, f: impl Fn(A) -&gt; C) -&gt; Self::P&lt;C, B&gt; {
+        Self::bimap(fab, f, |b| b)
+    }
+
+    fn second&lt;A, B, D&gt;(fab: Self::P&lt;A, B&gt;, g: impl Fn(B) -&gt; D) -&gt; Self::P&lt;A, D&gt; {
+        Self::bimap(fab, |a| a, g)
+    }
+}</code></pre>
+
+        <p>The <code>bimap</code> method applies two functions simultaneously -- one to each type parameter. The <code>first</code> and <code>second</code> methods are convenience shortcuts that map over only one parameter, leaving the other unchanged. Both have default implementations in terms of <code>bimap</code>.</p>
+
+        <p>Note that <code>Bifunctor</code> extends <code>HKT2</code>, the two-parameter higher-kinded type trait. Where <code>HKT</code> has <code>type Of&lt;T&gt;</code>, <code>HKT2</code> has <code>type P&lt;A, B&gt;</code>, reflecting the two type parameters.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Identity</span>
+          <p>Mapping two identity functions over a value must return it unchanged:</p>
+<pre><code class="language-rust">F::bimap(fab, |a| a, |b| b) == fab</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Composition</span>
+          <p>Mapping composed functions must equal mapping in two steps:</p>
+<pre><code class="language-rust">F::bimap(fab, |a| f(g(a)), |b| h(i(b)))
+    == F::bimap(F::bimap(fab, g, i), f, h)</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Marker type</th><th><code>P&lt;A, B&gt;</code> resolves to</th><th>Behavior</th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ResultBF</code></td>
+              <td><code>Result&lt;B, A&gt;</code></td>
+              <td><code>f</code> maps over the <code>Err</code> side, <code>g</code> maps over the <code>Ok</code> side</td>
+              <td>none (<code>no_std</code>)</td>
+            </tr>
+            <tr>
+              <td><code>TupleF</code></td>
+              <td><code>(A, B)</code></td>
+              <td><code>f</code> maps over the first element, <code>g</code> maps over the second</td>
+              <td>none (<code>no_std</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Note that <code>ResultBF</code> places the first type parameter in the <code>Err</code> position and the second in the <code>Ok</code> position (<code>P&lt;A, B&gt; = Result&lt;B, A&gt;</code>). This is consistent with the Bifunctor convention where the second parameter is the "main" one, matching how <code>ResultF&lt;E&gt;</code> treats the <code>Ok</code> value as the functor target.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::bifunctor::Bifunctor;
+use karpal_core::hkt::{ResultBF, TupleF};
+
+// bimap over a Result: transform both Ok and Err sides
+let r: Result&lt;i32, &amp;str&gt; = Ok(5);
+let result = ResultBF::bimap(r, |s| s.len(), |n| n * 2);
+assert_eq!(result, Ok(10));
+
+let r: Result&lt;i32, &amp;str&gt; = Err("hello");
+let result = ResultBF::bimap(r, |s| s.len(), |n| n * 2);
+assert_eq!(result, Err(5));
+
+// bimap over a tuple: transform both elements
+assert_eq!(TupleF::bimap((1, "hi"), |x| x + 1, |s| s.len()), (2, 2));
+
+// first and second: map over one side only
+assert_eq!(TupleF::first((1, "hi"), |x| x * 2), (2, "hi"));
+assert_eq!(TupleF::second((1, "hi"), |s| s.len()), (1, 2));
+
+// first on Result maps the Err side
+let r: Result&lt;i32, &amp;str&gt; = Err("hi");
+assert_eq!(ResultBF::first(r, |s| s.len()), Err(2));
+
+// second on Result maps the Ok side
+let r: Result&lt;i32, &amp;str&gt; = Ok(5);
+assert_eq!(ResultBF::second(r, |n| n * 3), Ok(15));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- NaturalTransformation                                              -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="natural-transformation">NaturalTransformation</h3>
+        <p class="trait-desc">A structure-preserving mapping between two type constructors.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Natural transformation: a mapping between two functors that preserves structure.
+///
+/// Laws:
+/// - Naturality: `fmap_G(f, transform(fa)) == transform(fmap_F(f, fa))`
+pub trait NaturalTransformation&lt;F: HKT, G: HKT&gt; {
+    fn transform&lt;A&gt;(fa: F::Of&lt;A&gt;) -&gt; G::Of&lt;A&gt;;
+}</code></pre>
+
+        <p>A <code>NaturalTransformation</code> converts a value from one type constructor into another without knowing or caring about the contained type <code>A</code>. The trait is parameterized by two <code>HKT</code> type constructors, <code>F</code> (source) and <code>G</code> (target), and the implementing struct serves as a named witness for the transformation.</p>
+
+        <p>Because the <code>transform</code> method is generic over <code>A</code>, it cannot inspect or modify the contained values -- it can only restructure the container. This is the key property that the naturality law captures.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Naturality</span>
+          <p>Mapping a function <code>f</code> over the result of <code>transform</code> must equal transforming after mapping <code>f</code> over the original:</p>
+<pre><code class="language-rust">G::fmap(NT::transform(fa), f) == NT::transform(F::fmap(fa, f))</code></pre>
+          <p>In other words, it does not matter whether you map first and then transform, or transform first and then map. The diagram commutes.</p>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Struct</th><th>Source (<code>F</code>)</th><th>Target (<code>G</code>)</th><th>Behavior</th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>OptionToVec</code></td>
+              <td><code>OptionF</code></td>
+              <td><code>VecF</code></td>
+              <td><code>None</code> becomes <code>vec![]</code>, <code>Some(a)</code> becomes <code>vec![a]</code></td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+            <tr>
+              <td><code>VecHeadToOption</code></td>
+              <td><code>VecF</code></td>
+              <td><code>OptionF</code></td>
+              <td>Takes the first element; empty <code>Vec</code> becomes <code>None</code></td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::natural::{NaturalTransformation, OptionToVec, VecHeadToOption};
+
+// OptionToVec: convert Option into a zero-or-one-element Vec
+assert_eq!(OptionToVec::transform(Some(42)), vec![42]);
+assert_eq!(OptionToVec::transform(None::&lt;i32&gt;), Vec::&lt;i32&gt;::new());
+
+// VecHeadToOption: extract the first element as an Option
+assert_eq!(VecHeadToOption::transform(vec![1, 2, 3]), Some(1));
+assert_eq!(VecHeadToOption::transform(Vec::&lt;i32&gt;::new()), None);</code></pre>
+
+        <h4>Verifying the naturality law</h4>
+
+        <p>The naturality law can be checked for any function <code>f</code>. Here is a concrete example with <code>OptionToVec</code>:</p>
+
+<pre><code class="language-rust">use karpal_core::functor::Functor;
+use karpal_core::hkt::{OptionF, VecF};
+use karpal_core::natural::{NaturalTransformation, OptionToVec};
+
+let x: Option&lt;i32&gt; = Some(5);
+let f = |a: i32| a + 1;
+
+// Map then transform
+let left = OptionToVec::transform(OptionF::fmap(x, f));
+
+// Transform then map
+let right = VecF::fmap(OptionToVec::transform(x), f);
+
+assert_eq!(left, right); // both are vec![6]</code></pre>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comonad Family - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html" class="active">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="../index.html">Reference</a> &gt; <span>Comonad Family</span>
+    </nav>
+
+    <h1>Comonad Family</h1>
+    <p class="page-desc">Dual of the monad hierarchy: comonadic context and extraction.</p>
+
+    <p>Where a Monad lets you <em>inject</em> values into a context and <em>sequence</em> context-producing computations, a Comonad lets you <em>extract</em> values from a context and <em>extend</em> context-consuming functions across an entire structure. The comonad family in Karpal consists of five traits arranged in a linear hierarchy with three specialized branches.</p>
+
+    <h2 id="hierarchy">Hierarchy</h2>
+
+    <div class="hierarchy">
+      <span class="node">Functor</span> <span class="arrow">&rarr;</span>
+      <span class="node">Extend</span> <span class="arrow">&rarr;</span>
+      <span class="node">Comonad</span> <span class="arrow">&rarr;</span>
+      <span class="node">ComonadEnv</span><br>
+      <span style="visibility:hidden">Functor &rarr; Extend &rarr; </span><span class="node">Comonad</span> <span class="arrow">&rarr;</span>
+      <span class="node">ComonadStore</span> <span class="arrow">*</span><br>
+      <span style="visibility:hidden">Functor &rarr; Extend &rarr; </span><span class="node">Comonad</span> <span class="arrow">&rarr;</span>
+      <span class="node">ComonadTraced</span> <span class="arrow">*</span>
+    </div>
+
+    <p style="margin-top: var(--space-md);"><strong>* Design note:</strong> <code>ComonadStore</code> and <code>ComonadTraced</code> require <code>HKT</code> (not <code>Comonad</code>) as their supertrait. This is because <code>StoreF</code> and <code>TracedF</code> use <code>Box&lt;dyn Fn&gt;</code> internally, which imposes <code>'static</code> bounds that are incompatible with the generic <code>Functor</code> signature. Since <code>Functor</code> is a supertrait of <code>Extend</code> and <code>Comonad</code>, these types cannot implement the full comonad chain. Instead, they provide their own <code>extract</code> method directly on the trait, defined as a default method in terms of <code>peek</code>/<code>trace</code>.</p>
+
+    <!-- ================================================================== -->
+    <h2 id="extend">Extend</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>Extend</h3>
+        <p class="trait-desc">The dual of Chain. Enables cooperative, context-aware computation.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub trait Extend: Functor {
+    fn extend&lt;A, B&gt;(wa: Self::Of&lt;A&gt;, f: impl Fn(&amp;Self::Of&lt;A&gt;) -&gt; B) -&gt; Self::Of&lt;B&gt;
+    where
+        A: Clone;
+
+    fn duplicate&lt;A&gt;(wa: Self::Of&lt;A&gt;) -&gt; Self::Of&lt;Self::Of&lt;A&gt;&gt;
+    where
+        A: Clone,
+        Self::Of&lt;A&gt;: Clone;
+}</code></pre>
+
+        <p>Given a value in context <code>W&lt;A&gt;</code> and a function <code>&amp;W&lt;A&gt; -&gt; B</code> that can inspect the full context, <code>extend</code> applies that function at every "position" in the structure, producing <code>W&lt;B&gt;</code>. The <code>duplicate</code> method has a default implementation: <code>Self::extend(wa, |w| w.clone())</code>.</p>
+
+        <h4>Laws</h4>
+        <div class="law-box">
+          <div class="law-name">Associativity</div>
+          extend(f, extend(g, w)) == extend(|w| f(&amp;extend(g, w.clone())), w)
+        </div>
+
+        <h4>Instances</h4>
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>IdentityF</code></td><td><code>A</code></td><td>Trivially applies <code>f</code> to the value</td></tr>
+            <tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td>Applies <code>f</code> if <code>Some</code>; returns <code>None</code> otherwise</td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec&lt;A&gt;</code></td><td>Applies <code>f</code> to each suffix (alloc-gated)</td></tr>
+            <tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td>Applies <code>f</code> to the pair, preserving the environment</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+// NonEmptyVec extend: apply a summary function to each suffix
+let nev = NonEmptyVec::new(1, vec![2, 3]);
+let sums = NonEmptyVecF::extend(nev, |w| w.iter().sum::&lt;i32&gt;());
+// Suffixes: [1,2,3], [2,3], [3]  =&gt;  Sums: 6, 5, 3
+assert_eq!(sums, NonEmptyVec::new(6, vec![5, 3]));
+
+// Option extend
+let doubled = OptionF::extend(Some(3), |opt| match opt {
+    Some(x) =&gt; x * 2,
+    None =&gt; 0,
+});
+assert_eq!(doubled, Some(6));
+
+// duplicate: embed the structure inside itself
+let nested = OptionF::duplicate(Some(42));
+assert_eq!(nested, Some(Some(42)));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <h2 id="comonad">Comonad</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>Comonad</h3>
+        <p class="trait-desc">The categorical dual of Monad. Extract a value from context.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub trait Comonad: Extend {
+    fn extract&lt;A: Clone&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
+}</code></pre>
+
+        <p>A Comonad can <code>extract</code> a value from a context and <code>extend</code> a context-aware function over the entire structure. Where <code>Monad::pure</code> injects a value into a minimal context, <code>Comonad::extract</code> pulls a value out of an existing context.</p>
+
+        <h4>Laws</h4>
+        <div class="law-box">
+          <div class="law-name">Left identity</div>
+          extract(&amp;extend(w, f)) == f(&amp;w)
+        </div>
+        <div class="law-box">
+          <div class="law-name">Right identity</div>
+          extend(w, |w| extract(w)) == w
+        </div>
+        <p>Associativity is inherited from <code>Extend</code>.</p>
+
+        <h4>Instances</h4>
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>IdentityF</code></td><td><code>A</code></td><td>Returns the value directly</td></tr>
+            <tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td>Panics on <code>None</code> (partial comonad)</td></tr>
+            <tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec&lt;A&gt;</code></td><td>Returns the head element (alloc-gated)</td></tr>
+            <tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td>Returns the <code>A</code> component, discarding the environment</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+// Extract from NonEmptyVec: always returns the head
+let nev = NonEmptyVec::new(10, vec![20, 30]);
+assert_eq!(NonEmptyVecF::extract(&amp;nev), 10);
+
+// Extract from Env: discards the environment, keeps the value
+assert_eq!(EnvF::&lt;&amp;str&gt;::extract(&amp;("config", 42)), 42);
+
+// Left identity law in action:
+let f = |w: &amp;NonEmptyVec&lt;i32&gt;| w.head + 1;
+let extended = NonEmptyVecF::extend(nev.clone(), f);
+assert_eq!(NonEmptyVecF::extract(&amp;extended), f(&amp;nev));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <h2 id="comonad-env">ComonadEnv</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>ComonadEnv&lt;E&gt;</h3>
+        <p class="trait-desc">A Comonad with access to an environment value. Dual of Reader/MonadReader.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub trait ComonadEnv&lt;E&gt;: Comonad {
+    fn ask&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; E;
+    fn local&lt;A&gt;(wa: Self::Of&lt;A&gt;, f: impl Fn(E) -&gt; E) -&gt; Self::Of&lt;A&gt;;
+}</code></pre>
+
+        <p><code>ask</code> retrieves the environment from the comonadic value. <code>local</code> transforms the environment while leaving the focus value unchanged.</p>
+
+        <h4>Laws</h4>
+        <div class="law-box">
+          <div class="law-name">Local preserves extract</div>
+          extract(local(wa, f)) == extract(wa)
+        </div>
+
+        <h4>Instances</h4>
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td><code>ask</code> returns <code>E</code>; <code>local</code> transforms <code>E</code> via <code>f</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+let w = ("hello", 42);
+
+// ask: retrieve the environment
+assert_eq!(EnvF::&lt;&amp;str&gt;::ask(&amp;w), "hello");
+
+// local: transform the environment, keep the value
+let w2 = (10i32, "value");
+let result = EnvF::&lt;i32&gt;::local(w2, |e| e * 2);
+assert_eq!(result, (20, "value"));
+
+// Law: local does not change the extracted value
+assert_eq!(
+    EnvF::&lt;i32&gt;::extract(&amp;EnvF::&lt;i32&gt;::local((5, 99), |e| e + 1)),
+    EnvF::&lt;i32&gt;::extract(&amp;(5, 99))
+);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <h2 id="comonad-store">ComonadStore</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>ComonadStore&lt;S&gt;</h3>
+        <p class="trait-desc">A comonad with a notion of position and peeking. Dual of State.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub trait ComonadStore&lt;S&gt;: HKT {
+    fn pos&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; S;
+    fn peek&lt;A&gt;(s: S, wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
+
+    /// Extract the focused value (equivalent to `peek(pos(wa), wa)`).
+    fn extract&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; A
+    where
+        S: Clone;
+}</code></pre>
+
+        <p><code>pos</code> returns the current position (index, key, cursor) within the store. <code>peek</code> retrieves the value at an arbitrary position. The default <code>extract</code> method is defined as <code>peek(pos(wa), wa)</code>.</p>
+
+        <p><strong>Design note:</strong> <code>ComonadStore</code> requires <code>HKT</code> rather than <code>Comonad</code> as its supertrait. <code>StoreF&lt;S&gt;</code> is represented as <code>(Box&lt;dyn Fn(S) -&gt; A&gt;, S)</code>, which requires <code>'static</code> bounds on <code>S</code>. The generic <code>Functor</code> trait does not carry this bound, so <code>StoreF</code> cannot implement <code>Functor</code> and therefore cannot implement <code>Extend</code> or <code>Comonad</code>. The <code>extract</code> method is provided directly on this trait instead.</p>
+
+        <h4>Laws</h4>
+        <div class="law-box">
+          <div class="law-name">Peek-pos identity</div>
+          peek(pos(wa), wa) == extract(wa)
+        </div>
+
+        <h4>Instances</h4>
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>StoreF&lt;S&gt;</code></td><td><code>(Box&lt;dyn Fn(S) -&gt; A&gt;, S)</code></td><td>Alloc-gated; requires <code>S: Clone + 'static</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+// A Store is a pair of (lookup function, current position)
+let store: (Box&lt;dyn Fn(i32) -&gt; String&gt;, i32) =
+    (Box::new(|s| format!("value_{}", s)), 42);
+
+// pos: get the current position
+assert_eq!(StoreF::&lt;i32&gt;::pos(&amp;store), 42);
+
+// peek: look up the value at any position
+assert_eq!(StoreF::&lt;i32&gt;::peek(10, &amp;store), "value_10");
+
+// extract: peek at the current position
+assert_eq!(StoreF::&lt;i32&gt;::extract(&amp;store), "value_42");</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <h2 id="comonad-traced">ComonadTraced</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>ComonadTraced&lt;M: Monoid&gt;</h3>
+        <p class="trait-desc">A comonad with a monoidal trace/accumulator. Dual of Writer.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub trait ComonadTraced&lt;M: Monoid&gt;: HKT {
+    fn trace&lt;A&gt;(m: M, wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
+
+    /// Extract the focused value (equivalent to `trace(M::empty(), wa)`).
+    fn extract&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
+}</code></pre>
+
+        <p><code>trace</code> queries the comonadic value with a monoidal input. The default <code>extract</code> method traces with the monoidal identity (<code>M::empty()</code>), yielding the "current" value without any accumulated trace.</p>
+
+        <p><strong>Design note:</strong> Like <code>ComonadStore</code>, this trait requires <code>HKT</code> rather than <code>Comonad</code> as its supertrait. <code>TracedF&lt;M&gt;</code> is represented as <code>Box&lt;dyn Fn(M) -&gt; A&gt;</code>, which imposes <code>'static</code> bounds incompatible with the generic <code>Functor</code> signature.</p>
+
+        <h4>Laws</h4>
+        <div class="law-box">
+          <div class="law-name">Identity trace</div>
+          trace(M::empty(), wa) == extract(wa)
+        </div>
+
+        <h4>Instances</h4>
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>TracedF&lt;M&gt;</code></td><td><code>Box&lt;dyn Fn(M) -&gt; A&gt;</code></td><td>Alloc-gated; requires <code>M: Monoid + Clone + 'static</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+<pre><code class="language-rust">use karpal_core::prelude::*;
+
+// A Traced comonad is a function from a monoid to a value
+let w: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|m| format!("traced_{}", m));
+
+// trace: query with a specific monoidal value
+assert_eq!(TracedF::&lt;i32&gt;::trace(5, &amp;w), "traced_5");
+
+// extract: trace with the monoidal identity (i32::empty() == 0)
+assert_eq!(TracedF::&lt;i32&gt;::extract(&amp;w), "traced_0");</code></pre>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

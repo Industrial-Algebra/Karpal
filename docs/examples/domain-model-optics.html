@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domain Model with Optics - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="../reference/functor-family.html">Functor Family</a></li>
+          <li><a href="../reference/alt-family.html">Alt Family</a></li>
+          <li><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="../reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="../reference/macros.html">Macros</a></li>
+          <li><a href="../reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="../reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="../reference/invariant.html">Invariant</a></li>
+          <li><a href="../reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="../reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="../reference/arrow-family.html">Arrow Family</a></li>
+          <li><a href="../reference/optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="data-transformation.html">Data Transformation</a></li>
+          <li><a href="cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="domain-model-optics.html" class="active">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="domain-model-optics.html">Examples</a> &gt; <span>Domain Model</span>
+    </nav>
+
+    <h1>Domain Model with Optics</h1>
+    <p>E-commerce domain model using Lens composition, Prism, and profunctor transform.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <p>Real-world domain models contain both <strong>product types</strong> (structs with named fields) and <strong>sum types</strong> (enums with distinct variants). Karpal provides two complementary optics for working with them:</p>
+
+    <ul>
+      <li><strong>Lens</strong> &mdash; focuses on a single field inside a product type. Every product has the field, so a Lens always succeeds. Lenses compose with <code>.then()</code> to reach deeply nested fields.</li>
+      <li><strong>Prism</strong> &mdash; focuses on a single variant of a sum type. The variant may or may not be present, so a Prism can fail gracefully. Prisms let you preview, construct, and modify individual variants without touching the others.</li>
+    </ul>
+
+    <p>Both optics support <code>transform</code>, which uses the <a href="../reference/profunctor-family.html">Profunctor</a> abstraction (<code>FnP</code>) to produce a reusable <code>S -&gt; S</code> update function from an <code>A -&gt; A</code> inner function. This is the key to composable, first-class data transformations.</p>
+
+    <h2 id="domain-model">The Domain Model</h2>
+
+    <p>The example defines an e-commerce order with nested structs and an enum for payment methods:</p>
+
+<pre><code class="language-rust">#[derive(Debug, Clone, PartialEq)]
+struct Order {
+    id: u32,
+    customer: Customer,
+    items: Vec&lt;Item&gt;,
+    payment: Payment,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Customer {
+    name: String,
+    address: Address,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Address {
+    street: String,
+    city: String,
+    zip: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Item {
+    name: String,
+    price_cents: i64,
+    quantity: u32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum Payment {
+    CreditCard { last4: String, exp: String },
+    BankTransfer { iban: String },
+    Wallet { provider: String, balance_cents: i64 },
+}</code></pre>
+
+    <p><code>Order</code>, <code>Customer</code>, <code>Address</code>, and <code>Item</code> are product types &mdash; every instance has every field. <code>Payment</code> is a sum type &mdash; each order uses exactly one payment method.</p>
+
+    <h2 id="lenses">Defining Lenses</h2>
+
+    <p>A <code>SimpleLens&lt;S, A&gt;</code> is created with <code>Lens::new</code>, which takes a getter (<code>&amp;S -&gt; A</code>) and a setter (<code>(S, A) -&gt; S</code>):</p>
+
+<pre><code class="language-rust">fn customer_lens() -&gt; SimpleLens&lt;Order, Customer&gt; {
+    Lens::new(
+        |o: &amp;Order| o.customer.clone(),
+        |o, customer| Order { customer, ..o },
+    )
+}
+
+fn address_lens() -&gt; SimpleLens&lt;Customer, Address&gt; {
+    Lens::new(
+        |c: &amp;Customer| c.address.clone(),
+        |c, address| Customer { address, ..c },
+    )
+}
+
+fn city_lens() -&gt; SimpleLens&lt;Address, String&gt; {
+    Lens::new(
+        |a: &amp;Address| a.city.clone(),
+        |a, city| Address { city, ..a },
+    )
+}</code></pre>
+
+    <p>Each lens is a small, self-contained unit that knows how to read and write a single field. The setter uses Rust's struct update syntax (<code>..o</code>) to copy all other fields unchanged.</p>
+
+    <h2 id="composition">Lens Composition with <code>.then()</code></h2>
+
+    <p>Individual lenses compose into a <code>ComposedLens</code> via <code>.then()</code>. This lets you reach deeply nested fields without manually threading getters and setters:</p>
+
+<pre><code class="language-rust">let order_city = customer_lens().then(address_lens()).then(city_lens());
+let order_zip  = customer_lens().then(address_lens()).then(zip_lens());
+
+// Deep get
+println!("Order city: {}", order_city.get(&amp;order));
+println!("Order zip:  {}", order_zip.get(&amp;order));
+
+// Deep set (returns a new Order, original unchanged)
+let updated = order_city.set(order.clone(), "Shelbyville".into());
+
+// Deep over (apply a function to the focused value)
+let uppercased = order_city.over(order.clone(), |c| c.to_uppercase());</code></pre>
+
+    <p>The composed lens <code>order_city</code> has type <code>ComposedLens&lt;Order, String&gt;</code>. It supports the same <code>get</code>, <code>set</code>, and <code>over</code> operations as a simple lens, but it reaches three levels deep: <code>Order -&gt; Customer -&gt; Address -&gt; city</code>.</p>
+
+    <h2 id="transform">Lens Transform with <code>FnP</code></h2>
+
+    <p>The <code>transform</code> method converts a lens and an inner function into a reusable update function. It uses the <code>FnP</code> profunctor (a boxed function type) to lift an <code>A -&gt; A</code> function into an <code>S -&gt; S</code> function:</p>
+
+<pre><code class="language-rust">let normalize_city: Box&lt;dyn Fn(String) -&gt; String&gt; =
+    Box::new(|c| c.trim().to_uppercase());
+let normalize_order_city = city_lens().transform::&lt;FnP&gt;(normalize_city);
+
+let addr = Address {
+    street: "456 Oak Ave".into(),
+    city: "  new york  ".into(),
+    zip: "10001".into(),
+};
+let normalized = normalize_order_city(addr);
+// normalized.city == "NEW YORK"</code></pre>
+
+    <p>The result is a plain <code>Address -&gt; Address</code> function that normalizes only the city field. You can store it, pass it around, and apply it to any <code>Address</code> value.</p>
+
+    <h2 id="prisms">Defining Prisms</h2>
+
+    <p>A <code>SimplePrism&lt;S, A&gt;</code> is created with <code>Prism::new</code>, which takes a match function (<code>S -&gt; Result&lt;A, S&gt;</code>) and a build function (<code>A -&gt; S</code>). The match returns <code>Ok(a)</code> if the variant matches, or <code>Err(s)</code> with the original value if it does not:</p>
+
+<pre><code class="language-rust">fn credit_card_prism() -&gt; SimplePrism&lt;Payment, (String, String)&gt; {
+    Prism::new(
+        |p| match p {
+            Payment::CreditCard { last4, exp } =&gt; Ok((last4, exp)),
+            other =&gt; Err(other),
+        },
+        |(last4, exp)| Payment::CreditCard { last4, exp },
+    )
+}
+
+fn wallet_prism() -&gt; SimplePrism&lt;Payment, (String, i64)&gt; {
+    Prism::new(
+        |p| match p {
+            Payment::Wallet { provider, balance_cents } =&gt; Ok((provider, balance_cents)),
+            other =&gt; Err(other),
+        },
+        |(provider, balance_cents)| Payment::Wallet { provider, balance_cents },
+    )
+}
+
+fn bank_transfer_prism() -&gt; SimplePrism&lt;Payment, String&gt; {
+    Prism::new(
+        |p| match p {
+            Payment::BankTransfer { iban } =&gt; Ok(iban),
+            other =&gt; Err(other),
+        },
+        |iban| Payment::BankTransfer { iban },
+    )
+}</code></pre>
+
+    <h2 id="prism-operations">Prism Operations</h2>
+
+    <p>Prisms provide three core operations:</p>
+
+    <ul>
+      <li><strong><code>preview(&amp;S) -&gt; Option&lt;A&gt;</code></strong> &mdash; attempts to extract the focused variant. Returns <code>Some(a)</code> on match, <code>None</code> otherwise.</li>
+      <li><strong><code>review(A) -&gt; S</code></strong> &mdash; constructs a sum type value from the variant's inner data.</li>
+      <li><strong><code>over(S, Fn(A) -&gt; A) -&gt; S</code></strong> &mdash; modifies the focused variant if it matches; passes through unchanged if it does not.</li>
+    </ul>
+
+<pre><code class="language-rust">let cc = credit_card_prism();
+let wallet = wallet_prism();
+
+// preview: extract if matched
+cc.preview(&amp;order.payment);      // Some(("4242", "12/25"))
+wallet.preview(&amp;order.payment);  // None (order pays by credit card)
+
+// review: construct a variant
+let new_payment = wallet.review(("PayPal".into(), 5000));
+// Payment::Wallet { provider: "PayPal", balance_cents: 5000 }
+
+// over: modify only if matched
+let updated_payment = cc.over(order.payment.clone(), |(last4, _exp)| {
+    (last4, "01/28".into())
+});
+// Updates the expiry; leaves other fields intact
+
+// over on non-matching variant: passes through unchanged
+let unchanged = wallet.over(order.payment.clone(), |(prov, bal)| {
+    (prov, bal + 1000)
+});
+// Still CreditCard — wallet.over is a no-op here</code></pre>
+
+    <h2 id="prism-transform">Prism Transform</h2>
+
+    <p>Like lenses, prisms support <code>transform</code> to produce a reusable <code>S -&gt; S</code> function. The transformed function applies the inner modification when the variant matches and returns the value unchanged otherwise:</p>
+
+<pre><code class="language-rust">let add_balance: Box&lt;dyn Fn((String, i64)) -&gt; (String, i64)&gt; =
+    Box::new(|(prov, bal)| (prov, bal + 2500));
+let add_wallet_balance = wallet_prism().transform::&lt;FnP&gt;(add_balance);
+
+let wallet_payment = Payment::Wallet {
+    provider: "PayPal".into(),
+    balance_cents: 10000,
+};
+let topped_up = add_wallet_balance(wallet_payment);
+// Payment::Wallet { provider: "PayPal", balance_cents: 12500 }
+
+// Apply to a non-wallet payment — passes through unchanged
+let still_cc = add_wallet_balance(order.payment.clone());
+// Still CreditCard { last4: "4242", exp: "12/25" }</code></pre>
+
+    <h2 id="combining">Combining Lenses and Prisms</h2>
+
+    <p>In practice you use lenses and prisms together. Lenses drill into product type fields; prisms branch on sum type variants. The example demonstrates iterating over a collection of orders and using both optics:</p>
+
+<pre><code class="language-rust">let order_city_lens = customer_lens().then(address_lens()).then(city_lens());
+
+for o in &amp;orders {
+    let city = order_city_lens.get(o);
+    let name = name_lens().get(&amp;o.customer);
+    let payment_type = match &amp;o.payment {
+        Payment::CreditCard { .. } =&gt; "CC",
+        Payment::BankTransfer { .. } =&gt; "Bank",
+        Payment::Wallet { .. } =&gt; "Wallet",
+    };
+    println!("Order #{}: {} ({}, pays via {})", o.id, city, name, payment_type);
+}
+
+// Extract all bank IBANs using a prism
+let bank = bank_transfer_prism();
+for o in &amp;orders {
+    if let Some(iban) = bank.preview(&amp;o.payment) {
+        println!("Order #{}: {}", o.id, iban);
+    }
+}</code></pre>
+
+    <h2 id="run-it">Run It</h2>
+
+    <p>To run this example from the workspace root:</p>
+
+<pre><code class="language-rust">cargo run -p karpal-std --example domain_model_optics</code></pre>
+
+    <h2 id="traits-used">Traits Used</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Trait / Type</th><th>Role in this example</th><th>Reference</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Lens</code> / <code>SimpleLens</code></td>
+          <td>Focus on a single field in a product type; get, set, over</td>
+          <td><a href="../reference/optics.html">Optics</a></td>
+        </tr>
+        <tr>
+          <td><code>ComposedLens</code></td>
+          <td>Chain lenses with <code>.then()</code> for deep nested access</td>
+          <td><a href="../reference/optics.html">Optics</a></td>
+        </tr>
+        <tr>
+          <td><code>Prism</code> / <code>SimplePrism</code></td>
+          <td>Focus on a single variant of a sum type; preview, review, over</td>
+          <td><a href="../reference/optics.html">Optics</a></td>
+        </tr>
+        <tr>
+          <td><code>FnP</code></td>
+          <td>Profunctor marker type for <code>transform</code>; lifts <code>A -&gt; A</code> to <code>S -&gt; S</code></td>
+          <td><a href="../reference/profunctor-family.html">Profunctor Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Strong</code></td>
+          <td>Profunctor subclass used internally by Lens transform</td>
+          <td><a href="../reference/profunctor-family.html">Profunctor Family</a></td>
+        </tr>
+        <tr>
+          <td><code>Choice</code></td>
+          <td>Profunctor subclass used internally by Prism transform</td>
+          <td><a href="../reference/profunctor-family.html">Profunctor Family</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

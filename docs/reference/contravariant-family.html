@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contravariant Family - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html" class="active">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="contravariant-family.html">Reference</a> &gt; <span>Contravariant Family</span>
+    </nav>
+
+    <h1>Contravariant Family</h1>
+    <p>Contravariant functors and their combinators: the duals of the covariant hierarchy.</p>
+
+    <p>Where a covariant <code>Functor</code> consumes a function <code>A -&gt; B</code> to transform <code>F&lt;A&gt;</code> into <code>F&lt;B&gt;</code>, a <code>Contravariant</code> functor consumes a function going the <em>other way</em> -- <code>B -&gt; A</code> -- to transform <code>F&lt;A&gt;</code> into <code>F&lt;B&gt;</code>. The canonical example is a predicate: if you have a predicate on integers and a function that extracts an integer from a string, you can build a predicate on strings.</p>
+
+    <p>The contravariant family splits into two branches that mirror the covariant hierarchy:</p>
+
+    <ul>
+      <li><strong>Product side:</strong> <code>Contravariant</code> &rarr; <code>Divide</code> &rarr; <code>Divisible</code></li>
+      <li><strong>Sum side:</strong> <code>Contravariant</code> &rarr; <code>Decide</code> &rarr; <code>Conclude</code></li>
+    </ul>
+
+    <p>All contravariant types in Karpal are <strong>alloc-gated</strong> -- they require the <code>std</code> or <code>alloc</code> feature because they use <code>Box&lt;dyn Fn&gt;</code> internally.</p>
+
+    <!-- ================================================================== -->
+    <!-- Duality table                                                      -->
+    <!-- ================================================================== -->
+
+    <h2 id="duality">Duality with the Covariant Hierarchy</h2>
+
+    <p>Each contravariant trait is the dual of a corresponding covariant trait. The relationship is systematic: where the covariant side <em>produces</em> values, the contravariant side <em>consumes</em> them.</p>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Contravariant</th><th>Covariant dual</th><th>Role</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>Contravariant</code></td><td><code>Functor</code></td><td>Adapt input type via a function</td></tr>
+        <tr><td><code>Divide</code></td><td><code>Apply</code></td><td>Split input into parts, handle each independently</td></tr>
+        <tr><td><code>Divisible</code></td><td><code>Applicative</code></td><td>Identity for splitting (accepts anything)</td></tr>
+        <tr><td><code>Decide</code></td><td><code>Alt</code></td><td>Route input to one of two handlers</td></tr>
+        <tr><td><code>Conclude</code></td><td><code>Plus</code></td><td>Identity for routing (uninhabited input)</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ================================================================== -->
+    <!-- Contravariant                                                      -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="contravariant">Contravariant</h3>
+        <p class="trait-desc">A functor that maps over inputs rather than outputs.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Contravariant functor: lifts a function `B -&gt; A` into `F&lt;A&gt; -&gt; F&lt;B&gt;`.
+pub trait Contravariant: HKT {
+    fn contramap&lt;A: 'static, B&gt;(
+        fa: Self::Of&lt;A&gt;,
+        f: impl Fn(B) -&gt; A + 'static,
+    ) -&gt; Self::Of&lt;B&gt;;
+}</code></pre>
+
+        <p>Given a value of type <code>F&lt;A&gt;</code> and a function <code>B -&gt; A</code>, <code>contramap</code> produces a value of type <code>F&lt;B&gt;</code>. The function goes in the <em>opposite</em> direction compared to <code>Functor::fmap</code>. The <code>'static</code> bounds are required because <code>PredicateF</code> stores the function inside a <code>Box&lt;dyn Fn&gt;</code>.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Identity</span>
+          <p>Contramapping the identity function changes nothing:</p>
+<pre><code class="language-rust">Contravariant::contramap(fa, |x| x) == fa</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Composition</span>
+          <p>Contramapping a composed function is the same as contramapping each function in sequence (note the reversed order):</p>
+<pre><code class="language-rust">contramap(f . g, fa) == contramap(g, contramap(f, fa))</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;T&gt;</code></th><th>Behavior</th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PredicateF</code></td>
+              <td><code>Box&lt;dyn Fn(T) -&gt; bool&gt;</code></td>
+              <td>Pre-composes the adaptation function before the predicate</td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::contravariant::{Contravariant, PredicateF};
+
+// A predicate on integers
+let is_positive: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x &gt; 0);
+
+// Adapt it to work on strings by extracting the length
+let str_len_positive = PredicateF::contramap(is_positive, |s: &amp;str| s.len() as i32);
+
+assert!(str_len_positive("hello"));  // len 5 &gt; 0
+assert!(!str_len_positive(""));      // len 0, not &gt; 0</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Divide                                                             -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="divide">Divide</h3>
+        <p class="trait-desc">The contravariant analogue of Apply -- split an input into parts and handle each independently.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Divide: the contravariant analogue of Apply.
+///
+/// Given a way to split `C` into `(A, B)`, and contravariant functors over
+/// `A` and `B`, produce a contravariant functor over `C`.
+pub trait Divide: Contravariant {
+    fn divide&lt;A: 'static, B: 'static, C: 'static&gt;(
+        f: impl Fn(C) -&gt; (A, B) + 'static,
+        fa: Self::Of&lt;A&gt;,
+        fb: Self::Of&lt;B&gt;,
+    ) -&gt; Self::Of&lt;C&gt;;
+}</code></pre>
+
+        <p>Where <code>Apply</code> combines two containers of <em>outputs</em>, <code>Divide</code> combines two consumers of <em>inputs</em>. The splitting function <code>f</code> decomposes the input <code>C</code> into a pair <code>(A, B)</code>, then each part is handled by its respective consumer.</p>
+
+        <p>For <code>PredicateF</code>, <code>divide</code> produces a predicate that splits the input and returns <code>true</code> only if <strong>both</strong> sub-predicates accept their respective parts.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Associativity</span>
+          <p>Nesting <code>divide</code> on the left or right produces equivalent results, as long as the splitting functions decompose the input consistently:</p>
+<pre><code class="language-rust">divide(f, divide(g, a, b), c) == divide(h, a, divide(i, b, c))</code></pre>
+          <p>Where <code>f</code>, <code>g</code>, <code>h</code>, and <code>i</code> are appropriate splitting functions that distribute the components equivalently.</p>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Behavior of <code>divide</code></th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PredicateF</code></td>
+              <td>Splits the input, then returns <code>fa(a) &amp;&amp; fb(b)</code></td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::contravariant::PredicateF;
+use karpal_core::divide::Divide;
+
+let is_positive: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x &gt; 0);
+let is_even: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x % 2 == 0);
+
+// Split a tuple into its components, check both predicates
+let both: Box&lt;dyn Fn((i32, i32)) -&gt; bool&gt; =
+    PredicateF::divide(|pair: (i32, i32)| pair, is_positive, is_even);
+
+assert!(both((3, 4)));   // 3 &gt; 0 AND 4 is even
+assert!(!both((-1, 4))); // -1 is not &gt; 0
+assert!(!both((3, 3)));  // 3 is not even</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Divisible                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="divisible">Divisible</h3>
+        <p class="trait-desc">The contravariant analogue of Applicative -- adds an identity element for Divide.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Divisible: the contravariant analogue of Applicative.
+///
+/// Adds a `conquer` operation (the identity for `divide`), analogous to `pure`.
+pub trait Divisible: Divide {
+    fn conquer&lt;A: 'static&gt;() -&gt; Self::Of&lt;A&gt;;
+}</code></pre>
+
+        <p>The <code>conquer</code> method produces a consumer that accepts any input and always succeeds. It is the identity element for <code>divide</code> -- dividing against a <code>conquer()</code> value has no effect on the result.</p>
+
+        <p>For <code>PredicateF</code>, <code>conquer</code> returns a predicate that is always <code>true</code>.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Identity</span>
+          <p>Dividing with <code>conquer()</code> on the left is equivalent to contramapping the second projection:</p>
+<pre><code class="language-rust">divide(f, conquer(), fa) == contramap(snd . f, fa)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Identity</span>
+          <p>Dividing with <code>conquer()</code> on the right is equivalent to contramapping the first projection:</p>
+<pre><code class="language-rust">divide(f, fa, conquer()) == contramap(fst . f, fa)</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Behavior of <code>conquer</code></th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PredicateF</code></td>
+              <td>Returns <code>Box::new(|_| true)</code> -- always accepts</td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::contravariant::PredicateF;
+use karpal_core::divisible::Divisible;
+
+// conquer() produces a predicate that accepts everything
+let p: Box&lt;dyn Fn(i32) -&gt; bool&gt; = PredicateF::conquer();
+assert!(p(42));
+assert!(p(-1));
+assert!(p(0));</code></pre>
+
+<pre><code class="language-rust">use karpal_core::contravariant::PredicateF;
+use karpal_core::divide::Divide;
+use karpal_core::divisible::Divisible;
+
+// Left identity: divide with conquer() on the left has no effect
+let fa: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|a| a &gt; 0);
+let result = PredicateF::divide(
+    |a: i32| ((), a),
+    PredicateF::conquer::&lt;()&gt;(),
+    fa,
+);
+assert!(result(5));   // equivalent to the original predicate
+assert!(!result(-3));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Decide                                                             -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="decide">Decide</h3>
+        <p class="trait-desc">The contravariant analogue of Alt -- route an input to one of two handlers.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Decide: the contravariant analogue of Alt.
+///
+/// Given a way to split `C` into either `A` or `B`, and contravariant
+/// functors over `A` and `B`, produce a contravariant functor over `C`.
+pub trait Decide: Contravariant {
+    fn choose&lt;A: 'static, B: 'static, C: 'static&gt;(
+        f: impl Fn(C) -&gt; Result&lt;A, B&gt; + 'static,
+        fa: Self::Of&lt;A&gt;,
+        fb: Self::Of&lt;B&gt;,
+    ) -&gt; Self::Of&lt;C&gt;;
+}</code></pre>
+
+        <p>Where <code>Divide</code> handles the product case (split into <em>both</em> parts), <code>Decide</code> handles the sum case (route to <em>one</em> handler). The classification function <code>f</code> returns <code>Result&lt;A, B&gt;</code>, which serves as Karpal's encoding of <code>Either</code>: <code>Ok(a)</code> routes to <code>fa</code>, and <code>Err(b)</code> routes to <code>fb</code>.</p>
+
+        <p>For <code>PredicateF</code>, <code>choose</code> classifies the input and delegates to whichever predicate matches.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Associativity</span>
+          <p>Nesting <code>choose</code> on the left or right produces equivalent results, as long as the routing functions classify consistently:</p>
+<pre><code class="language-rust">choose(f, choose(g, a, b), c) == choose(h, a, choose(i, b, c))</code></pre>
+          <p>Where <code>f</code>, <code>g</code>, <code>h</code>, and <code>i</code> are appropriate routing functions that distribute the cases equivalently.</p>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Behavior of <code>choose</code></th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PredicateF</code></td>
+              <td>Classifies input via <code>f</code>, then applies <code>fa</code> on <code>Ok</code> or <code>fb</code> on <code>Err</code></td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::contravariant::PredicateF;
+use karpal_core::decide::Decide;
+
+let is_positive: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x &gt; 0);
+let is_short: Box&lt;dyn Fn(String) -&gt; bool&gt; = Box::new(|s| s.len() &lt; 5);
+
+// Classify input: integers go to Ok, strings go to Err
+let classifier = PredicateF::choose(
+    |input: Result&lt;i32, String&gt;| input,
+    is_positive,
+    is_short,
+);
+
+assert!(classifier(Ok(5)));                          // 5 &gt; 0
+assert!(!classifier(Ok(-1)));                        // -1 not &gt; 0
+assert!(classifier(Err("hi".to_string())));          // len 2 &lt; 5
+assert!(!classifier(Err("hello world".to_string()))); // len 11, not &lt; 5</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Conclude                                                           -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="conclude">Conclude</h3>
+        <p class="trait-desc">The contravariant analogue of Plus -- the identity element for Decide.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Conclude: the contravariant analogue of Plus.
+///
+/// Adds a `conclude` operation (the identity for `choose`).
+/// `conclude` takes a function `A -&gt; Infallible`, witnessing that `A` is
+/// uninhabited -- so the resulting predicate is vacuously true.
+pub trait Conclude: Decide {
+    fn conclude&lt;A: 'static&gt;(
+        f: impl Fn(A) -&gt; core::convert::Infallible + 'static,
+    ) -&gt; Self::Of&lt;A&gt;;
+}</code></pre>
+
+        <p>The <code>conclude</code> method takes a function from <code>A</code> to <code>Infallible</code>. If such a function exists, it witnesses that <code>A</code> is uninhabited -- no value of type <code>A</code> can ever be constructed. The resulting consumer is vacuously valid: it will never be called with a real input.</p>
+
+        <p>Rust uses <code>core::convert::Infallible</code> as its bottom type (the equivalent of Haskell's <code>Void</code>). For inhabited types, the function body typically uses <code>unreachable!()</code> since it can never actually execute in well-typed code.</p>
+
+        <p>For <code>PredicateF</code>, <code>conclude</code> returns a predicate that is always <code>true</code>.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Identity</span>
+          <p>Choosing with <code>conclude(absurd)</code> on the left is equivalent to contramapping the right projection:</p>
+<pre><code class="language-rust">choose(f, conclude(absurd), fa) == contramap(from_right . f, fa)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Identity</span>
+          <p>Choosing with <code>conclude(absurd)</code> on the right is equivalent to contramapping the left projection:</p>
+<pre><code class="language-rust">choose(f, fa, conclude(absurd)) == contramap(from_left . f, fa)</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th>Behavior of <code>conclude</code></th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PredicateF</code></td>
+              <td>Returns <code>Box::new(|_| true)</code> -- vacuously accepts</td>
+              <td><code>std</code> or <code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::contravariant::PredicateF;
+use karpal_core::conclude::Conclude;
+
+// conclude with an unreachable function -- the predicate is vacuously true
+let p: Box&lt;dyn Fn(i32) -&gt; bool&gt; = PredicateF::conclude(|_: i32| unreachable!());
+assert!(p(42));
+assert!(p(-1));</code></pre>
+
+<pre><code class="language-rust">use karpal_core::contravariant::PredicateF;
+use karpal_core::decide::Decide;
+use karpal_core::conclude::Conclude;
+
+// Right identity: choosing with conclude on the right has no effect
+let fa: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|a| a &gt; 0);
+let result = PredicateF::choose(
+    |a: i32| -&gt; Result&lt;i32, core::convert::Infallible&gt; { Ok(a) },
+    fa,
+    PredicateF::conclude(|i: core::convert::Infallible| -&gt; core::convert::Infallible { i }),
+);
+assert!(result(5));   // equivalent to the original predicate
+assert!(!result(-3));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Combining both branches                                            -->
+    <!-- ================================================================== -->
+
+    <h2 id="combining-branches">Combining Both Branches</h2>
+
+    <p>In practice, <code>Divide</code> and <code>Decide</code> complement each other. <code>Divide</code> handles product types (structs, tuples) by splitting into fields, while <code>Decide</code> handles sum types (enums) by routing to the matching variant. Together they let you build validators and predicates for complex data structures compositionally:</p>
+
+<pre><code class="language-rust">use karpal_core::contravariant::{Contravariant, PredicateF};
+use karpal_core::divide::Divide;
+use karpal_core::decide::Decide;
+
+// Field-level predicates
+let name_valid: Box&lt;dyn Fn(String) -&gt; bool&gt; = Box::new(|s| !s.is_empty());
+let age_valid: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|a| a &gt;= 0 &amp;&amp; a &lt;= 150);
+
+// Combine with Divide: validate a (name, age) pair
+let person_valid: Box&lt;dyn Fn((String, i32)) -&gt; bool&gt; =
+    PredicateF::divide(|p: (String, i32)| p, name_valid, age_valid);
+
+assert!(person_valid(("Alice".to_string(), 30)));
+assert!(!person_valid(("".to_string(), 30)));       // empty name
+assert!(!person_valid(("Alice".to_string(), -1)));   // negative age
+
+// Sum-type routing with Decide: handle either a string or an integer
+let str_check: Box&lt;dyn Fn(String) -&gt; bool&gt; = Box::new(|s| s.len() &lt; 10);
+let int_check: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|n| n &gt; 0);
+
+let either_check = PredicateF::choose(
+    |input: Result&lt;String, i32&gt;| input,
+    str_check,
+    int_check,
+);
+
+assert!(either_check(Ok("short".to_string())));
+assert!(!either_check(Err(-5)));</code></pre>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

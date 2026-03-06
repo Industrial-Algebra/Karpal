@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FunctorFilter &amp; Selective - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html" class="active">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="../index.html">Reference</a> &gt; <span>FunctorFilter &amp; Selective</span>
+    </nav>
+
+    <h1>FunctorFilter &amp; Selective</h1>
+    <p>Filtering and conditional execution within functorial contexts.</p>
+
+    <!-- ================================================================== -->
+    <!-- FunctorFilter                                                       -->
+    <!-- ================================================================== -->
+
+    <h2 id="functor-filter">FunctorFilter</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>FunctorFilter</h3>
+      </div>
+      <div class="trait-card-body">
+        <p>A <code>Functor</code> that can filter elements during mapping. <code>filter_map</code> applies a function that may return <code>None</code> to discard elements, combining mapping and filtering in a single pass.</p>
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait FunctorFilter: Functor {
+    fn filter_map&lt;A, B&gt;(fa: Self::Of&lt;A&gt;, f: impl Fn(A) -&gt; Option&lt;B&gt;) -&gt; Self::Of&lt;B&gt;;
+
+    fn filter&lt;A: Clone&gt;(fa: Self::Of&lt;A&gt;, pred: impl Fn(&amp;A) -&gt; bool) -&gt; Self::Of&lt;A&gt; {
+        Self::filter_map(fa, |a| if pred(&amp;a) { Some(a) } else { None })
+    }
+}</code></pre>
+
+        <h4>Methods</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Method</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>filter_map(fa, f)</code></td>
+              <td>Apply <code>f</code> to each element; keep only those where <code>f</code> returns <code>Some</code>. This is the required method that implementations must provide.</td>
+            </tr>
+            <tr>
+              <td><code>filter(fa, pred)</code></td>
+              <td>Keep only elements for which <code>pred</code> returns <code>true</code>. Default implementation delegates to <code>filter_map</code>. Requires <code>A: Clone</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <ul>
+            <li><strong>Identity:</strong> <code>filter_map(fa, Some) == fa</code> &mdash; mapping with <code>Some</code> (which never discards) is a no-op.</li>
+            <li><strong>Composition:</strong> <code>filter_map(filter_map(fa, f), g) == filter_map(fa, |a| f(a).and_then(g))</code> &mdash; two successive filter-maps can be fused into one.</li>
+          </ul>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>OptionF</code></td>
+              <td><code>Option&lt;A&gt;</code></td>
+              <td>Delegates to <code>Option::and_then</code>. Available in <code>no_std</code>.</td>
+            </tr>
+            <tr>
+              <td><code>VecF</code></td>
+              <td><code>Vec&lt;A&gt;</code></td>
+              <td>Uses <code>Iterator::filter_map</code> internally. Requires <code>alloc</code> or <code>std</code> feature.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><code>ResultF&lt;E&gt;</code> does not implement <code>FunctorFilter</code> because filtering a <code>Result</code> would require a default error value (<code>E: Default</code>), which is too restrictive.</p>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// filter_map: keep only positive values, doubled
+let nums = vec![1, -2, 3, -4, 5];
+let result = VecF::filter_map(nums, |x| {
+    if x &gt; 0 { Some(x * 2) } else { None }
+});
+assert_eq!(result, vec![2, 6, 10]);
+
+// filter: keep only even numbers
+let nums = vec![1, 2, 3, 4, 5, 6];
+let evens = VecF::filter(nums, |x| x % 2 == 0);
+assert_eq!(evens, vec![2, 4, 6]);
+
+// With OptionF: filter_map acts like and_then
+let value = OptionF::filter_map(Some(10), |x| {
+    if x &gt; 5 { Some(x * 3) } else { None }
+});
+assert_eq!(value, Some(30));
+
+let rejected = OptionF::filter_map(Some(2), |x| {
+    if x &gt; 5 { Some(x * 3) } else { None }
+});
+assert_eq!(rejected, None);</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Selective                                                           -->
+    <!-- ================================================================== -->
+
+    <h2 id="selective">Selective</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3>Selective</h3>
+      </div>
+      <div class="trait-card-body">
+        <p>An <code>Applicative</code> that can conditionally apply effects. <code>Selective</code> sits between <code>Applicative</code> and <code>Monad</code> in expressive power: it can branch on a value inside the functor without requiring full monadic bind. The branching is encoded using <code>Result&lt;A, B&gt;</code> where <code>Ok(a)</code> means "needs the function applied" and <code>Err(b)</code> means "already resolved."</p>
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Selective: Applicative {
+    fn select&lt;A, B, F&gt;(fab: Self::Of&lt;Result&lt;A, B&gt;&gt;, ff: Self::Of&lt;F&gt;) -&gt; Self::Of&lt;B&gt;
+    where
+        A: Clone,
+        F: Fn(A) -&gt; B;
+}</code></pre>
+
+        <h4>Methods</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Method</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>select(fab, ff)</code></td>
+              <td>If <code>fab</code> contains <code>Ok(a)</code>, apply the function inside <code>ff</code> to produce <code>B</code>. If <code>fab</code> contains <code>Err(b)</code>, return <code>b</code> directly, ignoring <code>ff</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <ul>
+            <li><strong>Identity:</strong> <code>select(fmap(Err, x), _) == x</code> &mdash; when every value is already resolved (wrapped in <code>Err</code>), the function argument is never used and the original values pass through unchanged.</li>
+          </ul>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>OptionF</code></td>
+              <td><code>Option&lt;A&gt;</code></td>
+              <td><code>None</code> propagates. <code>Some(Ok(a))</code> applies the function if present. <code>Some(Err(b))</code> returns <code>Some(b)</code> directly.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Branching semantics</h4>
+
+        <p>The <code>Result</code> inside the first argument encodes a choice:</p>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th><code>fab</code></th><th><code>ff</code></th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Some(Ok(a))</code></td>
+              <td><code>Some(f)</code></td>
+              <td><code>Some(f(a))</code> &mdash; function is applied</td>
+            </tr>
+            <tr>
+              <td><code>Some(Ok(a))</code></td>
+              <td><code>None</code></td>
+              <td><code>None</code> &mdash; function needed but absent</td>
+            </tr>
+            <tr>
+              <td><code>Some(Err(b))</code></td>
+              <td><em>(any)</em></td>
+              <td><code>Some(b)</code> &mdash; already resolved, function ignored</td>
+            </tr>
+            <tr>
+              <td><code>None</code></td>
+              <td><em>(any)</em></td>
+              <td><code>None</code> &mdash; no value to branch on</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+// Ok branch: the function is applied
+let result = OptionF::select(
+    Some(Ok(3i32)),
+    Some(|x: i32| x * 2),
+);
+assert_eq!(result, Some(6));
+
+// Err branch: already resolved, function is ignored
+let result = OptionF::select(
+    Some(Err(42i32)),
+    Some(|_x: i32| 0),
+);
+assert_eq!(result, Some(42));
+
+// None propagation: no value means no result
+let result = OptionF::select(
+    None::&lt;Result&lt;i32, i32&gt;&gt;,
+    Some(|x: i32| x * 2),
+);
+assert_eq!(result, None);
+
+// Ok branch but no function available
+let result = OptionF::select(
+    Some(Ok(3i32)),
+    None::&lt;fn(i32) -&gt; i32&gt;,
+);
+assert_eq!(result, None);</code></pre>
+
+        <h4>When to use Selective</h4>
+
+        <p><code>Selective</code> is useful when you need conditional logic inside a functorial pipeline but do not need the full power of <code>Monad</code>. Because the branching is encoded in the type (<code>Result&lt;A, B&gt;</code>) rather than in arbitrary closures, selective computations can be analyzed statically &mdash; making them suitable for scenarios like build systems or task schedulers where you want to inspect the structure of a computation before running it.</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>
