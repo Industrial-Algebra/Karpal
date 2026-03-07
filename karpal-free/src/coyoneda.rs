@@ -9,97 +9,69 @@ use core::marker::PhantomData;
 use karpal_core::functor::Functor;
 use karpal_core::hkt::HKT;
 
-/// Private dyn-safe trait for the existential encoding of Coyoneda.
-trait CoyonedaLower<F: HKT + 'static, A: 'static> {
-    fn lower(self: Box<Self>) -> F::Of<A>
-    where
-        F: Functor;
-}
-
-/// Leaf node: wraps an `F::Of<A>` directly.
-struct CoyonedaLift<F: HKT + 'static, A: 'static> {
-    value: F::Of<A>,
-}
-
-impl<F: HKT + 'static, A: 'static> CoyonedaLower<F, A> for CoyonedaLift<F, A>
-where
-    F::Of<A>: 'static,
-{
-    fn lower(self: Box<Self>) -> F::Of<A>
-    where
-        F: Functor,
-    {
-        self.value
-    }
-}
-
-/// Map layer: wraps an inner `CoyonedaLower<F, Src>` with a function `Src -> A`.
-struct CoyonedaMap<F: HKT + 'static, Src: 'static, A: 'static> {
-    inner: Box<dyn CoyonedaLower<F, Src>>,
-    transform: Box<dyn Fn(Src) -> A>,
-}
-
-impl<F: HKT + 'static, Src: 'static, A: 'static> CoyonedaLower<F, A> for CoyonedaMap<F, Src, A> {
-    fn lower(self: Box<Self>) -> F::Of<A>
-    where
-        F: Functor,
-    {
-        F::fmap(self.inner.lower(), self.transform)
-    }
-}
-
-/// Coyoneda — the free functor. Makes any type constructor into a Functor
-/// by deferring `fmap` as function composition, applying it only when lowered.
+/// Coyoneda — the free functor.
 ///
-/// `Coyoneda<F, A>` is isomorphic to `F<A>` when `F: Functor`, but the
-/// `fmap` operation requires no `Functor` bound on `F` — it simply layers
-/// the transformation, deferring application until `lower()`.
+/// `Coyoneda<F, A, B>` stores a value `F::Of<B>` together with a function
+/// `B → A`. The `fmap` operation composes functions without touching `F`;
+/// only `lower()` applies `F::fmap` once at the end.
 ///
-/// Note: Due to Rust's GAT limitations, `CoyonedaF` does not implement
-/// the `HKT` or `Functor` traits. Use the inherent `fmap` method instead.
-pub struct Coyoneda<F: HKT + 'static, A: 'static> {
-    inner: Box<dyn CoyonedaLower<F, A>>,
+/// The type parameter `B` is the original ("base") type from `lift`.
+/// After `N` calls to `fmap`, `B` stays the same — only `A` changes.
+///
+/// ```text
+/// lift(fb: F<B>) → Coyoneda<F, B, B>     // f = identity
+/// .fmap(g: B→C)  → Coyoneda<F, C, B>     // f = g
+/// .fmap(h: C→D)  → Coyoneda<F, D, B>     // f = h ∘ g
+/// .lower()        → F<D>                  // one F::fmap(fb, h ∘ g)
+/// ```
+pub struct Coyoneda<F: HKT, A, B> {
+    f: Box<dyn Fn(B) -> A>,
+    fb: F::Of<B>,
+    _marker: PhantomData<F>,
 }
 
-impl<F: HKT + 'static, A: 'static> Coyoneda<F, A>
-where
-    F::Of<A>: 'static,
-{
-    /// Lift a value `F<A>` into `Coyoneda<F, A>`.
+impl<F: HKT, A: 'static> Coyoneda<F, A, A> {
+    /// Lift a value `F<A>` into `Coyoneda<F, A, A>`.
+    ///
+    /// No `Functor` bound required.
     pub fn lift(fa: F::Of<A>) -> Self {
         Coyoneda {
-            inner: Box::new(CoyonedaLift::<F, A> { value: fa }),
+            f: Box::new(|a| a),
+            fb: fa,
+            _marker: PhantomData,
         }
     }
 }
 
-impl<F: HKT + 'static, A: 'static> Coyoneda<F, A> {
-    /// Apply the deferred transformations, producing `F<A>`.
+impl<F: HKT, A: 'static, B: 'static> Coyoneda<F, A, B> {
+    /// Map a function over this Coyoneda. No `Functor` bound required —
+    /// the function is composed with the stored transform and applied
+    /// when `lower()` is called.
+    pub fn fmap<C: 'static>(self, g: impl Fn(A) -> C + 'static) -> Coyoneda<F, C, B> {
+        let old_f = self.f;
+        Coyoneda {
+            f: Box::new(move |b| g(old_f(b))),
+            fb: self.fb,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Apply the stored function via `F::fmap`, producing `F<A>`.
     /// This is the only operation that requires `F: Functor`.
     pub fn lower(self) -> F::Of<A>
     where
         F: Functor,
     {
-        self.inner.lower()
-    }
-
-    /// Map a function over this Coyoneda. No `Functor` bound required —
-    /// the function is stored and applied when `lower()` is called.
-    pub fn fmap<B: 'static>(self, f: impl Fn(A) -> B + 'static) -> Coyoneda<F, B> {
-        Coyoneda {
-            inner: Box::new(CoyonedaMap {
-                inner: self.inner,
-                transform: Box::new(f),
-            }),
-        }
+        F::fmap(self.fb, self.f)
     }
 }
 
-/// Marker type for `Coyoneda<F, _>`.
+/// Marker type for `Coyoneda<F, _, B>`.
 ///
-/// Note: Cannot implement `HKT` or `Functor` due to Rust's GAT limitations
-/// (`type Of<T>` cannot add `T: 'static` in impl). Use `Coyoneda::fmap` directly.
-pub struct CoyonedaF<F: HKT + 'static>(PhantomData<F>);
+/// Note: Cannot implement `HKT` or `Functor` because `Coyoneda` has
+/// three type parameters and the `B` parameter is fixed at construction.
+/// Use `Coyoneda::fmap` directly.
+pub struct CoyonedaF<F: HKT>(PhantomData<F>);
 
 #[cfg(test)]
 mod tests {
@@ -108,19 +80,19 @@ mod tests {
 
     #[test]
     fn lift_lower_roundtrip_option() {
-        let result = Coyoneda::<OptionF, i32>::lift(Some(42)).lower();
+        let result = Coyoneda::<OptionF, _, _>::lift(Some(42)).lower();
         assert_eq!(result, Some(42));
     }
 
     #[test]
     fn lift_lower_roundtrip_vec() {
-        let result = Coyoneda::<VecF, i32>::lift(vec![1, 2, 3]).lower();
+        let result = Coyoneda::<VecF, _, _>::lift(vec![1, 2, 3]).lower();
         assert_eq!(result, vec![1, 2, 3]);
     }
 
     #[test]
     fn fmap_then_lower() {
-        let result = Coyoneda::<OptionF, i32>::lift(Some(2))
+        let result = Coyoneda::<OptionF, _, _>::lift(Some(2))
             .fmap(|x| x * 3)
             .lower();
         assert_eq!(result, Some(6));
@@ -128,7 +100,7 @@ mod tests {
 
     #[test]
     fn multiple_fmaps() {
-        let result = Coyoneda::<OptionF, i32>::lift(Some(1))
+        let result = Coyoneda::<OptionF, _, _>::lift(Some(1))
             .fmap(|x| x + 1)
             .fmap(|x| x * 10)
             .fmap(|x| x + 5)
@@ -138,20 +110,29 @@ mod tests {
 
     #[test]
     fn fmap_none() {
-        let result = Coyoneda::<OptionF, i32>::lift(None).fmap(|x| x * 2).lower();
+        let result = Coyoneda::<OptionF, _, _>::lift(None::<i32>)
+            .fmap(|x| x * 2)
+            .lower();
         assert_eq!(result, None);
     }
 
     #[test]
     fn fmap_without_functor_bound() {
-        // Demonstrates that fmap works without F: Functor
-        // We use OptionF here but the fmap call itself doesn't require Functor
-        let co = Coyoneda::<OptionF, i32>::lift(Some(10));
+        // fmap works without F: Functor
+        let co = Coyoneda::<OptionF, _, _>::lift(Some(10));
         let co2 = co.fmap(|x| x + 5);
         let co3 = co2.fmap(|x| format!("value: {}", x));
         // Only lower() requires Functor
         let result = co3.lower();
         assert_eq!(result, Some("value: 15".to_string()));
+    }
+
+    #[test]
+    fn fmap_changes_type() {
+        let result = Coyoneda::<OptionF, _, _>::lift(Some(42))
+            .fmap(|x: i32| x.to_string())
+            .lower();
+        assert_eq!(result, Some("42".to_string()));
     }
 }
 
@@ -164,7 +145,7 @@ mod law_tests {
     proptest! {
         #[test]
         fn coyoneda_identity(x in any::<Option<i32>>()) {
-            let result = Coyoneda::<OptionF, i32>::lift(x).fmap(|a| a).lower();
+            let result = Coyoneda::<OptionF, _, _>::lift(x).fmap(|a| a).lower();
             prop_assert_eq!(result, x);
         }
 
@@ -173,8 +154,8 @@ mod law_tests {
             let f = |a: i32| a.wrapping_add(1);
             let g = |a: i32| a.wrapping_mul(2);
 
-            let left = Coyoneda::<OptionF, i32>::lift(x).fmap(move |a| g(f(a))).lower();
-            let right = Coyoneda::<OptionF, i32>::lift(x).fmap(f).fmap(g).lower();
+            let left = Coyoneda::<OptionF, _, _>::lift(x).fmap(move |a| g(f(a))).lower();
+            let right = Coyoneda::<OptionF, _, _>::lift(x).fmap(f).fmap(g).lower();
             prop_assert_eq!(left, right);
         }
     }

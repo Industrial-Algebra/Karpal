@@ -34,6 +34,7 @@
           <li><a href="reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
           <li><a href="reference/profunctor-family.html">Profunctor Family</a></li>
           <li><a href="reference/arrow-family.html">Arrow Family</a></li>
+          <li><a href="reference/free-constructions.html">Free Constructions</a></li>
           <li><a href="reference/optics.html">Optics</a></li>
         </ul>
       </li>
@@ -118,11 +119,13 @@ fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
         <tr><td><code>karpal-core</code></td><td>HKT encoding, functor hierarchy, Semigroup, Monoid, macros</td></tr>
         <tr><td><code>karpal-profunctor</code></td><td>Profunctor, Strong, Choice, FnP</td></tr>
         <tr><td><code>karpal-optics</code></td><td>Profunctor optics: Lens, Prism, composition</td></tr>
+        <tr><td><code>karpal-arrow</code></td><td>Arrow hierarchy: Category, Arrow, ArrowChoice, Kleisli, Cokleisli</td></tr>
+        <tr><td><code>karpal-free</code></td><td>Free constructions: Coyoneda, Yoneda, Free Monad, Cofree Comonad</td></tr>
         <tr><td><code>karpal-std</code></td><td>Standard prelude re-exports</td></tr>
       </tbody>
     </table>
 
-    <p><code>karpal-core</code> and <code>karpal-profunctor</code> are <code>no_std</code> compatible with optional <code>std</code>/<code>alloc</code> feature gates.</p>
+    <p><code>karpal-core</code>, <code>karpal-profunctor</code>, <code>karpal-arrow</code>, and <code>karpal-free</code> are <code>no_std</code> compatible with optional <code>std</code>/<code>alloc</code> feature gates.</p>
 
     <div class="footer">
       <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
