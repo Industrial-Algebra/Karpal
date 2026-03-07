@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Constructions - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html" class="active">Free Constructions</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Free Constructions</span>
+    </nav>
+
+    <h1>Free Constructions</h1>
+    <p>Free constructions generate algebraic structure "for free" from a type constructor. They live in the <code>karpal-free</code> crate and build on the HKT encoding and typeclass hierarchy from <code>karpal-core</code>.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Type</th><th>What it gives you</th><th>Key idea</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Coyoneda&lt;F, A&gt;</code></td>
+          <td>Free Functor</td>
+          <td><code>fmap</code> without <code>F: Functor</code>, deferred until <code>lower()</code></td>
+        </tr>
+        <tr>
+          <td><code>Yoneda&lt;F, A&gt;</code></td>
+          <td>Map fusion</td>
+          <td>O(1) map composition via CPS; <code>lift</code> requires <code>F: Functor</code></td>
+        </tr>
+        <tr>
+          <td><code>Free&lt;F, A&gt;</code></td>
+          <td>Free Monad</td>
+          <td>Build monadic programs as data, interpret with <code>fold_map</code></td>
+        </tr>
+        <tr>
+          <td><code>Cofree&lt;F, A&gt;</code></td>
+          <td>Cofree Comonad</td>
+          <td>Annotated trees/streams; <code>F</code> determines branching shape</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="types">Types</h2>
+
+    <!-- ================================================================== -->
+    <!-- Coyoneda                                                           -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="coyoneda">Coyoneda&lt;F, A&gt;</h3>
+        <p class="trait-desc">The free functor -- makes any type constructor into a Functor by deferring <code>fmap</code> as function composition.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct Coyoneda&lt;F: HKT + 'static, A: 'static&gt; {
+    // Existential encoding: erases the pivot type via dyn-safe trait
+    inner: Box&lt;dyn CoyonedaLower&lt;F, A&gt;&gt;,
+}
+
+pub struct CoyonedaF&lt;F: HKT + 'static&gt;(PhantomData&lt;F&gt;);</code></pre>
+
+        <p><code>Coyoneda&lt;F, A&gt;</code> wraps an <code>F&lt;Pivot&gt;</code> together with a chain of functions <code>Pivot -&gt; ... -&gt; A</code>. The <code>fmap</code> method just appends to the function chain (no <code>Functor</code> bound required). Calling <code>lower()</code> applies the composed function via a single <code>F::fmap</code>.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F: HKT + 'static, A: 'static&gt; Coyoneda&lt;F, A&gt; {
+    /// Lift F&lt;A&gt; into Coyoneda. No Functor bound needed.
+    pub fn lift(fa: F::Of&lt;A&gt;) -&gt; Self;
+
+    /// Apply deferred transformations, producing F&lt;A&gt;.
+    /// This is the only operation that requires F: Functor.
+    pub fn lower(self) -&gt; F::Of&lt;A&gt; where F: Functor;
+
+    /// Map without Functor bound -- defers the function.
+    pub fn fmap&lt;B: 'static&gt;(self, f: impl Fn(A) -&gt; B + 'static) -&gt; Coyoneda&lt;F, B&gt;;
+}</code></pre>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::{Coyoneda, CoyonedaF};
+use karpal_core::hkt::OptionF;
+
+// Chain multiple fmaps -- no Functor needed yet
+let co = Coyoneda::&lt;OptionF, i32&gt;::lift(Some(1))
+    .fmap(|x| x + 1)
+    .fmap(|x| x * 10)
+    .fmap(|x| x + 5);
+
+// Only lower() needs Functor -- applies all maps at once
+let result = co.lower();
+assert_eq!(result, Some(25)); // (1+1)*10+5</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Yoneda                                                             -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="yoneda">Yoneda&lt;F, A&gt;</h3>
+        <p class="trait-desc">The Yoneda lemma as a data type -- O(1) map composition via CPS.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct Yoneda&lt;F: HKT + Functor + 'static, A: 'static&gt; {
+    inner: Box&lt;dyn YonedaLower&lt;F, A&gt;&gt;,
+}
+
+pub struct YonedaF&lt;F: HKT + Functor + 'static&gt;(PhantomData&lt;F&gt;);</code></pre>
+
+        <p><code>Yoneda&lt;F, A&gt;</code> is similar to Coyoneda, but <code>lift</code> requires <code>F: Functor</code>. The benefit is <strong>map fusion</strong>: chaining N <code>fmap</code> calls composes the functions before applying them to <code>F</code>, so <code>lower()</code> makes only one pass through the structure.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F: HKT + Functor + 'static, A: Clone + 'static&gt; Yoneda&lt;F, A&gt; {
+    /// Lift F&lt;A&gt; into Yoneda. Requires F: Functor (unlike Coyoneda).
+    pub fn lift(fa: F::Of&lt;A&gt;) -&gt; Self;
+}
+
+impl&lt;F: HKT + Functor + 'static, A: 'static&gt; Yoneda&lt;F, A&gt; {
+    /// Lower back to F&lt;A&gt; by applying accumulated transformations.
+    pub fn lower(self) -&gt; F::Of&lt;A&gt;;
+
+    /// Map a function -- composed into the CPS, deferred until lower().
+    pub fn fmap&lt;B: 'static&gt;(self, f: impl Fn(A) -&gt; B + 'static) -&gt; Yoneda&lt;F, B&gt;;
+}</code></pre>
+
+        <h4>Coyoneda vs Yoneda</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th></th><th>Coyoneda</th><th>Yoneda</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>lift</code> requires Functor?</td><td>No</td><td>Yes</td></tr>
+            <tr><td><code>fmap</code> requires Functor?</td><td>No</td><td>No</td></tr>
+            <tr><td><code>lower</code> requires Functor?</td><td>Yes</td><td>No (already lifted)</td></tr>
+            <tr><td>Use case</td><td>Make non-Functor types mappable</td><td>Fuse chains of maps for performance</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::{Yoneda, YonedaF};
+use karpal_core::hkt::OptionF;
+
+// Yoneda fuses multiple fmaps into a single pass
+let result = Yoneda::&lt;OptionF, i32&gt;::lift(Some(42))
+    .fmap(|x| x * 2)
+    .fmap(|x| format!("val={}", x))
+    .lower();
+assert_eq!(result, Some("val=84".to_string()));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Free Monad                                                         -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="free">Free&lt;F, A&gt;</h3>
+        <p class="trait-desc">The Free Monad -- build monadic computations as data structures, then interpret them.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">/// Pure(a)             -- a finished computation returning a
+/// Roll(F&lt;Free&lt;F, A&gt;&gt;) -- one layer of effect wrapping a continuation
+pub enum Free&lt;F: HKT, A&gt; {
+    Pure(A),
+    Roll(Box&lt;F::Of&lt;Free&lt;F, A&gt;&gt;&gt;),
+}
+
+/// HKT marker -- implements HKT + Functor
+pub struct FreeF&lt;F: HKT&gt;(PhantomData&lt;F&gt;);</code></pre>
+
+        <p><code>Free&lt;F, A&gt;</code> represents a program where <code>F</code> describes the available effects and <code>A</code> is the result type. Programs are built with <code>pure</code> and <code>lift_f</code>, composed with <code>chain</code>, and interpreted with <code>fold_map</code> using a <a href="bifunctor-natural.html">natural transformation</a> into any target monad.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F: HKT, A&gt; Free&lt;F, A&gt; {
+    /// Wrap a pure value.
+    pub fn pure(a: A) -&gt; Self;
+}
+
+impl&lt;F: HKT + Functor, A&gt; Free&lt;F, A&gt; {
+    /// Lift a single effect F&lt;A&gt; into the free monad.
+    pub fn lift_f(fa: F::Of&lt;A&gt;) -&gt; Self;
+
+    /// Map a function over the result.
+    pub fn fmap&lt;B&gt;(self, f: impl Fn(A) -&gt; B) -&gt; Free&lt;F, B&gt;;
+
+    /// Monadic bind -- sequence with a continuation.
+    pub fn chain&lt;B&gt;(self, f: impl Fn(A) -&gt; Free&lt;F, B&gt;) -&gt; Free&lt;F, B&gt;;
+
+    /// Interpret into target monad M via natural transformation NT: F ~&gt; M.
+    pub fn fold_map&lt;M, NT&gt;(self) -&gt; M::Of&lt;A&gt;
+    where
+        M: Applicative + Chain,
+        NT: NaturalTransformation&lt;F, M&gt;;
+}</code></pre>
+
+        <h4>Trait Implementations</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Marker</th><th>Trait</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FreeF&lt;F&gt;</code></td><td><code>HKT</code></td><td><code>Of&lt;T&gt; = Free&lt;F, T&gt;</code></td></tr>
+            <tr><td><code>FreeF&lt;F&gt;</code></td><td><code>Functor</code></td><td>Delegates to <code>Free::fmap</code></td></tr>
+          </tbody>
+        </table>
+
+        <p><code>FreeF</code> does <strong>not</strong> implement <code>Apply</code>, <code>Chain</code>, or <code>Monad</code>. See <a href="#design-no-monad">Design Notes</a> for why.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Functor Identity</span>
+<pre><code class="language-rust">free.fmap(|a| a) == free</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Functor Composition</span>
+<pre><code class="language-rust">free.fmap(|a| g(f(a))) == free.fmap(f).fmap(g)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Monad Left Identity</span>
+<pre><code class="language-rust">Free::pure(a).chain(f) == f(a)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Monad Right Identity</span>
+<pre><code class="language-rust">m.chain(Free::pure) == m</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::{Free, FreeF};
+use karpal_core::hkt::OptionF;
+use karpal_core::natural::NaturalTransformation;
+
+// Define a natural transformation: Option ~&gt; Option (identity)
+struct OptionId;
+impl NaturalTransformation&lt;OptionF, OptionF&gt; for OptionId {
+    fn transform&lt;A&gt;(fa: Option&lt;A&gt;) -&gt; Option&lt;A&gt; { fa }
+}
+
+// Build a computation: lift an effect, then chain
+let program = Free::&lt;OptionF, i32&gt;::lift_f(Some(3))
+    .chain(|x| Free::lift_f(Some(x * 10)));
+
+// Interpret into Option via the natural transformation
+let result = program.fold_map::&lt;OptionF, OptionId&gt;();
+assert_eq!(result, Some(30));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Cofree Comonad                                                     -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="cofree">Cofree&lt;F, A&gt;</h3>
+        <p class="trait-desc">The Cofree Comonad -- annotated trees/streams where <code>F</code> determines the branching structure.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">/// Each node carries a value (head) and subtrees (tail).
+/// The choice of F determines the shape:
+///   OptionF  -&gt; a non-empty list (finite stream)
+///   VecF     -&gt; a rose tree
+///   IdentityF -&gt; an infinite stream
+pub struct Cofree&lt;F: HKT, A&gt; {
+    pub head: A,
+    pub tail: Box&lt;F::Of&lt;Cofree&lt;F, A&gt;&gt;&gt;,
+}
+
+/// HKT marker -- implements HKT + Functor + Extend + Comonad
+pub struct CofreeF&lt;F: HKT&gt;(PhantomData&lt;F&gt;);</code></pre>
+
+        <p><code>Cofree&lt;F, A&gt;</code> is the dual of the Free Monad. Where Free builds up effects layer by layer, Cofree builds up <strong>context</strong> -- every node in the tree carries a value and can see its entire subtree.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F: HKT, A&gt; Cofree&lt;F, A&gt; {
+    /// Create a node with the given head and tail.
+    pub fn new(head: A, tail: F::Of&lt;Cofree&lt;F, A&gt;&gt;) -&gt; Self;
+
+    /// Extract the head value.
+    pub fn extract(&amp;self) -&gt; A where A: Clone;
+}
+
+impl&lt;F: HKT + Functor, A&gt; Cofree&lt;F, A&gt; {
+    /// Map a function over all head values.
+    pub fn fmap&lt;B&gt;(self, f: impl Fn(A) -&gt; B) -&gt; Cofree&lt;F, B&gt;;
+
+    /// Apply a context-aware function to every position.
+    /// f receives the entire sub-cofree rooted at each node.
+    pub fn extend&lt;B&gt;(self, f: impl Fn(&amp;Cofree&lt;F, A&gt;) -&gt; B) -&gt; Cofree&lt;F, B&gt;
+    where A: Clone;
+
+    /// Build a Cofree from a seed and an unfolding function.
+    /// f(seed) returns (head, F&lt;Seed&gt;) -- the value and seeds for subtrees.
+    pub fn unfold&lt;Seed&gt;(seed: Seed, f: impl Fn(&amp;Seed) -&gt; (A, F::Of&lt;Seed&gt;)) -&gt; Self;
+}</code></pre>
+
+        <h4>Trait Implementations</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Marker</th><th>Trait</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CofreeF&lt;F&gt;</code></td><td><code>HKT</code></td><td><code>Of&lt;T&gt; = Cofree&lt;F, T&gt;</code></td></tr>
+            <tr><td><code>CofreeF&lt;F&gt;</code></td><td><code>Functor</code></td><td>Delegates to <code>Cofree::fmap</code></td></tr>
+            <tr><td><code>CofreeF&lt;F&gt;</code></td><td><code>Extend</code></td><td>Context-aware mapping over all positions</td></tr>
+            <tr><td><code>CofreeF&lt;F&gt;</code></td><td><code>Comonad</code></td><td><code>extract</code> returns the head value</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Comonad: extract after extend</span>
+          <p><code>extract(extend(w, f)) == f(w)</code></p>
+<pre><code class="language-rust">let extended = CofreeF::&lt;OptionF&gt;::extend(w, f);
+CofreeF::&lt;OptionF&gt;::extract(&amp;extended) == f(&amp;w)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Comonad: extend with extract</span>
+          <p><code>extend(w, extract) == w</code></p>
+<pre><code class="language-rust">CofreeF::&lt;OptionF&gt;::extend(w, CofreeF::&lt;OptionF&gt;::extract).head == w.head</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::{Cofree, CofreeF};
+use karpal_core::hkt::OptionF;
+
+// Unfold a countdown stream: 3, 2, 1, 0
+let stream = Cofree::&lt;OptionF, i32&gt;::unfold(3, |&amp;seed| {
+    if seed &lt;= 0 { (seed, None) }
+    else { (seed, Some(seed - 1)) }
+});
+assert_eq!(stream.head, 3);
+
+// Extend: at each position, sum the current and next head
+let sums = stream.extend(|w| {
+    let next = w.tail.as_ref().as_ref().map(|c| c.head).unwrap_or(0);
+    w.head + next
+});
+assert_eq!(sums.head, 3 + 2); // 5</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Design Notes                                                       -->
+    <!-- ================================================================== -->
+
+    <h2 id="design-notes">Design Notes</h2>
+
+    <h3>Two families of free constructions</h3>
+
+    <p>Coyoneda and Yoneda use <strong>trait objects</strong> (<code>Box&lt;dyn CoyonedaLower&gt;</code>) to erase existential pivot types. This requires <code>F: 'static</code> and <code>A: 'static</code> bounds everywhere. Due to a Rust GAT limitation (you cannot add <code>T: 'static</code> to <code>type Of&lt;T&gt;</code> in a trait impl when the trait definition doesn't have it), <code>CoyonedaF</code> and <code>YonedaF</code> <strong>cannot implement</strong> the <code>HKT</code> or <code>Functor</code> traits. Use the inherent <code>fmap</code> methods instead.</p>
+
+    <p>Free and Cofree use <strong>recursive enums/structs</strong> (not trait objects), so they avoid the <code>'static</code> limitation entirely. <code>FreeF</code> implements <code>HKT + Functor</code>; <code>CofreeF</code> implements the full <code>HKT + Functor + Extend + Comonad</code> chain.</p>
+
+    <h3 id="design-no-monad">Why Free doesn't implement the Monad trait</h3>
+
+    <p><code>FreeF</code> implements <code>Functor</code> but not <code>Apply</code>, <code>Chain</code>, or <code>Monad</code>. The problem is <code>Apply::ap</code>: in the <code>Roll</code> case, each child of the function tree needs its own copy of the argument tree. The trait only provides <code>A: Clone</code>, not <code>Free&lt;F, A&gt;: Clone</code>. Adding bounds to an impl that the trait doesn't have is not allowed in Rust. The inherent <code>chain</code> method avoids this issue since it doesn't need to clone its argument.</p>
+
+    <h3>Why Cofree doesn't implement Clone</h3>
+
+    <p>A generic <code>Clone</code> impl for <code>Cofree&lt;F, A&gt;</code> would require <code>F::Of&lt;Cofree&lt;F, A&gt;&gt;: Clone</code>, which triggers <strong>infinite recursion</strong> in the compiler's trait resolution (coinductive reasoning, which Rust doesn't support). For the same reason, <code>Cofree</code> doesn't provide a <code>duplicate</code> method (which would need <code>Clone</code> internally). Use <code>extend</code> directly instead.</p>
+
+    <h3>The <code>&amp;dyn Fn</code> recursion pattern</h3>
+
+    <p>Recursive methods like <code>fmap</code> and <code>extend</code> on Free/Cofree pass their closure to child nodes. Naively passing <code>&amp;f</code> causes each recursive level to add a reference layer (<code>&amp;Fn</code>, <code>&amp;&amp;Fn</code>, <code>&amp;&amp;&amp;Fn</code>, ...), hitting the monomorphization recursion limit. The solution: public methods accept <code>impl Fn</code>, then immediately delegate to a private <code>_inner</code> method that takes <code>&amp;dyn Fn</code>. Since the type is erased behind <code>dyn</code>, the recursive calls all use the same concrete type.</p>
+
+<pre><code class="language-rust">// Public API: accepts impl Fn
+pub fn fmap&lt;B&gt;(self, f: impl Fn(A) -&gt; B) -&gt; Cofree&lt;F, B&gt; {
+    self.fmap_inner(&amp;f)  // erase to &amp;dyn Fn
+}
+
+// Private: fixed type at every recursion level
+fn fmap_inner&lt;B&gt;(self, f: &amp;dyn Fn(A) -&gt; B) -&gt; Cofree&lt;F, B&gt; {
+    Cofree {
+        head: f(self.head),
+        tail: Box::new(F::fmap(*self.tail, |child| child.fmap_inner(f))),
+    }
+}</code></pre>
+
+    <!-- ================================================================== -->
+    <!-- See Also                                                           -->
+    <!-- ================================================================== -->
+
+    <h2 id="see-also">See Also</h2>
+    <ul>
+      <li><a href="functor-family.html"><strong>Functor Family</strong></a> -- the traits that Free/Cofree build on (Functor, Apply, Chain, Monad)</li>
+      <li><a href="comonad-family.html"><strong>Comonad Family</strong></a> -- Extend and Comonad, which Cofree implements</li>
+      <li><a href="bifunctor-natural.html"><strong>Bifunctor &amp; Natural</strong></a> -- NaturalTransformation, used by <code>Free::fold_map</code></li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>
