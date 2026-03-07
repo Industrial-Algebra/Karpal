@@ -55,6 +55,9 @@ pub mod prelude {
     // Arrow macros
     pub use karpal_arrow::{impl_cokleisli, impl_cokleisli_env};
 
+    // Free constructions
+    pub use karpal_free::{Coyoneda, CoyonedaF, Yoneda, YonedaF};
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -62,6 +65,7 @@ pub mod prelude {
 // Crate re-exports for qualified access
 pub use karpal_arrow;
 pub use karpal_core;
+pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;
 

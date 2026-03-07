@@ -33,3 +33,6 @@ jobs:
 
       - name: no_std check (karpal-arrow)
         run: cargo build --no-default-features -p karpal-arrow
+
+      - name: no_std check (karpal-free)
+        run: cargo build --no-default-features -p karpal-free
