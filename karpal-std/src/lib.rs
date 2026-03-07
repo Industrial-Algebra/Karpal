@@ -57,8 +57,9 @@ pub mod prelude {
 
     // Free constructions
     pub use karpal_free::{
-        Codensity, CodensityF, Cofree, CofreeF, Coyoneda, CoyonedaF, Density, DensityF, Free,
-        FreeF, Freer, FreerF, Lan, LanF, Ran, RanMapped, Yoneda, YonedaF,
+        Codensity, CodensityF, Cofree, CofreeF, Coyoneda, CoyonedaF, Day, DayF, Density, DensityF,
+        Free, FreeAlt, FreeAltF, FreeAp, FreeApF, FreeF, Freer, FreerF, Lan, LanF, Ran, RanMapped,
+        Yoneda, YonedaF,
     };
 
     // Macros
