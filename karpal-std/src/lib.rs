@@ -56,7 +56,10 @@ pub mod prelude {
     pub use karpal_arrow::{impl_cokleisli, impl_cokleisli_env};
 
     // Free constructions
-    pub use karpal_free::{Cofree, CofreeF, Coyoneda, CoyonedaF, Free, FreeF, Yoneda, YonedaF};
+    pub use karpal_free::{
+        Codensity, CodensityF, Cofree, CofreeF, Coyoneda, CoyonedaF, Density, DensityF, Free,
+        FreeF, Freer, FreerF, Lan, LanF, Ran, RanMapped, Yoneda, YonedaF,
+    };
 
     // Macros
     pub use karpal_core::{ado_, do_};
