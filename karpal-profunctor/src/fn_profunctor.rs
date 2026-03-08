@@ -1,8 +1,10 @@
 use alloc::boxed::Box;
+use alloc::vec::Vec;
 
 use crate::choice::Choice;
 use crate::profunctor::{HKT2, Profunctor};
 use crate::strong::Strong;
+use crate::traversing::Traversing;
 
 /// Marker type whose `P<A, B>` is `Box<dyn Fn(A) -> B>`.
 ///
@@ -40,6 +42,22 @@ impl Strong for FnP {
         C: 'static,
     {
         Box::new(move |(c, a)| (c, pab(a)))
+    }
+}
+
+impl Traversing for FnP {
+    fn wander<S, T, A, B>(
+        _get_all: impl Fn(&S) -> Vec<A> + 'static,
+        modify_all: impl Fn(S, &dyn Fn(A) -> B) -> T + 'static,
+        pab: Box<dyn Fn(A) -> B>,
+    ) -> Box<dyn Fn(S) -> T>
+    where
+        S: 'static,
+        T: 'static,
+        A: 'static,
+        B: 'static,
+    {
+        Box::new(move |s| modify_all(s, &*pab))
     }
 }
 

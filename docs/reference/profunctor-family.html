@@ -67,19 +67,23 @@
 
     <h2 id="hierarchy">Hierarchy</h2>
 
-    <p>The profunctor hierarchy branches into two subclasses, each enabling a different family of optics:</p>
+    <p>The profunctor hierarchy branches into subclasses, each enabling a different family of optics:</p>
 
 <pre><code class="language-rust">HKT2
   |
-Profunctor        -- dimap, lmap, rmap
+Profunctor          -- dimap, lmap, rmap            (Iso)
   |         \
-Strong     Choice
-(product)  (sum)</code></pre>
+Strong     Choice                                   (Lens / Prism)
+  |           |
+  +-----------+
+        |
+    Traversing      -- wander                       (Traversal)</code></pre>
 
     <ul>
-      <li><strong>Profunctor</strong> -- the base trait. Provides <code>dimap</code> for simultaneous pre- and post-processing.</li>
-      <li><strong>Strong</strong> -- lifts a profunctor through product types (tuples). This is the constraint that powers <a href="optics.html">Lens</a>.</li>
-      <li><strong>Choice</strong> -- lifts a profunctor through sum types (<code>Result</code>). This is the constraint that powers <a href="optics.html">Prism</a>.</li>
+      <li><strong>Profunctor</strong> -- the base trait. Provides <code>dimap</code> for simultaneous pre- and post-processing. Powers <a href="optics.html#iso">Iso</a>.</li>
+      <li><strong>Strong</strong> -- lifts a profunctor through product types (tuples). Powers <a href="optics.html#lens">Lens</a>.</li>
+      <li><strong>Choice</strong> -- lifts a profunctor through sum types (<code>Result</code>). Powers <a href="optics.html#prism">Prism</a>.</li>
+      <li><strong>Traversing</strong> -- extends Strong + Choice to handle multiple foci. Powers <a href="optics.html#traversal">Traversal</a>.</li>
     </ul>
 
     <p>All three traits require the <code>HKT2</code> encoding from <code>karpal-core</code>:</p>
@@ -155,6 +159,8 @@ pub trait Profunctor: HKT2 {
           </thead>
           <tbody>
             <tr><td><code>FnP</code></td><td><code>Box&lt;dyn Fn(A) -&gt; B&gt;</code></td><td><code>alloc</code></td></tr>
+            <tr><td><code>ForgetF&lt;R&gt;</code></td><td><code>Box&lt;dyn Fn(A) -&gt; R&gt;</code> (B is phantom)</td><td><code>alloc</code></td></tr>
+            <tr><td><code>TaggedF</code></td><td><code>B</code> (A is phantom)</td><td>none (<code>no_std</code>)</td></tr>
           </tbody>
         </table>
 
@@ -244,8 +250,11 @@ assert_eq!(as_string(9), "result: 10");</code></pre>
           </thead>
           <tbody>
             <tr><td><code>FnP</code></td><td><code>|(a, c)| (pab(a), c)</code></td><td><code>alloc</code></td></tr>
+            <tr><td><code>ForgetF&lt;R&gt;</code></td><td><code>|(a, _)| pab(a)</code> -- extracts R, ignores second component</td><td><code>alloc</code></td></tr>
           </tbody>
         </table>
+
+        <p><code>TaggedF</code> is deliberately <strong>not</strong> <code>Strong</code>. This enforces at the type level that write-only optics (like <a href="optics.html#review">Review</a>) cannot be used for reading -- <code>Strong</code> requires producing a <code>(B, C)</code> from a <code>B</code>, but <code>TaggedF</code> has no way to produce the <code>C</code>.</p>
 
         <h4>Connection to Lens</h4>
 
@@ -346,8 +355,12 @@ assert_eq!(g(("hi", 5)), ("hi", 15));</code></pre>
           </thead>
           <tbody>
             <tr><td><code>FnP</code></td><td><code>|r| match r { Ok(a) =&gt; Ok(pab(a)), Err(c) =&gt; Err(c) }</code></td><td><code>alloc</code></td></tr>
+            <tr><td><code>ForgetF&lt;R: Monoid&gt;</code></td><td><code>|r| match r { Ok(a) =&gt; pab(a), Err(_) =&gt; R::empty() }</code></td><td><code>alloc</code></td></tr>
+            <tr><td><code>TaggedF</code></td><td><code>Ok(pab)</code> -- wraps the value in <code>Ok</code></td><td>none (<code>no_std</code>)</td></tr>
           </tbody>
         </table>
+
+        <p><code>ForgetF</code>'s <code>Choice</code> impl requires <code>R: Monoid</code> because the miss case needs a default value (<code>R::empty()</code>). Its <code>Strong</code> impl has no such restriction -- products always have the focus available.</p>
 
         <h4>Connection to Prism</h4>
 
@@ -444,6 +457,11 @@ impl HKT2 for FnP {
               <td><code>right(pab)</code></td>
               <td><code>Box::new(move |r| match r { Ok(c) =&gt; Ok(c), Err(a) =&gt; Err(pab(a)) })</code></td>
             </tr>
+            <tr>
+              <td><code>Traversing</code></td>
+              <td><code>wander(get_all, modify_all, pab)</code></td>
+              <td><code>Box::new(move |s| modify_all(s, &amp;*pab))</code></td>
+            </tr>
           </tbody>
         </table>
 
@@ -469,6 +487,177 @@ let pipeline = FnP::dimap(
 
 assert_eq!(pipeline("41"), "result = 42");
 assert_eq!(pipeline("not a number"), "result = 1");</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Traversing                                                         -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="traversing">Traversing</h3>
+        <p class="trait-desc">A profunctor that can operate over multiple foci simultaneously.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Traversing: Strong + Choice {
+    fn wander&lt;S, T, A, B&gt;(
+        get_all: impl Fn(&amp;S) -&gt; Vec&lt;A&gt; + 'static,
+        modify_all: impl Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T + 'static,
+        pab: Self::P&lt;A, B&gt;,
+    ) -&gt; Self::P&lt;S, T&gt;
+    where
+        S: 'static, T: 'static, A: 'static, B: 'static;
+}</code></pre>
+
+        <p><code>Traversing</code> extends <code>Strong + Choice</code> with the ability to handle multiple foci. The <code>wander</code> method takes <strong>two</strong> functions instead of a single polymorphic traversal function, because Rust lacks rank-2 types:</p>
+
+        <ul>
+          <li><code>get_all</code> -- extracts all foci (used by read-only profunctors like <code>ForgetF</code>)</li>
+          <li><code>modify_all</code> -- applies a function to every focus in-place (used by read-write profunctors like <code>FnP</code>)</li>
+        </ul>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Marker type</th><th>Strategy</th><th>Feature gate</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FnP</code></td><td>Uses <code>modify_all</code>, ignores <code>get_all</code></td><td><code>alloc</code></td></tr>
+            <tr><td><code>ForgetF&lt;R: Monoid&gt;</code></td><td>Uses <code>get_all</code>, maps each through <code>pab</code>, combines with <code>Monoid</code></td><td><code>alloc</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Connection to Traversal</h4>
+
+        <p>A <a href="optics.html#traversal">Traversal</a> is defined as a function that works for <em>all</em> profunctors that are <code>Traversing</code>. The traversal's <code>transform</code> method calls <code>P::wander(get_all, modify_all, pab)</code> -- each profunctor instance decides how to interpret the traversal.</p>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_profunctor::{Traversing, FnP, ForgetF};
+
+// wander with FnP: modify each element
+let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
+let f = FnP::wander(
+    |v: &amp;Vec&lt;i32&gt;| v.clone(),
+    |v: Vec&lt;i32&gt;, f: &amp;dyn Fn(i32) -&gt; i32| v.into_iter().map(f).collect(),
+    double,
+);
+assert_eq!(f(vec![1, 2, 3]), vec![2, 4, 6]);
+
+// wander with ForgetF: accumulate with Monoid
+let to_str: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|x| x.to_string());
+let g = &lt;ForgetF&lt;String&gt; as Traversing&gt;::wander(
+    |v: &amp;Vec&lt;i32&gt;| v.clone(),
+    |v: Vec&lt;i32&gt;, f: &amp;dyn Fn(i32) -&gt; String| { let _ = v; let _ = f; String::new() },
+    to_str,
+);
+assert_eq!(g(vec![1, 2, 3]), "123"); // String Monoid concatenates</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ForgetF                                                            -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="forgetf">ForgetF&lt;R&gt; (Forget Profunctor)</h3>
+        <p class="trait-desc">Marker type whose <code>P&lt;A, B&gt;</code> is <code>Box&lt;dyn Fn(A) -&gt; R&gt;</code> -- a read-only profunctor that extracts a summary value.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct ForgetF&lt;R&gt;(PhantomData&lt;R&gt;);
+
+impl&lt;R: 'static&gt; HKT2 for ForgetF&lt;R&gt; {
+    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; R&gt;;
+}</code></pre>
+
+        <p><code>ForgetF&lt;R&gt;</code> "forgets" the output type <code>B</code> entirely -- the second type parameter is phantom. A <code>ForgetF&lt;R&gt;::P&lt;A, B&gt;</code> is just a function from <code>A</code> to <code>R</code>, regardless of what <code>B</code> is. This makes it ideal for read-only operations that extract or summarize data.</p>
+
+        <h4>Implemented traits</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Constraint on <code>R</code></th><th>Behavior</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Profunctor</code></td><td><code>'static</code></td><td><code>dimap(f, _g, pab) = |c| pab(f(c))</code> -- <code>g</code> is ignored</td></tr>
+            <tr><td><code>Strong</code></td><td><code>'static</code></td><td><code>first(pab) = |(a, _)| pab(a)</code> -- extracts from first component</td></tr>
+            <tr><td><code>Choice</code></td><td><code>Monoid</code></td><td><code>left(pab) = |r| match r { Ok(a) =&gt; pab(a), Err(_) =&gt; R::empty() }</code></td></tr>
+            <tr><td><code>Traversing</code></td><td><code>Monoid</code></td><td>Maps each focus through <code>pab</code>, combines results via <code>Semigroup::combine</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Feature gate</h4>
+
+        <p>Requires <code>alloc</code> (uses <code>Box&lt;dyn Fn&gt;</code> and <code>Vec</code>).</p>
+
+        <h4>Role in optics</h4>
+
+        <p><code>ForgetF</code> is the profunctor behind read-only optics. When you use a <a href="optics.html#traversal">Traversal</a> with <code>ForgetF&lt;R&gt;</code>, you get a function <code>S -&gt; R</code> that extracts and combines data from all foci using a <code>Monoid</code>. This is how <a href="optics.html#fold">Fold</a>'s <code>fold_map</code> works conceptually.</p>
+
+<pre><code class="language-rust">use karpal_profunctor::ForgetF;
+
+// ForgetF ignores the B parameter completely
+let extract: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|x| format!("got {x}"));
+
+// B can be anything -- it's never used
+let _: &lt;ForgetF&lt;String&gt; as HKT2&gt;::P&lt;i32, Vec&lt;u8&gt;&gt; = extract;</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- TaggedF                                                            -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="taggedf">TaggedF (Tagged Profunctor)</h3>
+        <p class="trait-desc">Marker type whose <code>P&lt;A, B&gt;</code> is just <code>B</code> -- a write-only profunctor for construction.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct TaggedF;
+
+impl HKT2 for TaggedF {
+    type P&lt;A, B&gt; = B;
+}</code></pre>
+
+        <p><code>TaggedF</code> "forgets" the input type <code>A</code> entirely -- the first type parameter is phantom. A <code>TaggedF::P&lt;A, B&gt;</code> is just <code>B</code>, regardless of what <code>A</code> is. This makes it ideal for construction-only operations.</p>
+
+        <h4>Implemented traits</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Behavior</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Profunctor</code></td><td><code>dimap(_f, g, b) = g(b)</code> -- <code>f</code> is ignored</td></tr>
+            <tr><td><code>Choice</code></td><td><code>left(b) = Ok(b)</code>, <code>right(b) = Err(b)</code></td></tr>
+          </tbody>
+        </table>
+
+        <p><code>TaggedF</code> is deliberately <strong>not</strong> <code>Strong</code> and <strong>not</strong> <code>Traversing</code>. This is a deliberate design decision: <code>Strong::first</code> would need to produce a <code>(B, C)</code> from just a <code>B</code>, which is impossible without access to <code>C</code>. By not implementing <code>Strong</code>, the type system enforces that write-only optics like <a href="optics.html#review">Review</a> cannot be used for reading.</p>
+
+        <h4>Feature gate</h4>
+
+        <p>None -- <code>TaggedF</code> is <code>no_std</code>-compatible with no allocator requirement.</p>
+
+        <h4>Role in optics</h4>
+
+        <p><code>TaggedF</code> is the profunctor behind write-only optics. A <a href="optics.html#review">Review</a> conceptually transforms a <code>TaggedF::P&lt;A, B&gt;</code> (which is just <code>B</code>) into a <code>TaggedF::P&lt;S, T&gt;</code> (which is just <code>T</code>) -- construction from a value.</p>
 
       </div>
     </div>
