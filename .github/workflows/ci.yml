@@ -39,3 +39,6 @@ jobs:
 
       - name: no_std check (karpal-recursion)
         run: cargo build --no-default-features -p karpal-recursion
+
+      - name: no_std check (karpal-algebra)
+        run: cargo build --no-default-features -p karpal-algebra

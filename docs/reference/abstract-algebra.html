@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abstract Algebra - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+          <li><a href="abstract-algebra.html" class="active">Abstract Algebra</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Abstract Algebra</span>
+    </nav>
+
+    <h1>Abstract Algebra</h1>
+    <p>Higher algebraic structures built on top of <a href="algebraic.html">Semigroup &amp; Monoid</a>. These traits live in the <code>karpal-algebra</code> crate and extend the hierarchy with groups, rings, fields, lattices, and vector spaces.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Trait</th><th>Extends</th><th>Key idea</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Group</code></td>
+          <td><code>Monoid</code></td>
+          <td>Every element has an inverse: <code>a.combine(a.invert()) == empty()</code></td>
+        </tr>
+        <tr>
+          <td><code>AbelianGroup</code></td>
+          <td><code>Group</code></td>
+          <td>Marker &mdash; operation is commutative</td>
+        </tr>
+        <tr>
+          <td><code>Semiring</code></td>
+          <td>(independent)</td>
+          <td>Two operations (add/mul) with distribution and annihilation</td>
+        </tr>
+        <tr>
+          <td><code>Ring</code></td>
+          <td><code>Semiring</code></td>
+          <td>Additive inverses: <code>a.add(a.negate()) == zero()</code></td>
+        </tr>
+        <tr>
+          <td><code>Field</code></td>
+          <td><code>Ring</code></td>
+          <td>Multiplicative inverses for non-zero elements</td>
+        </tr>
+        <tr>
+          <td><code>Lattice</code></td>
+          <td>(independent)</td>
+          <td>Join (supremum) and meet (infimum) with absorption</td>
+        </tr>
+        <tr>
+          <td><code>BoundedLattice</code></td>
+          <td><code>Lattice</code></td>
+          <td>Top and bottom elements</td>
+        </tr>
+        <tr>
+          <td><code>Module&lt;R&gt;</code></td>
+          <td><code>AbelianGroup</code></td>
+          <td>Scalar multiplication over a ring</td>
+        </tr>
+        <tr>
+          <td><code>VectorSpace&lt;F&gt;</code></td>
+          <td><code>Module&lt;F&gt;</code></td>
+          <td>Module over a field</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="trait-hierarchy">Trait Hierarchy</h2>
+
+<pre><code class="language-text">Semigroup (karpal-core)         Semiring (independent)      Lattice (independent)
+  |                               |                           |
+Monoid (karpal-core)            Ring                        BoundedLattice
+  |                               |
+Group                           Field
+  |
+AbelianGroup (marker)           Module&lt;R: Ring&gt;: AbelianGroup
+                                  |
+                                VectorSpace&lt;F: Field&gt;
+</code></pre>
+
+    <p>The <code>Semigroup &rarr; Monoid &rarr; Group</code> chain extends the existing <code>karpal-core</code> hierarchy. <code>Semiring</code> and <code>Lattice</code> are independent hierarchies &mdash; they define their own operations to avoid the "which operation is the semigroup?" ambiguity.</p>
+
+    <!-- ================================================================== -->
+    <!-- Newtype Wrappers                                                    -->
+    <!-- ================================================================== -->
+
+    <h2 id="newtypes">Newtype Wrappers</h2>
+
+    <p>The default <code>Semigroup</code> for numeric types uses addition. Newtype wrappers in <code>karpal-core</code> let you select a different combining strategy. This is the standard approach to the "a type can be a monoid in multiple ways" problem.</p>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="sum-product">Sum &amp; Product</h3>
+        <p class="trait-desc">Select additive or multiplicative combining.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct Sum&lt;T&gt;(pub T);      // Semigroup: +, Monoid: 0
+pub struct Product&lt;T&gt;(pub T);  // Semigroup: *, Monoid: 1</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::{Sum, Product, Semigroup, Monoid};
+use karpal_core::Foldable;
+use karpal_core::hkt::VecF;
+
+// Sum uses addition
+assert_eq!(Sum(3i32).combine(Sum(4)), Sum(7));
+assert_eq!(Sum::&lt;i32&gt;::empty(), Sum(0));
+
+// Product uses multiplication
+assert_eq!(Product(3i32).combine(Product(4)), Product(12));
+assert_eq!(Product::&lt;i32&gt;::empty(), Product(1));
+
+// Fold a list as a product instead of a sum
+let product = VecF::fold_map(vec![1, 2, 3, 4], |x| Product(x));
+assert_eq!(product, Product(24));</code></pre>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Wrapper</th><th>Semigroup</th><th>Monoid <code>empty()</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Sum&lt;T: Add&gt;</code></td><td><code>self.0 + other.0</code></td><td><code>Sum(0)</code> / <code>Sum(0.0)</code></td></tr>
+            <tr><td><code>Product&lt;T: Mul&gt;</code></td><td><code>self.0 * other.0</code></td><td><code>Product(1)</code> / <code>Product(1.0)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="min-max">Min &amp; Max</h3>
+        <p class="trait-desc">Select minimum or maximum combining for ordered types.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct Min&lt;T&gt;(pub T);  // Semigroup: min, Monoid: T::MAX
+pub struct Max&lt;T&gt;(pub T);  // Semigroup: max, Monoid: T::MIN</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::{Min, Max, Semigroup, Monoid};
+
+assert_eq!(Min(3i32).combine(Min(7)), Min(3));
+assert_eq!(Max(3i32).combine(Max(7)), Max(7));
+
+// Monoid identity: combining with empty returns the other value
+assert_eq!(Min::&lt;i32&gt;::empty().combine(Min(5)), Min(5));  // MAX.min(5) = 5
+assert_eq!(Max::&lt;i32&gt;::empty().combine(Max(5)), Max(5));  // MIN.max(5) = 5</code></pre>
+
+        <p><code>Monoid</code> is implemented for all integer types (<code>i8</code>&ndash;<code>i128</code>, <code>u8</code>&ndash;<code>u128</code>) using <code>T::MAX</code> for <code>Min</code> and <code>T::MIN</code> for <code>Max</code>. Floats have <code>Semigroup</code> but not <code>Monoid</code> because <code>f64::INFINITY</code> is debatable and NaN breaks the identity law.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="first-last">First &amp; Last</h3>
+        <p class="trait-desc">Select the first or last <code>Some</code> value.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">pub struct First&lt;T&gt;(pub T);  // Only Semigroup+Monoid for Option&lt;T&gt;
+pub struct Last&lt;T&gt;(pub T);   // Only Semigroup+Monoid for Option&lt;T&gt;</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::{First, Last, Semigroup, Monoid};
+
+// First picks the first Some value
+assert_eq!(First(Some(1)).combine(First(Some(2))), First(Some(1)));
+assert_eq!(First(None::&lt;i32&gt;).combine(First(Some(2))), First(Some(2)));
+
+// Last picks the last Some value
+assert_eq!(Last(Some(1)).combine(Last(Some(2))), Last(Some(2)));
+assert_eq!(Last(Some(1)).combine(Last(None)), Last(Some(1)));
+
+// Monoid identity is None (neutral under "pick the Some")
+assert_eq!(First::&lt;Option&lt;i32&gt;&gt;::empty(), First(None));</code></pre>
+
+        <p><code>First</code> and <code>Last</code> are only implemented for <code>Option&lt;T&gt;</code>, matching Haskell's <code>Data.Monoid.First</code>/<code>Last</code>. A blanket <code>First&lt;T&gt;</code> would conflict with the <code>Option</code> specialization due to Rust's coherence rules.</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Group                                                              -->
+    <!-- ================================================================== -->
+
+    <h2 id="group-hierarchy">Group Hierarchy</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="group">Group</h3>
+        <p class="trait-desc">A Monoid where every element has an inverse.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Group: Monoid {
+    fn invert(self) -&gt; Self;
+
+    // Provided: a.combine(b.invert())
+    fn combine_inverse(self, other: Self) -&gt; Self { ... }
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Inverse</span>
+<pre><code class="language-rust">a.invert().combine(a) == Self::empty()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Inverse</span>
+<pre><code class="language-rust">a.combine(a.invert()) == Self::empty()</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>invert</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td>Negation (<code>-self</code>)</td></tr>
+            <tr><td><code>f32</code>, <code>f64</code></td><td>Negation (<code>-self</code>)</td></tr>
+            <tr><td><code>(A, B)</code> where <code>A: Group, B: Group</code></td><td>Component-wise inversion</td></tr>
+          </tbody>
+        </table>
+
+        <p>Unsigned integers are not groups &mdash; they have no additive inverse.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::Group;
+use karpal_core::{Semigroup, Monoid};
+
+assert_eq!(5i32.invert(), -5);
+assert_eq!(5i32.combine(5i32.invert()), 0);  // right inverse
+assert_eq!(10i32.combine_inverse(3), 7);      // 10 + (-3) = 7</code></pre>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="abelian-group">AbelianGroup</h3>
+        <p class="trait-desc">A Group whose operation is commutative. Marker trait &mdash; commutativity verified by property tests.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait AbelianGroup: Group {}</code></pre>
+
+        <div class="law-box">
+          <span class="law-name">Commutativity</span>
+<pre><code class="language-rust">a.combine(b) == b.combine(a)</code></pre>
+        </div>
+
+        <p>All <code>Group</code> instances in Karpal are abelian (addition is commutative). The marker trait exists so that <code>Module</code> can require it &mdash; modules are defined over abelian groups.</p>
+
+        <h4>Instances</h4>
+        <p>All signed integers (<code>i8</code>&ndash;<code>i128</code>), <code>f32</code>, <code>f64</code>, and <code>(A, B)</code> where both components are <code>AbelianGroup</code>.</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Semiring / Ring / Field                                            -->
+    <!-- ================================================================== -->
+
+    <h2 id="ring-hierarchy">Semiring / Ring / Field</h2>
+
+    <p>These traits model the algebraic structures from abstract algebra, with two operations: addition and multiplication. They are <strong>independent</strong> of <code>Semigroup</code> &mdash; they define their own method names to avoid the ambiguity of which operation the semigroup uses.</p>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="semiring">Semiring</h3>
+        <p class="trait-desc">A type with addition (commutative monoid) and multiplication (monoid), where multiplication distributes over addition.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Semiring: Sized + Clone + PartialEq {
+    fn zero() -&gt; Self;
+    fn one() -&gt; Self;
+    fn add(self, other: Self) -&gt; Self;
+    fn mul(self, other: Self) -&gt; Self;
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Additive Commutative Monoid</span>
+<pre><code class="language-rust">a.add(b) == b.add(a)                    // commutativity
+a.add(b).add(c) == a.add(b.add(c))      // associativity
+Self::zero().add(a) == a                 // identity</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Multiplicative Monoid</span>
+<pre><code class="language-rust">a.mul(b).mul(c) == a.mul(b.mul(c))      // associativity
+Self::one().mul(a) == a                  // identity</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Distribution &amp; Annihilation</span>
+<pre><code class="language-rust">a.mul(b.add(c)) == a.mul(b).add(a.mul(c))  // left distribution
+a.add(b).mul(c) == a.mul(c).add(b.mul(c))  // right distribution
+Self::zero().mul(a) == Self::zero()         // annihilation</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>zero</code> / <code>one</code></th><th><code>add</code> / <code>mul</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>All integer types</td><td><code>0</code> / <code>1</code></td><td><code>+</code> / <code>*</code></td></tr>
+            <tr><td><code>f32</code>, <code>f64</code></td><td><code>0.0</code> / <code>1.0</code></td><td><code>+</code> / <code>*</code></td></tr>
+            <tr><td><code>bool</code></td><td><code>false</code> / <code>true</code></td><td>OR / AND</td></tr>
+          </tbody>
+        </table>
+
+        <p>The <code>bool</code> semiring is the classic example: OR is "addition" (with identity <code>false</code>), AND is "multiplication" (with identity <code>true</code>), AND distributes over OR, and <code>false &amp;&amp; x == false</code> (annihilation).</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::Semiring;
+
+assert_eq!(3i32.add(4), 7);
+assert_eq!(3i32.mul(4), 12);
+assert_eq!(i32::zero(), 0);
+assert_eq!(i32::one(), 1);
+
+// Boolean semiring
+assert_eq!(false.add(true), true);   // OR
+assert_eq!(true.mul(false), false);  // AND</code></pre>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="ring">Ring</h3>
+        <p class="trait-desc">A Semiring with additive inverses (negation).</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Ring: Semiring {
+    fn negate(self) -&gt; Self;
+
+    // Provided: self.add(other.negate())
+    fn sub(self, other: Self) -&gt; Self { ... }
+}</code></pre>
+
+        <div class="law-box">
+          <span class="law-name">Additive Inverse</span>
+<pre><code class="language-rust">a.add(a.negate()) == Self::zero()</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>negate</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td><code>-self</code></td></tr>
+            <tr><td><code>f32</code>, <code>f64</code></td><td><code>-self</code></td></tr>
+          </tbody>
+        </table>
+
+        <p>Unsigned integers and <code>bool</code> are <strong>not</strong> rings &mdash; they have no additive inverse.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::{Ring, Semiring};
+
+assert_eq!(5i32.negate(), -5);
+assert_eq!(5i32.add(5i32.negate()), 0);  // additive inverse
+assert_eq!(10i32.sub(3), 7);             // sub = add(negate)</code></pre>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="field">Field</h3>
+        <p class="trait-desc">A Ring with multiplicative inverses for all non-zero elements.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Field: Ring {
+    fn reciprocal(self) -&gt; Self;
+
+    // Provided: self.mul(other.reciprocal())
+    fn div(self, other: Self) -&gt; Self { ... }
+}</code></pre>
+
+        <div class="law-box">
+          <span class="law-name">Multiplicative Inverse (non-zero)</span>
+<pre><code class="language-rust">// For a != zero():
+a.mul(a.reciprocal()) == Self::one()</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>reciprocal</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>f32</code></td><td><code>1.0 / self</code></td></tr>
+            <tr><td><code>f64</code></td><td><code>1.0 / self</code></td></tr>
+          </tbody>
+        </table>
+
+        <p>Integers are not fields &mdash; <code>1 / 2</code> is not an integer. Only floating-point types have a multiplicative inverse.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::{Field, Ring, Semiring};
+
+let half = 2.0f64.reciprocal();
+assert!((half - 0.5).abs() &lt; 1e-10);
+
+let result = 10.0f64.div(4.0);
+assert!((result - 2.5).abs() &lt; 1e-10);</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Lattice                                                            -->
+    <!-- ================================================================== -->
+
+    <h2 id="lattice-hierarchy">Lattice Hierarchy</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="lattice">Lattice</h3>
+        <p class="trait-desc">A type with join (supremum) and meet (infimum) operations satisfying absorption.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Lattice: Sized {
+    fn join(self, other: Self) -&gt; Self;  // supremum (least upper bound)
+    fn meet(self, other: Self) -&gt; Self;  // infimum (greatest lower bound)
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Associativity</span>
+<pre><code class="language-rust">a.join(b.join(c)) == a.join(b).join(c)
+a.meet(b.meet(c)) == a.meet(b).meet(c)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Commutativity</span>
+<pre><code class="language-rust">a.join(b) == b.join(a)
+a.meet(b) == b.meet(a)</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Idempotency</span>
+<pre><code class="language-rust">a.join(a) == a
+a.meet(a) == a</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Absorption</span>
+<pre><code class="language-rust">a.join(a.meet(b)) == a
+a.meet(a.join(b)) == a</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>join</code></th><th><code>meet</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>All integer types</td><td><code>max</code></td><td><code>min</code></td></tr>
+            <tr><td><code>bool</code></td><td>OR</td><td>AND</td></tr>
+            <tr><td><code>f32</code>, <code>f64</code></td><td><code>f64::max</code></td><td><code>f64::min</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::Lattice;
+
+assert_eq!(3i32.join(5), 5);   // max
+assert_eq!(3i32.meet(5), 3);   // min
+
+// Absorption: a.join(a.meet(b)) == a
+assert_eq!(3i32.join(3i32.meet(5)), 3);
+
+// Bool lattice
+assert_eq!(false.join(true), true);   // OR
+assert_eq!(false.meet(true), false);  // AND</code></pre>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="bounded-lattice">BoundedLattice</h3>
+        <p class="trait-desc">A Lattice with top (greatest) and bottom (least) elements.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait BoundedLattice: Lattice {
+    fn top() -&gt; Self;
+    fn bottom() -&gt; Self;
+}</code></pre>
+
+        <div class="law-box">
+          <span class="law-name">Identity</span>
+<pre><code class="language-rust">a.join(Self::bottom()) == a   // bottom is join identity
+a.meet(Self::top()) == a      // top is meet identity</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>top</code></th><th><code>bottom</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>All integer types</td><td><code>T::MAX</code></td><td><code>T::MIN</code></td></tr>
+            <tr><td><code>bool</code></td><td><code>true</code></td><td><code>false</code></td></tr>
+          </tbody>
+        </table>
+
+        <p><code>f32</code> and <code>f64</code> intentionally do <strong>not</strong> implement <code>BoundedLattice</code> &mdash; <code>INFINITY</code> is debatable as a top element, and <code>NaN</code> breaks the lattice laws (it is not comparable to itself).</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Module / VectorSpace                                               -->
+    <!-- ================================================================== -->
+
+    <h2 id="linear-algebra">Module &amp; VectorSpace</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="module">Module&lt;R: Ring&gt;</h3>
+        <p class="trait-desc">An abelian group with scalar multiplication over a ring.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Module&lt;R: Ring&gt;: AbelianGroup {
+    fn scale(self, scalar: R) -&gt; Self;
+}</code></pre>
+
+        <p>The ring <code>R</code> is a generic parameter, not an associated type. This allows a single vector type to be a module over different rings.</p>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Module Laws</span>
+<pre><code class="language-rust">a.scale(R::one()) == a                            // identity
+a.scale(r).scale(s) == a.scale(r.mul(s))           // compatibility
+a.combine(b).scale(r) == a.scale(r).combine(b.scale(r))  // distribution over group
+a.scale(r.add(s)) == a.scale(r).combine(a.scale(s))      // distribution over ring</code></pre>
+        </div>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th>Scalar ring</th><th><code>scale</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>f32</code></td><td><code>f32</code></td><td><code>self * scalar</code></td></tr>
+            <tr><td><code>f64</code></td><td><code>f64</code></td><td><code>self * scalar</code></td></tr>
+            <tr><td><code>(F, F)</code></td><td><code>F: Field</code></td><td>Component-wise multiplication</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::{Module, Semiring};
+use karpal_core::Semigroup;
+
+// Scalar field as 1D module
+assert!((3.0f64.scale(2.0) - 6.0).abs() &lt; 1e-10);
+
+// 2D vector as module
+let v = (1.0f64, 2.0).scale(3.0);
+assert!((v.0 - 3.0).abs() &lt; 1e-10);
+assert!((v.1 - 6.0).abs() &lt; 1e-10);
+
+// Distribution: (a + b) * r == a*r + b*r
+let a = (1.0f64, 2.0);
+let b = (3.0, 4.0);
+let left = a.combine(b).scale(2.0);
+let right = a.scale(2.0).combine(b.scale(2.0));
+assert!((left.0 - right.0).abs() &lt; 1e-10);</code></pre>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="vector-space">VectorSpace&lt;F: Field&gt;</h3>
+        <p class="trait-desc">A Module over a Field. Marker trait guaranteeing scalar division.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait VectorSpace&lt;F: Field&gt;: Module&lt;F&gt; {}</code></pre>
+
+        <p>A vector space inherits all module laws. The key additional guarantee is that scalars form a <code>Field</code>, so scalar division is available. Any field is a one-dimensional vector space over itself.</p>
+
+        <h4>Instances</h4>
+        <p><code>f32</code> over <code>f32</code>, <code>f64</code> over <code>f64</code>, and <code>(F, F)</code> over any <code>F: Field</code>.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_algebra::{VectorSpace, Module, Semiring};
+use karpal_core::Semigroup;
+
+// Generic function over any vector space
+fn linear_combination&lt;V: VectorSpace&lt;f64&gt; + Semigroup&gt;(
+    a: V, sa: f64, b: V, sb: f64,
+) -&gt; V {
+    a.scale(sa).combine(b.scale(sb))
+}
+
+// Standard basis vectors in R^2
+let e1 = (1.0f64, 0.0);
+let e2 = (0.0f64, 1.0);
+let v = e1.scale(3.0).combine(e2.scale(4.0));
+assert!((v.0 - 3.0).abs() &lt; 1e-10);
+assert!((v.1 - 4.0).abs() &lt; 1e-10);</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Design Notes                                                       -->
+    <!-- ================================================================== -->
+
+    <h2 id="design-notes">Design Notes</h2>
+
+    <ul>
+      <li><strong>Semiring is independent of Semigroup</strong> &mdash; a type can be a semigroup under addition (the default) while also being a semiring with both add and mul. The newtypes (<code>Sum</code>, <code>Product</code>) solve "which is the semigroup?" for <code>Foldable</code>; the semiring/ring/field hierarchy provides both operations simultaneously.</li>
+      <li><strong>Integer impls use standard operators</strong> &mdash; matching the existing <code>Semigroup</code> pattern. Property tests use bounded ranges (<code>-100..100</code>) to avoid overflow.</li>
+      <li><strong>Float equality</strong> &mdash; all float-related property tests use epsilon tolerance (<code>1e-6</code> to <code>1e-10</code>) rather than exact equality.</li>
+      <li><strong>No <code>BoundedLattice</code> for floats</strong> &mdash; NaN is not comparable to itself, so <code>NaN.meet(top()) != NaN</code>. Rather than special-case NaN handling, we leave the impl out.</li>
+      <li><strong><code>no_std</code> compatible</strong> &mdash; all traits in <code>karpal-algebra</code> work without <code>std</code> or <code>alloc</code>.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

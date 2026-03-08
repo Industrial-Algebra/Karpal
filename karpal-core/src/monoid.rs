@@ -43,6 +43,12 @@ impl<T: Semigroup> Monoid for Option<T> {
     }
 }
 
+impl<A: Monoid, B: Monoid> Monoid for (A, B) {
+    fn empty() -> Self {
+        (A::empty(), B::empty())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

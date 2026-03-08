@@ -17,3 +17,4 @@ karpal-optics.workspace = true
 karpal-arrow.workspace = true
 karpal-free.workspace = true
 karpal-recursion.workspace = true
+karpal-algebra.workspace = true
