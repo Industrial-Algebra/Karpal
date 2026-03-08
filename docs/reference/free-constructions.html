@@ -114,6 +114,21 @@
           <td>CPS Comonad</td>
           <td><code>extract</code>/<code>fmap</code> without bounds on <code>W</code></td>
         </tr>
+        <tr>
+          <td><code>Day&lt;F, G, A, B, C&gt;</code></td>
+          <td>Day Convolution</td>
+          <td>Pairs two functors with a combining function; interprets via two NTs</td>
+        </tr>
+        <tr>
+          <td><code>FreeAp&lt;F, A&gt;</code></td>
+          <td>Free Applicative</td>
+          <td>Static analysis of effects before interpretation; <code>retract</code> into <code>F</code></td>
+        </tr>
+        <tr>
+          <td><code>FreeAlt&lt;F, A&gt;</code></td>
+          <td>Free Alternative</td>
+          <td>Choice among applicative branches; <code>zero</code>/<code>alt</code>/<code>retract</code></td>
+        </tr>
       </tbody>
     </table>
 
@@ -813,6 +828,290 @@ assert_eq!(mapped.extract(), "val=42");</code></pre>
     </div>
 
     <!-- ================================================================== -->
+    <!-- Day Convolution                                                    -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="day">Day&lt;F, G, A, B, C&gt;</h3>
+        <p class="trait-desc">Day Convolution -- pairs two functors with a combining function.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">/// Day f g a &cong; &exist;b c. (f b, g c, b &rarr; c &rarr; a)
+/// B and C are exposed as type parameters (Rust lacks existential types).
+pub struct Day&lt;F: HKT, G: HKT, A, B, C&gt; {
+    f_val: F::Of&lt;B&gt;,
+    g_val: G::Of&lt;C&gt;,
+    combine: Box&lt;dyn Fn(B, C) -&gt; A&gt;,
+    _marker: PhantomData&lt;(F, G)&gt;,
+}
+
+pub struct DayF&lt;F: HKT + 'static, G: HKT + 'static&gt;(PhantomData&lt;(F, G)&gt;);</code></pre>
+
+        <p><code>Day&lt;F, G, A, B, C&gt;</code> stores an <code>F&lt;B&gt;</code> value, a <code>G&lt;C&gt;</code> value, and a function <code>(B, C) &rarr; A</code>. <code>fmap</code> composes onto the combining function with no bounds on F or G. <code>run_day</code> interprets both sides into a target Applicative using two natural transformations.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F, G, A, B: Clone, C: Clone&gt; Day&lt;F, G, A, B, C&gt; {
+    /// Construct from two functor values and a combining function.
+    pub fn new(f_val: F::Of&lt;B&gt;, g_val: G::Of&lt;C&gt;,
+               combine: impl Fn(B, C) -&gt; A + 'static) -&gt; Self;
+
+    /// Map over the result. No bounds on F or G required.
+    pub fn fmap&lt;D: 'static&gt;(self, f: impl Fn(A) -&gt; D + 'static) -&gt; Day&lt;F, G, D, B, C&gt;;
+
+    /// Interpret into target Applicative M using two natural transformations.
+    pub fn run_day&lt;M, NF, NG&gt;(self) -&gt; M::Of&lt;A&gt;
+    where
+        M: Applicative,
+        NF: NaturalTransformation&lt;F, M&gt;,
+        NG: NaturalTransformation&lt;G, M&gt;;
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Functor Identity</span>
+<pre><code class="language-rust">day.fmap(|a| a).run_day() == day.run_day()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Functor Composition</span>
+<pre><code class="language-rust">day.fmap(|a| g(f(a))).run_day() == day.fmap(f).fmap(g).run_day()</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::Day;
+use karpal_core::hkt::OptionF;
+use karpal_core::natural::NaturalTransformation;
+
+struct OptionId;
+impl NaturalTransformation&lt;OptionF, OptionF&gt; for OptionId {
+    fn transform&lt;A&gt;(fa: Option&lt;A&gt;) -&gt; Option&lt;A&gt; { fa }
+}
+
+// Pair two Option values with multiplication
+let day = Day::&lt;OptionF, OptionF, i32, i32, i32&gt;::new(
+    Some(3), Some(4), |a, b| a * b,
+);
+let result = day.run_day::&lt;OptionF, OptionId, OptionId&gt;();
+assert_eq!(result, Some(12));
+
+// fmap composes onto the combining function
+let day = Day::&lt;OptionF, OptionF, i32, i32, i32&gt;::new(
+    Some(2), Some(5), |a, b| a + b,
+).fmap(|x| x * 3);
+let result = day.run_day::&lt;OptionF, OptionId, OptionId&gt;();
+assert_eq!(result, Some(21)); // (2+5)*3</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Free Applicative                                                   -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="free-ap">FreeAp&lt;F, A&gt;</h3>
+        <p class="trait-desc">The Free Applicative -- build applicative computations as data for static analysis before interpretation.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">/// Pure(a)   -- a finished computation
+/// Ap(node)  -- an effect step (existentially quantified)
+pub enum FreeAp&lt;F: HKT + 'static, A: 'static&gt; {
+    Pure(A),
+    Ap(Box&lt;dyn FreeApNode&lt;F, A&gt;&gt;),
+}
+
+pub struct FreeApF&lt;F: HKT + 'static&gt;(PhantomData&lt;F&gt;);</code></pre>
+
+        <p><code>FreeAp&lt;F, A&gt;</code> stores a computation tree where effects from <code>F</code> can be <strong>statically analyzed</strong> before interpretation. Unlike <code>Free&lt;F, A&gt;</code> (the free monad), effects in <code>FreeAp</code> do not depend on the results of previous effects -- they form a tree, not a chain.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F: HKT + 'static, A: 'static&gt; FreeAp&lt;F, A&gt; {
+    /// Wrap a pure value.
+    pub fn pure(a: A) -&gt; Self;
+
+    /// Lift a single effect F&lt;A&gt;. Requires A: Clone (for Apply::ap).
+    pub fn lift_f(fa: F::Of&lt;A&gt;) -&gt; Self where A: Clone;
+
+    /// Map a function over the result. No bounds on F required.
+    pub fn fmap&lt;B: 'static&gt;(self, f: impl Fn(A) -&gt; B + 'static) -&gt; FreeAp&lt;F, B&gt;;
+
+    /// Applicative ap: apply wrapped functions to values.
+    pub fn ap&lt;B: 'static&gt;(
+        ff: FreeAp&lt;F, Box&lt;dyn Fn(A) -&gt; B&gt;&gt;, fa: FreeAp&lt;F, A&gt;,
+    ) -&gt; FreeAp&lt;F, B&gt; where A: Clone;
+
+    /// Collapse into F's own Applicative. Requires F: Applicative.
+    pub fn retract(self) -&gt; F::Of&lt;A&gt; where F: Applicative;
+
+    /// Count the number of lift_f effects in this tree.
+    pub fn count_effects(&amp;self) -&gt; usize;
+}</code></pre>
+
+        <h4>FreeAp vs Free</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th></th><th>Free (Monad)</th><th>FreeAp (Applicative)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Effect dependencies</td><td>Later effects depend on earlier results</td><td>All effects are independent</td></tr>
+            <tr><td>Static analysis</td><td>Not possible (effects depend on runtime values)</td><td>Yes: <code>count_effects</code>, tree inspection</td></tr>
+            <tr><td>Interpretation</td><td><code>fold_map</code> via natural transformation</td><td><code>retract</code> into F's Applicative</td></tr>
+            <tr><td>Power</td><td>More powerful (monadic sequencing)</td><td>Less powerful but more analyzable</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Functor Identity</span>
+<pre><code class="language-rust">fa.fmap(|a| a).retract() == fa.retract()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Applicative Identity</span>
+<pre><code class="language-rust">FreeAp::ap(FreeAp::pure(Box::new(|x| x)), fa).retract() == fa.retract()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Applicative Homomorphism</span>
+<pre><code class="language-rust">FreeAp::ap(FreeAp::pure(f), FreeAp::pure(x)).retract()
+  == FreeAp::pure(f(x)).retract()</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::FreeAp;
+use karpal_core::hkt::OptionF;
+
+// Build a computation tree
+let fa = FreeAp::&lt;OptionF, i32&gt;::lift_f(Some(10));
+let fb = fa.fmap(|x| x + 5);
+
+// Static analysis: count effects before running
+assert_eq!(fb.count_effects(), 1);
+
+// Interpret by collapsing into Option's Applicative
+let result = fb.retract();
+assert_eq!(result, Some(15));
+
+// Apply wrapped functions
+let ff = FreeAp::&lt;OptionF, Box&lt;dyn Fn(i32) -&gt; i32&gt;&gt;::pure(
+    Box::new(|x| x * 2) as Box&lt;dyn Fn(i32) -&gt; i32&gt;
+);
+let fa = FreeAp::&lt;OptionF, i32&gt;::lift_f(Some(21));
+let result = FreeAp::ap(ff, fa).retract();
+assert_eq!(result, Some(42));</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Free Alternative                                                   -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="free-alt">FreeAlt&lt;F, A&gt;</h3>
+        <p class="trait-desc">The Free Alternative -- choice among zero or more applicative computations.</p>
+      </div>
+      <div class="trait-card-body">
+
+        <h4>Definition</h4>
+
+<pre><code class="language-rust">/// FreeAlt f a &cong; [FreeAp f a]
+/// An empty list is zero (failure), multiple elements represent choice.
+pub struct FreeAlt&lt;F: HKT + 'static, A: 'static&gt; {
+    alternatives: Vec&lt;FreeAp&lt;F, A&gt;&gt;,
+}
+
+pub struct FreeAltF&lt;F: HKT + 'static&gt;(PhantomData&lt;F&gt;);</code></pre>
+
+        <p><code>FreeAlt&lt;F, A&gt;</code> wraps a list of <code>FreeAp&lt;F, A&gt;</code> branches. An empty list represents <code>zero</code> (failure/no alternatives). <code>alt</code> combines two alternatives by concatenating their branches. <code>retract</code> collapses into <code>F</code>'s own Alternative by folding branches with <code>F::alt</code>.</p>
+
+        <h4>Key Methods</h4>
+
+<pre><code class="language-rust">impl&lt;F: HKT + 'static, A: 'static&gt; FreeAlt&lt;F, A&gt; {
+    /// Wrap a pure value (single branch).
+    pub fn pure(a: A) -&gt; Self;
+
+    /// Lift a single effect (single branch).
+    pub fn lift_f(fa: F::Of&lt;A&gt;) -&gt; Self where A: Clone;
+
+    /// The empty alternative (zero / failure).
+    pub fn zero() -&gt; Self;
+
+    /// Combine two alternatives (choice).
+    pub fn alt(self, other: FreeAlt&lt;F, A&gt;) -&gt; Self;
+
+    /// Map a function over all branches.
+    pub fn fmap&lt;B: 'static&gt;(self, f: impl Fn(A) -&gt; B + 'static) -&gt; FreeAlt&lt;F, B&gt;;
+
+    /// Collapse into F's own Alternative.
+    pub fn retract(self) -&gt; F::Of&lt;A&gt; where F: Alternative;
+
+    /// Count branches.
+    pub fn count_alternatives(&amp;self) -&gt; usize;
+
+    /// Count total effects across all branches.
+    pub fn count_effects(&amp;self) -&gt; usize;
+}</code></pre>
+
+        <h4>Laws</h4>
+
+        <div class="law-box">
+          <span class="law-name">Alt Associativity</span>
+<pre><code class="language-rust">(a.alt(b)).alt(c).retract() == a.alt(b.alt(c)).retract()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Plus Left Identity</span>
+<pre><code class="language-rust">FreeAlt::zero().alt(x).retract() == x.retract()</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Plus Right Identity</span>
+<pre><code class="language-rust">x.alt(FreeAlt::zero()).retract() == x.retract()</code></pre>
+        </div>
+
+        <h4>Example</h4>
+
+<pre><code class="language-rust">use karpal_free::FreeAlt;
+use karpal_core::hkt::OptionF;
+
+// Build alternatives
+let a = FreeAlt::&lt;OptionF, i32&gt;::lift_f(None);
+let b = FreeAlt::&lt;OptionF, i32&gt;::lift_f(Some(42));
+let combined = a.alt(b);
+
+// Inspect before interpreting
+assert_eq!(combined.count_alternatives(), 2);
+assert_eq!(combined.count_effects(), 2);
+
+// retract: collapses using Option's alt (picks first Some)
+let result = combined.retract();
+assert_eq!(result, Some(42));
+
+// zero is the identity for alt
+let z = FreeAlt::&lt;OptionF, i32&gt;::zero();
+assert_eq!(z.retract(), None);</code></pre>
+
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
     <!-- Design Notes                                                       -->
     <!-- ================================================================== -->
 
@@ -820,11 +1119,13 @@ assert_eq!(mapped.extract(), "val=42");</code></pre>
 
     <h3>Three families of free constructions</h3>
 
-    <p><strong>Exposed type parameters</strong> (Coyoneda, Lan): These types keep a type parameter visible (e.g. <code>B</code> in <code>Coyoneda&lt;F, A, B&gt;</code>) representing the original value inside <code>F</code>. This is the simplest encoding and avoids trait objects for the core structure, though <code>fmap</code> closures still require <code>Box&lt;dyn Fn&gt;</code>.</p>
+    <p><strong>Exposed type parameters</strong> (Coyoneda, Lan, Day): These types keep type parameters visible (e.g. <code>B</code> in <code>Coyoneda&lt;F, A, B&gt;</code>, or <code>B, C</code> in <code>Day&lt;F, G, A, B, C&gt;</code>) representing the original values inside the functors. This is the simplest encoding and avoids trait objects for the core structure, though <code>fmap</code> closures still require <code>Box&lt;dyn Fn&gt;</code>.</p>
 
-    <p><strong>Trait objects with dyn-safe traits</strong> (Yoneda, Codensity, Density, Freer): These types erase an internal type parameter via <code>Box&lt;dyn Trait&gt;</code>. This requires <code>F: 'static</code> and <code>A: 'static</code> bounds everywhere. Due to a Rust GAT limitation (you cannot add <code>T: 'static</code> to <code>type Of&lt;T&gt;</code> in a trait impl when the trait definition doesn't have it), marker types like <code>CodensityF</code> and <code>FreerF</code> <strong>cannot implement</strong> the <code>HKT</code> or <code>Functor</code> traits. Use the inherent methods instead.</p>
+    <p><strong>Trait objects with dyn-safe traits</strong> (Yoneda, Codensity, Density, Freer, FreeAp): These types erase an internal type parameter via <code>Box&lt;dyn Trait&gt;</code>. This requires <code>F: 'static</code> and <code>A: 'static</code> bounds everywhere. Due to a Rust GAT limitation (you cannot add <code>T: 'static</code> to <code>type Of&lt;T&gt;</code> in a trait impl when the trait definition doesn't have it), marker types like <code>CodensityF</code>, <code>FreerF</code>, <code>FreeApF</code>, and <code>FreeAltF</code> <strong>cannot implement</strong> the <code>HKT</code> or <code>Functor</code> traits. Use the inherent methods instead.</p>
 
     <p><strong>Recursive enums/structs</strong> (Free, Cofree): These use direct recursion (not trait objects), so they avoid the <code>'static</code> limitation entirely. <code>FreeF</code> implements <code>HKT + Functor</code>; <code>CofreeF</code> implements the full <code>HKT + Functor + Extend + Comonad</code> chain.</p>
+
+    <p><strong>Composite wrappers</strong> (FreeAlt): Built on top of other free constructions. <code>FreeAlt&lt;F, A&gt;</code> is simply <code>Vec&lt;FreeAp&lt;F, A&gt;&gt;</code>, providing Alternative structure by combining applicative branches.</p>
 
     <h3>Kan extension relationships</h3>
 
@@ -866,6 +1167,19 @@ fn fmap_inner&lt;B&gt;(self, f: &amp;dyn Fn(A) -&gt; B) -&gt; Cofree&lt;F, B&gt;
     }
 }</code></pre>
 
+    <h3>Why FreeAp uses <code>retract</code> instead of <code>fold_map</code></h3>
+
+    <p>In Haskell, the primary eliminator for free applicatives is <code>foldMap :: (forall x. f x -&gt; g x) -&gt; Ap f a -&gt; g a</code>, which interprets into any target Applicative via a natural transformation. In Rust, this is <strong>impossible</strong> through dyn dispatch.</p>
+
+    <p>The issue: <code>FreeAp::Ap</code> erases an intermediate type <code>B</code> behind a trait object (<code>Box&lt;dyn FreeApNode&lt;F, A&gt;&gt;</code>). Calling <code>NT::transform&lt;B&gt;(effect)</code> requires compile-time monomorphisation for the specific <code>B</code>, but <code>B</code> has been erased. Rust cannot dispatch a generic function through a type-erased interface.</p>
+
+    <p><code>retract</code> avoids this because it collapses into <code>F</code> itself -- <code>F</code> is already a type parameter of the trait. To interpret into a <em>different</em> Applicative <code>M</code>, apply your natural transformation at each <code>lift_f</code> call site, then <code>retract</code>:</p>
+
+<pre><code class="language-rust">// fold_map nt &equiv; retract . hoist nt
+// In practice: apply NT when building, then retract
+let free_m: FreeAp&lt;M, A&gt; = FreeAp::lift_f(NT::transform(effect));
+let result: M::Of&lt;A&gt; = free_m.retract();</code></pre>
+
     <h3>Why Ran is a trait, not a struct</h3>
 
     <p>Ran encodes a universally quantified function: <code>&forall;R. (A &rarr; G R) &rarr; H R</code>. In Rust, this requires a generic method <code>run_ran&lt;R&gt;</code>, which cannot be made object-safe. Unlike Codensity (which restricts to a single eliminator <code>to_monad</code>), Ran preserves the full generality of <code>&forall;R</code>, so it must remain a trait. Use <code>ran_fmap</code> for functor-like mapping over Ran implementations.</p>
@@ -876,9 +1190,10 @@ fn fmap_inner&lt;B&gt;(self, f: &amp;dyn Fn(A) -&gt; B) -&gt; Cofree&lt;F, B&gt;
 
     <h2 id="see-also">See Also</h2>
     <ul>
-      <li><a href="functor-family.html"><strong>Functor Family</strong></a> -- the traits that Free/Cofree build on (Functor, Apply, Chain, Monad)</li>
+      <li><a href="functor-family.html"><strong>Functor Family</strong></a> -- the traits that Free/Cofree/FreeAp build on (Functor, Apply, Applicative, Chain, Monad)</li>
+      <li><a href="alt-family.html"><strong>Alt Family</strong></a> -- Alt, Plus, and Alternative, which FreeAlt's <code>retract</code> requires</li>
       <li><a href="comonad-family.html"><strong>Comonad Family</strong></a> -- Extend and Comonad, which Cofree implements</li>
-      <li><a href="bifunctor-natural.html"><strong>Bifunctor &amp; Natural</strong></a> -- NaturalTransformation, used by <code>Free::fold_map</code>, <code>Freer::fold_map</code>, and <code>Lan::lower</code></li>
+      <li><a href="bifunctor-natural.html"><strong>Bifunctor &amp; Natural</strong></a> -- NaturalTransformation, used by <code>Free::fold_map</code>, <code>Freer::fold_map</code>, <code>Lan::lower</code>, and <code>Day::run_day</code></li>
     </ul>
 
     <div class="footer">
