@@ -37,6 +37,14 @@ pub mod prelude {
     // Algebraic typeclasses
     pub use karpal_core::{Monoid, Semigroup};
 
+    // Newtype wrappers
+    pub use karpal_core::{First, Last, Max, Min, Product, Sum};
+
+    // Abstract algebra
+    pub use karpal_algebra::{
+        AbelianGroup, BoundedLattice, Field, Group, Lattice, Module, Ring, Semiring, VectorSpace,
+    };
+
     // Profunctor
     pub use karpal_profunctor::{Choice, FnP, ForgetF, Profunctor, Strong, TaggedF, Traversing};
 
@@ -77,6 +85,7 @@ pub mod prelude {
 }
 
 // Crate re-exports for qualified access
+pub use karpal_algebra;
 pub use karpal_arrow;
 pub use karpal_core;
 pub use karpal_free;
