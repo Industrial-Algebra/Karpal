@@ -185,6 +185,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-recursion"
+version = "0.1.0"
+dependencies = [
+ "karpal-core",
+ "karpal-free",
+ "proptest",
+]
+
+[[package]]
 name = "karpal-std"
 version = "0.1.0"
 dependencies = [
@@ -193,6 +202,7 @@ dependencies = [
  "karpal-free",
  "karpal-optics",
  "karpal-profunctor",
+ "karpal-recursion",
 ]
 
 [[package]]

@@ -1,0 +1,23 @@
+[package]
+name = "karpal-recursion"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Recursion schemes (cata, ana, hylo, para, apo, histo, futu, zygo, chrono) for the Industrial Algebra ecosystem"
+
+[dependencies]
+karpal-core = { version = "0.1.0", path = "../karpal-core", default-features = false }
+karpal-free = { version = "0.1.0", path = "../karpal-free", default-features = false }
+
+[features]
+default = ["std"]
+std = ["alloc", "karpal-core/std", "karpal-free/std"]
+alloc = ["karpal-core/alloc", "karpal-free/alloc"]
+
+[dev-dependencies]
+proptest.workspace = true
