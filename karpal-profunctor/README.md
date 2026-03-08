@@ -40,10 +40,26 @@ Lifts `P<A, B>` into `P<(A, C), (B, C)>` — the key ingredient for lenses.
 
 Lifts `P<A, B>` into `P<Result<A, C>, Result<B, C>>` — the key ingredient for prisms.
 
+### Traversing
+
+Extends `Strong + Choice` with `wander` — the key ingredient for traversals.
+
+### ForgetF\<R\>
+
+A profunctor that forgets the output: `P<A, B> = Box<dyn Fn(A) -> R>`.
+Implements `Profunctor`, `Strong`, and `Choice + Traversing` when `R: Monoid`.
+Used by `Getter`, `Fold`, and read-only optics.
+
+### TaggedF
+
+A profunctor that ignores the input: `P<A, B> = B`.
+Implements `Profunctor` and `Choice` but **not** `Strong` (enforces write-only).
+Used by `Review`.
+
 ### FnP
 
 The canonical profunctor instance: `Box<dyn Fn(A) -> B>`.
-Implements `Profunctor`, `Strong`, and `Choice`. Gated behind the `alloc` feature.
+Implements `Profunctor`, `Strong`, `Choice`, and `Traversing`. Gated behind the `alloc` feature.
 
 ## Features
 

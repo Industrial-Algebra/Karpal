@@ -39,8 +39,32 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
+      - name: Publish karpal-free
+        run: cargo publish -p karpal-free
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-algebra
+        run: cargo publish -p karpal-algebra
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
       - name: Publish karpal-optics
         run: cargo publish -p karpal-optics
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-recursion
+        run: cargo publish -p karpal-recursion
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 

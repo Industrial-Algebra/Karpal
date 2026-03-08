@@ -207,9 +207,33 @@ assert_eq!(Some(3i32).combine(Some(4)), Some(7));
 
 // Monoid adds an identity element
 assert_eq!(Vec::<i32>::empty().combine(vec![1, 2]), vec![1, 2]);
+
+// Tuple instances combine component-wise
+assert_eq!((1i32, 10i32).combine((2, 20)), (3, 30));
 ```
 
-Instances: all numeric types (additive), `String`, `Vec<T>`, `Option<T: Semigroup>`.
+Instances: all numeric types (additive), `String`, `Vec<T>`, `Option<T: Semigroup>`, `(A, B)`.
+
+### Newtype wrappers
+
+Select alternative `Semigroup`/`Monoid` instances for numeric types:
+
+```rust
+use karpal_core::{Sum, Product, Min, Max, First, Last, Semigroup, Monoid, Foldable};
+use karpal_core::hkt::VecF;
+
+// Product uses multiplication instead of addition
+let product = VecF::fold_map(vec![1, 2, 3, 4], |x| Product(x));
+assert_eq!(product, Product(24));
+
+// Min/Max for ordered types
+assert_eq!(Min(3i32).combine(Min(7)), Min(3));
+assert_eq!(Max(3i32).combine(Max(7)), Max(7));
+
+// First/Last pick the first/last Some value
+assert_eq!(First(None::<i32>).combine(First(Some(2))), First(Some(2)));
+assert_eq!(Last(Some(1i32)).combine(Last(None)), Last(Some(1)));
+```
 
 ## Features
 

@@ -52,6 +52,12 @@ impl<T> Semigroup for crate::hkt::NonEmptyVec<T> {
     }
 }
 
+impl<A: Semigroup, B: Semigroup> Semigroup for (A, B) {
+    fn combine(self, other: Self) -> Self {
+        (self.0.combine(other.0), self.1.combine(other.1))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
