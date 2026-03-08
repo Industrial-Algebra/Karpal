@@ -38,12 +38,17 @@ pub mod prelude {
     pub use karpal_core::{Monoid, Semigroup};
 
     // Profunctor
-    pub use karpal_profunctor::{Choice, FnP, Profunctor, Strong};
+    pub use karpal_profunctor::{Choice, FnP, ForgetF, Profunctor, Strong, TaggedF, Traversing};
 
     // Optics
-    pub use karpal_optics::lens::ComposedLens;
-    pub use karpal_optics::lens::{Lens, SimpleLens};
+    pub use karpal_optics::fold::{ComposedFold, Fold};
+    pub use karpal_optics::getter::{ComposedGetter, Getter};
+    pub use karpal_optics::iso::{Iso, SimpleIso};
+    pub use karpal_optics::lens::{ComposedLens, Lens, SimpleLens};
     pub use karpal_optics::optic::Optic;
+    pub use karpal_optics::review::Review;
+    pub use karpal_optics::setter::{Setter, SimpleSetter};
+    pub use karpal_optics::traversal::{ComposedTraversal, SimpleTraversal, Traversal};
     pub use karpal_optics::{Prism, SimplePrism};
 
     // Arrow hierarchy
@@ -62,6 +67,11 @@ pub mod prelude {
         Yoneda, YonedaF,
     };
 
+    // Recursion schemes
+    pub use karpal_recursion::{
+        Either, Fix, FixF, Mu, Nu, ana, apo, cata, chrono, futu, histo, hylo, para, zygo,
+    };
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -72,6 +82,7 @@ pub use karpal_core;
 pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;
+pub use karpal_recursion;
 
 // Macro re-exports
 pub use karpal_core::ado_;

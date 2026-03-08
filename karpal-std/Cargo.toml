@@ -16,3 +16,4 @@ karpal-profunctor.workspace = true
 karpal-optics.workspace = true
 karpal-arrow.workspace = true
 karpal-free.workspace = true
+karpal-recursion.workspace = true

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recursion Schemes - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.1.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html" class="active">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Recursion Schemes</span>
+    </nav>
+
+    <h1>Recursion Schemes</h1>
+    <p>Recursion schemes provide structured, composable patterns for folding and unfolding recursive data. They live in the <code>karpal-recursion</code> crate and depend on <code>karpal-core</code> (HKT, Functor) and <code>karpal-free</code> (Cofree, Free).</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Type / Function</th><th>Category</th><th>Key idea</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Fix&lt;F&gt;</code></td>
+          <td>Fixed point</td>
+          <td>Ties the recursive knot: <code>Fix&lt;F&gt; &cong; F&lt;Fix&lt;F&gt;&gt;</code></td>
+        </tr>
+        <tr>
+          <td><code>Mu&lt;F&gt;</code></td>
+          <td>Least fixed point</td>
+          <td>Type alias for <code>Fix&lt;F&gt;</code> (Rust can't enforce finiteness)</td>
+        </tr>
+        <tr>
+          <td><code>Nu&lt;F, Seed&gt;</code></td>
+          <td>Greatest fixed point</td>
+          <td>Seed + coalgebra; lazy observation of corecursive structures</td>
+        </tr>
+        <tr>
+          <td><code>cata</code></td>
+          <td>Fold</td>
+          <td>Catamorphism &mdash; fold bottom-up with <code>F&lt;A&gt; &rarr; A</code></td>
+        </tr>
+        <tr>
+          <td><code>ana</code></td>
+          <td>Unfold</td>
+          <td>Anamorphism &mdash; unfold top-down with <code>A &rarr; F&lt;A&gt;</code></td>
+        </tr>
+        <tr>
+          <td><code>hylo</code></td>
+          <td>Refold</td>
+          <td>Hylomorphism &mdash; unfold then fold, no intermediate <code>Fix</code></td>
+        </tr>
+        <tr>
+          <td><code>para</code></td>
+          <td>Fold+</td>
+          <td>Paramorphism &mdash; fold with access to original subterms</td>
+        </tr>
+        <tr>
+          <td><code>apo</code></td>
+          <td>Unfold+</td>
+          <td>Apomorphism &mdash; unfold with early termination via <code>Either</code></td>
+        </tr>
+        <tr>
+          <td><code>histo</code></td>
+          <td>Fold++</td>
+          <td>Histomorphism &mdash; fold with full history via <code>Cofree</code></td>
+        </tr>
+        <tr>
+          <td><code>futu</code></td>
+          <td>Unfold++</td>
+          <td>Futumorphism &mdash; multi-step unfold via <code>Free</code></td>
+        </tr>
+        <tr>
+          <td><code>zygo</code></td>
+          <td>Composite</td>
+          <td>Zygomorphism &mdash; fold with auxiliary fold in parallel</td>
+        </tr>
+        <tr>
+          <td><code>chrono</code></td>
+          <td>Composite</td>
+          <td>Chronomorphism &mdash; <code>futu</code> ; <code>histo</code> in a single pass</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="fixed-points">Fixed Points</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="fix">Fix&lt;F&gt;</h3>
+        <p class="trait-desc">The fixed point of a functor. Ties the recursive knot so that <code>Fix&lt;F&gt; &cong; F&lt;Fix&lt;F&gt;&gt;</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Definition</h4>
+<pre><code class="language-rust">pub struct Fix&lt;F: HKT&gt;(Rc&lt;F::Of&lt;Fix&lt;F&gt;&gt;&gt;);
+
+// Unconditional Clone via Rc reference counting
+impl&lt;F: HKT&gt; Clone for Fix&lt;F&gt; { ... }
+
+pub type Mu&lt;F&gt; = Fix&lt;F&gt;;</code></pre>
+
+        <h4>Key Methods</h4>
+<pre><code class="language-rust">// Wrap one layer
+Fix::new(f: F::Of&lt;Fix&lt;F&gt;&gt;) -&gt; Fix&lt;F&gt;
+
+// Unwrap one layer (consuming)
+fix.unfix() -&gt; F::Of&lt;Fix&lt;F&gt;&gt;  // where F::Of&lt;Fix&lt;F&gt;&gt;: Clone
+
+// Borrow one layer
+fix.unfix_ref() -&gt; &amp;F::Of&lt;Fix&lt;F&gt;&gt;</code></pre>
+
+        <h4>Design: Rc vs Box</h4>
+        <p><code>Fix</code> uses <code>Rc</code> instead of <code>Box</code> for indirection. This makes <code>Fix&lt;F&gt;: Clone</code> unconditional (just a reference count bump), which is essential for paramorphism &mdash; it needs to both preserve and consume each subterm. Rust's trait solver cannot prove coinductive Clone bounds like <code>Fix&lt;OptionF&gt;: Clone &harr; Option&lt;Fix&lt;OptionF&gt;&gt;: Clone</code>, so <code>Box</code> would make <code>Clone</code> impossible.</p>
+
+        <h4>Example: Natural Numbers</h4>
+<pre><code class="language-rust">use karpal_recursion::{Fix, cata, ana};
+use karpal_core::hkt::OptionF;
+
+// None = Zero, Some(n) = Succ(n)
+let three: Fix&lt;OptionF&gt; = Fix::new(Some(Fix::new(Some(Fix::new(None)))));
+
+// Or build with ana:
+let five: Fix&lt;OptionF&gt; = ana(
+    |n: u32| if n == 0 { None } else { Some(n - 1) },
+    5,
+);
+
+// Fold with cata:
+let count = cata::&lt;OptionF, u32&gt;(
+    |layer| match layer {
+        None =&gt; 0,
+        Some(n) =&gt; n + 1,
+    },
+    five,
+);
+assert_eq!(count, 5);</code></pre>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="nu">Nu&lt;F, Seed&gt;</h3>
+        <p class="trait-desc">Greatest fixed point &mdash; a seed paired with a coalgebra for lazy observation.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Definition</h4>
+<pre><code class="language-rust">pub struct Nu&lt;F: HKT, Seed&gt; {
+    pub seed: Seed,
+    pub coalgebra: Box&lt;dyn Fn(&amp;Seed) -&gt; F::Of&lt;Seed&gt;&gt;,
+}</code></pre>
+
+        <h4>Key Methods</h4>
+<pre><code class="language-rust">Nu::new(seed, coalgebra) -&gt; Nu&lt;F, Seed&gt;
+nu.observe() -&gt; F::Of&lt;Seed&gt;   // apply coalgebra once
+nu.to_fix() -&gt; Fix&lt;F&gt;         // fully unfold via ana</code></pre>
+
+        <h4>Example</h4>
+<pre><code class="language-rust">use karpal_recursion::Nu;
+use karpal_core::hkt::OptionF;
+
+let countdown = Nu::&lt;OptionF, u32&gt;::new(3, |&amp;s| {
+    if s == 0 { None } else { Some(s - 1) }
+});
+assert_eq!(countdown.observe(), Some(2));</code></pre>
+      </div>
+    </div>
+
+    <h2 id="schemes">Recursion Schemes</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="cata">cata &mdash; Catamorphism</h3>
+        <p class="trait-desc">Fold a recursive structure bottom-up. The fundamental "tear down" operation.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn cata&lt;F: HKT + Functor, A&gt;(
+    alg: impl Fn(F::Of&lt;A&gt;) -&gt; A,
+    fix: Fix&lt;F&gt;,
+) -&gt; A</code></pre>
+
+        <h4>Example: Sum Natural Numbers</h4>
+<pre><code class="language-rust">let n = ana(|s: u32| if s == 0 { None } else { Some(s - 1) }, 5);
+let sum = cata::&lt;OptionF, u32&gt;(
+    |layer| match layer {
+        None =&gt; 0,
+        Some(acc) =&gt; acc + 1,
+    },
+    n,
+);
+assert_eq!(sum, 5);</code></pre>
+
+        <h4>Laws</h4>
+        <ul>
+          <li><code>cata(Fix::new, x) == x</code> &mdash; folding with the constructor is identity</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="ana">ana &mdash; Anamorphism</h3>
+        <p class="trait-desc">Unfold a recursive structure top-down from a seed.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn ana&lt;F: HKT + Functor, A&gt;(
+    coalg: impl Fn(A) -&gt; F::Of&lt;A&gt;,
+    seed: A,
+) -&gt; Fix&lt;F&gt;</code></pre>
+
+        <h4>Example: Build Natural Numbers</h4>
+<pre><code class="language-rust">let three: Fix&lt;OptionF&gt; = ana(
+    |n: u32| if n == 0 { None } else { Some(n - 1) },
+    3,
+);</code></pre>
+
+        <h4>Laws</h4>
+        <ul>
+          <li><code>cata(alg, ana(coalg, seed)) == hylo(alg, coalg, seed)</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="hylo">hylo &mdash; Hylomorphism</h3>
+        <p class="trait-desc">Unfold then fold in a single pass &mdash; no intermediate <code>Fix</code> is allocated.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn hylo&lt;F: HKT + Functor, A, B&gt;(
+    alg: impl Fn(F::Of&lt;B&gt;) -&gt; B,
+    coalg: impl Fn(A) -&gt; F::Of&lt;A&gt;,
+    seed: A,
+) -&gt; B</code></pre>
+
+        <h4>Key Property</h4>
+        <p><code>hylo(alg, coalg, seed) == cata(alg, ana(coalg, seed))</code> but more efficient &mdash; the intermediate data structure is "deforested" away.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="para">para &mdash; Paramorphism</h3>
+        <p class="trait-desc">Fold with access to original subterms. The algebra receives both the folded result and the original sub-structure.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn para&lt;F: HKT + Functor, A&gt;(
+    alg: impl Fn(F::Of&lt;(Fix&lt;F&gt;, A)&gt;) -&gt; A,
+    fix: Fix&lt;F&gt;,
+) -&gt; A</code></pre>
+
+        <h4>Example: Factorial</h4>
+<pre><code class="language-rust">let factorial = para::&lt;OptionF, u64&gt;(
+    |layer| match layer {
+        None =&gt; 1,           // 0! = 1
+        Some((sub, acc)) =&gt; {
+            let n = count(&amp;sub) + 1;  // read current number from subterm
+            (n as u64) * acc
+        }
+    },
+    nat(5),
+);
+assert_eq!(factorial, 120);</code></pre>
+
+        <h4>Laws</h4>
+        <ul>
+          <li>When ignoring the <code>Fix&lt;F&gt;</code> subterm, <code>para</code> degenerates to <code>cata</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="apo">apo &mdash; Apomorphism</h3>
+        <p class="trait-desc">Unfold with early termination. The coalgebra can short-circuit by injecting a pre-built <code>Fix</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn apo&lt;F: HKT + Functor, A&gt;(
+    coalg: impl Fn(A) -&gt; F::Of&lt;Either&lt;Fix&lt;F&gt;, A&gt;&gt;,
+    seed: A,
+) -&gt; Fix&lt;F&gt;</code></pre>
+
+        <h4>Key Idea</h4>
+        <p><code>Either::Right(seed)</code> continues unfolding, <code>Either::Left(fix)</code> embeds an already-built subtree directly. When always returning <code>Right</code>, <code>apo</code> degenerates to <code>ana</code>.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="histo">histo &mdash; Histomorphism</h3>
+        <p class="trait-desc">Fold with full history via <code>Cofree</code>. At each step, access all previously-computed results.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn histo&lt;F: HKT + Functor, A&gt;(
+    alg: impl Fn(&amp;F::Of&lt;Cofree&lt;F, A&gt;&gt;) -&gt; A,
+    fix: Fix&lt;F&gt;,
+) -&gt; A</code></pre>
+
+        <h4>Example: Fibonacci</h4>
+<pre><code class="language-rust">let fib = histo::&lt;OptionF, u64&gt;(
+    |layer| match layer {
+        None =&gt; 0,                      // fib(0) = 0
+        Some(cofree) =&gt; {
+            let prev = cofree.head;      // fib(n-1)
+            match cofree.tail.as_ref() {
+                None =&gt; 1,               // fib(1) = 1
+                Some(gc) =&gt; prev + gc.head,  // fib(n-1) + fib(n-2)
+            }
+        }
+    },
+    nat(10),
+);
+assert_eq!(fib, 55);</code></pre>
+
+        <h4>Design Note</h4>
+        <p>The algebra takes <code>&amp;F::Of&lt;Cofree&lt;F, A&gt;&gt;</code> (a reference) rather than ownership. This avoids needing <code>Clone</code> on the recursive <code>Cofree</code> structure, which Rust's trait solver cannot prove coinductively.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="futu">futu &mdash; Futumorphism</h3>
+        <p class="trait-desc">Multi-step unfold via <code>Free</code>. Generate multiple layers of structure at once.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn futu&lt;F: HKT + Functor, A&gt;(
+    coalg: impl Fn(A) -&gt; F::Of&lt;Free&lt;F, A&gt;&gt;,
+    seed: A,
+) -&gt; Fix&lt;F&gt;</code></pre>
+
+        <h4>Key Idea</h4>
+        <p><code>Free::Pure(seed)</code> continues with one more coalgebra application. <code>Free::Roll(f)</code> injects multiple layers at once. When always returning <code>Pure</code>, <code>futu</code> degenerates to <code>ana</code>.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="zygo">zygo &mdash; Zygomorphism</h3>
+        <p class="trait-desc">Fold with an auxiliary fold running in parallel.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn zygo&lt;F: HKT + Functor, A, B&gt;(
+    aux: impl Fn(F::Of&lt;B&gt;) -&gt; B,
+    alg: impl Fn(F::Of&lt;(B, A)&gt;) -&gt; A,
+    fix: Fix&lt;F&gt;,
+) -&gt; A
+where F::Of&lt;(B, A)&gt;: Clone</code></pre>
+
+        <h4>Key Idea</h4>
+        <p>Two algebras run simultaneously: <code>aux</code> computes a helper value <code>B</code> at each layer, and <code>alg</code> has access to both <code>B</code> and the primary result <code>A</code> from sub-structures.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="chrono">chrono &mdash; Chronomorphism</h3>
+        <p class="trait-desc">Combines futumorphism and histomorphism in a single pass.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+<pre><code class="language-rust">pub fn chrono&lt;F: HKT + Functor, A, B&gt;(
+    alg: impl Fn(&amp;F::Of&lt;Cofree&lt;F, B&gt;&gt;) -&gt; B,
+    coalg: impl Fn(A) -&gt; F::Of&lt;Free&lt;F, A&gt;&gt;,
+    seed: A,
+) -&gt; B</code></pre>
+
+        <h4>Key Idea</h4>
+        <p>Conceptually <code>chrono = histo . futu</code> &mdash; multi-step unfolding with history-aware folding &mdash; but computed in a single pass without building an intermediate <code>Fix</code>.</p>
+      </div>
+    </div>
+
+    <h2 id="either">Either&lt;L, R&gt;</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="either-type">Either&lt;L, R&gt;</h3>
+        <p class="trait-desc">A simple sum type used by apomorphism for early termination.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Definition</h4>
+<pre><code class="language-rust">pub enum Either&lt;L, R&gt; {
+    Left(L),
+    Right(R),
+}
+
+// Methods: either, map_left, map_right</code></pre>
+      </div>
+    </div>
+
+    <h2 id="scheme-relationships">Scheme Relationships</h2>
+    <p>The schemes form a lattice of generality:</p>
+<pre><code class="language-text">        cata ────────── hylo ────────── ana
+         │                                │
+    para (+ subterms)              apo (+ early stop)
+         │                                │
+   histo (+ full history)         futu (+ multi-step)
+         │                                │
+         └──────── chrono ────────────────┘
+                     │
+                zygo (+ aux fold)
+</code></pre>
+    <p>Each scheme on the left is the dual of the corresponding scheme on the right. Moving down adds more power (and constraints). <code>hylo</code> sits in the middle as the deforested composition of any fold and unfold.</p>
+
+    <h2 id="patterns">Implementation Patterns</h2>
+    <ul>
+      <li><strong><code>&amp;dyn Fn</code> recursion</strong> &mdash; all inner helper functions use <code>&amp;dyn Fn</code> for the algebra/coalgebra to break monomorphization recursion (same pattern as <code>Free::fmap_inner</code>)</li>
+      <li><strong><code>Rc</code> in Fix</strong> &mdash; enables <code>Clone</code> without coinductive proofs; essential for <code>para</code></li>
+      <li><strong>Reference algebras</strong> &mdash; <code>histo</code> and <code>chrono</code> take <code>&amp;F::Of&lt;Cofree&lt;F, A&gt;&gt;</code> to avoid cloning Cofree</li>
+      <li><strong><code>F::Of&lt;Fix&lt;F&gt;&gt;: Clone</code></strong> &mdash; required by schemes that call <code>unfix()</code> (cata, para, histo, zygo) for the <code>Rc::try_unwrap</code> fallback path</li>
+    </ul>
+
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="../js/main.js"></script>
+</body>
+</html>

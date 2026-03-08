@@ -1,4 +1,8 @@
+use crate::fold::Fold;
 use crate::optic::Optic;
+use crate::review::Review;
+use crate::setter::Setter;
+use crate::traversal::Traversal;
 use karpal_profunctor::choice::Choice;
 
 /// A prism focuses on one variant of a sum type.
@@ -54,6 +58,63 @@ impl<S, T, A, B> Prism<S, T, A, B> {
             Ok(a) => (self.build)(f(a)),
             Err(t) => t,
         }
+    }
+
+    /// Convert to a `Review` (write-only, construction).
+    pub fn to_review(&self) -> Review<T, B> {
+        Review::new(self.build)
+    }
+
+    /// Convert to a `Setter` (modify-only).
+    pub fn to_setter(&self) -> Setter<S, T, A, B>
+    where
+        S: 'static,
+        T: 'static,
+        A: 'static,
+        B: 'static,
+    {
+        let match_ = self.match_;
+        let build = self.build;
+        Setter::new(move |s: S, f: &dyn Fn(A) -> B| match match_(s) {
+            Ok(a) => build(f(a)),
+            Err(t) => t,
+        })
+    }
+
+    /// Convert to a `Traversal` (0-or-1 element focus).
+    pub fn to_traversal(&self) -> Traversal<S, T, A, B>
+    where
+        S: Clone + 'static,
+        T: 'static,
+        A: 'static,
+        B: 'static,
+    {
+        let match_ = self.match_;
+        let build = self.build;
+        Traversal::new(
+            move |s: &S| match match_(s.clone()) {
+                Ok(a) => vec![a],
+                Err(_) => vec![],
+            },
+            move |s: S, f: &dyn Fn(A) -> B| match match_(s) {
+                Ok(a) => build(f(a)),
+                Err(t) => t,
+            },
+        )
+    }
+
+    /// Convert to a `Fold` (0-or-1 element, read-only).
+    pub fn to_fold(&self) -> Fold<S, A>
+    where
+        S: Clone + 'static,
+        T: 'static,
+        A: 'static,
+    {
+        let match_ = self.match_;
+        Fold::new(move |s: &S| match match_(s.clone()) {
+            Ok(a) => vec![a],
+            Err(_) => vec![],
+        })
     }
 
     /// Profunctor encoding: transform a `P<A, B>` into a `P<S, T>` via this prism.

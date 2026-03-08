@@ -11,6 +11,7 @@ readme = "README.md"
 description = "Profunctor optics (Lens, Prism) for the Industrial Algebra ecosystem"
 
 [dependencies]
+karpal-core.workspace = true
 karpal-profunctor.workspace = true
 
 [dev-dependencies]
