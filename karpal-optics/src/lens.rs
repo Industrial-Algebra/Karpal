@@ -1,6 +1,10 @@
 use std::rc::Rc;
 
+use crate::fold::Fold;
+use crate::getter::Getter;
 use crate::optic::Optic;
+use crate::setter::Setter;
+use crate::traversal::Traversal;
 use karpal_profunctor::strong::Strong;
 
 /// A composed lens built from two lenses chained together.
@@ -22,6 +26,11 @@ pub type SimpleComposedLens<S, X> = ComposedLens<S, S, X, X>;
 impl<S, T, X, Y> Optic for ComposedLens<S, T, X, Y> {}
 
 impl<S, T, X, Y> ComposedLens<S, T, X, Y> {
+    /// Create a composed lens directly from boxed closures.
+    pub fn from_fns(getter: Box<dyn Fn(&S) -> X>, setter: Box<dyn Fn(S, Y) -> T>) -> Self {
+        Self { getter, setter }
+    }
+
     pub fn get(&self, s: &S) -> X {
         (self.getter)(s)
     }
@@ -114,6 +123,58 @@ impl<S, T, A, B> Lens<S, T, A, B> {
                 outer_setter(s, b)
             }),
         }
+    }
+}
+
+impl<S, T, A, B> Lens<S, T, A, B> {
+    /// Convert to a `Getter` (read-only, discards setter).
+    pub fn to_getter(&self) -> Getter<S, A> {
+        Getter::new(self.getter)
+    }
+
+    /// Convert to a `Setter` (modify-only).
+    pub fn to_setter(&self) -> Setter<S, T, A, B>
+    where
+        S: 'static,
+        T: 'static,
+        A: 'static,
+        B: 'static,
+    {
+        let getter = self.getter;
+        let setter = self.setter;
+        Setter::new(move |s: S, f: &dyn Fn(A) -> B| {
+            let a = getter(&s);
+            setter(s, f(a))
+        })
+    }
+
+    /// Convert to a `Traversal` (single-element focus).
+    pub fn to_traversal(&self) -> Traversal<S, T, A, B>
+    where
+        S: 'static,
+        T: 'static,
+        A: 'static,
+        B: 'static,
+    {
+        let getter = self.getter;
+        let setter = self.setter;
+        Traversal::new(
+            move |s| vec![getter(s)],
+            move |s, f| {
+                let a = getter(&s);
+                setter(s, f(a))
+            },
+        )
+    }
+
+    /// Convert to a `Fold` (single-element, read-only).
+    pub fn to_fold(&self) -> Fold<S, A>
+    where
+        S: 'static,
+        A: 'static,
+    {
+        let getter = self.getter;
+        Fold::new(move |s| vec![getter(s)])
     }
 }
 

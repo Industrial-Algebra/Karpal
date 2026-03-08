@@ -172,6 +172,7 @@ dependencies = [
 name = "karpal-optics"
 version = "0.1.0"
 dependencies = [
+ "karpal-core",
  "karpal-profunctor",
  "proptest",
 ]
