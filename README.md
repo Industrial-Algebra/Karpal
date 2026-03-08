@@ -5,23 +5,28 @@ Higher-Kinded Types (HKTs) via GATs.
 
 Karpal provides HKT encoding, a full functor hierarchy (Functor through Monad,
 Alt/Plus/Alternative, Foldable, Traversable, and more), algebraic typeclasses
-(Semigroup, Monoid), a profunctor hierarchy (Profunctor, Strong, Choice),
-a category/arrow hierarchy (Semigroupoid, Category, Arrow, ArrowChoice, and more),
-profunctor optics (Lens, Prism, composition), and `do_!`/`ado_!` notation macros — all with
-`no_std` support and property-based law verification.
+(Semigroup, Monoid, Group, Ring, Field), profunctor optics (Lens, Prism,
+Traversal, Fold, and more), a category/arrow hierarchy, free constructions
+(Free Monad, Cofree Comonad, Coyoneda, Day Convolution), recursion schemes
+(cata, ana, hylo, histo, and more), and `do_!`/`ado_!` notation macros — all
+with `no_std` support and property-based law verification.
 
 ## Workspace
 
 | Crate | Description |
 |-------|-------------|
-| [`karpal-core`](karpal-core/) | HKT encoding, functor hierarchy, Semigroup, Monoid, macros |
-| [`karpal-profunctor`](karpal-profunctor/) | Profunctor, Strong, Choice, FnP |
+| [`karpal-core`](karpal-core/) | HKT encoding, functor hierarchy, Semigroup, Monoid, newtype wrappers, macros |
+| [`karpal-profunctor`](karpal-profunctor/) | Profunctor, Strong, Choice, Traversing, FnP |
 | [`karpal-arrow`](karpal-arrow/) | Category/Arrow hierarchy, FnA, KleisliF, CokleisliF |
-| [`karpal-optics`](karpal-optics/) | Profunctor optics (Lens, Prism, composition) |
+| [`karpal-optics`](karpal-optics/) | Profunctor optics (Iso, Lens, Prism, Traversal, Fold, Getter, Setter, Review) |
+| [`karpal-free`](karpal-free/) | Free constructions (Coyoneda, Yoneda, Free, Cofree, Freer, Day, FreeAp, FreeAlt) |
+| [`karpal-recursion`](karpal-recursion/) | Recursion schemes (Fix, cata, ana, hylo, para, apo, histo, futu, zygo, chrono) |
+| [`karpal-algebra`](karpal-algebra/) | Abstract algebra (Group, Semiring, Ring, Field, Lattice, Module, VectorSpace) |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
-`karpal-core`, `karpal-profunctor`, and `karpal-arrow` are `no_std` compatible
-with optional `std`/`alloc` feature gates.
+`karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
+`karpal-recursion`, and `karpal-algebra` are `no_std` compatible with
+optional `std`/`alloc` feature gates.
 
 ## Why Karpal?
 
@@ -289,6 +294,75 @@ let fallback: Box<dyn Fn(String) -> Option<i32>> =
 let with_fallback = KOpt::plus(try_parse, fallback);
 assert_eq!(with_fallback("42".into()), Some(42));
 assert_eq!(with_fallback("bad".into()), Some(0));
+```
+
+### Recursion schemes — structured folds and unfolds
+
+Build and tear down recursive data without writing explicit recursion:
+
+```rust
+use karpal_recursion::{Fix, cata, ana, histo};
+use karpal_core::hkt::OptionF;
+
+// Build natural number 5 by unfolding
+let five: Fix<OptionF> = ana(
+    |n: u32| if n == 0 { None } else { Some(n - 1) },
+    5,
+);
+
+// Fold it back to count layers
+let count = cata::<OptionF, u32>(
+    |layer| match layer {
+        None => 0,
+        Some(n) => n + 1,
+    },
+    five.clone(),
+);
+assert_eq!(count, 5);
+
+// Histomorphism — fold with access to full history (Fibonacci)
+let fib = histo::<OptionF, u64>(
+    |layer| match layer {
+        None => 0,
+        Some(cofree) => {
+            let prev = cofree.head;
+            match cofree.tail.as_ref() {
+                None => 1,
+                Some(gc) => prev + gc.head,
+            }
+        }
+    },
+    five,
+);
+assert_eq!(fib, 5);  // fib(5) = 5
+```
+
+### Abstract algebra — groups, rings, fields, and vector spaces
+
+```rust
+use karpal_algebra::{Group, Ring, Field, Semiring, Module, VectorSpace};
+use karpal_core::{Semigroup, Monoid, Product};
+use karpal_core::hkt::VecF;
+use karpal_core::Foldable;
+
+// Group: every element has an inverse
+assert_eq!(5i32.invert(), -5);
+assert_eq!(10i32.combine_inverse(3), 7);
+
+// Ring: two operations with additive inverse
+assert_eq!(3i32.add(4), 7);
+assert_eq!(3i32.mul(4), 12);
+
+// Newtype wrappers select alternative Monoid instances
+let product = VecF::fold_map(vec![1, 2, 3, 4], |x| Product(x));
+assert_eq!(product, Product(24));
+
+// 2D vector space
+let e1 = (1.0f64, 0.0);
+let e2 = (0.0f64, 1.0);
+let v = e1.scale(3.0).combine(e2.scale(4.0));
+assert!((v.0 - 3.0).abs() < 1e-10);
+assert!((v.1 - 4.0).abs() < 1e-10);
 ```
 
 ### Lens composition — focus deep into nested structs

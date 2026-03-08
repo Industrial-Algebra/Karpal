@@ -147,7 +147,7 @@ checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
 name = "karpal-algebra"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -155,7 +155,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-arrow"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -163,14 +163,14 @@ dependencies = [
 
 [[package]]
 name = "karpal-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "proptest",
 ]
 
 [[package]]
 name = "karpal-free"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -178,7 +178,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-optics"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-core",
  "karpal-profunctor",
@@ -187,7 +187,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-profunctor"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -195,7 +195,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-recursion"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-core",
  "karpal-free",
@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-std"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "karpal-algebra",
  "karpal-arrow",

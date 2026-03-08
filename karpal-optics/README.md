@@ -166,10 +166,20 @@ let double_circle = circle.transform::<FnP>(double);
 assert_eq!(double_circle(Shape::Circle(5.0)), Shape::Circle(10.0));
 ```
 
-### Optic
+### Full optic family
 
-Marker trait for all optic types. `Lens`, `ComposedLens`, and `Prism` all
-implement `Optic`.
+| Optic | Focus | Constraint | Description |
+|-------|-------|-----------|-------------|
+| `Iso` | Single, invertible | `Profunctor` | Isomorphism between two representations |
+| `Lens` | Single field | `Strong` | Read/write access to a product field |
+| `Prism` | Single variant | `Choice` | Read/write access to a sum variant |
+| `Getter` | Single, read-only | — | Extract a value without modification |
+| `Review` | Single, write-only | — | Construct a value |
+| `Setter` | Single, write-only | — | Modify without reading |
+| `Traversal` | Multi-focus | `Traversing` | Read/write access to multiple targets |
+| `Fold` | Multi-focus, read-only | — | Read multiple targets with `Monoid` |
+
+All optics support composition and implement the `Optic` marker trait.
 
 ## License
 

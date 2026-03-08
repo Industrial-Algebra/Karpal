@@ -2,8 +2,8 @@
 
 Standard prelude for the Karpal ecosystem.
 
-Re-exports the most commonly used types and traits from `karpal-core`,
-`karpal-profunctor`, and `karpal-optics` for ergonomic single-import usage.
+Re-exports the most commonly used types and traits from all Karpal crates
+for ergonomic single-import usage.
 
 ## Usage
 
@@ -13,13 +13,24 @@ use karpal_std::prelude::*;
 
 This gives you access to:
 
-- **HKT encoding**: `HKT`, `HKT2`, `OptionF`, `ResultF`, `VecF`, `ResultBF`, `TupleF`
+- **HKT encoding**: `HKT`, `HKT2`, `OptionF`, `ResultF`, `VecF`, `ResultBF`, `TupleF`, and more
 - **Functor hierarchy**: `Functor`, `Apply`, `Applicative`, `Chain`, `Monad`,
   `Alt`, `Plus`, `Alternative`, `Foldable`, `Traversable`, `FunctorFilter`,
   `Selective`, `Bifunctor`, `Contravariant`, `NaturalTransformation`
+- **Comonad hierarchy**: `Comonad`, `ComonadEnv`, `ComonadStore`, `ComonadTraced`, `Extend`
 - **Algebraic typeclasses**: `Semigroup`, `Monoid`
-- **Profunctor**: `Profunctor`, `Strong`, `Choice`, `FnP`
-- **Optics**: `Lens`, `SimpleLens`, `Prism`, `SimplePrism`, `ComposedLens`
+- **Newtype wrappers**: `Sum`, `Product`, `Min`, `Max`, `First`, `Last`
+- **Abstract algebra**: `Group`, `AbelianGroup`, `Semiring`, `Ring`, `Field`,
+  `Lattice`, `BoundedLattice`, `Module`, `VectorSpace`
+- **Profunctor**: `Profunctor`, `Strong`, `Choice`, `Traversing`, `FnP`, `ForgetF`, `TaggedF`
+- **Optics**: `Iso`, `Lens`, `Prism`, `Traversal`, `Fold`, `Getter`, `Setter`, `Review`, and composed variants
+- **Arrow hierarchy**: `Semigroupoid`, `Category`, `Arrow`, `ArrowChoice`, `ArrowApply`,
+  `ArrowLoop`, `ArrowZero`, `ArrowPlus`, `FnA`, `KleisliF`, `CokleisliF`
+- **Free constructions**: `Free`, `Cofree`, `Freer`, `Coyoneda`, `Yoneda`, `Day`,
+  `FreeAp`, `FreeAlt`, `Codensity`, `Density`, `Lan`, `Ran`
+- **Recursion schemes**: `Fix`, `Mu`, `Nu`, `cata`, `ana`, `hylo`, `para`, `apo`,
+  `histo`, `futu`, `zygo`, `chrono`
+- **Macros**: `do_!`, `ado_!`
 
 For qualified access, the individual crates are also re-exported:
 
@@ -27,6 +38,10 @@ For qualified access, the individual crates are also re-exported:
 use karpal_std::karpal_core;
 use karpal_std::karpal_profunctor;
 use karpal_std::karpal_optics;
+use karpal_std::karpal_arrow;
+use karpal_std::karpal_free;
+use karpal_std::karpal_recursion;
+use karpal_std::karpal_algebra;
 ```
 
 The `do_!` and `ado_!` macros are available directly:

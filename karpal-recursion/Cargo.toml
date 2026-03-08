@@ -11,8 +11,8 @@ readme = "README.md"
 description = "Recursion schemes (cata, ana, hylo, para, apo, histo, futu, zygo, chrono) for the Industrial Algebra ecosystem"
 
 [dependencies]
-karpal-core = { version = "0.1.0", path = "../karpal-core", default-features = false }
-karpal-free = { version = "0.1.0", path = "../karpal-free", default-features = false }
+karpal-core = { version = "0.2.0", path = "../karpal-core", default-features = false }
+karpal-free = { version = "0.2.0", path = "../karpal-free", default-features = false }
 
 [features]
 default = ["std"]
