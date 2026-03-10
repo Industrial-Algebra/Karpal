@@ -276,6 +276,47 @@ pioneered in [amari-flynn](https://github.com/Industrial-Algebra/amari-flynn).
 | Bicategories | Weakened 2-categories where composition is associative only up to isomorphism — relevant for profunctor composition |
 | FFunctor / FMonad | Functor and Monad at the functor-category level; maps natural transformations |
 
+### Phase 15 — `karpal-schubert-types`: Schubert Intersection Type System
+
+**Crate**: `karpal-schubert-types` (new, experimental)
+
+**Origin**: Discovered via ShaperOS sasm dual-domain execution model — cross-domain
+type checking between rewrite rules and register VM requires verifying that
+declarative patterns satisfy imperative signatures. This maps directly to
+Schubert intersection in a Grassmannian.
+
+**Core idea**: types are Schubert classes σ_λ in Gr(k, n), and type checking
+is computing intersection numbers via Littlewood-Richardson coefficients.
+Subtyping becomes `σ_A · σ_B ≠ 0`, with the LR coefficient giving the
+*multiplicity* — the number of distinct coercion paths.
+
+| Concept | Description |
+|---------|-------------|
+| `SchubertType` | A class (or union of classes) in Gr(k, n) |
+| `Intersection` | Result with multiplicity, per-class decomposition, computation path, structured classification |
+| `IntersectionKind` | Structural zero / geometric zero / positive / underdetermined — the concrete realization of [structured emptiness](#structured-emptiness-zero-intersection-semantics) |
+| `SchubertTyped` trait | Associate a Schubert class with a Rust type |
+| `SchubertProven<λ, T>` | Proof-carrying type assertion verified by intersection computation |
+| Operadic composition | `compose_checks()` — chained type checks compose via the LR rule |
+
+**Sub-phases**:
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — Core engine** | `SchubertType`, `Intersection`, `check_intersection()` backed by amari-enumerative | karpal-core, karpal-algebra, amari-enumerative |
+| **B — Proof integration** | `SchubertProven<λ, T>` witness type, composition of proofs via LR | Phase 11 (karpal-proof) |
+| **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule | Phase 12 (karpal-verify) |
+| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 14 (karpal-higher) |
+
+**Benefits beyond ShaperOS**:
+- **Multiplicity-aware compatibility**: formalizes what newtypes (`Sum<T>`, `Product<T>`) do informally — multiplicity > 1 means multiple valid instances
+- **Capability-based access control**: capabilities as Schubert classes, nonzero intersection = access granted
+- **Interface compatibility scoring**: quantitative API evolution analysis (0 = breaking, 1 = seamless, >1 = ambiguous)
+- **Enriched error messages**: "Schubert intersection = 0 in Gr(3,6)" vs "3 coercion paths available, please disambiguate"
+
+See [docs/dev/schubert-intersection-types.md](docs/dev/schubert-intersection-types.md)
+for the full synopsis.
+
 ---
 
 ## Structured Emptiness: Zero-Intersection Semantics
@@ -327,6 +368,12 @@ This pattern is not specific to Schubert calculus. It appears anywhere
 No widely-used programming language or algebraic library formalizes this
 distinction. Karpal can be the first.
 
+**Phase 15 (`karpal-schubert-types`)** is the concrete realization of this
+vision: types as Schubert classes, type checking as intersection computation,
+and `IntersectionKind` as the structured emptiness lattice made computable.
+The `BoundedLattice` from Phase 8 isn't just a library curiosity — it's the
+truth value of the type system.
+
 ### Categorical Foundations
 
 **Heyting-valued truth (Phase 8).** The enumeration result forms a
@@ -374,6 +421,7 @@ correctly through chains of operations.
 | **11 — Proof** | Witnesses distinguishing structural impossibility from geometric vanishing |
 | **13 — Diagrams** | String diagrams where wires carry lattice-valued annotations |
 | **14 — Enriched categories** | Categories enriched over enumeration lattices; composition via LR-style rules |
+| **15 — Schubert types** | Concrete realization: types as Schubert classes, type checking as intersection computation, `IntersectionKind` as the structured emptiness lattice |
 
 ---
 
@@ -393,7 +441,8 @@ karpal/
 ├── karpal-proof/          # Phase 11: Type-level witnesses, refinements
 ├── karpal-verify/         # Phase 12: SMT/Lean bridge, amari-flynn integration
 ├── karpal-diagram/        # Phase 13: Monoidal categories, string diagrams
-└── karpal-higher/         # Phase 14: 2-categories, enriched categories
+├── karpal-higher/         # Phase 14: 2-categories, enriched categories
+└── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
 ```
 
 ## Syntax & Ergonomics
@@ -576,6 +625,14 @@ abstract.
 - **Proof Complexity of Linear Logics** — Tabatabai, Jalali
   [arXiv:2601.22393](https://arxiv.org/abs/2601.22393v1).
   Linear logic proof-size bounds. Informs resource-aware type reasoning.
+
+### Papers — Schubert Calculus & Intersection Types (Phase 15)
+
+- Fulton, *Young Tableaux* — Schubert calculus foundations (Littlewood-Richardson
+  rule, cohomology of Grassmannians)
+- Vakil, "Schubert Induction" — algorithmic intersection theory
+- ShaperOS sasm spec (`docs/spec/shaper_asm.md`) — dual-domain execution model
+  motivating Schubert intersection as cross-domain type checking
 
 ### Papers — Formal Verification at Scale (Phase 12)
 
