@@ -18,3 +18,4 @@ karpal-arrow.workspace = true
 karpal-free.workspace = true
 karpal-recursion.workspace = true
 karpal-algebra.workspace = true
+karpal-effect.workspace = true

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Effect System - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.2.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+          <li><a href="abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="effect-system.html" class="active">Effect System</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Effect System</span>
+    </nav>
+
+    <h1>Effect System &amp; Monad Transformers</h1>
+    <p>The <code>karpal-effect</code> crate provides monad transformers &mdash; composable building blocks for stacking effects (errors, state, environment, logging) on top of any inner monad. It also introduces <code>FunctorSt</code>, <code>ApplicativeSt</code>, and <code>ChainSt</code> &mdash; variants of the functor hierarchy with <code>'static</code> bounds required by Rust's <code>Box&lt;dyn Fn&gt;</code>.</p>
+
+    <!-- ================================================================== -->
+    <!-- Overview                                                            -->
+    <!-- ================================================================== -->
+
+    <h2 id="overview">Overview</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Transformer</th><th>Representation</th><th>Effect</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ExceptTF&lt;E, M&gt;</code></td>
+          <td><code>M::Of&lt;Result&lt;A, E&gt;&gt;</code></td>
+          <td>Error handling &mdash; short-circuits on <code>Err</code></td>
+        </tr>
+        <tr>
+          <td><code>WriterTF&lt;W, M&gt;</code></td>
+          <td><code>M::Of&lt;(A, W)&gt;</code></td>
+          <td>Log accumulation &mdash; <code>W</code> must be a <code>Monoid</code></td>
+        </tr>
+        <tr>
+          <td><code>ReaderTF&lt;E, M&gt;</code></td>
+          <td><code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code></td>
+          <td>Shared environment &mdash; every computation reads the same <code>E</code></td>
+        </tr>
+        <tr>
+          <td><code>StateTF&lt;S, M&gt;</code></td>
+          <td><code>Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;</code></td>
+          <td>Mutable state &mdash; state is threaded through computations</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>All four transformers implement <code>HKT</code>, <code>FunctorSt</code>, <code>ChainSt</code>, and <code>MonadTrans</code>. <code>ExceptTF</code> and <code>WriterTF</code> additionally implement <code>ApplicativeSt</code>.</p>
+
+    <!-- ================================================================== -->
+    <!-- Static Type Classes                                                 -->
+    <!-- ================================================================== -->
+
+    <h2 id="static-classes">Static Type Classes</h2>
+
+    <p>The standard <code>Functor</code> / <code>Applicative</code> / <code>Chain</code> traits in <code>karpal-core</code> do not have <code>'static</code> bounds on their type parameters. Monad transformers that use <code>Box&lt;dyn Fn&gt;</code> internally need these bounds, so <code>karpal-effect</code> introduces parallel traits with the suffix <code>St</code>.</p>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="functor-st">FunctorSt / ApplicativeSt / ChainSt</h3>
+        <p class="trait-desc">Mirror traits with <code>'static</code> bounds for transformer compatibility.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signatures</h4>
+
+<pre><code class="language-rust">pub trait FunctorSt: HKT {
+    fn fmap_st&lt;A: 'static, B: 'static&gt;(
+        fa: Self::Of&lt;A&gt;,
+        f: impl Fn(A) -&gt; B + 'static,
+    ) -&gt; Self::Of&lt;B&gt;;
+}
+
+pub trait ApplicativeSt: FunctorSt {
+    fn pure_st&lt;A: 'static&gt;(a: A) -&gt; Self::Of&lt;A&gt;;
+}
+
+pub trait ChainSt: FunctorSt {
+    fn chain_st&lt;A: 'static, B: 'static&gt;(
+        fa: Self::Of&lt;A&gt;,
+        f: impl Fn(A) -&gt; Self::Of&lt;B&gt; + 'static,
+    ) -&gt; Self::Of&lt;B&gt;;
+}</code></pre>
+
+        <h4>Base Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Type</th><th><code>FunctorSt</code></th><th><code>ApplicativeSt</code></th><th><code>ChainSt</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OptionF</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td><code>ResultF&lt;E&gt;</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td><code>IdentityF</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td><code>VecF</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+
+        <p>These implementations are trivial &mdash; for <code>OptionF</code>, <code>fmap_st</code> is just <code>fa.map(f)</code>. The <code>'static</code> bound is strictly weaker than what <code>Box&lt;dyn Fn&gt;</code> requires, so base types satisfy it automatically.</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- MonadTrans                                                          -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="monad-trans">MonadTrans</h3>
+        <p class="trait-desc">Lift an inner monad computation into a transformer stack.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait MonadTrans&lt;M: HKT&gt;: HKT {
+    fn lift&lt;A: 'static&gt;(ma: M::Of&lt;A&gt;) -&gt; Self::Of&lt;A&gt;
+    where
+        M::Of&lt;A&gt;: Clone;
+}</code></pre>
+
+        <p><code>lift</code> embeds an <code>M</code> computation into the transformer without adding any effect. The <code>Clone</code> bound on <code>M::Of&lt;A&gt;</code> is needed by closure-based transformers (ReaderT, StateT) whose inner function may be called multiple times.</p>
+
+        <h4>Law</h4>
+
+        <div class="law-box">
+          <span class="law-name">lift preserves pure</span>
+<pre><code class="language-rust">lift(M::pure_st(a)) == pure(a)</code></pre>
+        </div>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_effect::{MonadTrans, ExceptTF, WriterTF, ReaderTF, StateTF};
+use karpal_core::hkt::OptionF;
+
+// Lift Some(42) into ExceptT &mdash; produces Some(Ok(42))
+let lifted = ExceptTF::&lt;&str, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted, Some(Ok(42)));
+
+// Lift Some(42) into WriterT &mdash; produces Some((42, ""))
+let lifted = WriterTF::&lt;String, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted, Some((42, String::new())));
+
+// Lift Some(42) into ReaderT &mdash; ignores the environment
+let lifted = ReaderTF::&lt;i32, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted(999), Some(42));
+
+// Lift Some(42) into StateT &mdash; passes state through unchanged
+let lifted = StateTF::&lt;i32, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted(99), Some((99, 42)));</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ExceptT                                                             -->
+    <!-- ================================================================== -->
+
+    <h2 id="transformers">Monad Transformers</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="except-t">ExceptTF&lt;E, M&gt;</h3>
+        <p class="trait-desc">Adds error handling to an inner monad. Equivalent to <code>EitherT</code> / <code>ExceptT</code> in Haskell.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Representation</h4>
+
+<pre><code class="language-rust">pub struct ExceptTF&lt;E, M&gt;(PhantomData&lt;(E, M)&gt;);
+
+// ExceptTF&lt;E, M&gt;::Of&lt;A&gt; = M::Of&lt;Result&lt;A, E&gt;&gt;
+impl&lt;E: 'static, M: HKT&gt; HKT for ExceptTF&lt;E, M&gt; {
+    type Of&lt;A&gt; = M::Of&lt;Result&lt;A, E&gt;&gt;;
+}</code></pre>
+
+        <p>This is the simplest transformer &mdash; the inner monad wraps <code>Result&lt;A, E&gt;</code> directly. No closures, no <code>Box&lt;dyn Fn&gt;</code>.</p>
+
+        <h4>Trait Implementations</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Bounds on <code>M</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt</code></td></tr>
+            <tr><td><code>ApplicativeSt</code></td><td><code>M: ApplicativeSt</code></td></tr>
+            <tr><td><code>ChainSt</code></td><td><code>M: ChainSt + ApplicativeSt</code></td></tr>
+            <tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>M: FunctorSt</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Operations</h4>
+
+<pre><code class="language-rust">// pure: wrap a value in Ok inside the inner monad
+fn except_t_pure&lt;E, M: ApplicativeSt, A&gt;(a: A) -&gt; M::Of&lt;Result&lt;A, E&gt;&gt;;
+
+// fmap: apply a function to the Ok value
+fn except_t_fmap&lt;E, M: FunctorSt, A, B&gt;(fa, f) -&gt; M::Of&lt;Result&lt;B, E&gt;&gt;;
+
+// chain: short-circuits on Err
+fn except_t_chain&lt;E, M: ChainSt + ApplicativeSt, A, B&gt;(fa, f) -&gt; M::Of&lt;Result&lt;B, E&gt;&gt;;
+
+// throw: produce an error
+fn except_t_throw&lt;E, M: ApplicativeSt, A&gt;(e: E) -&gt; M::Of&lt;Result&lt;A, E&gt;&gt;;
+
+// catch: handle an error with a recovery function
+fn except_t_catch&lt;E, M: ChainSt + ApplicativeSt, A&gt;(fa, handler) -&gt; M::Of&lt;Result&lt;A, E&gt;&gt;;</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_effect::except_t::*;
+use karpal_core::hkt::OptionF;
+
+// Success path
+let val = except_t_pure::&lt;&str, OptionF, _&gt;(10);
+let result = except_t_chain::&lt;&str, OptionF, _, _&gt;(
+    val, |x| Some(Ok(x + 5))
+);
+assert_eq!(result, Some(Ok(15)));
+
+// Error short-circuit
+let err: Option&lt;Result&lt;i32, &str&gt;&gt; = Some(Err("fail"));
+let result = except_t_chain::&lt;&str, OptionF, _, _&gt;(
+    err, |x| Some(Ok(x + 10))
+);
+assert_eq!(result, Some(Err("fail")));
+
+// Error recovery
+let recovered = except_t_catch::&lt;&str, OptionF, i32&gt;(
+    Some(Err("bad")), |_| Some(Ok(42))
+);
+assert_eq!(recovered, Some(Ok(42)));</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- WriterT                                                             -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="writer-t">WriterTF&lt;W, M&gt;</h3>
+        <p class="trait-desc">Adds log accumulation to an inner monad. The log type must be a Monoid.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Representation</h4>
+
+<pre><code class="language-rust">pub struct WriterTF&lt;W, M&gt;(PhantomData&lt;(W, M)&gt;);
+
+// WriterTF&lt;W, M&gt;::Of&lt;A&gt; = M::Of&lt;(A, W)&gt;
+impl&lt;W: 'static, M: HKT&gt; HKT for WriterTF&lt;W, M&gt; {
+    type Of&lt;A&gt; = M::Of&lt;(A, W)&gt;;
+}</code></pre>
+
+        <p>Like ExceptT, the representation is a direct wrapper &mdash; no closures. The log <code>W</code> is paired with the value inside the inner monad. Logs are combined using <code>Semigroup::combine</code> when chaining.</p>
+
+        <h4>Trait Implementations</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Bounds on <code>W</code> / <code>M</code></th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt</code></td></tr>
+            <tr><td><code>ApplicativeSt</code></td><td><code>W: Monoid</code>, <code>M: ApplicativeSt</code></td></tr>
+            <tr><td><code>ChainSt</code></td><td><code>W: Semigroup + Clone</code>, <code>M: ChainSt + FunctorSt</code></td></tr>
+            <tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>W: Monoid</code>, <code>M: FunctorSt</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Operations</h4>
+
+<pre><code class="language-rust">fn writer_t_pure&lt;W: Monoid, M: ApplicativeSt, A&gt;(a: A) -&gt; M::Of&lt;(A, W)&gt;;
+fn writer_t_tell&lt;W, M: ApplicativeSt&gt;(w: W) -&gt; M::Of&lt;((), W)&gt;;
+fn writer_t_listen&lt;W: Clone, M: FunctorSt, A&gt;(fa) -&gt; M::Of&lt;((A, W), W)&gt;;
+fn writer_t_pass&lt;W, M: FunctorSt, A&gt;(fa) -&gt; M::Of&lt;(A, W)&gt;;</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_effect::writer_t::*;
+use karpal_core::hkt::OptionF;
+
+// tell appends to the log
+let told = writer_t_tell::&lt;String, OptionF&gt;("hello".to_string());
+assert_eq!(told, Some(((), "hello".to_string())));
+
+// chain accumulates logs via Semigroup::combine
+let m1 = writer_t_tell::&lt;String, OptionF&gt;("a".to_string());
+let result = writer_t_chain::&lt;String, OptionF, _, _&gt;(m1, |()| {
+    writer_t_tell::&lt;String, OptionF&gt;("b".to_string())
+});
+assert_eq!(result, Some(((), "ab".to_string())));
+
+// listen exposes the log alongside the value
+let val: Option&lt;(i32, String)&gt; = Some((42, "log".to_string()));
+let listened = writer_t_listen::&lt;String, OptionF, i32&gt;(val);
+assert_eq!(listened, Some(((42, "log".to_string()), "log".to_string())));</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ReaderT                                                             -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="reader-t">ReaderTF&lt;E, M&gt;</h3>
+        <p class="trait-desc">Adds a shared, read-only environment to an inner monad.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Representation</h4>
+
+<pre><code class="language-rust">pub struct ReaderTF&lt;E, M&gt;(PhantomData&lt;(E, M)&gt;);
+
+// ReaderTF&lt;E, M&gt;::Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;
+impl&lt;E: 'static, M: HKT + 'static&gt; HKT for ReaderTF&lt;E, M&gt; {
+    type Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+}</code></pre>
+
+        <p>ReaderT wraps a function from environment to inner monad. The environment is <strong>shared</strong> (not threaded) &mdash; each chained computation receives the same environment value.</p>
+
+        <h4>Trait Implementations</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Bounds</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt + 'static</code></td></tr>
+            <tr><td><code>ChainSt</code></td><td><code>E: Clone</code>, <code>M: ChainSt + 'static</code></td></tr>
+            <tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>M: FunctorSt + 'static</code></td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>Note:</strong> <code>ApplicativeSt</code> is <strong>not</strong> implemented for <code>ReaderTF</code>. The trait's <code>pure_st</code> method cannot produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> without cloning <code>A</code>, and adding <code>A: Clone</code> to the trait would break <code>ExceptTF</code> (since <code>Result&lt;A, E&gt;</code> requires <code>A: Clone</code>). Use the standalone <code>reader_t_pure</code> function instead, which explicitly requires <code>A: Clone</code>.</p>
+
+        <h4>Operations</h4>
+
+<pre><code class="language-rust">fn reader_t_pure&lt;E, M: ApplicativeSt, A: Clone&gt;(a: A) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+fn reader_t_ask&lt;E: Clone, M: ApplicativeSt&gt;() -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;E&gt;&gt;;
+fn reader_t_local&lt;E, M: HKT, A&gt;(f: impl Fn(E) -&gt; E, reader) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+fn reader_t_reader&lt;E, M: ApplicativeSt, A&gt;(f: impl Fn(E) -&gt; A) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+fn reader_t_run&lt;E, M: HKT, A&gt;(reader, env: E) -&gt; M::Of&lt;A&gt;;</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_effect::reader_t::*;
+use karpal_core::hkt::OptionF;
+
+// ask: read the environment
+let r = reader_t_ask::&lt;i32, OptionF&gt;();
+assert_eq!(r(42), Some(42));
+
+// chain shares the environment between computations
+let r = reader_t_chain::&lt;i32, OptionF, _, _&gt;(
+    reader_t_ask::&lt;i32, OptionF&gt;(),
+    |x| {
+        let x_captured = x;
+        reader_t_fmap::&lt;i32, OptionF, _, _&gt;(
+            reader_t_ask::&lt;i32, OptionF&gt;(),
+            move |e| e + x_captured,
+        )
+    },
+);
+assert_eq!(r(10), Some(20));  // 10 + 10
+
+// local: modify the environment for a sub-computation
+let r = reader_t_ask::&lt;i32, OptionF&gt;();
+let localized = reader_t_local::&lt;i32, OptionF, i32&gt;(|e| e + 100, r);
+assert_eq!(localized(5), Some(105));</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- StateT                                                              -->
+    <!-- ================================================================== -->
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="state-t">StateTF&lt;S, M&gt;</h3>
+        <p class="trait-desc">Adds mutable state to an inner monad. State is threaded through computations.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Representation</h4>
+
+<pre><code class="language-rust">pub struct StateTF&lt;S, M&gt;(PhantomData&lt;(S, M)&gt;);
+
+// StateTF&lt;S, M&gt;::Of&lt;A&gt; = Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;
+impl&lt;S: 'static, M: HKT + 'static&gt; HKT for StateTF&lt;S, M&gt; {
+    type Of&lt;A&gt; = Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;;
+}</code></pre>
+
+        <p>Unlike ReaderT, the state is <strong>threaded</strong> (modified) &mdash; each chained computation receives the updated state from the previous one. The output includes both the new state and the result.</p>
+
+        <h4>Trait Implementations</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Trait</th><th>Bounds</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt + 'static</code></td></tr>
+            <tr><td><code>ChainSt</code></td><td><code>S: Clone</code>, <code>M: ChainSt + 'static</code></td></tr>
+            <tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>S: Clone</code>, <code>M: FunctorSt + 'static</code></td></tr>
+          </tbody>
+        </table>
+
+        <p>Like ReaderT, <code>ApplicativeSt</code> is <strong>not</strong> implemented &mdash; use the standalone <code>state_t_pure</code> function (which requires <code>A: Clone</code>).</p>
+
+        <h4>Operations</h4>
+
+<pre><code class="language-rust">fn state_t_pure&lt;S: Clone, M: ApplicativeSt, A: Clone&gt;(a: A) -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;;
+fn state_t_get&lt;S: Clone, M: ApplicativeSt&gt;() -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, S)&gt;&gt;;
+fn state_t_put&lt;S: Clone, M: ApplicativeSt&gt;(new_state: S) -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, ())&gt;&gt;;
+fn state_t_modify&lt;S: Clone, M: ApplicativeSt&gt;(f: impl Fn(S) -&gt; S) -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, ())&gt;&gt;;
+fn state_t_run&lt;S, M: HKT, A&gt;(state, initial: S) -&gt; M::Of&lt;(S, A)&gt;;</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_effect::state_t::*;
+use karpal_core::hkt::OptionF;
+
+// get reads the current state
+let g = state_t_get::&lt;i32, OptionF&gt;();
+assert_eq!(g(42), Some((42, 42)));
+
+// put replaces the state
+let p = state_t_put::&lt;i32, OptionF&gt;(99);
+assert_eq!(p(0), Some((99, ())));
+
+// chain threads state: get 10, modify +10, get 20
+let program = state_t_chain::&lt;i32, OptionF, _, _&gt;(
+    state_t_get::&lt;i32, OptionF&gt;(),
+    |x| state_t_chain::&lt;i32, OptionF, _, _&gt;(
+        state_t_modify::&lt;i32, OptionF&gt;(move |s| s + x),
+        |_| state_t_get::&lt;i32, OptionF&gt;(),
+    ),
+);
+assert_eq!(program(10), Some((20, 20)));
+
+// Inner monad can short-circuit (OptionF with None)
+let guarded = state_t_chain::&lt;i32, OptionF, _, _&gt;(
+    state_t_get::&lt;i32, OptionF&gt;(),
+    |x| -&gt; Box&lt;dyn Fn(i32) -&gt; Option&lt;(i32, i32)&gt;&gt; {
+        if x &gt; 100 {
+            state_t_pure::&lt;i32, OptionF, _&gt;(x)
+        } else {
+            Box::new(|_| None)
+        }
+    },
+);
+assert_eq!(guarded(10), None);
+assert_eq!(guarded(200), Some((200, 200)));</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Reader vs State                                                     -->
+    <!-- ================================================================== -->
+
+    <h2 id="reader-vs-state">Reader vs State</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th></th><th>ReaderT</th><th>StateT</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Environment</td><td>Shared (read-only)</td><td>Threaded (mutable)</td></tr>
+        <tr><td>Chain semantics</td><td>Both computations see the same <code>E</code></td><td>Second sees updated <code>S</code> from first</td></tr>
+        <tr><td><code>ask</code> / <code>get</code></td><td>Always returns the original environment</td><td>Returns current (potentially modified) state</td></tr>
+        <tr><td><code>local</code> / <code>modify</code></td><td>Scoped change (only affects sub-computation)</td><td>Permanent change (visible to all subsequent)</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ================================================================== -->
+    <!-- Design Notes                                                        -->
+    <!-- ================================================================== -->
+
+    <h2 id="design-notes">Design Notes</h2>
+
+    <ul>
+      <li><strong>Why separate <code>FunctorSt</code> / <code>ChainSt</code> traits?</strong> &mdash; Rust's <code>Box&lt;dyn Fn&gt;</code> requires <code>'static</code> bounds on captured types. Adding <code>'static</code> to the main <code>Functor</code> trait would unnecessarily constrain non-transformer code. The <code>St</code> family provides a parallel hierarchy that coexists cleanly.</li>
+
+      <li><strong>Why no <code>ApplicativeSt</code> for ReaderT and StateT?</strong> &mdash; <code>pure_st</code> must produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> from a single <code>A</code>. The closure may be called multiple times, so <code>A</code> must be cloneable. But adding <code>A: Clone</code> to the trait would break <code>ExceptTF</code>, where <code>A</code> is <code>Result&lt;A, E&gt;</code>. The solution: standalone <code>reader_t_pure</code> / <code>state_t_pure</code> functions with explicit <code>A: Clone</code> bounds.</li>
+
+      <li><strong>Why <code>M: 'static</code> on closure-based transformers?</strong> &mdash; <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> has an implicit <code>'static</code> lifetime bound, which propagates to <code>M::Of&lt;A&gt;</code>. Adding <code>M: 'static</code> to the HKT impl ensures the associated type satisfies this bound.</li>
+
+      <li><strong>Rc for closure sharing</strong> &mdash; <code>reader_t_fmap</code> and <code>reader_t_chain</code> wrap the user-provided function in <code>Rc</code> because the outer closure (which is <code>Fn</code>, not <code>FnOnce</code>) may be called multiple times, and each call creates an inner closure that needs its own reference.</li>
+
+      <li><strong><code>no_std</code> compatible</strong> &mdash; the <code>MonadTrans</code> trait and its definition work in <code>no_std</code>. The transformers themselves require <code>alloc</code> (for <code>Box</code> and <code>Rc</code>).</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

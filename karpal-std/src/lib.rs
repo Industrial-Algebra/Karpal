@@ -80,6 +80,11 @@ pub mod prelude {
         Either, Fix, FixF, Mu, Nu, ana, apo, cata, chrono, futu, histo, hylo, para, zygo,
     };
 
+    // Effect system / Monad transformers
+    pub use karpal_effect::{
+        ApplicativeSt, ChainSt, ExceptTF, FunctorSt, MonadTrans, ReaderTF, StateTF, WriterTF,
+    };
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -88,6 +93,7 @@ pub mod prelude {
 pub use karpal_algebra;
 pub use karpal_arrow;
 pub use karpal_core;
+pub use karpal_effect;
 pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;
