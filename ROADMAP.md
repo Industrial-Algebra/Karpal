@@ -317,6 +317,63 @@ Subtyping becomes `σ_A · σ_B ≠ 0`, with the LR coefficient giving the
 See [docs/dev/schubert-intersection-types.md](docs/dev/schubert-intersection-types.md)
 for the full synopsis.
 
+**Extensions** (building on existing and planned phases):
+
+| Extension | Description | Dependencies |
+|-----------|-------------|--------------|
+| **E — Topos-theoretic grounding** | Schubert intersection as pullback in a presheaf topos; IntersectionKind as Heyting-valued subobject classifier; enables internal logic over Schubert classes | Phase 16 (karpal-topos) |
+| **F — K-theoretic refinement** | Replace cohomology classes with K-theory classes; Grothendieck ring structure on type lattice; quantum deformation parameter for refined multiplicity | karpal-algebra (Ring), Phase 14 |
+| **G — Equivariant Schubert calculus** | Torus-equivariant intersection theory; localization formulas (Atiyah-Bott) for efficient computation; polynomial representatives (Schubert polynomials) via karpal-algebra | karpal-algebra (Ring, Module), amari-enumerative |
+| **H — Motivic measures** | Motivic integration over Schubert varieties; connects structured emptiness to measure-theoretic "weight of emptiness"; virtual motives as universal additive invariant | Phase 16 (karpal-topos), karpal-algebra |
+
+Extensions E and F are the most immediately meaningful:
+- **E** gives Phase 15 a rigorous categorical home — Schubert intersection *is*
+  pullback in the right topos, and `IntersectionKind` *is* the subobject
+  classifier of that topos. This collapses the gap between "structured emptiness
+  as a design pattern" and "structured emptiness as categorical truth".
+- **F** refines the coarse intersection number into a polynomial invariant. Where
+  Phase 15A gives `σ_λ · σ_μ = 2`, K-theoretic refinement gives
+  `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
+  deformation parameter, which maps to distinct coercion paths at the type level.
+
+### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions
+
+**Crate**: `karpal-topos` (new)
+
+Topos theory unifies logic, geometry, and category theory. A topos is a
+category that "behaves like Set" — it has all finite limits, exponentials,
+and a subobject classifier Ω. This phase provides the categorical
+infrastructure that Phase 15 and structured emptiness ultimately rest on.
+
+| Concept | Description |
+|---------|-------------|
+| `SubobjectClassifier` trait | Ω with `true: 1 → Ω` and characteristic morphism `χ: Sub(A) ↔ Hom(A, Ω)` |
+| `HeytingAlgebra` | Lattice + implication; internal logic of any topos. Extends `BoundedLattice` from Phase 8 |
+| `Presheaf<C>` | Functor `C^op → Set`; the free cocompletion. Built on karpal-core's `Functor` + `NaturalTransformation` |
+| `Sieve<C>` | Subfunctor of a representable presheaf; the "covering" concept underlying Grothendieck topologies |
+| `GrothendieckTopology` | Coverage on a category; axiomatizes which sieves count as "covers" |
+| `Sheaf<C, J>` | Presheaf satisfying the gluing condition for topology J; sheafification functor |
+| `Topos` trait | Category with finite limits, exponentials, and subobject classifier |
+| `InternalHom` | Exponential objects A^B in a topos; generalizes function types |
+| `PowerObject` | P(A) = Ω^A; internal powerset; the "type of subtypes of A" |
+| `Pullback` / `Equalizer` | Finite limit constructions; Schubert intersection *is* pullback in the flag variety topos |
+
+**Sub-phases**:
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — Heyting algebras & internal logic** | `HeytingAlgebra` extending `BoundedLattice`, internal implication `→`, negation `¬`, propositional connectives | karpal-algebra (BoundedLattice) |
+| **B — Presheaves & sieves** | `Presheaf<C>`, `Sieve<C>`, Yoneda embedding (connecting to karpal-free's Yoneda), representable presheaves | karpal-core (Functor, NaturalTransformation), karpal-free (Yoneda) |
+| **C — Subobject classifier & finite limits** | `SubobjectClassifier`, `Pullback`, `Equalizer`, characteristic morphism construction | Sub-phase A, Sub-phase B |
+| **D — Grothendieck topologies & sheaves** | `GrothendieckTopology`, `Sheaf`, sheafification adjunction (connecting to karpal-core adjunctions), Lawvere-Tierney topologies | Sub-phase C, karpal-core (Adjunction) |
+
+**Connections to existing phases**:
+- **Phase 8 (Abstract Algebra)**: `BoundedLattice` → `HeytingAlgebra` is a direct extension; the structured emptiness lattice `Ω = { Denied, Granted(0), Granted(n), Granted(∞) }` becomes a concrete subobject classifier
+- **Phase 9 (Adjunctions)**: Sheafification is a left adjoint to the inclusion of sheaves into presheaves; this is a new `Adjunction` instance with deep computational content
+- **Phase 5 (Free Constructions)**: Presheaves *are* the free cocompletion; the Yoneda lemma (karpal-free's `Yoneda<F, A>`) is the embedding theorem for presheaf topoi
+- **Phase 14 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 15's LR-enriched categories
+- **Phase 15 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
+
 ---
 
 ## Structured Emptiness: Zero-Intersection Semantics
@@ -422,6 +479,7 @@ correctly through chains of operations.
 | **13 — Diagrams** | String diagrams where wires carry lattice-valued annotations |
 | **14 — Enriched categories** | Categories enriched over enumeration lattices; composition via LR-style rules |
 | **15 — Schubert types** | Concrete realization: types as Schubert classes, type checking as intersection computation, `IntersectionKind` as the structured emptiness lattice |
+| **16 — Topos** | Subobject classifier *is* the structured emptiness lattice; Schubert intersection *is* pullback; sheafification gives "local-to-global" composition of structured truth values |
 
 ---
 
@@ -442,7 +500,8 @@ karpal/
 ├── karpal-verify/         # Phase 12: SMT/Lean bridge, amari-flynn integration
 ├── karpal-diagram/        # Phase 13: Monoidal categories, string diagrams
 ├── karpal-higher/         # Phase 14: 2-categories, enriched categories
-└── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
+├── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
+└── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
 ```
 
 ## Syntax & Ergonomics

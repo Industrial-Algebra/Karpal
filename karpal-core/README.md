@@ -1,7 +1,8 @@
 # karpal-core
 
 Core algebraic structures for Rust: HKT encoding, a full functor hierarchy
-(Functor through Monad), Semigroup, Monoid, and `do_!`/`ado_!` notation macros.
+(Functor through Monad), Semigroup, Monoid, adjunctions, ends/coends,
+dinatural transformations, and `do_!`/`ado_!` notation macros.
 
 ## What's inside
 
@@ -35,6 +36,12 @@ use karpal_core::hkt::{HKT, HKT2, OptionF, ResultF, VecF, ResultBF, TupleF};
 | Contravariant | HKT | PredicateF |
 | Bifunctor | HKT2 | ResultBF, TupleF |
 | NaturalTransformation | HKT | OptionToVec, VecHeadToOption |
+| Adjunction | HKT | IdentityAdj, CurryAdj |
+| ContravariantAdjunction | HKT | ContAdj |
+| DinaturalTransformation | HKT2 | DinaturalId |
+| End | HKT2 | trait with generic `run<A>` |
+| Coend | HKT2 | struct with `elim` |
+| ComposeF | HKT | Functor composition |
 
 ### Chain and `do_!` — sequential, dependent computations
 

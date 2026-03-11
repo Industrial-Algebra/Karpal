@@ -22,6 +22,9 @@ This gives you access to:
 - **Newtype wrappers**: `Sum`, `Product`, `Min`, `Max`, `First`, `Last`
 - **Abstract algebra**: `Group`, `AbelianGroup`, `Semiring`, `Ring`, `Field`,
   `Lattice`, `BoundedLattice`, `Module`, `VectorSpace`
+- **Adjunctions**: `Adjunction`, `ComposeF`, `End`, `Coend`, `DinaturalTransformation`
+- **Effect system**: `FunctorSt`, `ApplicativeSt`, `ChainSt`, `MonadTrans`,
+  `ExceptTF`, `WriterTF`, `ReaderTF`, `StateTF`
 - **Profunctor**: `Profunctor`, `Strong`, `Choice`, `Traversing`, `FnP`, `ForgetF`, `TaggedF`
 - **Optics**: `Iso`, `Lens`, `Prism`, `Traversal`, `Fold`, `Getter`, `Setter`, `Review`, and composed variants
 - **Arrow hierarchy**: `Semigroupoid`, `Category`, `Arrow`, `ArrowChoice`, `ArrowApply`,
@@ -42,6 +45,7 @@ use karpal_std::karpal_arrow;
 use karpal_std::karpal_free;
 use karpal_std::karpal_recursion;
 use karpal_std::karpal_algebra;
+use karpal_std::karpal_effect;
 ```
 
 The `do_!` and `ado_!` macros are available directly:
