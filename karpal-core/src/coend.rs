@@ -30,11 +30,12 @@ impl<P: HKT2, A> Coend<P, A> {
         Coend { value }
     }
 
-    /// Eliminate the coend using a dinatural transformation.
+    /// Eliminate the coend by applying a function to the diagonal value.
     ///
-    /// Given a function `P(A, A) -> R`, extract a result. This is valid
-    /// because the consumer must work for the specific A that was used
-    /// to construct the coend.
+    /// Given a function `P(A, A) -> R`, extract a result. This is the
+    /// concrete elimination form — in category theory, the eliminator
+    /// would be a dinatural transformation, but here the type parameter
+    /// A is exposed rather than existentially hidden.
     pub fn elim<R>(self, f: impl FnOnce(P::P<A, A>) -> R) -> R {
         f(self.value)
     }

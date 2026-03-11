@@ -237,9 +237,9 @@ assert_eq!(program(10), (20, 20));  // get 10, add 10, get 20</code></pre>
 let store: (i32, Box&lt;dyn Fn(i32) -&gt; i32&gt;) =
     (5, Box::new(|e| e * e));
 
-assert_eq!(store_extract(store), 25);   // lookup(5) = 25
-assert_eq!(store_pos(&amp;store2), 5);      // current position
-assert_eq!(store_peek(3, &amp;store2), 9);   // lookup(3) = 9</code></pre>
+assert_eq!(store_pos(&amp;store), 5);       // current position
+assert_eq!(store_peek(3, &amp;store), 9);    // lookup(3) = 9
+assert_eq!(store_extract(store), 25);   // lookup(5) = 25 (moves store)</code></pre>
       </div>
     </div>
 
