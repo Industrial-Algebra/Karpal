@@ -21,10 +21,7 @@ use std::rc::Rc;
 /// from `karpal-core`'s adjunction module.
 pub struct StateTF<S, M>(PhantomData<(S, M)>);
 
-impl<S: 'static, M: HKT> HKT for StateTF<S, M>
-where
-    for<'a> M: 'static,
-{
+impl<S: 'static, M: HKT + 'static> HKT for StateTF<S, M> {
     type Of<A> = Box<dyn Fn(S) -> M::Of<(S, A)>>;
 }
 

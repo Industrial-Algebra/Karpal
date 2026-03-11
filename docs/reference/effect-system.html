@@ -149,7 +149,7 @@ pub trait ChainSt: FunctorSt {
           </tbody>
         </table>
 
-        <p>These implementations are trivial &mdash; for <code>OptionF</code>, <code>fmap_st</code> is just <code>fa.map(f)</code>. The <code>'static</code> bound is strictly weaker than what <code>Box&lt;dyn Fn&gt;</code> requires, so base types satisfy it automatically.</p>
+        <p>These implementations are trivial &mdash; for <code>OptionF</code>, <code>fmap_st</code> is just <code>fa.map(f)</code>. The <code>'static</code> bound matches what <code>Box&lt;dyn Fn&gt;</code> requires, so base types that work with boxed closures satisfy it automatically.</p>
       </div>
     </div>
 
@@ -383,7 +383,7 @@ impl&lt;E: 'static, M: HKT + 'static&gt; HKT for ReaderTF&lt;E, M&gt; {
           </tbody>
         </table>
 
-        <p><strong>Note:</strong> <code>ApplicativeSt</code> is <strong>not</strong> implemented for <code>ReaderTF</code>. The trait's <code>pure_st</code> method cannot produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> without cloning <code>A</code>, and adding <code>A: Clone</code> to the trait would break <code>ExceptTF</code> (since <code>Result&lt;A, E&gt;</code> requires <code>A: Clone</code>). Use the standalone <code>reader_t_pure</code> function instead, which explicitly requires <code>A: Clone</code>.</p>
+        <p><strong>Note:</strong> <code>ApplicativeSt</code> is <strong>not</strong> implemented for <code>ReaderTF</code>. The trait's <code>pure_st</code> method cannot produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> without being able to clone <code>A</code>. Adding a blanket <code>A: Clone</code> bound to <code>ApplicativeSt::pure_st</code> would impose that requirement on <em>every</em> <code>ApplicativeSt</code> implementation (including <code>ExceptTF</code>), preventing its use with non-<code>Clone</code> values. Instead, use the standalone <code>reader_t_pure</code> function when you specifically need a <code>Clone</code> <code>A</code>; it requires <code>A: Clone</code> explicitly.</p>
 
         <h4>Operations</h4>
 
@@ -532,7 +532,7 @@ assert_eq!(guarded(200), Some((200, 200)));</code></pre>
     <ul>
       <li><strong>Why separate <code>FunctorSt</code> / <code>ChainSt</code> traits?</strong> &mdash; Rust's <code>Box&lt;dyn Fn&gt;</code> requires <code>'static</code> bounds on captured types. Adding <code>'static</code> to the main <code>Functor</code> trait would unnecessarily constrain non-transformer code. The <code>St</code> family provides a parallel hierarchy that coexists cleanly.</li>
 
-      <li><strong>Why no <code>ApplicativeSt</code> for ReaderT and StateT?</strong> &mdash; <code>pure_st</code> must produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> from a single <code>A</code>. The closure may be called multiple times, so <code>A</code> must be cloneable. But adding <code>A: Clone</code> to the trait would break <code>ExceptTF</code>, where <code>A</code> is <code>Result&lt;A, E&gt;</code>. The solution: standalone <code>reader_t_pure</code> / <code>state_t_pure</code> functions with explicit <code>A: Clone</code> bounds.</li>
+      <li><strong>Why no <code>ApplicativeSt</code> for ReaderT and StateT?</strong> &mdash; <code>pure_st</code> must produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> from a single <code>A</code>. The closure may be called multiple times, so <code>A</code> must be cloneable. But adding <code>A: Clone</code> to the trait would impose that requirement globally on every <code>ApplicativeSt</code> implementation, preventing use with non-<code>Clone</code> values. The solution: standalone <code>reader_t_pure</code> / <code>state_t_pure</code> functions with explicit <code>A: Clone</code> bounds.</li>
 
       <li><strong>Why <code>M: 'static</code> on closure-based transformers?</strong> &mdash; <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> has an implicit <code>'static</code> lifetime bound, which propagates to <code>M::Of&lt;A&gt;</code>. Adding <code>M: 'static</code> to the HKT impl ensures the associated type satisfies this bound.</li>
 

@@ -17,10 +17,7 @@ use std::rc::Rc;
 /// When the inner monad is `IdentityF`, this is equivalent to `ReaderF<E>`.
 pub struct ReaderTF<E, M>(PhantomData<(E, M)>);
 
-impl<E: 'static, M: HKT> HKT for ReaderTF<E, M>
-where
-    for<'a> M: 'static,
-{
+impl<E: 'static, M: HKT + 'static> HKT for ReaderTF<E, M> {
     type Of<A> = Box<dyn Fn(E) -> M::Of<A>>;
 }
 

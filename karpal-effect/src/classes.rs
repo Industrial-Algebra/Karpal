@@ -4,8 +4,8 @@ use karpal_core::hkt::{HKT, IdentityF, OptionF, ResultF};
 ///
 /// This mirrors [`karpal_core::Functor`] but adds `'static` bounds required by
 /// types that use `Box<dyn Fn>` internally (monad transformers, `ReaderF`, etc.).
-/// Base types that implement `Functor` can implement this trivially since the
-/// `'static` bound is strictly weaker.
+/// Base types that implement `Functor` can typically implement this trivially
+/// because their type parameters often already satisfy `'static` (e.g., for owned types).
 pub trait FunctorSt: HKT {
     fn fmap_st<A: 'static, B: 'static>(
         fa: Self::Of<A>,
@@ -15,8 +15,10 @@ pub trait FunctorSt: HKT {
 
 /// Applicative with `'static` bounds on type parameters.
 ///
-/// The `Clone` bound on `A` is required because some types (ReaderTF, StateTF)
-/// wrap the value in a closure that may be called multiple times.
+/// This mirrors [`karpal_core::Applicative`] but adds `'static` bounds required by
+/// types that use `Box<dyn Fn>` internally (monad transformers, `ReaderTF`, `StateTF`, etc.).
+/// Clone-requiring cases are handled by standalone helper functions (such as `*_t_pure`),
+/// so `pure_st` itself only requires `A: 'static`.
 pub trait ApplicativeSt: FunctorSt {
     fn pure_st<A: 'static>(a: A) -> Self::Of<A>;
 }
