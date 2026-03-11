@@ -42,3 +42,6 @@ jobs:
 
       - name: no_std check (karpal-algebra)
         run: cargo build --no-default-features -p karpal-algebra
+
+      - name: no_std check (karpal-effect)
+        run: cargo build --no-default-features -p karpal-effect

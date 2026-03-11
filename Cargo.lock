@@ -169,6 +169,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-effect"
+version = "0.2.0"
+dependencies = [
+ "karpal-core",
+ "proptest",
+]
+
+[[package]]
 name = "karpal-free"
 version = "0.2.0"
 dependencies = [
@@ -209,6 +217,7 @@ dependencies = [
  "karpal-algebra",
  "karpal-arrow",
  "karpal-core",
+ "karpal-effect",
  "karpal-free",
  "karpal-optics",
  "karpal-profunctor",
