@@ -7,8 +7,8 @@
 pub mod prelude {
     // HKT encoding
     pub use karpal_core::hkt::{
-        EnvF, HKT, HKT2, IdentityF, NonEmptyVec, NonEmptyVecF, OptionF, ResultBF, ResultF, StoreF,
-        TracedF, TupleF, VecF,
+        EnvF, HKT, HKT2, IdentityF, NonEmptyVec, NonEmptyVecF, OptionF, ReaderF, ResultBF, ResultF,
+        StoreF, TracedF, TupleF, VecF,
     };
 
     // Functor hierarchy
@@ -22,8 +22,8 @@ pub mod prelude {
     // Comonad hierarchy
     pub use karpal_core::{Comonad, ComonadEnv, ComonadStore, ComonadTraced, Extend};
 
-    // Bifunctor, Selective, NaturalTransformation
-    pub use karpal_core::{Bifunctor, NaturalTransformation, Selective};
+    // Bifunctor, Selective, NaturalTransformation, DinaturalTransformation
+    pub use karpal_core::{Bifunctor, DinaturalTransformation, NaturalTransformation, Selective};
 
     // Invariant
     pub use karpal_core::Invariant;
@@ -39,6 +39,13 @@ pub mod prelude {
 
     // Newtype wrappers
     pub use karpal_core::{First, Last, Max, Min, Product, Sum};
+
+    // Adjunctions & advanced category theory
+    pub use karpal_core::{
+        Adjunction, Coend, ComposeF, ContAdj, ContF, ContravariantAdjunction, CurryAdj, End,
+        IdentityAdj, ProfunctorAdjunction, ProfunctorFunctor, ProfunctorIdentityAdj,
+        ProfunctorIdentityF,
+    };
 
     // Abstract algebra
     pub use karpal_algebra::{
