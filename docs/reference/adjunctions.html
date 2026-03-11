@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adjunctions &amp; Category Theory - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.2.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+          <li><a href="abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="adjunctions.html" class="active">Adjunctions</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="algebraic.html">Reference</a> &gt; <span>Adjunctions &amp; Category Theory</span>
+    </nav>
+
+    <h1>Adjunctions &amp; Category Theory</h1>
+    <p>Advanced category-theoretic constructions in <code>karpal-core</code>. An adjunction F &dashv; U is the fundamental relationship that gives rise to monads and comonads. This module also includes functor composition, ends, coends, dinatural transformations, the continuation monad, and profunctor-level adjunctions.</p>
+
+    <h2 id="overview">Overview</h2>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Concept</th><th>Module</th><th>Key idea</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Adjunction&lt;F, U&gt;</code></td>
+          <td><code>adjunction</code></td>
+          <td>F &dashv; U: <code>unit: A &rarr; U(F(A))</code>, <code>counit: F(U(B)) &rarr; B</code></td>
+        </tr>
+        <tr>
+          <td><code>ComposeF&lt;F, G&gt;</code></td>
+          <td><code>compose</code></td>
+          <td>Functor composition: <code>(F . G)(A) = F(G(A))</code></td>
+        </tr>
+        <tr>
+          <td><code>DinaturalTransformation</code></td>
+          <td><code>dinatural</code></td>
+          <td>Transform between profunctor diagonals: <code>P(A,A) &rarr; Q(A,A)</code></td>
+        </tr>
+        <tr>
+          <td><code>End&lt;P&gt;</code></td>
+          <td><code>end</code></td>
+          <td>Universal quantification: <code>&forall;A. P(A,A)</code></td>
+        </tr>
+        <tr>
+          <td><code>Coend&lt;P, A&gt;</code></td>
+          <td><code>coend</code></td>
+          <td>Existential quantification: <code>&exist;A. P(A,A)</code></td>
+        </tr>
+        <tr>
+          <td><code>ContravariantAdjunction</code></td>
+          <td><code>adjunction</code></td>
+          <td>Adjunction between contravariant functors; <code>ContF&lt;R&gt; &dashv; ContF&lt;R&gt;</code> gives the continuation monad</td>
+        </tr>
+        <tr>
+          <td><code>ProfunctorAdjunction</code></td>
+          <td><code>adjunction</code></td>
+          <td>Adjunction in the category of profunctors</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ================================================================== -->
+    <!-- Adjunction                                                         -->
+    <!-- ================================================================== -->
+
+    <h2 id="adjunction">Adjunction</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="adjunction-trait">Adjunction&lt;F, U&gt;</h3>
+        <p class="trait-desc">The fundamental relationship between a left adjoint F and right adjoint U.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait Adjunction&lt;F: HKT, U: HKT&gt; {
+    fn unit&lt;A: Clone + 'static&gt;(a: A) -&gt; U::Of&lt;F::Of&lt;A&gt;&gt;;
+    fn counit&lt;B: 'static&gt;(fub: F::Of&lt;U::Of&lt;B&gt;&gt;) -&gt; B;
+}</code></pre>
+
+        <p>The trait is bounded by <code>HKT</code> rather than <code>Functor</code> because some right adjoints (like <code>ReaderF&lt;E&gt;</code>) cannot implement the generic <code>Functor</code> trait due to <code>'static</code> limitations on <code>Box&lt;dyn Fn&gt;</code>.</p>
+
+        <h4>Laws (Triangle Identities)</h4>
+
+        <div class="law-box">
+          <span class="law-name">Left Triangle</span>
+<pre><code class="language-rust">// counit(F::fmap(fa, unit)) == fa
+// "Going up then back down is identity on F"</code></pre>
+        </div>
+
+        <div class="law-box">
+          <span class="law-name">Right Triangle</span>
+<pre><code class="language-rust">// U::fmap(unit(a), counit) == a
+// "Going up then back down is identity on U"</code></pre>
+        </div>
+
+        <h4>Derived Operations</h4>
+
+<pre><code class="language-rust">// left_adjunct: (F(A) -&gt; B) -&gt; (A -&gt; U(B))
+fn left_adjunct(f, a) = U::fmap(unit(a), f)
+
+// right_adjunct: (A -&gt; U(B)) -&gt; (F(A) -&gt; B)
+fn right_adjunct(f, fa) = counit(F::fmap(fa, f))</code></pre>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Witness</th><th>F (left)</th><th>U (right)</th><th>Feature</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>IdentityAdj</code></td>
+              <td><code>IdentityF</code></td>
+              <td><code>IdentityF</code></td>
+              <td><code>no_std</code></td>
+            </tr>
+            <tr>
+              <td><code>CurryAdj&lt;E&gt;</code></td>
+              <td><code>EnvF&lt;E&gt;</code></td>
+              <td><code>ReaderF&lt;E&gt;</code></td>
+              <td><code>alloc</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Monad & Comonad from Adjunction                                    -->
+    <!-- ================================================================== -->
+
+    <h2 id="monad-comonad">Monad &amp; Comonad from Adjunctions</h2>
+
+    <p>Every adjunction F &dashv; U gives rise to both a monad and a comonad:</p>
+
+    <ul>
+      <li><strong>Monad on U . F</strong> &mdash; <code>pure = unit</code>, <code>join = U(counit)</code></li>
+      <li><strong>Comonad on F . U</strong> &mdash; <code>extract = counit</code>, <code>duplicate = F(unit)</code></li>
+    </ul>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="curry-adj">CurryAdj&lt;E&gt; &mdash; Product/Exponential Adjunction</h3>
+        <p class="trait-desc"><code>EnvF&lt;E&gt; &dashv; ReaderF&lt;E&gt;</code>: the canonical adjunction giving State and Store.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>How It Works</h4>
+
+<pre><code class="language-text">EnvF&lt;E&gt;::Of&lt;A&gt;   = (E, A)            -- product ("pairing with environment")
+ReaderF&lt;E&gt;::Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; A&gt;  -- exponential ("function from environment")
+
+unit(a) = |e| (e, a)                   -- embed value into reader of pairs
+counit((e, f)) = f(e)                  -- apply the function to the environment</code></pre>
+
+        <h4>State Monad (U . F = ReaderF . EnvF)</h4>
+        <p>The composed functor <code>ReaderF&lt;E&gt; . EnvF&lt;E&gt;</code> gives <code>Of&lt;A&gt; = Box&lt;dyn Fn(E) &rarr; (E, A)&gt;</code> &mdash; exactly the State monad, where the environment <code>E</code> is threaded and potentially modified.</p>
+
+<pre><code class="language-rust">use karpal_core::adjunction::*;
+
+// State monad: E -&gt; (E, A) where E is mutable state
+let get = state_get::&lt;i32&gt;();               // |e| (e, e)
+let put = |s| state_put(s);                  // |_| (s, ())
+let modify = state_modify(|e: i32| e + 1);  // |e| (e+1, ())
+
+// Pure wraps a value without touching state
+let pure_42 = state_pure::&lt;i32, _&gt;(42);
+assert_eq!(pure_42(0), (0, 42));
+
+// Chain sequences state-passing computations
+let program = state_chain(
+    state_get::&lt;i32&gt;(),
+    |x| state_chain(
+        state_modify(move |e: i32| e + x),
+        |_| state_get::&lt;i32&gt;(),
+    ),
+);
+assert_eq!(program(10), (20, 20));  // get 10, add 10, get 20</code></pre>
+
+        <h4>Store Comonad (F . U = EnvF . ReaderF)</h4>
+        <p>The composed functor <code>EnvF&lt;E&gt; . ReaderF&lt;E&gt;</code> gives <code>Of&lt;A&gt; = (E, Box&lt;dyn Fn(E) &rarr; A&gt;)</code> &mdash; the Store comonad, holding a position and a function to look up values.</p>
+
+<pre><code class="language-rust">use karpal_core::adjunction::*;
+
+// Store: (position, lookup_function)
+let store: (i32, Box&lt;dyn Fn(i32) -&gt; i32&gt;) =
+    (5, Box::new(|e| e * e));
+
+assert_eq!(store_pos(&amp;store), 5);       // current position
+assert_eq!(store_peek(3, &amp;store), 9);    // lookup(3) = 9
+assert_eq!(store_extract(store), 25);   // lookup(5) = 25 (moves store)</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ReaderF                                                            -->
+    <!-- ================================================================== -->
+
+    <h2 id="reader">ReaderF&lt;E&gt;</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="reader-f">ReaderF&lt;E&gt;</h3>
+        <p class="trait-desc">The Reader functor: <code>Of&lt;T&gt; = Box&lt;dyn Fn(E) &rarr; T&gt;</code>. Right adjoint of <code>EnvF&lt;E&gt;</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <p><code>ReaderF&lt;E&gt;</code> cannot implement the generic <code>Functor</code> trait because <code>Box&lt;dyn Fn&gt;</code> requires <code>'static</code> bounds that the trait signature doesn't allow. Instead, it provides equivalent functionality via <strong>inherent methods</strong> with <code>'static</code> bounds on the impl block (the "Lan workaround").</p>
+
+        <h4>Inherent Methods</h4>
+
+<pre><code class="language-rust">impl&lt;E: Clone + 'static&gt; ReaderF&lt;E&gt; {
+    fn fmap&lt;A: 'static, B: 'static&gt;(
+        fa: Box&lt;dyn Fn(E) -&gt; A&gt;,
+        f: impl Fn(A) -&gt; B + 'static,
+    ) -&gt; Box&lt;dyn Fn(E) -&gt; B&gt;;
+
+    fn pure&lt;A: Clone + 'static&gt;(a: A) -&gt; Box&lt;dyn Fn(E) -&gt; A&gt;;
+
+    fn chain&lt;A: 'static, B: 'static&gt;(
+        fa: Box&lt;dyn Fn(E) -&gt; A&gt;,
+        f: impl Fn(A) -&gt; Box&lt;dyn Fn(E) -&gt; B&gt; + 'static,
+    ) -&gt; Box&lt;dyn Fn(E) -&gt; B&gt;;
+
+    fn ask() -&gt; Box&lt;dyn Fn(E) -&gt; E&gt;;
+
+    fn local&lt;A: 'static&gt;(
+        f: impl Fn(E) -&gt; E + 'static,
+        reader: Box&lt;dyn Fn(E) -&gt; A&gt;,
+    ) -&gt; Box&lt;dyn Fn(E) -&gt; A&gt;;
+}</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::hkt::ReaderF;
+
+// Reader monad: shared read-only environment
+let reader = ReaderF::&lt;String&gt;::chain(
+    ReaderF::ask(),
+    |env: String| ReaderF::pure(env.len()),
+);
+assert_eq!(reader("hello".to_string()), 5);</code></pre>
+
+        <p><strong>State vs Reader:</strong> Reader's <code>chain</code> passes the <em>same</em> environment to both computations (<code>|e| f(reader(e))(e)</code>), while State threads <em>modified</em> state (<code>|e| let (e', a) = m(e); f(a)(e')</code>). They are different monads arising from the same adjunction.</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ComposeF                                                           -->
+    <!-- ================================================================== -->
+
+    <h2 id="compose">Functor Composition</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="compose-f">ComposeF&lt;F, G&gt;</h3>
+        <p class="trait-desc">Compose two type constructors: <code>(F . G)(A) = F(G(A))</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub struct ComposeF&lt;F, G&gt;(PhantomData&lt;(F, G)&gt;);
+
+impl&lt;F: HKT, G: HKT&gt; HKT for ComposeF&lt;F, G&gt; {
+    type Of&lt;T&gt; = F::Of&lt;G::Of&lt;T&gt;&gt;;
+}
+
+impl&lt;F: Functor, G: Functor&gt; Functor for ComposeF&lt;F, G&gt; {
+    fn fmap&lt;A, B&gt;(fga: F::Of&lt;G::Of&lt;A&gt;&gt;, f: impl Fn(A) -&gt; B) -&gt; F::Of&lt;G::Of&lt;B&gt;&gt; {
+        F::fmap(fga, |ga| G::fmap(ga, &amp;f))
+    }
+}</code></pre>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::compose::ComposeF;
+use karpal_core::functor::Functor;
+use karpal_core::hkt::{OptionF, VecF};
+
+// Option&lt;Option&lt;i32&gt;&gt; as a composed functor
+let val: Option&lt;Option&lt;i32&gt;&gt; = Some(Some(42));
+let result = ComposeF::&lt;OptionF, OptionF&gt;::fmap(val, |x| x + 1);
+assert_eq!(result, Some(Some(43)));
+
+// Vec&lt;Option&lt;i32&gt;&gt; -- fmap reaches through both layers
+let val: Vec&lt;Option&lt;i32&gt;&gt; = vec![Some(1), None, Some(3)];
+let result = ComposeF::&lt;VecF, OptionF&gt;::fmap(val, |x| x * 10);
+assert_eq!(result, vec![Some(10), None, Some(30)]);</code></pre>
+
+        <p>Functor composition is the key building block for adjunction-derived monads and comonads: the State monad is <code>ComposeF&lt;ReaderF&lt;E&gt;, EnvF&lt;E&gt;&gt;</code> and the Store comonad is <code>ComposeF&lt;EnvF&lt;E&gt;, ReaderF&lt;E&gt;&gt;</code>.</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Dinatural Transformation                                           -->
+    <!-- ================================================================== -->
+
+    <h2 id="dinatural">Dinatural Transformation</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="dinatural-trait">DinaturalTransformation&lt;P, Q&gt;</h3>
+        <p class="trait-desc">A transformation between two profunctors on the diagonal: <code>P(A,A) &rarr; Q(A,A)</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait DinaturalTransformation&lt;P: HKT2, Q: HKT2&gt; {
+    fn transform&lt;A: 'static&gt;(paa: P::P&lt;A, A&gt;) -&gt; Q::P&lt;A, A&gt;;
+}</code></pre>
+
+        <p>A dinatural transformation is to profunctors what a natural transformation is to functors. Where a natural transformation has components <code>&alpha;_A: F(A) &rarr; G(A)</code>, a dinatural transformation has components <code>&alpha;_A: P(A,A) &rarr; Q(A,A)</code> that work on the diagonal of a profunctor (both type parameters equal).</p>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Witness</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DinaturalId</code></td><td>Identity: <code>P(A,A) &rarr; P(A,A)</code> for any profunctor P</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::dinatural::*;
+use karpal_core::hkt::TupleF;
+
+let val: (i32, i32) = (1, 2);
+let result = &lt;DinaturalId as DinaturalTransformation&lt;TupleF, TupleF&gt;&gt;
+    ::transform::&lt;i32&gt;(val);
+assert_eq!(result, (1, 2));</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- End & Coend                                                        -->
+    <!-- ================================================================== -->
+
+    <h2 id="ends-coends">Ends &amp; Coends</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="end-trait">End&lt;P&gt;</h3>
+        <p class="trait-desc">Universal quantification over a profunctor's diagonal: <code>&forall;A. P(A,A)</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait End&lt;P: HKT2&gt; {
+    fn run&lt;A: 'static&gt;(&amp;self) -&gt; P::P&lt;A, A&gt;;
+}</code></pre>
+
+        <p>An end is a value that, when asked for any type <code>A</code>, can produce a <code>P(A,A)</code>. This is the categorical analogue of <code>forall A. P(A,A)</code> from System F. The <code>End</code> trait is not dyn-compatible (it has a generic method), so implementations must be concrete types.</p>
+
+        <p>Ends appear in categorical constructions like the Yoneda lemma (<code>&int;_A [A, F(A)] &cong; F</code>) and are the natural setting for parametric polymorphism.</p>
+      </div>
+    </div>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="coend-struct">Coend&lt;P, A&gt;</h3>
+        <p class="trait-desc">Existential quantification over a profunctor's diagonal: <code>&exist;A. P(A,A)</code>.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub struct Coend&lt;P: HKT2, A&gt; {
+    pub value: P::P&lt;A, A&gt;,
+}
+
+impl&lt;P: HKT2, A&gt; Coend&lt;P, A&gt; {
+    pub fn new(value: P::P&lt;A, A&gt;) -&gt; Self;
+    pub fn elim&lt;R&gt;(self, f: impl FnOnce(P::P&lt;A, A&gt;) -&gt; R) -&gt; R;
+}</code></pre>
+
+        <p>A coend packages a <code>P(A,A)</code> value where the type <code>A</code> is "existentially hidden". Since Rust lacks existential types, <code>A</code> is exposed as a type parameter. The <code>elim</code> method provides CPS-style elimination.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::coend::Coend;
+use karpal_core::hkt::TupleF;
+
+let c = Coend::&lt;TupleF, i32&gt;::new((42, 42));
+let sum = c.elim(|(a, b)| a + b);
+assert_eq!(sum, 84);</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Contravariant Adjunction                                           -->
+    <!-- ================================================================== -->
+
+    <h2 id="contravariant-adjunction">Contravariant Adjunction</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="contra-adj-trait">ContravariantAdjunction&lt;F, G&gt;</h3>
+        <p class="trait-desc">An adjunction between contravariant functors, giving rise to the continuation monad.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">pub trait ContravariantAdjunction&lt;F: HKT, G: HKT&gt; {
+    fn unit&lt;A: Clone + 'static&gt;(a: A) -&gt; G::Of&lt;F::Of&lt;A&gt;&gt;;
+    fn counit&lt;B: Clone + 'static&gt;(b: B) -&gt; F::Of&lt;G::Of&lt;B&gt;&gt;;
+}</code></pre>
+
+        <p>For contravariant functors, the composition <code>G . F</code> is <em>covariant</em> (two contravariants compose to give a covariant functor). The primary instance is the self-adjunction of <code>ContF&lt;R&gt;</code>, which gives the continuation monad.</p>
+
+        <h4>ContF&lt;R&gt; &mdash; The Continuation Functor</h4>
+
+<pre><code class="language-rust">pub struct ContF&lt;R&gt;(PhantomData&lt;R&gt;);
+
+// Of&lt;A&gt; = Box&lt;dyn Fn(A) -&gt; R&gt;
+// Generalizes PredicateF (which is ContF&lt;bool&gt;)</code></pre>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Witness</th><th>F</th><th>G</th><th>Resulting Monad</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ContAdj&lt;R&gt;</code></td>
+              <td><code>ContF&lt;R&gt;</code></td>
+              <td><code>ContF&lt;R&gt;</code></td>
+              <td><code>(A &rarr; R) &rarr; R</code> (Continuation)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><code>ContAdj&lt;R&gt;</code> is self-adjoint: <code>unit</code> and <code>counit</code> are the same operation (<code>|k| k(a)</code>), embedding a value into CPS form.</p>
+
+        <h4>Continuation Monad Helpers</h4>
+
+<pre><code class="language-rust">use karpal_core::adjunction::*;
+
+// Pure: embed a value into CPS
+let m = cont_pure::&lt;i32, _&gt;(42);
+assert_eq!(cont_run(&amp;*m, |x| x + 1), 43);
+
+// Fmap: transform inside CPS
+let mapped = cont_fmap(|x: i32| x * 3, cont_pure(10));
+assert_eq!(cont_run(&amp;*mapped, |x| x + 1), 31);  // (10 * 3) + 1
+
+// Chain (bind): sequence CPS computations
+let chained = cont_chain(cont_pure(5), |x| cont_pure(x + 10));
+assert_eq!(cont_run(&amp;*chained, |x| x * 2), 30);  // (5 + 10) * 2
+
+// call/cc: call-with-current-continuation
+let m = cont_call_cc::&lt;i32, i32, i32&gt;(|escape| {
+    // escape(10) short-circuits, ignoring the rest
+    let escaped = escape(10);
+    cont_chain(escaped, |_| cont_pure(999))  // never reached
+});
+assert_eq!(cont_run(&amp;*m, |x| x), 10);  // not 999!</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Profunctor Adjunction                                              -->
+    <!-- ================================================================== -->
+
+    <h2 id="profunctor-adjunction">Profunctor Adjunction</h2>
+
+    <div class="trait-card">
+      <div class="trait-card-header">
+        <h3 id="prof-adj-trait">ProfunctorAdjunction&lt;F, U&gt;</h3>
+        <p class="trait-desc">An adjunction in the category of profunctors.</p>
+      </div>
+      <div class="trait-card-body">
+        <h4>Signature</h4>
+
+<pre><code class="language-rust">/// Type-level functor on profunctors
+pub trait ProfunctorFunctor {
+    type Applied&lt;P: HKT2&gt;: HKT2;
+}
+
+/// Adjunction between profunctor functors
+pub trait ProfunctorAdjunction&lt;F: ProfunctorFunctor, U: ProfunctorFunctor&gt; {
+    fn unit&lt;P: HKT2, A: 'static, B: 'static&gt;(
+        pab: P::P&lt;A, B&gt;,
+    ) -&gt; &lt;U::Applied&lt;F::Applied&lt;P&gt;&gt; as HKT2&gt;::P&lt;A, B&gt;;
+
+    fn counit&lt;Q: HKT2, A: 'static, B: 'static&gt;(
+        fuqab: &lt;F::Applied&lt;U::Applied&lt;Q&gt;&gt; as HKT2&gt;::P&lt;A, B&gt;,
+    ) -&gt; Q::P&lt;A, B&gt;;
+}</code></pre>
+
+        <p><code>ProfunctorFunctor</code> maps profunctors to profunctors using GATs as an HKT3-like encoding. A <code>ProfunctorAdjunction</code> witnesses a left/right adjoint pair at the profunctor level, with unit and counit that are natural transformations between profunctors.</p>
+
+        <h4>Instances</h4>
+
+        <table class="instance-table">
+          <thead>
+            <tr><th>Witness</th><th>F</th><th>U</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ProfunctorIdentityAdj</code></td>
+              <td><code>ProfunctorIdentityF</code></td>
+              <td><code>ProfunctorIdentityF</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>The identity instance maps every profunctor to itself. Non-trivial instances like <code>Pastro &dashv; Tambara</code> require profunctor transformer types and are planned for future phases.</p>
+
+        <h4>Examples</h4>
+
+<pre><code class="language-rust">use karpal_core::adjunction::*;
+use karpal_core::hkt::TupleF;
+
+// Identity profunctor adjunction: roundtrip is identity
+let val: (i32, String) = (42, "hello".into());
+let roundtrip = ProfunctorIdentityAdj::counit::&lt;TupleF, i32, String&gt;(
+    ProfunctorIdentityAdj::unit::&lt;TupleF, i32, String&gt;(val.clone()),
+);
+assert_eq!(roundtrip, val);</code></pre>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Design Notes                                                       -->
+    <!-- ================================================================== -->
+
+    <h2 id="design-notes">Design Notes</h2>
+
+    <ul>
+      <li><strong>HKT not Functor in Adjunction trait</strong> &mdash; <code>ReaderF&lt;E&gt;</code> can't implement generic <code>Functor</code> (GAT can't add <code>'static</code> bounds that the trait lacks). The trait uses <code>HKT</code> bounds; standalone helper functions add <code>Functor</code> bounds where needed.</li>
+      <li><strong>Lan workaround for ReaderF</strong> &mdash; <code>'static</code> bounds go on the <code>impl</code> block rather than the trait, allowing <code>Box&lt;dyn Fn&gt;</code> usage without changing trait signatures. This pattern was pioneered in the Lan/Ran implementations.</li>
+      <li><strong>State &ne; Reader</strong> &mdash; Though both derive from <code>CurryAdj&lt;E&gt;</code>, the State monad threads modified state while Reader shares the same environment. State's <code>chain</code> is <code>|e| let (e', a) = m(e); f(a)(e')</code>; Reader's is <code>|e| f(reader(e))(e)</code>.</li>
+      <li><strong>Rc for continuation closures</strong> &mdash; <code>cont_chain</code> and <code>cont_call_cc</code> use <code>Rc</code> to share closures across multiple <code>Fn</code> invocations. This is required because <code>Fn</code> closures must be callable multiple times but captured values are moved.</li>
+      <li><strong>End is not dyn-compatible</strong> &mdash; The <code>run&lt;A&gt;</code> method is generic, so <code>End</code> cannot be used as a trait object. Concrete types must implement it.</li>
+      <li><strong>Coend exposes A</strong> &mdash; Rust lacks existential types, so the "hidden" type parameter is exposed. The <code>elim</code> method provides CPS-style consumption.</li>
+      <li><strong><code>no_std</code> support</strong> &mdash; <code>IdentityAdj</code>, <code>ComposeF</code>, <code>DinaturalTransformation</code>, <code>End</code>, <code>Coend</code>, <code>ProfunctorFunctor</code>, and <code>ProfunctorAdjunction</code> all work without <code>std</code> or <code>alloc</code>. <code>CurryAdj</code>, <code>ContAdj</code>, <code>ReaderF</code>, and continuation helpers require <code>alloc</code>.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>
