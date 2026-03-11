@@ -7,8 +7,8 @@
 pub mod prelude {
     // HKT encoding
     pub use karpal_core::hkt::{
-        EnvF, HKT, HKT2, IdentityF, NonEmptyVec, NonEmptyVecF, OptionF, ResultBF, ResultF, StoreF,
-        TracedF, TupleF, VecF,
+        EnvF, HKT, HKT2, IdentityF, NonEmptyVec, NonEmptyVecF, OptionF, ReaderF, ResultBF, ResultF,
+        StoreF, TracedF, TupleF, VecF,
     };
 
     // Functor hierarchy
@@ -22,8 +22,8 @@ pub mod prelude {
     // Comonad hierarchy
     pub use karpal_core::{Comonad, ComonadEnv, ComonadStore, ComonadTraced, Extend};
 
-    // Bifunctor, Selective, NaturalTransformation
-    pub use karpal_core::{Bifunctor, NaturalTransformation, Selective};
+    // Bifunctor, Selective, NaturalTransformation, DinaturalTransformation
+    pub use karpal_core::{Bifunctor, DinaturalTransformation, NaturalTransformation, Selective};
 
     // Invariant
     pub use karpal_core::Invariant;
@@ -39,6 +39,13 @@ pub mod prelude {
 
     // Newtype wrappers
     pub use karpal_core::{First, Last, Max, Min, Product, Sum};
+
+    // Adjunctions & advanced category theory
+    pub use karpal_core::{
+        Adjunction, Coend, ComposeF, ContAdj, ContF, ContravariantAdjunction, CurryAdj, End,
+        IdentityAdj, ProfunctorAdjunction, ProfunctorFunctor, ProfunctorIdentityAdj,
+        ProfunctorIdentityF,
+    };
 
     // Abstract algebra
     pub use karpal_algebra::{
@@ -80,6 +87,11 @@ pub mod prelude {
         Either, Fix, FixF, Mu, Nu, ana, apo, cata, chrono, futu, histo, hylo, para, zygo,
     };
 
+    // Effect system / Monad transformers
+    pub use karpal_effect::{
+        ApplicativeSt, ChainSt, ExceptTF, FunctorSt, MonadTrans, ReaderTF, StateTF, WriterTF,
+    };
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -88,6 +100,7 @@ pub mod prelude {
 pub use karpal_algebra;
 pub use karpal_arrow;
 pub use karpal_core;
+pub use karpal_effect;
 pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;

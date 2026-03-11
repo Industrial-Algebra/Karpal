@@ -8,8 +8,10 @@ Alt/Plus/Alternative, Foldable, Traversable, and more), algebraic typeclasses
 (Semigroup, Monoid, Group, Ring, Field), profunctor optics (Lens, Prism,
 Traversal, Fold, and more), a category/arrow hierarchy, free constructions
 (Free Monad, Cofree Comonad, Coyoneda, Day Convolution), recursion schemes
-(cata, ana, hylo, histo, and more), and `do_!`/`ado_!` notation macros — all
-with `no_std` support and property-based law verification.
+(cata, ana, hylo, histo, and more), adjunctions and advanced category theory
+(ends, coends, dinatural transformations), monad transformers (ExceptT,
+WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
+`no_std` support and property-based law verification.
 
 ## Workspace
 
@@ -22,11 +24,12 @@ with `no_std` support and property-based law verification.
 | [`karpal-free`](karpal-free/) | Free constructions (Coyoneda, Yoneda, Free, Cofree, Freer, Day, FreeAp, FreeAlt) |
 | [`karpal-recursion`](karpal-recursion/) | Recursion schemes (Fix, cata, ana, hylo, para, apo, histo, futu, zygo, chrono) |
 | [`karpal-algebra`](karpal-algebra/) | Abstract algebra (Group, Semiring, Ring, Field, Lattice, Module, VectorSpace) |
+| [`karpal-effect`](karpal-effect/) | Monad transformers (ExceptT, WriterT, ReaderT, StateT) and static-bound functor hierarchy |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
-`karpal-recursion`, and `karpal-algebra` are `no_std` compatible with
-optional `std`/`alloc` feature gates.
+`karpal-recursion`, `karpal-algebra`, and `karpal-effect` are `no_std`
+compatible with optional `std`/`alloc` feature gates.
 
 ## Why Karpal?
 
@@ -363,6 +366,53 @@ let e2 = (0.0f64, 1.0);
 let v = e1.scale(3.0).combine(e2.scale(4.0));
 assert!((v.0 - 3.0).abs() < 1e-10);
 assert!((v.1 - 4.0).abs() < 1e-10);
+```
+
+### Adjunctions — state and store from universal constructions
+
+Adjunctions capture deep relationships between functors. The currying
+adjunction `EnvF<E> ⊣ ReaderF<E>` gives rise to the State monad and
+Store comonad as derived constructions:
+
+```rust
+use karpal_core::adjunction::{CurryAdj, state_pure, state_chain, state_get, state_modify};
+use karpal_core::hkt::OptionF;
+
+// State monad from the currying adjunction
+let counter = state_chain(
+    state_get::<i32>(),
+    |n| state_chain(
+        state_modify(move |s: i32| s + 1),
+        move |_| state_pure::<i32, _>(n),  // return old value, increment state
+    ),
+);
+let (result, final_state) = counter(10);
+assert_eq!(result, 10);       // returned the old value
+assert_eq!(final_state, 11);  // state was incremented
+```
+
+### Monad transformers — compose effects
+
+Stack monadic effects with transformers. Each transformer adds one
+effect to an existing monad:
+
+```rust
+use karpal_effect::{ExceptTF, MonadTrans, FunctorSt, ChainSt};
+use karpal_core::hkt::OptionF;
+
+// ExceptT adds error handling on top of Option
+type ExceptOpt<A> = Option<Result<A, String>>;
+
+// Lift an Option into the ExceptT stack
+let lifted: ExceptOpt<i32> = ExceptTF::<String, OptionF>::lift(Some(42));
+assert_eq!(lifted, Some(Ok(42)));
+
+// Map over the inner value through both layers
+let doubled = ExceptTF::<String, OptionF>::fmap_st(
+    Some(Ok(21)),
+    |x| x * 2,
+);
+assert_eq!(doubled, Some(Ok(42)));
 ```
 
 ### Lens composition — focus deep into nested structs

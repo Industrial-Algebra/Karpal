@@ -145,3 +145,71 @@ pub struct TracedF<M>(PhantomData<M>);
 impl<M: 'static> HKT for TracedF<M> {
     type Of<T> = Box<dyn Fn(M) -> T>;
 }
+
+/// Type constructor for the Reader functor: `Of<T> = Box<dyn Fn(E) -> T>`.
+///
+/// Isomorphic to `TracedF<E>` in representation, but serves a different
+/// semantic role: `ReaderF<E>` is the right adjoint of `EnvF<E>` in the
+/// product/exponential adjunction (`EnvF<E> ⊣ ReaderF<E>`).
+///
+/// `ReaderF<E>` cannot implement the generic `Functor` trait because
+/// `Box<dyn Fn>` requires `'static` bounds that the trait signature doesn't
+/// allow. Following the Lan pattern, inherent methods with `'static` bounds
+/// on the impl block provide the same functionality.
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub struct ReaderF<E>(PhantomData<E>);
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl<E: 'static> HKT for ReaderF<E> {
+    type Of<T> = Box<dyn Fn(E) -> T>;
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl<E: Clone + 'static> ReaderF<E> {
+    /// Functor `fmap` for Reader: post-compose a function.
+    ///
+    /// `fmap(f, reader) = |e| f(reader(e))`
+    pub fn fmap<A: 'static, B: 'static>(
+        fa: Box<dyn Fn(E) -> A>,
+        f: impl Fn(A) -> B + 'static,
+    ) -> Box<dyn Fn(E) -> B> {
+        Box::new(move |e| f(fa(e)))
+    }
+
+    /// Applicative `pure` for Reader: ignore the environment, return a constant.
+    ///
+    /// `pure(a) = |_e| a`
+    pub fn pure<A: Clone + 'static>(a: A) -> Box<dyn Fn(E) -> A> {
+        Box::new(move |_| a.clone())
+    }
+
+    /// Monadic `chain` (bind) for Reader: Kleisli composition.
+    ///
+    /// `chain(reader, f) = |e| f(reader(e))(e)`
+    pub fn chain<A: 'static, B: 'static>(
+        fa: Box<dyn Fn(E) -> A>,
+        f: impl Fn(A) -> Box<dyn Fn(E) -> B> + 'static,
+    ) -> Box<dyn Fn(E) -> B> {
+        Box::new(move |e: E| {
+            let a = fa(e.clone());
+            f(a)(e)
+        })
+    }
+
+    /// Reader-specific: access the environment directly.
+    ///
+    /// `ask() = |e| e`
+    pub fn ask() -> Box<dyn Fn(E) -> E> {
+        Box::new(|e| e)
+    }
+
+    /// Reader-specific: modify the environment before running a reader.
+    ///
+    /// `local(f, reader) = |e| reader(f(e))`
+    pub fn local<A: 'static>(
+        f: impl Fn(E) -> E + 'static,
+        reader: Box<dyn Fn(E) -> A>,
+    ) -> Box<dyn Fn(E) -> A> {
+        Box::new(move |e| reader(f(e)))
+    }
+}

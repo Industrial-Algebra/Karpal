@@ -16,7 +16,7 @@ std = ["alloc", "karpal-core/std"]
 alloc = ["karpal-core/alloc"]
 
 [dependencies]
-karpal-core = { version = "0.2.0", path = "../karpal-core", default-features = false }
+karpal-core = { version = "0.3.0", path = "../karpal-core", default-features = false }
 
 [dev-dependencies]
 proptest.workspace = true

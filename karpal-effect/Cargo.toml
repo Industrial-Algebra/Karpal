@@ -1,5 +1,5 @@
 [package]
-name = "karpal-recursion"
+name = "karpal-effect"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,16 +8,15 @@ homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
 readme = "README.md"
-description = "Recursion schemes (cata, ana, hylo, para, apo, histo, futu, zygo, chrono) for the Industrial Algebra ecosystem"
+description = "Monad transformers and effect system for the Industrial Algebra ecosystem"
 
 [dependencies]
 karpal-core = { version = "0.3.0", path = "../karpal-core", default-features = false }
-karpal-free = { version = "0.3.0", path = "../karpal-free", default-features = false }
 
 [features]
 default = ["std"]
-std = ["alloc", "karpal-core/std", "karpal-free/std"]
-alloc = ["karpal-core/alloc", "karpal-free/alloc"]
+std = ["alloc", "karpal-core/std"]
+alloc = ["karpal-core/alloc"]
 
 [dev-dependencies]
 proptest.workspace = true
