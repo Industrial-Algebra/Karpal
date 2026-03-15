@@ -115,6 +115,14 @@ pub mod prelude {
         Property,
         Proven,
         Rewrite,
+        // Derive macros
+        VerifyCommutative,
+        VerifyGroup,
+        VerifyLattice,
+        VerifyMonoid,
+        VerifyRing,
+        VerifySemigroup,
+        VerifySemiring,
     };
 
     // Macros

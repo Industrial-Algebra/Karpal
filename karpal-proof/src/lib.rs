@@ -20,3 +20,10 @@ pub use rewrite::{Justifies, Rewrite};
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use refinement::{NonEmpty, Positive};
+
+/// Re-export derive macros when the `derive` feature is enabled.
+#[cfg(feature = "derive")]
+pub use karpal_proof_derive::{
+    VerifyCommutative, VerifyGroup, VerifyLattice, VerifyMonoid, VerifyRing, VerifySemigroup,
+    VerifySemiring,
+};

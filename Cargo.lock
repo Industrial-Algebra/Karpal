@@ -207,7 +207,17 @@ version = "0.3.0"
 dependencies = [
  "karpal-algebra",
  "karpal-core",
+ "karpal-proof-derive",
  "proptest",
+]
+
+[[package]]
+name = "karpal-proof-derive"
+version = "0.3.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
