@@ -1,5 +1,5 @@
 [workspace]
-members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-std"]
+members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-proof", "karpal-std"]
 resolver = "3"
 
 [workspace.package]
@@ -20,4 +20,5 @@ karpal-free = { version = "0.3.0", path = "karpal-free" }
 karpal-recursion = { version = "0.3.0", path = "karpal-recursion" }
 karpal-algebra = { version = "0.3.0", path = "karpal-algebra" }
 karpal-effect = { version = "0.3.0", path = "karpal-effect" }
+karpal-proof = { version = "0.3.0", path = "karpal-proof" }
 proptest = "1"

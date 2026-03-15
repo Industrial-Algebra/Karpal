@@ -202,6 +202,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-proof"
+version = "0.3.0"
+dependencies = [
+ "karpal-algebra",
+ "karpal-core",
+ "proptest",
+]
+
+[[package]]
 name = "karpal-recursion"
 version = "0.3.0"
 dependencies = [
@@ -221,6 +230,7 @@ dependencies = [
  "karpal-free",
  "karpal-optics",
  "karpal-profunctor",
+ "karpal-proof",
  "karpal-recursion",
 ]
 
