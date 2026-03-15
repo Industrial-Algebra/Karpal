@@ -45,3 +45,6 @@ jobs:
 
       - name: no_std check (karpal-effect)
         run: cargo build --no-default-features -p karpal-effect
+
+      - name: no_std check (karpal-proof)
+        run: cargo build --no-default-features -p karpal-proof

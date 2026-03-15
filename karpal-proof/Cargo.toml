@@ -1,0 +1,25 @@
+[package]
+name = "karpal-proof"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Algebraic law witnesses and refinement types for the Industrial Algebra ecosystem"
+
+[features]
+default = ["std", "derive"]
+std = ["alloc", "karpal-core/std", "karpal-algebra/std"]
+alloc = ["karpal-core/alloc", "karpal-algebra/alloc"]
+derive = ["karpal-proof-derive"]
+
+[dependencies]
+karpal-core = { version = "0.3.0", path = "../karpal-core", default-features = false }
+karpal-algebra = { version = "0.3.0", path = "../karpal-algebra", default-features = false }
+karpal-proof-derive = { version = "0.3.0", path = "../karpal-proof-derive", optional = true }
+
+[dev-dependencies]
+proptest.workspace = true

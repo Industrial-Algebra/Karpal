@@ -92,6 +92,39 @@ pub mod prelude {
         ApplicativeSt, ChainSt, ExceptTF, FunctorSt, MonadTrans, ReaderTF, StateTF, WriterTF,
     };
 
+    // Proof system / Algebraic witnesses
+    pub use karpal_proof::{
+        And,
+        Implies,
+        IsAbelianGroup,
+        // Property markers
+        IsAssociative,
+        IsBoundedLattice,
+        IsCommutative,
+        IsField,
+        IsGroup,
+        IsLattice,
+        IsLawfulFunctor,
+        IsLawfulMonad,
+        IsMonoid,
+        IsRing,
+        IsSemiring,
+        Justifies,
+        NonEmpty,
+        Positive,
+        Property,
+        Proven,
+        Rewrite,
+        // Derive macros
+        VerifyCommutative,
+        VerifyGroup,
+        VerifyLattice,
+        VerifyMonoid,
+        VerifyRing,
+        VerifySemigroup,
+        VerifySemiring,
+    };
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -104,6 +137,7 @@ pub use karpal_effect;
 pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;
+pub use karpal_proof;
 pub use karpal_recursion;
 
 // Macro re-exports
