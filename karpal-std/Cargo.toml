@@ -20,3 +20,4 @@ karpal-recursion.workspace = true
 karpal-algebra.workspace = true
 karpal-effect.workspace = true
 karpal-proof.workspace = true
+karpal-verify.workspace = true

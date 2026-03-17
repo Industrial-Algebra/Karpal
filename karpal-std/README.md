@@ -25,6 +25,12 @@ This gives you access to:
 - **Adjunctions**: `Adjunction`, `ComposeF`, `End`, `Coend`, `DinaturalTransformation`
 - **Effect system**: `FunctorSt`, `ApplicativeSt`, `ChainSt`, `MonadTrans`,
   `ExceptTF`, `WriterTF`, `ReaderTF`, `StateTF`
+- **Proof system**: `Proven`, `Property`, `Rewrite`, `NonEmpty`, `Positive`,
+  and law-verification derive macros
+- **External verification**: `Obligation`, `ObligationBundle`, `Term`, `Sort`,
+  `Certificate`, `Certified`, `SmtLib2`, `Lean4`, artifact layouts, configs,
+  dry-run invocation plans, runner abstractions, execution results, and
+  verification reports
 - **Profunctor**: `Profunctor`, `Strong`, `Choice`, `Traversing`, `FnP`, `ForgetF`, `TaggedF`
 - **Optics**: `Iso`, `Lens`, `Prism`, `Traversal`, `Fold`, `Getter`, `Setter`, `Review`, and composed variants
 - **Arrow hierarchy**: `Semigroupoid`, `Category`, `Arrow`, `ArrowChoice`, `ArrowApply`,
@@ -46,6 +52,8 @@ use karpal_std::karpal_free;
 use karpal_std::karpal_recursion;
 use karpal_std::karpal_algebra;
 use karpal_std::karpal_effect;
+use karpal_std::karpal_proof;
+use karpal_std::karpal_verify;
 ```
 
 The `do_!` and `ado_!` macros are available directly:
