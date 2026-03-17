@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification CI Workflow - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.3.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+          <li><a href="abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="adjunctions.html">Adjunctions</a></li>
+          <li><a href="effect-system.html">Effect System</a></li>
+          <li><a href="proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="verification-ci.html" class="active">Verification CI Workflow</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+          <li><a href="../examples/verification-workflow.html">Verification Workflow</a></li>
+          <li><a href="../examples/verified-domain-api.html">Verified Domain API</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="proof-verification.html">Reference</a> &gt; <span>Verification CI Workflow</span>
+    </nav>
+
+    <h1>Verification CI Workflow</h1>
+    <p>This guide shows how to use the <code>karpal-verify</code> stack in continuous integration. The goal is to make external verification runs inspectable and archivable: generate artifacts, execute plans with explicit backend policies, and persist JSON / Markdown summaries beside those artifacts.</p>
+
+    <h2 id="workflow-overview">Workflow overview</h2>
+    <ol>
+      <li>Construct an <code>ObligationBundle</code> from an <code>AlgebraicSignature</code>.</li>
+      <li>Choose an <code>ArtifactLayout</code> under your CI workspace.</li>
+      <li>Run a <code>VerificationSession</code> or <code>verify_bundle_with_ci_outputs(...)</code>.</li>
+      <li>Publish the generated SMT / Lean artifacts and the report files as CI artifacts.</li>
+      <li>Review <code>VerificationReport</code> and imported certificates at explicit trust boundaries.</li>
+    </ol>
+
+    <h2 id="directory-layout">Directory layout</h2>
+    <p><code>karpal-verify</code> uses a predictable on-disk layout. Given a root like <code>target/karpal-verify</code>:</p>
+
+<pre><code class="language-text">target/karpal-verify/
+├── smt/
+│   ├── associativity.smt2
+│   ├── left_identity.smt2
+│   └── right_identity.smt2
+├── lean/
+│   └── KarpalVerify.lean
+├── verification-report.json
+└── verification-report.md</code></pre>
+
+    <p>This layout is useful in CI because a single directory can be attached as an artifact bundle for later inspection.</p>
+
+    <h2 id="one-shot-helper">One-shot helper</h2>
+    <p>For simple CI jobs, the easiest entry point is <code>verify_bundle_with_ci_outputs(...)</code>:</p>
+
+<pre><code class="language-rust">use karpal_verify::{
+    verify_bundle_with_ci_outputs, AlgebraicSignature, ArtifactLayout, DryRunner,
+    LeanConfig, ObligationBundle, Origin, SmtConfig, Sort,
+};
+
+let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+let bundle = ObligationBundle::monoid(
+    "sum_monoid",
+    Origin::new("karpal-core", "Monoid for Sum&lt;i32&gt;"),
+    &sig,
+);
+
+let output = verify_bundle_with_ci_outputs(
+    &bundle,
+    &ArtifactLayout::new("target/karpal-verify"),
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+    &DryRunner,
+).expect("verification run should succeed");
+
+assert!(output.report_files.json_path.ends_with("verification-report.json"));
+assert!(output.report_files.markdown_path.ends_with("verification-report.md"));</code></pre>
+
+    <p>This function builds artifacts, runs plans with the supplied runner, and writes CI-oriented summaries directly beside the generated files.</p>
+
+    <h2 id="session-api">Session API</h2>
+    <p>For more control, use <code>VerificationSession</code>. It lets you customize solver binaries, Lean arguments, and the report file stem.</p>
+
+<pre><code class="language-rust">use karpal_verify::{
+    AlgebraicSignature, ArtifactLayout, LeanConfig, ObligationBundle, Origin,
+    SmtConfig, Sort, VerificationSession,
+};
+
+let sig = AlgebraicSignature::semiring(Sort::Int, "add", "zero", "mul", "one");
+let bundle = ObligationBundle::semiring(
+    "wrap_ring",
+    Origin::new("karpal-algebra", "Semiring for WrapRing"),
+    &sig,
+);
+
+let session = VerificationSession::new(
+    bundle,
+    ArtifactLayout::new("target/verify-semiring"),
+    "KarpalVerify",
+)
+.with_smt_config(SmtConfig::new("z3").with_arg("-smt2"))
+.with_lean_config(LeanConfig::new("lean"))
+.with_report_stem("ci-summary");</code></pre>
+
+    <h3>Dry-run validation in CI</h3>
+    <p>A dry run is useful when you want to validate export and path generation without requiring external tools to be installed on every CI job:</p>
+
+<pre><code class="language-rust">let report = session.dry_run_report();
+assert_eq!(report.obligation_count(), 6);
+assert!(report.obligations.iter().all(|o| o.status().is_some()));</code></pre>
+
+    <p>Because <code>DryRunner</code> returns shell-rendered commands, it is a good fit for preview jobs and artifact smoke tests.</p>
+
+    <h3>Real execution in CI</h3>
+    <p>When the CI image includes your solver and Lean, use:</p>
+
+<pre><code class="language-rust">let output = session
+    .verify_local_with_ci_outputs()
+    .expect("local verification should run");
+
+if !output.report.is_success() {
+    panic!("verification failed; inspect generated report artifacts");
+}</code></pre>
+
+    <p>This path uses <code>LocalProcessRunner</code>, backend-specific <code>VerificationPolicy</code> interpretation, and report serialization.</p>
+
+    <h2 id="backend-policy-behavior">Backend policy behavior</h2>
+    <p>CI should not guess what “success” means. In <code>karpal-verify</code>, success is interpreted explicitly:</p>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Backend</th><th>Success condition</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>SMT</td>
+          <td><code>ExecutionStatus::Unsat</code></td>
+          <td>Karpal exports the negation of the obligation, so <code>unsat</code> means the law holds.</td>
+        </tr>
+        <tr>
+          <td>Lean</td>
+          <td><code>ExecutionStatus::Success</code></td>
+          <td>The module is accepted by Lean without process failure.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>This distinction matters in CI dashboards and failure triage: a solver returning <code>sat</code> or <code>unknown</code> should not be treated the same way as a successful Lean process.</p>
+
+    <h2 id="report-files">Report files</h2>
+    <p>The JSON and Markdown outputs are intentionally lightweight:</p>
+    <ul>
+      <li><strong>JSON</strong> is useful for CI bots, artifact scraping, or post-processing.</li>
+      <li><strong>Markdown</strong> is useful for human inspection in uploaded artifacts or job summaries.</li>
+    </ul>
+
+    <p>The report includes bundle name, root directory, success/failure counts, per-obligation status, artifact paths, and certificate summaries where available.</p>
+
+    <h2 id="sample-ci-shape">Sample CI shape</h2>
+    <p>A typical CI pipeline might split external verification into two jobs:</p>
+
+    <ol>
+      <li><strong>Export / dry-run job</strong>
+        <ul>
+          <li>Runs on every PR</li>
+          <li>Generates artifacts and dry-run reports</li>
+          <li>Publishes export files for review</li>
+        </ul>
+      </li>
+      <li><strong>Solver-backed verification job</strong>
+        <ul>
+          <li>Runs where Z3 / Lean are available</li>
+          <li>Executes local verification</li>
+          <li>Uploads the same artifact directory plus final report files</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h2 id="recommended-practices">Recommended practices</h2>
+    <ul>
+      <li>Use deterministic artifact roots so CI artifacts are easy to find.</li>
+      <li>Archive the whole layout root, not just the JSON report.</li>
+      <li>Keep report file names stable via <code>DEFAULT_REPORT_STEM</code> unless you need multiple outputs.</li>
+      <li>Review imported certificates separately from exporter correctness.</li>
+      <li>Treat <code>Certified&lt;...&gt;</code> as an explicit trust handoff, not as an automatic theorem import.</li>
+    </ul>
+
+    <p>For an end-to-end example with SMT and Lean-oriented snippets, see the <a href="../examples/verification-workflow.html">Verification Workflow example</a>. For the higher-level API overview, return to <a href="proof-verification.html">Proof &amp; Verification</a>.</p>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

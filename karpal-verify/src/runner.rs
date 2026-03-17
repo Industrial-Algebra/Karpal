@@ -29,6 +29,35 @@ pub struct SmtOutput {
     pub reason_unknown: Option<String>,
 }
 
+/// Backend-specific verification policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct VerificationPolicy {
+    pub kind: CommandKind,
+    pub success_status: ExecutionStatus,
+    pub witness_suffix: &'static str,
+}
+
+impl VerificationPolicy {
+    pub fn for_kind(kind: CommandKind) -> Self {
+        match kind {
+            CommandKind::Smt => Self {
+                kind,
+                success_status: ExecutionStatus::Unsat,
+                witness_suffix: "unsat",
+            },
+            CommandKind::Lean => Self {
+                kind,
+                success_status: ExecutionStatus::Success,
+                witness_suffix: "ok",
+            },
+        }
+    }
+
+    pub fn accepts(self, status: ExecutionStatus) -> bool {
+        status == self.success_status
+    }
+}
+
 /// Result captured from a verifier invocation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExecutionResult {
@@ -42,11 +71,12 @@ pub struct ExecutionResult {
 }
 
 impl ExecutionResult {
+    pub fn verification_policy(&self) -> VerificationPolicy {
+        VerificationPolicy::for_kind(self.plan.kind)
+    }
+
     pub fn is_success(&self) -> bool {
-        matches!(
-            self.status,
-            ExecutionStatus::Success | ExecutionStatus::Unsat
-        )
+        self.verification_policy().accepts(self.status)
     }
 
     pub fn certificate_for_obligation(&self, obligation: &str) -> Option<Certificate> {
@@ -59,10 +89,11 @@ impl ExecutionResult {
             CommandKind::Lean => LeanCertificate::NAME,
         };
 
-        let witness = match self.plan.kind {
-            CommandKind::Smt => format!("{}:unsat", self.plan.executable),
-            CommandKind::Lean => format!("{}:ok", self.plan.executable),
-        };
+        let witness = format!(
+            "{}:{}",
+            self.plan.executable,
+            self.verification_policy().witness_suffix
+        );
 
         let artifact_path = self.plan.input_files.first().cloned();
         let mut cert = Certificate::new(backend, obligation, witness);
@@ -294,5 +325,13 @@ mod tests {
         assert_eq!(cert.backend, "smtlib2");
         assert_eq!(cert.artifact_path.as_deref(), Some("input"));
         assert_eq!(cert.backend_version.as_deref(), Some("Z3 4.13.0"));
+    }
+
+    #[test]
+    fn verification_policy_is_backend_specific() {
+        assert!(VerificationPolicy::for_kind(CommandKind::Smt).accepts(ExecutionStatus::Unsat));
+        assert!(!VerificationPolicy::for_kind(CommandKind::Smt).accepts(ExecutionStatus::Success));
+        assert!(VerificationPolicy::for_kind(CommandKind::Lean).accepts(ExecutionStatus::Success));
+        assert!(!VerificationPolicy::for_kind(CommandKind::Lean).accepts(ExecutionStatus::Unsat));
     }
 }

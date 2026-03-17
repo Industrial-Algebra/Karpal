@@ -9,8 +9,9 @@ External prover bridge for the Karpal ecosystem.
 - grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
 - exporters for **SMT-LIB2** and **Lean 4**
 - artifact writers and **dry-run invocation plans** for external tools
-- runner abstractions and basic SMT result parsing
+- runner abstractions, backend-specific verification policies, and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
+- session/orchestration helpers for build → run → report flows
 - report serialization helpers for CI-friendly JSON / Markdown summaries
 - an explicit **external trust boundary** for importing certificates back into Rust
 
@@ -198,6 +199,38 @@ assert_eq!(report.obligation_count(), 1);
 assert!(report.to_json().contains("bundle_name"));
 assert!(report.to_markdown().contains("Verification Report"));
 ```
+
+### Verification session orchestration
+
+For a higher-level build → run → report flow, use `VerificationSession` or the
+one-shot `verify_bundle(...)` helper:
+
+```rust
+use karpal_verify::{
+    verify_bundle, AlgebraicSignature, ArtifactLayout, DryRunner, LeanConfig,
+    ObligationBundle, Origin, SmtConfig, Sort,
+};
+
+let sig = AlgebraicSignature::semigroup(Sort::Int, "combine");
+let bundle = ObligationBundle::semigroup(
+    "sum_semigroup",
+    Origin::new("karpal-core", "Semigroup for Sum<i32>"),
+    &sig,
+);
+let report = verify_bundle(
+    &bundle,
+    &ArtifactLayout::new("target/karpal-verify-session"),
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+    &DryRunner,
+)
+.expect("verification session should succeed");
+assert_eq!(report.obligation_count(), 1);
+```
+
+`VerificationSession::verify_with_ci_outputs(...)` also writes JSON / Markdown
+summaries directly beside generated artifacts.
 
 ### Imported trust markers
 

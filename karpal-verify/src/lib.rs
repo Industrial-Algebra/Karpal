@@ -20,6 +20,8 @@ pub mod obligation;
 pub mod report;
 #[cfg(feature = "std")]
 pub mod runner;
+#[cfg(feature = "std")]
+pub mod session;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod signature;
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -47,8 +49,13 @@ pub use report::{
 };
 #[cfg(feature = "std")]
 pub use runner::{
-    DryRunner, ExecutionResult, ExecutionStatus, LocalProcessRunner, SmtOutput, VerifierRunner,
-    parse_smt_output, parse_smt_status,
+    DryRunner, ExecutionResult, ExecutionStatus, LocalProcessRunner, SmtOutput, VerificationPolicy,
+    VerifierRunner, parse_smt_output, parse_smt_status,
+};
+#[cfg(feature = "std")]
+pub use session::{
+    DEFAULT_REPORT_STEM, ReportFiles, VerificationOutput, VerificationSession, verify_bundle,
+    verify_bundle_with_ci_outputs,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use signature::{AlgebraicSignature, BinarySymbol, ConstantSymbol, UnarySymbol};

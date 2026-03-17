@@ -257,14 +257,15 @@ fn certificate_for_obligation(
         return None;
     }
 
+    let policy = result.verification_policy();
     let mut cert = match result.plan.kind {
         crate::CommandKind::Smt => Certificate::from_obligation::<crate::SmtCertificate>(
             obligation,
-            format!("{}:unsat", result.plan.executable),
+            format!("{}:{}", result.plan.executable, policy.witness_suffix),
         ),
         crate::CommandKind::Lean => Certificate::from_obligation::<crate::LeanCertificate>(
             obligation,
-            format!("{}:ok", result.plan.executable),
+            format!("{}:{}", result.plan.executable, policy.witness_suffix),
         ),
     };
 

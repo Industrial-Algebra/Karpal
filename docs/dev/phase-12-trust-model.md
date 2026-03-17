@@ -1,4 +1,4 @@
-# Phase 12 Trust Model
+# Trust Model
 
 `karpal-verify` adds an external-proof boundary to Karpal. That boundary must
 stay explicit.

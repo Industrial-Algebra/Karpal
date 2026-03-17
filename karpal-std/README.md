@@ -29,8 +29,8 @@ This gives you access to:
   and law-verification derive macros
 - **External verification**: `Obligation`, `ObligationBundle`, `Term`, `Sort`,
   `Certificate`, `Certified`, `SmtLib2`, `Lean4`, artifact layouts, configs,
-  dry-run invocation plans, runner abstractions, execution results, parsed SMT
-  output, and verification reports
+  dry-run invocation plans, runner abstractions, backend policies, execution
+  results, parsed SMT output, orchestration helpers, and verification reports
 - **Profunctor**: `Profunctor`, `Strong`, `Choice`, `Traversing`, `FnP`, `ForgetF`, `TaggedF`
 - **Optics**: `Iso`, `Lens`, `Prism`, `Traversal`, `Fold`, `Getter`, `Setter`, `Review`, and composed variants
 - **Arrow hierarchy**: `Semigroupoid`, `Category`, `Arrow`, `ArrowChoice`, `ArrowApply`,

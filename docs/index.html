@@ -38,9 +38,10 @@
           <li><a href="reference/recursion-schemes.html">Recursion Schemes</a></li>
           <li><a href="reference/optics.html">Optics</a></li>
           <li><a href="reference/abstract-algebra.html">Abstract Algebra</a></li>
-                    <li><a href="reference/adjunctions.html">Adjunctions</a></li>
-          <li><a href="reference/effect-system.html">Effect System</a></li>
           <li><a href="reference/adjunctions.html">Adjunctions</a></li>
+          <li><a href="reference/effect-system.html">Effect System</a></li>
+          <li><a href="reference/proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="reference/verification-ci.html">Verification CI Workflow</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -50,6 +51,8 @@
           <li><a href="examples/data-transformation.html">Data Transformation</a></li>
           <li><a href="examples/cellular-automaton.html">Cellular Automaton</a></li>
           <li><a href="examples/domain-model-optics.html">Domain Model</a></li>
+          <li><a href="examples/verification-workflow.html">Verification Workflow</a></li>
+          <li><a href="examples/verified-domain-api.html">Verified Domain API</a></li>
         </ul>
       </li>
     </ul>
@@ -86,6 +89,10 @@
       <div class="feature-card">
         <h3>Ergonomic Macros</h3>
         <p><code>do_!</code> flattens nested <code>.and_then()</code> chains. <code>ado_!</code> combines independent computations. Both work with any Monad or Applicative.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Proof &amp; Verification</h3>
+        <p><code>karpal-proof</code> provides law witnesses and refinement types, while <code>karpal-verify</code> exports obligations to SMT and Lean with explicit trust boundaries.</p>
       </div>
     </div>
 
@@ -128,11 +135,32 @@ fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
         <tr><td><code>karpal-free</code></td><td>Free constructions: Coyoneda, Yoneda, Free Monad, Cofree Comonad</td></tr>
         <tr><td><code>karpal-recursion</code></td><td>Recursion schemes: Fix, cata, ana, hylo, para, histo, chrono</td></tr>
         <tr><td><code>karpal-algebra</code></td><td>Abstract algebra: Group, Ring, Field, Lattice, Module, VectorSpace</td></tr>
+        <tr><td><code>karpal-effect</code></td><td>Monad transformers and static-bound functor hierarchy</td></tr>
+        <tr><td><code>karpal-proof</code></td><td>Law witnesses, refinement types, rewrite evidence, and derive-based law checks</td></tr>
+        <tr><td><code>karpal-verify</code></td><td>External verification bridge: obligations, exporters, runners, reporting, and trust model</td></tr>
         <tr><td><code>karpal-std</code></td><td>Standard prelude re-exports</td></tr>
       </tbody>
     </table>
 
-    <p><code>karpal-core</code>, <code>karpal-profunctor</code>, <code>karpal-arrow</code>, <code>karpal-free</code>, <code>karpal-recursion</code>, and <code>karpal-algebra</code> are <code>no_std</code> compatible with optional <code>std</code>/<code>alloc</code> feature gates.</p>
+    <p><code>karpal-core</code>, <code>karpal-profunctor</code>, <code>karpal-arrow</code>, <code>karpal-free</code>, <code>karpal-recursion</code>, <code>karpal-algebra</code>, <code>karpal-effect</code>, <code>karpal-proof</code>, and the modeling/export portions of <code>karpal-verify</code> are <code>no_std</code> compatible with optional <code>std</code>/<code>alloc</code> feature gates.</p>
+
+    <h2>Documentation Map</h2>
+    <table class="instance-table">
+      <thead>
+        <tr><th>Need</th><th>Where to start</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Core HKT and trait hierarchy</td><td><a href="getting-started.html">Getting Started</a> and <a href="architecture.html">Architecture</a></td></tr>
+        <tr><td>Detailed typeclass APIs</td><td><a href="reference/functor-family.html">Reference pages</a></td></tr>
+        <tr><td><code>karpal-proof</code> law witnesses and refinement types</td><td><a href="reference/proof-verification.html">Proof &amp; Verification</a></td></tr>
+        <tr><td><code>karpal-verify</code> exporters, runners, and trust model</td><td><a href="reference/proof-verification.html">Proof &amp; Verification</a></td></tr>
+        <tr><td>CI artifact/report workflow</td><td><a href="reference/verification-ci.html">Verification CI Workflow</a></td></tr>
+        <tr><td>End-to-end verification walkthrough</td><td><a href="examples/verification-workflow.html">Verification Workflow</a></td></tr>
+        <tr><td>Importing verified evidence into domain APIs</td><td><a href="examples/verified-domain-api.html">Verified Domain API</a></td></tr>
+      </tbody>
+    </table>
+
+    <p>To explore the new proof and external verification stack, see the <a href="reference/proof-verification.html">Proof &amp; Verification reference</a>, the <a href="reference/verification-ci.html">Verification CI Workflow</a> guide, the <a href="examples/verification-workflow.html">Verification Workflow</a> example, and the <a href="examples/verified-domain-api.html">Verified Domain API</a> example.</p>
 
     <div class="footer">
       <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
