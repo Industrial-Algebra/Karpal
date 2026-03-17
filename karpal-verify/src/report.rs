@@ -3,6 +3,9 @@ use crate::{
     ObligationBundle, VerifierRunner,
 };
 
+#[cfg(feature = "std")]
+use std::fmt::Write as _;
+
 #[cfg(not(feature = "std"))]
 use alloc::{string::String, vec::Vec};
 #[cfg(feature = "std")]
@@ -72,6 +75,105 @@ impl VerificationReport {
 
     pub fn is_success(&self) -> bool {
         self.failure_count() == 0
+    }
+
+    #[cfg(feature = "std")]
+    pub fn to_json(&self) -> String {
+        fn esc(s: &str) -> String {
+            s.replace('\\', "\\\\")
+                .replace('"', "\\\"")
+                .replace('\n', "\\n")
+        }
+
+        let mut out = String::new();
+        let _ = write!(
+            out,
+            "{{\"bundle_name\":\"{}\",\"root\":\"{}\",\"success_count\":{},\"failure_count\":{},\"obligations\":[",
+            esc(&self.bundle_name),
+            esc(&self.root),
+            self.success_count(),
+            self.failure_count()
+        );
+
+        for (idx, obligation) in self.obligations.iter().enumerate() {
+            if idx > 0 {
+                out.push(',');
+            }
+            let _ = write!(
+                out,
+                "{{\"name\":\"{}\",\"summary\":\"{}\",\"status\":\"{}\",\"artifact_path\":{},\"certificate\":{}}}",
+                esc(&obligation.obligation_name),
+                esc(&obligation.summary),
+                obligation
+                    .status()
+                    .map(|s| format!("{s:?}"))
+                    .unwrap_or_else(|| "None".into()),
+                obligation
+                    .artifact_path
+                    .as_ref()
+                    .map(|p| format!("\"{}\"", esc(p)))
+                    .unwrap_or_else(|| "null".into()),
+                obligation
+                    .certificate
+                    .as_ref()
+                    .map(|c| format!(
+                        "{{\"backend\":\"{}\",\"witness_ref\":\"{}\"}}",
+                        esc(c.backend),
+                        esc(&c.witness_ref)
+                    ))
+                    .unwrap_or_else(|| "null".into())
+            );
+        }
+        out.push(']');
+        if let Some(module) = &self.lean_module {
+            let _ = write!(
+                out,
+                ",\"lean_module\":{{\"module_name\":\"{}\",\"status\":\"{}\"}}",
+                esc(&module.module_name),
+                module
+                    .status()
+                    .map(|s| format!("{s:?}"))
+                    .unwrap_or_else(|| "None".into())
+            );
+        }
+        out.push('}');
+        out
+    }
+
+    #[cfg(feature = "std")]
+    pub fn to_markdown(&self) -> String {
+        let mut out = String::new();
+        let _ = writeln!(out, "# Verification Report");
+        let _ = writeln!(out);
+        let _ = writeln!(out, "- Bundle: `{}`", self.bundle_name);
+        let _ = writeln!(out, "- Root: `{}`", self.root);
+        let _ = writeln!(out, "- Successes: {}", self.success_count());
+        let _ = writeln!(out, "- Failures: {}", self.failure_count());
+        let _ = writeln!(out);
+        let _ = writeln!(out, "| Obligation | Status | Artifact | Certificate |");
+        let _ = writeln!(out, "|---|---|---|---|");
+        for obligation in &self.obligations {
+            let _ = writeln!(
+                out,
+                "| `{}` | `{}` | `{}` | `{}` |",
+                obligation.obligation_name,
+                obligation
+                    .status()
+                    .map(|s| format!("{s:?}"))
+                    .unwrap_or_else(|| "None".into()),
+                obligation.artifact_path.as_deref().unwrap_or("-"),
+                obligation
+                    .certificate
+                    .as_ref()
+                    .map(|c| c.backend)
+                    .unwrap_or("-")
+            );
+        }
+        if let Some(module) = &self.lean_module {
+            let _ = writeln!(out);
+            let _ = writeln!(out, "Lean module: `{}`", module.module_name);
+        }
+        out
     }
 }
 
@@ -166,6 +268,10 @@ fn certificate_for_obligation(
         ),
     };
 
+    if let Some(version) = &result.backend_version {
+        cert = cert.with_backend_version(version.clone());
+    }
+
     if let Some(path) = artifact_path {
         cert = cert.with_artifact_path(path);
     }
@@ -241,6 +347,12 @@ mod tests {
                     stdout: String::new(),
                     stderr: String::new(),
                     exit_code: Some(0),
+                    backend_version: Some("tool 1.0".into()),
+                    smt_output: Some(crate::SmtOutput {
+                        status: Some(ExecutionStatus::Unsat),
+                        model: None,
+                        reason_unknown: None,
+                    }),
                 }
             }
         }
@@ -248,5 +360,34 @@ mod tests {
         let report = execute_report(&bundle, &artifacts, &SuccessRunner);
         assert_eq!(report.success_count(), 1);
         assert!(report.obligations[0].certificate.is_some());
+        assert_eq!(
+            report.obligations[0]
+                .certificate
+                .as_ref()
+                .and_then(|c| c.backend_version.as_deref()),
+            Some("tool 1.0")
+        );
+    }
+
+    #[test]
+    fn report_serialization_includes_summary_data() {
+        let report = VerificationReport {
+            bundle_name: "demo".into(),
+            root: "target/demo".into(),
+            obligations: vec![ObligationReport {
+                obligation_name: "assoc".into(),
+                summary: "demo::assoc [associativity]".into(),
+                artifact_path: Some("target/demo/smt/assoc.smt2".into()),
+                result: None,
+                certificate: None,
+            }],
+            lean_module: None,
+        };
+
+        let json = report.to_json();
+        let markdown = report.to_markdown();
+        assert!(json.contains("\"bundle_name\":\"demo\""));
+        assert!(markdown.contains("# Verification Report"));
+        assert!(markdown.contains("`assoc`"));
     }
 }

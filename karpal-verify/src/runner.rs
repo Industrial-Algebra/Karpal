@@ -21,6 +21,14 @@ pub enum ExecutionStatus {
     DryRun,
 }
 
+/// Parsed SMT output details.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SmtOutput {
+    pub status: Option<ExecutionStatus>,
+    pub model: Option<String>,
+    pub reason_unknown: Option<String>,
+}
+
 /// Result captured from a verifier invocation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExecutionResult {
@@ -29,6 +37,8 @@ pub struct ExecutionResult {
     pub stdout: String,
     pub stderr: String,
     pub exit_code: Option<i32>,
+    pub backend_version: Option<String>,
+    pub smt_output: Option<SmtOutput>,
 }
 
 impl ExecutionResult {
@@ -56,6 +66,9 @@ impl ExecutionResult {
 
         let artifact_path = self.plan.input_files.first().cloned();
         let mut cert = Certificate::new(backend, obligation, witness);
+        if let Some(version) = &self.backend_version {
+            cert = cert.with_backend_version(version.clone());
+        }
         if let Some(path) = artifact_path {
             cert = cert.with_artifact_path(path);
         }
@@ -83,6 +96,8 @@ impl VerifierRunner for DryRunner {
             stdout: plan.render_shell(),
             stderr: String::new(),
             exit_code: None,
+            backend_version: None,
+            smt_output: None,
         }
     }
 }
@@ -100,10 +115,16 @@ impl VerifierRunner for LocalProcessRunner {
             command.current_dir(dir);
         }
 
+        let backend_version = probe_backend_version(&plan.executable);
+
         match command.output() {
             Ok(output) => {
                 let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
                 let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+                let smt_output = match plan.kind {
+                    CommandKind::Smt => Some(parse_smt_output(&stdout)),
+                    CommandKind::Lean => None,
+                };
                 let status = classify_status(plan.kind, output.status.success(), &stdout);
                 ExecutionResult {
                     plan: plan.clone(),
@@ -111,6 +132,8 @@ impl VerifierRunner for LocalProcessRunner {
                     stdout,
                     stderr,
                     exit_code: output.status.code(),
+                    backend_version,
+                    smt_output,
                 }
             }
             Err(err) => ExecutionResult {
@@ -119,6 +142,8 @@ impl VerifierRunner for LocalProcessRunner {
                 stdout: String::new(),
                 stderr: err.to_string(),
                 exit_code: None,
+                backend_version,
+                smt_output: None,
             },
         }
     }
@@ -126,11 +151,13 @@ impl VerifierRunner for LocalProcessRunner {
 
 fn classify_status(kind: CommandKind, process_success: bool, stdout: &str) -> ExecutionStatus {
     match kind {
-        CommandKind::Smt => parse_smt_status(stdout).unwrap_or(if process_success {
-            ExecutionStatus::Success
-        } else {
-            ExecutionStatus::Failure
-        }),
+        CommandKind::Smt => parse_smt_output(stdout)
+            .status
+            .unwrap_or(if process_success {
+                ExecutionStatus::Success
+            } else {
+                ExecutionStatus::Failure
+            }),
         CommandKind::Lean => {
             if process_success {
                 ExecutionStatus::Success
@@ -141,14 +168,71 @@ fn classify_status(kind: CommandKind, process_success: bool, stdout: &str) -> Ex
     }
 }
 
+/// Parse SMT solver output into structured details.
+pub fn parse_smt_output(stdout: &str) -> SmtOutput {
+    let mut status = None;
+    let mut model_lines = Vec::new();
+    let mut reason_unknown = None;
+    let mut capture_model = false;
+
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        match trimmed {
+            "sat" => {
+                status = Some(ExecutionStatus::Sat);
+                capture_model = true;
+                continue;
+            }
+            "unsat" => {
+                status = Some(ExecutionStatus::Unsat);
+                continue;
+            }
+            "unknown" => {
+                status = Some(ExecutionStatus::Unknown);
+                continue;
+            }
+            _ => {}
+        }
+
+        if let Some(rest) = trimmed.strip_prefix("(:reason-unknown") {
+            reason_unknown = Some(
+                rest.trim()
+                    .trim_end_matches(')')
+                    .trim()
+                    .trim_matches('"')
+                    .to_string(),
+            );
+            continue;
+        }
+
+        if capture_model && !trimmed.is_empty() {
+            model_lines.push(trimmed.to_string());
+        }
+    }
+
+    SmtOutput {
+        status,
+        model: (!model_lines.is_empty()).then(|| model_lines.join("\n")),
+        reason_unknown,
+    }
+}
+
 /// Parse the first SMT solver status token from stdout.
 pub fn parse_smt_status(stdout: &str) -> Option<ExecutionStatus> {
-    for line in stdout.lines() {
-        match line.trim() {
-            "sat" => return Some(ExecutionStatus::Sat),
-            "unsat" => return Some(ExecutionStatus::Unsat),
-            "unknown" => return Some(ExecutionStatus::Unknown),
-            _ => {}
+    parse_smt_output(stdout).status
+}
+
+#[cfg(feature = "std")]
+fn probe_backend_version(executable: &str) -> Option<String> {
+    let probes = [["--version"], ["-version"]];
+    for args in probes {
+        if let Ok(output) = Command::new(executable).args(args).output()
+            && output.status.success()
+        {
+            let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !text.is_empty() {
+                return Some(text.lines().next().unwrap_or_default().to_string());
+            }
         }
     }
     None
@@ -177,6 +261,13 @@ mod tests {
         assert_eq!(parse_smt_status("sat"), Some(ExecutionStatus::Sat));
         assert_eq!(parse_smt_status("unknown"), Some(ExecutionStatus::Unknown));
         assert_eq!(parse_smt_status("noise"), None);
+
+        let parsed = parse_smt_output("sat\n(model\n  (define-fun x () Int 1)\n)");
+        assert_eq!(parsed.status, Some(ExecutionStatus::Sat));
+        assert!(parsed.model.as_deref().unwrap().contains("define-fun x"));
+
+        let parsed = parse_smt_output("unknown\n(:reason-unknown \"incomplete\")");
+        assert_eq!(parsed.reason_unknown.as_deref(), Some("incomplete"));
     }
 
     #[test]
@@ -194,11 +285,14 @@ mod tests {
             stdout: "unsat".into(),
             stderr: String::new(),
             exit_code: Some(0),
+            backend_version: Some("Z3 4.13.0".into()),
+            smt_output: Some(parse_smt_output("unsat")),
         };
         let cert = result
             .certificate_for_obligation("karpal-core::Semigroup for i32 [associativity]")
             .expect("successful result should yield certificate");
         assert_eq!(cert.backend, "smtlib2");
         assert_eq!(cert.artifact_path.as_deref(), Some("input"));
+        assert_eq!(cert.backend_version.as_deref(), Some("Z3 4.13.0"));
     }
 }

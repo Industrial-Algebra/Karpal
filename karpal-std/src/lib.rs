@@ -131,10 +131,11 @@ pub mod prelude {
         Certificate, Certified, CommandKind, ConstantSymbol, Declaration, DryRunner,
         ExecutionResult, ExecutionStatus, InvocationPlan, Lean4, LeanCertificate, LeanConfig,
         LocalProcessRunner, ModuleReport, Obligation, ObligationBundle, ObligationReport, Origin,
-        ProofDialect, SmtCertificate, SmtConfig, SmtLib2, Sort, Term, UnarySymbol,
+        ProofDialect, SmtCertificate, SmtConfig, SmtLib2, SmtOutput, Sort, Term, UnarySymbol,
         VerificationBackend, VerificationReport, VerificationTier, VerifierRunner,
         dry_run_bundle_artifacts, dry_run_report, execute_report, export_lean_bundle,
-        export_smt_batch, export_smt_bundle, parse_smt_status, write_bundle_artifacts,
+        export_smt_batch, export_smt_bundle, parse_smt_output, parse_smt_status,
+        write_bundle_artifacts,
     };
 
     // Macros

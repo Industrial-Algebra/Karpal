@@ -47,8 +47,8 @@ pub use report::{
 };
 #[cfg(feature = "std")]
 pub use runner::{
-    DryRunner, ExecutionResult, ExecutionStatus, LocalProcessRunner, VerifierRunner,
-    parse_smt_status,
+    DryRunner, ExecutionResult, ExecutionStatus, LocalProcessRunner, SmtOutput, VerifierRunner,
+    parse_smt_output, parse_smt_status,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use signature::{AlgebraicSignature, BinarySymbol, ConstantSymbol, UnarySymbol};

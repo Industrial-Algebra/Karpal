@@ -11,6 +11,7 @@ External prover bridge for the Karpal ecosystem.
 - artifact writers and **dry-run invocation plans** for external tools
 - runner abstractions and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
+- report serialization helpers for CI-friendly JSON / Markdown summaries
 - an explicit **external trust boundary** for importing certificates back into Rust
 
 ## What's inside
@@ -164,8 +165,9 @@ let result = DryRunner.run(&plan);
 assert_eq!(result.status, karpal_verify::ExecutionStatus::DryRun);
 ```
 
-For SMT backends, `parse_smt_status()` recognizes `sat`, `unsat`, and `unknown`.
-Successful results can be turned into lightweight certificates.
+For SMT backends, `parse_smt_status()` recognizes `sat`, `unsat`, and `unknown`,
+while `parse_smt_output()` also extracts simple model / `:reason-unknown`
+information. Successful results can be turned into lightweight certificates.
 
 ### Reporting layer
 
@@ -193,6 +195,8 @@ let artifacts = dry_run_bundle_artifacts(
 );
 let report = dry_run_report(&bundle, &artifacts);
 assert_eq!(report.obligation_count(), 1);
+assert!(report.to_json().contains("bundle_name"));
+assert!(report.to_markdown().contains("Verification Report"));
 ```
 
 ### Imported trust markers
