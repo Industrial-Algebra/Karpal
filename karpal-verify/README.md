@@ -1,0 +1,228 @@
+# karpal-verify
+
+External prover bridge for the Karpal ecosystem.
+
+`karpal-verify` is the Phase 12 foundation crate. It introduces:
+
+- a backend-agnostic **proof obligation IR**
+- reusable **algebraic signatures** for trait-level law generation
+- grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
+- exporters for **SMT-LIB2** and **Lean 4**
+- artifact writers and **dry-run invocation plans** for external tools
+- runner abstractions and basic SMT result parsing
+- reporting types that attach execution outcomes and certificates back to obligations
+- an explicit **external trust boundary** for importing certificates back into Rust
+
+## What's inside
+
+### Proof obligations
+
+`Obligation` captures a law to be discharged by an external backend:
+
+```rust
+use karpal_verify::{Obligation, Origin, Sort};
+
+let assoc = Obligation::associativity(
+    "sum_assoc",
+    Origin::new("karpal-algebra", "Semigroup for Sum<i32>"),
+    Sort::Int,
+    "combine",
+);
+```
+
+### Algebraic signatures
+
+`AlgebraicSignature` lets exporters and higher-level integrations refer to
+semantic roles like `combine`, `identity`, `inverse`, `add`, `mul`, `meet`,
+and `join` instead of duplicating raw symbol strings:
+
+```rust
+use karpal_verify::{AlgebraicSignature, Obligation, Origin, Sort};
+
+let sig = AlgebraicSignature::group(Sort::Int, "combine", "e", "inv");
+let obligation = Obligation::left_inverse_in(
+    "group_left_inverse",
+    Origin::new("karpal-algebra", "Group for i32"),
+    &sig,
+);
+assert_eq!(obligation.property, "left inverse");
+```
+
+### Obligation bundles
+
+`ObligationBundle` packages related laws together so callers can generate and
+export whole verification batches from one semantic signature:
+
+```rust
+use karpal_verify::{AlgebraicSignature, ObligationBundle, Origin, Sort};
+
+let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+let bundle = ObligationBundle::monoid(
+    "sum_monoid",
+    Origin::new("karpal-core", "Monoid for Sum<i32>"),
+    &sig,
+);
+assert_eq!(bundle.obligations().len(), 3);
+```
+
+### SMT-LIB2 export
+
+```rust
+use karpal_verify::{export_smt_obligation, Obligation, Origin, Sort};
+
+let obligation = Obligation::commutativity(
+    "sum_comm",
+    Origin::new("karpal-algebra", "AbelianGroup for i32"),
+    Sort::Int,
+    "combine",
+);
+
+let smt = export_smt_obligation(&obligation);
+assert!(smt.contains("(check-sat)"));
+```
+
+### Lean 4 export
+
+```rust
+use karpal_verify::{export_lean_module, Obligation, Origin, Sort};
+
+let obligation = Obligation::associativity(
+    "sum_assoc",
+    Origin::new("karpal-algebra", "Semigroup for Sum<i32>"),
+    Sort::Int,
+    "combine",
+);
+
+let lean = export_lean_module("KarpalVerify", &[obligation]);
+assert!(lean.contains("namespace KarpalVerify"));
+```
+
+### Batch export APIs
+
+```rust
+use karpal_verify::{
+    export_lean_bundle, export_smt_bundle, AlgebraicSignature, ObligationBundle, Origin, Sort,
+};
+
+let sig = AlgebraicSignature::group(Sort::Int, "combine", "e", "inv");
+let bundle = ObligationBundle::group(
+    "sum_group",
+    Origin::new("karpal-algebra", "Group for i32"),
+    &sig,
+);
+
+let smt_scripts = export_smt_bundle(&bundle);
+let lean_module = export_lean_bundle("KarpalVerify", &bundle);
+assert_eq!(smt_scripts.len(), 5);
+assert!(lean_module.contains("theorem left_inverse"));
+```
+
+### Artifact writing and dry runs
+
+With the `std` feature, `karpal-verify` can write export artifacts to disk and
+prepare dry-run command plans for solver / Lean invocation:
+
+```rust
+use karpal_verify::{
+    dry_run_bundle_artifacts, AlgebraicSignature, ArtifactLayout, LeanConfig, ObligationBundle,
+    Origin, SmtConfig, Sort,
+};
+
+let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+let bundle = ObligationBundle::monoid(
+    "sum_monoid",
+    Origin::new("karpal-core", "Monoid for Sum<i32>"),
+    &sig,
+);
+let layout = ArtifactLayout::new("target/karpal-verify");
+let batch = dry_run_bundle_artifacts(
+    &bundle,
+    &layout,
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+);
+assert_eq!(batch.plans.len(), 4);
+```
+
+### Execution model
+
+`VerifierRunner` abstracts over dry-run and local process execution:
+
+```rust
+use karpal_verify::{CommandKind, DryRunner, InvocationPlan, VerifierRunner};
+
+let plan = InvocationPlan {
+    kind: CommandKind::Smt,
+    executable: "z3".into(),
+    args: vec!["-smt2".into(), "target/example.smt2".into()],
+    working_directory: None,
+    input_files: vec!["target/example.smt2".into()],
+};
+
+let result = DryRunner.run(&plan);
+assert_eq!(result.status, karpal_verify::ExecutionStatus::DryRun);
+```
+
+For SMT backends, `parse_smt_status()` recognizes `sat`, `unsat`, and `unknown`.
+Successful results can be turned into lightweight certificates.
+
+### Reporting layer
+
+`VerificationReport` attaches artifact paths, execution results, and generated
+certificates back to each obligation in a bundle:
+
+```rust
+use karpal_verify::{
+    dry_run_bundle_artifacts, dry_run_report, AlgebraicSignature, ArtifactLayout, LeanConfig,
+    ObligationBundle, Origin, SmtConfig, Sort,
+};
+
+let sig = AlgebraicSignature::semigroup(Sort::Int, "combine");
+let bundle = ObligationBundle::semigroup(
+    "sum_semigroup",
+    Origin::new("karpal-core", "Semigroup for Sum<i32>"),
+    &sig,
+);
+let artifacts = dry_run_bundle_artifacts(
+    &bundle,
+    &ArtifactLayout::new("target/karpal-verify"),
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+);
+let report = dry_run_report(&bundle, &artifacts);
+assert_eq!(report.obligation_count(), 1);
+```
+
+### Imported trust markers
+
+External evidence does not silently become a Karpal proof witness.
+Certificates can also carry provenance like backend version, obligation digest,
+and artifact path. Crossing the boundary into `Proven<P, T>` remains explicit
+and `unsafe`:
+
+```rust
+use karpal_proof::{IsAssociative, Proven};
+use karpal_verify::{Certificate, Certified, LeanCertificate};
+
+let cert = Certificate::new("lean4", "sum_assoc", "Sum.assoc");
+let externally_checked =
+    unsafe { Certified::<LeanCertificate, IsAssociative, i32>::assume(1, cert) };
+let _: Proven<IsAssociative, i32> = unsafe { externally_checked.into_proven() };
+```
+
+## Current scope
+
+This crate currently provides the Phase 12 pre-implementation scaffold:
+
+- obligation modeling
+- text export backends
+- explicit trust-model types
+
+Solver invocation, Lean project generation, and amari-flynn integration can
+build on this foundation next.
+
+## License
+
+MIT OR Apache-2.0
