@@ -38,9 +38,11 @@ pub use bundle::ObligationBundle;
 #[cfg(feature = "std")]
 pub use command::{CommandKind, InvocationPlan, LeanConfig, SmtConfig};
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub use export::{export_lean_bundle, export_smt_batch, export_smt_bundle};
+pub use export::{
+    export_lean_bundle, export_lean_bundle_structured, export_smt_batch, export_smt_bundle,
+};
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub use lean::{Lean4, export_module as export_lean_module};
+pub use lean::{Lean4, LeanExport, LeanTheorem, export, export_module as export_lean_module};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use obligation::{Declaration, Obligation, Origin, ProofDialect, Sort, Term, VerificationTier};
 #[cfg(feature = "std")]

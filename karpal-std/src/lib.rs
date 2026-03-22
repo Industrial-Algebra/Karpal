@@ -130,13 +130,14 @@ pub mod prelude {
         AlgebraicSignature, ArtifactBatch, ArtifactLayout, ArtifactRecord, BinarySymbol,
         Certificate, Certified, CommandKind, ConstantSymbol, DEFAULT_REPORT_STEM, Declaration,
         DryRunner, ExecutionResult, ExecutionStatus, InvocationPlan, Lean4, LeanCertificate,
-        LeanConfig, LocalProcessRunner, ModuleReport, Obligation, ObligationBundle,
-        ObligationReport, Origin, ProofDialect, ReportFiles, SmtCertificate, SmtConfig, SmtLib2,
-        SmtOutput, Sort, Term, UnarySymbol, VerificationBackend, VerificationOutput,
-        VerificationPolicy, VerificationReport, VerificationSession, VerificationTier,
-        VerifierRunner, dry_run_bundle_artifacts, dry_run_report, execute_report,
-        export_lean_bundle, export_smt_batch, export_smt_bundle, parse_smt_output,
-        parse_smt_status, verify_bundle, verify_bundle_with_ci_outputs, write_bundle_artifacts,
+        LeanConfig, LeanExport, LeanTheorem, LocalProcessRunner, ModuleReport, Obligation,
+        ObligationBundle, ObligationReport, Origin, ProofDialect, ReportFiles, SmtCertificate,
+        SmtConfig, SmtLib2, SmtOutput, Sort, Term, UnarySymbol, VerificationBackend,
+        VerificationOutput, VerificationPolicy, VerificationReport, VerificationSession,
+        VerificationTier, VerifierRunner, dry_run_bundle_artifacts, dry_run_report, execute_report,
+        export_lean_bundle, export_lean_bundle_structured, export_smt_batch, export_smt_bundle,
+        parse_smt_output, parse_smt_status, verify_bundle, verify_bundle_with_ci_outputs,
+        write_bundle_artifacts,
     };
 
     // Macros

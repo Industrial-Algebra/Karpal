@@ -11,35 +11,97 @@ use crate::{
 /// Marker for the Lean 4 backend.
 pub struct Lean4;
 
+/// Structured Lean theorem metadata derived from an obligation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LeanTheorem {
+    pub obligation_name: String,
+    pub theorem_name: String,
+    pub property: String,
+    pub origin_summary: String,
+}
+
+impl LeanTheorem {
+    pub fn witness_ref(&self, module_name: &str) -> String {
+        format!("{module_name}.{}", self.theorem_name)
+    }
+}
+
+/// Structured Lean export result.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LeanExport {
+    pub module_name: String,
+    pub source: String,
+    pub theorems: Vec<LeanTheorem>,
+}
+
+impl LeanExport {
+    pub fn theorem_for_obligation(&self, obligation_name: &str) -> Option<&LeanTheorem> {
+        self.theorems
+            .iter()
+            .find(|theorem| theorem.obligation_name == obligation_name)
+    }
+
+    pub fn theorem_names(&self) -> Vec<String> {
+        self.theorems
+            .iter()
+            .map(|theorem| theorem.theorem_name.clone())
+            .collect()
+    }
+}
+
 impl Lean4 {
     /// Export a list of obligations as a Lean 4 module skeleton.
     pub fn export_module(module_name: &str, obligations: &[Obligation]) -> String {
         export_module(module_name, obligations)
     }
 
+    /// Export a list of obligations as structured Lean metadata plus source.
+    pub fn export(module_name: &str, obligations: &[Obligation]) -> LeanExport {
+        export(module_name, obligations)
+    }
+
     /// Export a bundle of obligations as a Lean 4 module skeleton.
     pub fn export_bundle(module_name: &str, bundle: &ObligationBundle) -> String {
         export_module(module_name, bundle.obligations())
     }
+
+    /// Export a bundle of obligations as structured Lean metadata plus source.
+    pub fn export_bundle_structured(module_name: &str, bundle: &ObligationBundle) -> LeanExport {
+        export(module_name, bundle.obligations())
+    }
 }
 
-pub fn export_module(module_name: &str, obligations: &[Obligation]) -> String {
+pub fn export(module_name: &str, obligations: &[Obligation]) -> LeanExport {
+    let theorems = obligations
+        .iter()
+        .map(LeanTheorem::from)
+        .collect::<Vec<_>>();
+
     let mut lines = Vec::new();
     lines.push(format!("namespace {}", module_name));
     lines.push(String::new());
 
-    for obligation in obligations {
+    for (obligation, theorem) in obligations.iter().zip(&theorems) {
         lines.push(format!("-- property: {}", obligation.property));
         lines.push(format!("-- origin: {}", obligation.summary()));
-        lines.push(render_theorem(obligation));
+        lines.push(render_theorem(obligation, theorem));
         lines.push(String::new());
     }
 
     lines.push(format!("end {}", module_name));
-    lines.join("\n")
+
+    LeanExport {
+        module_name: module_name.into(),
+        source: lines.join("\n"),
+        theorems,
+    }
 }
 
-fn render_theorem(obligation: &Obligation) -> String {
+pub fn export_module(module_name: &str, obligations: &[Obligation]) -> String {
+    export(module_name, obligations).source
+}
+
+fn render_theorem(obligation: &Obligation, theorem: &LeanTheorem) -> String {
     let binders = obligation
         .declarations
         .iter()
@@ -55,7 +117,7 @@ fn render_theorem(obligation: &Obligation) -> String {
         .collect::<Vec<_>>()
         .join(" ");
 
-    let mut header = format!("theorem {}", sanitize(&obligation.name));
+    let mut header = format!("theorem {}", theorem.theorem_name);
     if !binders.is_empty() {
         header.push(' ');
         header.push_str(&binders);
@@ -138,6 +200,17 @@ fn sanitize(name: &str) -> String {
         .collect()
 }
 
+impl From<&Obligation> for LeanTheorem {
+    fn from(obligation: &Obligation) -> Self {
+        Self {
+            obligation_name: obligation.name.clone(),
+            theorem_name: sanitize(&obligation.name),
+            property: obligation.property.into(),
+            origin_summary: obligation.summary(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -162,5 +235,25 @@ mod tests {
         assert!(text.contains("namespace KarpalVerify"));
         assert!(text.contains("theorem sum_commutative"));
         assert!(text.contains("sorry"));
+    }
+
+    #[test]
+    fn structured_export_tracks_theorem_identity() {
+        let obligation = Obligation::associativity(
+            "sum-assoc",
+            Origin::new("karpal-core", "Semigroup for i32"),
+            Sort::Int,
+            "combine",
+        );
+
+        let export = export("KarpalVerify", &[obligation]);
+        assert_eq!(export.module_name, "KarpalVerify");
+        assert_eq!(export.theorems.len(), 1);
+        assert_eq!(export.theorems[0].theorem_name, "sum_assoc");
+        assert_eq!(
+            export.theorems[0].witness_ref("KarpalVerify"),
+            "KarpalVerify.sum_assoc"
+        );
+        assert!(export.source.contains("theorem sum_assoc"));
     }
 }

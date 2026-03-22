@@ -8,6 +8,7 @@ External prover bridge for the Karpal ecosystem.
 - reusable **algebraic signatures** for trait-level law generation
 - grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
 - exporters for **SMT-LIB2** and **Lean 4**
+- structured Lean module/theorem metadata for a deeper Lean bridge
 - artifact writers and **dry-run invocation plans** for external tools
 - runner abstractions, backend-specific verification policies, and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
@@ -97,6 +98,9 @@ let obligation = Obligation::associativity(
 
 let lean = export_lean_module("KarpalVerify", &[obligation]);
 assert!(lean.contains("namespace KarpalVerify"));
+
+let structured = karpal_verify::Lean4::export("KarpalVerify", &[obligation]);
+assert_eq!(structured.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.sum_assoc");
 ```
 
 ### Batch export APIs
@@ -115,8 +119,10 @@ let bundle = ObligationBundle::group(
 
 let smt_scripts = export_smt_bundle(&bundle);
 let lean_module = export_lean_bundle("KarpalVerify", &bundle);
+let lean_export = karpal_verify::export_lean_bundle_structured("KarpalVerify", &bundle);
 assert_eq!(smt_scripts.len(), 5);
 assert!(lean_module.contains("theorem left_inverse"));
+assert_eq!(lean_export.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.associativity");
 ```
 
 ### Artifact writing and dry runs
@@ -230,7 +236,9 @@ assert_eq!(report.obligation_count(), 1);
 ```
 
 `VerificationSession::verify_with_ci_outputs(...)` also writes JSON / Markdown
-summaries directly beside generated artifacts.
+summaries directly beside generated artifacts. Lean artifact batches now also
+carry structured theorem metadata and write a small Lean manifest alongside the
+module source.
 
 ### Imported trust markers
 

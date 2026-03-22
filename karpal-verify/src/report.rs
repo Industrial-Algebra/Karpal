@@ -39,6 +39,7 @@ impl ObligationReport {
 pub struct ModuleReport {
     pub module_name: String,
     pub artifact_path: Option<String>,
+    pub theorem_refs: Vec<String>,
     pub result: Option<ExecutionResult>,
 }
 
@@ -128,12 +129,13 @@ impl VerificationReport {
         if let Some(module) = &self.lean_module {
             let _ = write!(
                 out,
-                ",\"lean_module\":{{\"module_name\":\"{}\",\"status\":\"{}\"}}",
+                ",\"lean_module\":{{\"module_name\":\"{}\",\"status\":\"{}\",\"theorem_count\":{}}}",
                 esc(&module.module_name),
                 module
                     .status()
                     .map(|s| format!("{s:?}"))
-                    .unwrap_or_else(|| "None".into())
+                    .unwrap_or_else(|| "None".into()),
+                module.theorem_refs.len()
             );
         }
         out.push('}');
@@ -172,6 +174,7 @@ impl VerificationReport {
         if let Some(module) = &self.lean_module {
             let _ = writeln!(out);
             let _ = writeln!(out, "Lean module: `{}`", module.module_name);
+            let _ = writeln!(out, "Lean theorems: {}", module.theorem_refs.len());
         }
         out
     }
@@ -236,6 +239,17 @@ pub fn execute_report(
             ModuleReport {
                 module_name: record.name.clone(),
                 artifact_path: Some(record.path.clone()),
+                theorem_refs: artifacts
+                    .lean_export
+                    .as_ref()
+                    .map(|export| {
+                        export
+                            .theorems
+                            .iter()
+                            .map(|theorem| theorem.witness_ref(&export.module_name))
+                            .collect()
+                    })
+                    .unwrap_or_default(),
                 result,
             }
         });
@@ -317,6 +331,7 @@ mod tests {
             report.lean_module.as_ref().unwrap().status(),
             Some(ExecutionStatus::DryRun)
         );
+        assert_eq!(report.lean_module.as_ref().unwrap().theorem_refs.len(), 3);
     }
 
     #[test]
@@ -367,6 +382,13 @@ mod tests {
                 .as_ref()
                 .and_then(|c| c.backend_version.as_deref()),
             Some("tool 1.0")
+        );
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .map(|module| module.theorem_refs.len()),
+            Some(1)
         );
     }
 

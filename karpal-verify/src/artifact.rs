@@ -1,5 +1,6 @@
 use crate::{
-    InvocationPlan, LeanConfig, ObligationBundle, SmtConfig, export_lean_bundle, export_smt_bundle,
+    InvocationPlan, LeanConfig, LeanExport, ObligationBundle, SmtConfig,
+    export_lean_bundle_structured, export_smt_bundle,
 };
 
 #[cfg(not(feature = "std"))]
@@ -25,6 +26,7 @@ pub struct ArtifactBatch {
     pub root: String,
     pub records: Vec<ArtifactRecord>,
     pub plans: Vec<InvocationPlan>,
+    pub lean_export: Option<LeanExport>,
 }
 
 #[cfg(feature = "std")]
@@ -71,18 +73,29 @@ pub fn write_bundle_artifacts(
         });
     }
 
+    let lean_export = export_lean_bundle_structured(lean_module_name, bundle);
     let lean_path = layout.lean_dir.join(format!("{lean_module_name}.lean"));
-    fs::write(&lean_path, export_lean_bundle(lean_module_name, bundle))?;
+    fs::write(&lean_path, &lean_export.source)?;
     plans.push(InvocationPlan::lean(lean, &lean_path));
     records.push(ArtifactRecord {
         name: lean_module_name.into(),
         path: path_to_string(&lean_path),
     });
 
+    let manifest_path = layout
+        .lean_dir
+        .join(format!("{lean_module_name}.manifest.json"));
+    fs::write(&manifest_path, render_lean_manifest_json(&lean_export))?;
+    records.push(ArtifactRecord {
+        name: format!("{lean_module_name}_manifest"),
+        path: path_to_string(&manifest_path),
+    });
+
     Ok(ArtifactBatch {
         root: path_to_string(&layout.root),
         records,
         plans,
+        lean_export: Some(lean_export),
     })
 }
 
@@ -106,6 +119,7 @@ pub fn dry_run_bundle_artifacts(
         });
     }
 
+    let lean_export = export_lean_bundle_structured(lean_module_name, bundle);
     let lean_path = layout.lean_dir.join(format!("{lean_module_name}.lean"));
     plans.push(InvocationPlan::lean(lean, &lean_path));
     records.push(ArtifactRecord {
@@ -113,11 +127,49 @@ pub fn dry_run_bundle_artifacts(
         path: path_to_string(&lean_path),
     });
 
+    let manifest_path = layout
+        .lean_dir
+        .join(format!("{lean_module_name}.manifest.json"));
+    records.push(ArtifactRecord {
+        name: format!("{lean_module_name}_manifest"),
+        path: path_to_string(&manifest_path),
+    });
+
     ArtifactBatch {
         root: path_to_string(&layout.root),
         records,
         plans,
+        lean_export: Some(lean_export),
     }
+}
+
+#[cfg(feature = "std")]
+fn render_lean_manifest_json(export: &LeanExport) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+    }
+
+    let theorem_entries = export
+        .theorems
+        .iter()
+        .map(|theorem| {
+            format!(
+                "{{\"obligation_name\":\"{}\",\"theorem_name\":\"{}\",\"witness_ref\":\"{}\"}}",
+                esc(&theorem.obligation_name),
+                esc(&theorem.theorem_name),
+                esc(&theorem.witness_ref(&export.module_name))
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
+    format!(
+        "{{\"module_name\":\"{}\",\"theorems\":[{}]}}",
+        esc(&export.module_name),
+        theorem_entries
+    )
 }
 
 #[cfg(feature = "std")]
@@ -144,13 +196,23 @@ mod tests {
             &LeanConfig::default(),
         );
 
-        assert_eq!(batch.records.len(), 4);
+        assert_eq!(batch.records.len(), 5);
         assert_eq!(batch.plans.len(), 4);
         assert!(
             batch
                 .records
                 .iter()
                 .any(|r| r.path.ends_with("KarpalVerify.lean"))
+        );
+        assert!(
+            batch
+                .records
+                .iter()
+                .any(|r| r.path.ends_with("KarpalVerify.manifest.json"))
+        );
+        assert_eq!(
+            batch.lean_export.as_ref().unwrap().module_name,
+            "KarpalVerify"
         );
     }
 
@@ -181,6 +243,7 @@ mod tests {
                 .iter()
                 .all(|record| Path::new(&record.path).exists())
         );
+        assert!(batch.lean_export.is_some());
 
         let _ = fs::remove_dir_all(&temp);
     }
