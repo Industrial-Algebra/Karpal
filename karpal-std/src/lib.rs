@@ -146,9 +146,10 @@ pub mod prelude {
     pub use karpal_verify::{
         AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
         AmariStatisticalProperty, AmariVerificationResult, StatisticalBound,
-        StatisticalVerification, classify_tier, concentration_obligation_for, ensures_expected,
+        StatisticalVerification, ThreeTierObligationReport, ThreeTierVerificationReport,
+        classify_tier, concentration_obligation_for, ensures_expected,
         expected_value_obligation_for, postcondition_obligation_for, precondition_obligation_for,
-        prob_ensures, prob_requires, verify_rare_event,
+        prob_ensures, prob_requires, three_tier_report, verify_rare_event,
     };
 
     // Macros

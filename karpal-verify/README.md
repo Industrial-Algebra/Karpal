@@ -337,6 +337,11 @@ story:
 - **Rare** → amari-flynn statistical bounds over violating events
 - **Emergent** → behavior that remains possible and therefore observable
 
+For bundle-level summaries, `three_tier_report(...)` combines declared
+obligation tiers, amari statistical evidence, and successful external
+verification results into a single aggregate report with JSON / Markdown
+rendering helpers.
+
 #### Schema compatibility
 
 Current serialized verification artifacts use schema version `1`.
