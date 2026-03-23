@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification Schemas - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.3.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+          <li><a href="abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="adjunctions.html">Adjunctions</a></li>
+          <li><a href="effect-system.html">Effect System</a></li>
+          <li><a href="proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="verification-schemas.html" class="active">Verification Schemas</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="../examples/config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="../examples/data-transformation.html">Data Transformation</a></li>
+          <li><a href="../examples/cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="../examples/domain-model-optics.html">Domain Model</a></li>
+          <li><a href="../examples/verification-workflow.html">Verification Workflow</a></li>
+          <li><a href="../examples/verified-domain-api.html">Verified Domain API</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="proof-verification.html">Reference</a> &gt; <span>Verification Schemas</span>
+    </nav>
+
+    <h1>Verification Schemas</h1>
+    <p>This page documents the serialized artifact formats emitted by <code>karpal-verify</code> and the compatibility contract around their <code>schema_version</code> markers.</p>
+
+    <h2 id="versioned-artifacts">Versioned artifacts</h2>
+    <ul>
+      <li>verification report JSON</li>
+      <li>Lean manifest JSON</li>
+      <li>Lean diagnostics sidecar JSON</li>
+      <li>nested <code>report_files</code> metadata blocks embedded in report and manifest JSON</li>
+    </ul>
+
+    <h2 id="current-version">Current version</h2>
+    <p>The current published schema version is <code>1</code>. In Rust code this is exposed through constants such as <code>VERIFICATION_REPORT_SCHEMA_VERSION</code>, <code>LEAN_MANIFEST_SCHEMA_VERSION</code>, and <code>VERIFICATION_SIDECAR_SCHEMA_VERSION</code>.</p>
+
+    <h2 id="guarantees">Version 1 guarantees</h2>
+    <ul>
+      <li>each top-level JSON object includes a string <code>schema_version</code></li>
+      <li>existing field names remain stable within the <code>1.x</code> line</li>
+      <li>new fields are added only as optional, forward-compatible extensions</li>
+      <li>nested <code>report_files</code> objects also include their own <code>schema_version</code></li>
+      <li>string path fields preserve the artifact/session paths written by the current run</li>
+    </ul>
+
+    <h2 id="consumer-guidance">Consumer guidance</h2>
+    <p>External CI tooling, bots, or archive readers should:</p>
+    <ol>
+      <li>accept <code>schema_version == "1"</code></li>
+      <li>ignore unknown optional fields for forward compatibility</li>
+      <li>treat a future schema bump as a breaking parser boundary</li>
+    </ol>
+
+    <h2 id="breaking-vs-additive">Additive vs. breaking changes</h2>
+    <p>The schema version stays at <code>1</code> for additive changes such as new optional counters, new optional metadata blocks, or richer cross-linking fields. A future version bump is required if a required field is removed, renamed incompatibly, changes type, or changes meaning.</p>
+
+    <h2 id="related-guides">Related guides</h2>
+    <ul>
+      <li><a href="proof-verification.html">Proof &amp; Verification</a> for the overall model/export/run/trust story</li>
+      <li><a href="verification-ci.html">Verification CI Workflow</a> for report/layout usage in automation</li>
+      <li><a href="../examples/verification-workflow.html">Verification Workflow</a> for an end-to-end example</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

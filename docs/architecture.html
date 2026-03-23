@@ -42,6 +42,7 @@
           <li><a href="reference/effect-system.html">Effect System</a></li>
           <li><a href="reference/proof-verification.html">Proof &amp; Verification</a></li>
           <li><a href="reference/verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="reference/verification-schemas.html">Verification Schemas</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -484,17 +485,19 @@ impl&lt;F: Applicative + Chain&gt; Monad for F {}</code></pre>
     <ol>
       <li>Model a goal as an <code>Obligation</code> or <code>ObligationBundle</code>.</li>
       <li>Export the bundle to SMT-LIB2 scripts or a Lean module.</li>
+      <li>Attach structured Lean metadata such as theorem identities, declaration spans, imports, aliases, and package/project scaffold data.</li>
       <li>Write artifacts and build <code>InvocationPlan</code> values.</li>
-      <li>Execute those plans through a <code>VerifierRunner</code>.</li>
+      <li>Execute those plans through a <code>VerifierRunner</code>, including project-aware <code>lake env lean</code> or <code>lake build</code> flows when desired.</li>
+      <li>Parse solver or Lean output, including Lean diagnostics and theorem-aware failure mapping.</li>
       <li>Interpret success through an explicit <code>VerificationPolicy</code> per backend.</li>
-      <li>Aggregate results into a <code>VerificationReport</code>, optionally serialized for CI.</li>
+      <li>Aggregate results into a <code>VerificationReport</code>, Lean manifest, and diagnostics sidecar, all suitable for CI serialization.</li>
       <li>Import successful evidence as <code>Certified&lt;B, P, T&gt;</code>, not directly as <code>Proven&lt;P, T&gt;</code>.</li>
     </ol>
 
     <h3>Trust boundary</h3>
     <p>This separation is deliberate. External evidence crosses a visible boundary through <code>Certified&lt;...&gt;</code> and only becomes <code>Proven&lt;...&gt;</code> via an explicit <code>unsafe</code> conversion. That keeps imported trust searchable in code review and avoids conflating theorem prover output with Rust-native guarantees.</p>
 
-    <p>For API details, see the <a href="reference/proof-verification.html">Proof &amp; Verification reference</a>. For CI-specific execution/reporting guidance, see <a href="reference/verification-ci.html">Verification CI Workflow</a>. For a walkthrough example, see <a href="examples/verification-workflow.html">Verification Workflow</a>. For a domain-boundary example that combines <code>karpal-proof</code> and <code>karpal-verify</code>, see <a href="examples/verified-domain-api.html">Verified Domain API</a>. For the design note focused on imported trust, see <a href="dev/phase-12-trust-model.md">Trust Model</a>.</p>
+    <p>For API details, see the <a href="reference/proof-verification.html">Proof &amp; Verification reference</a>. For CI-specific execution/reporting guidance, see <a href="reference/verification-ci.html">Verification CI Workflow</a>. For serialized artifact compatibility, see <a href="reference/verification-schemas.html">Verification Schemas</a>. For a walkthrough example, see <a href="examples/verification-workflow.html">Verification Workflow</a>. For a domain-boundary example that combines <code>karpal-proof</code> and <code>karpal-verify</code>, see <a href="examples/verified-domain-api.html">Verified Domain API</a>. For the design note focused on imported trust, see <a href="dev/phase-12-trust-model.md">Trust Model</a>.</p>
 
     <div class="footer">
       <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>

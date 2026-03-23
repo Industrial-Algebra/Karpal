@@ -42,6 +42,7 @@
           <li><a href="../reference/effect-system.html">Effect System</a></li>
           <li><a href="../reference/proof-verification.html">Proof &amp; Verification</a></li>
           <li><a href="../reference/verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="../reference/verification-schemas.html">Verification Schemas</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -134,7 +135,7 @@ fn import_associative_i32(
     <ul>
       <li><strong><code>karpal-proof</code></strong> gives your domain rich law-aware APIs.</li>
       <li><strong><code>karpal-verify</code></strong> lets external provers feed those APIs without erasing trust provenance.</li>
-      <li><strong>The combination</strong> means you can keep public APIs principled while still integrating with SMT and Lean workflows.</li>
+      <li><strong>The combination</strong> means you can keep public APIs principled while still integrating with SMT and full Lean workflows, including project-aware execution, structured diagnostics, and archived verification artifacts.</li>
     </ul>
 
     <h2 id="recommended-usage">Recommended usage</h2>
@@ -145,7 +146,7 @@ fn import_associative_i32(
       <li>Convert to <code>Proven&lt;P, T&gt;</code> only in a small, audited boundary layer.</li>
     </ol>
 
-    <p>For the broader export/execution workflow, see <a href="verification-workflow.html">Verification Workflow</a>. For the API overview, see <a href="../reference/proof-verification.html">Proof &amp; Verification</a>.</p>
+    <p>For the broader export/execution workflow, see <a href="verification-workflow.html">Verification Workflow</a>. For the API overview, see <a href="../reference/proof-verification.html">Proof &amp; Verification</a>. For CI/report/archive details, see <a href="../reference/verification-ci.html">Verification CI Workflow</a>, and for serialized compatibility details see <a href="../reference/verification-schemas.html">Verification Schemas</a>.</p>
 
     <div class="footer">
       <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>

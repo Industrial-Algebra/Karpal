@@ -42,6 +42,7 @@
           <li><a href="../reference/effect-system.html">Effect System</a></li>
           <li><a href="../reference/proof-verification.html">Proof &amp; Verification</a></li>
           <li><a href="../reference/verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="../reference/verification-schemas.html">Verification Schemas</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -121,7 +122,7 @@ for plan in &batch.plans {
     println!("{}", plan.render_shell());
 }</code></pre>
 
-    <p>A dry-run batch is especially useful while wiring CI, because it validates paths and exporter output without requiring solver binaries to be available.</p>
+    <p>A dry-run batch is especially useful while wiring CI, because it validates paths and exporter output without requiring solver binaries to be available. The batch also carries structured Lean export metadata, generated Lean project data, and a typed Lean manifest model that will later be serialized beside the generated module.</p>
 
     <h2 id="step-4-orchestrate">4. Orchestrate build → run → report</h2>
     <p>The orchestration layer wraps the lower-level pieces into one cohesive flow. For example, here is a dry-run CI-style session:</p>
@@ -144,8 +145,10 @@ assert!(output.report_files.markdown_path.ends_with("verification-report.md"));<
       <li>writes SMT and Lean artifacts,</li>
       <li>creates invocation plans,</li>
       <li>runs them with the supplied runner,</li>
-      <li>builds a <code>VerificationReport</code>, and</li>
-      <li>writes JSON / Markdown summaries beside the generated artifacts.</li>
+      <li>builds a <code>VerificationReport</code>,</li>
+      <li>writes JSON / Markdown summaries beside the generated artifacts,</li>
+      <li>writes a schema-versioned Lean diagnostics sidecar, and</li>
+      <li>cross-links a schema-versioned Lean manifest back to those report files.</li>
     </ul>
 
     <h2 id="step-5-backend-semantics">5. Understand backend semantics</h2>
@@ -156,7 +159,7 @@ assert!(output.report_files.markdown_path.ends_with("verification-report.md"));<
 assert!(VerificationPolicy::for_kind(CommandKind::Lean)
     .accepts(ExecutionStatus::Success));</code></pre>
 
-    <p>For SMT backends, Karpal exports the negation of the law, so <code>unsat</code> is the success case. For Lean, success is an accepted module and a zero-exit process.</p>
+    <p>For SMT backends, Karpal exports the negation of the law, so <code>unsat</code> is the success case. For Lean, success is an accepted module together with parsed diagnostics that report no errors. Lean diagnostics are then mapped back to exported theorem identities, using source-line spans as a fallback when the diagnostic message does not name the theorem directly.</p>
 
     <h2 id="step-6-session-builder">6. Use the session builder for more control</h2>
     <p>If you need to configure tool names, extra arguments, or custom report names, use <code>VerificationSession</code> directly:</p>
@@ -167,7 +170,10 @@ assert!(VerificationPolicy::for_kind(CommandKind::Lean)
     "KarpalVerify",
 )
 .with_smt_config(SmtConfig::new("z3").with_arg("-smt2"))
-.with_lean_config(LeanConfig::new("lean"))
+.with_lean_config(
+    LeanConfig::new("lean")
+        .with_driver(LeanDriver::LakeBuild)
+)
 .with_report_stem("nightly-summary");
 
 let dry_report = session.dry_run_report();
@@ -190,6 +196,7 @@ let _: Proven&lt;IsAssociative, i32&gt; = unsafe { imported.into_proven() };</co
     <ul>
       <li><a href="../reference/proof-verification.html">Proof &amp; Verification</a> for the full API overview.</li>
       <li><a href="../reference/verification-ci.html">Verification CI Workflow</a> for CI-focused layout and reporting guidance.</li>
+      <li><a href="../reference/verification-schemas.html">Verification Schemas</a> for report/manifest/sidecar compatibility details.</li>
       <li><a href="../dev/phase-12-trust-model.md">Trust Model</a> for the imported-proof boundary design note.</li>
     </ul>
 

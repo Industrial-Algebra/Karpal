@@ -2,13 +2,13 @@
 
 External prover bridge for the Karpal ecosystem.
 
-`karpal-verify` is the Phase 12 foundation crate. It introduces:
+`karpal-verify` is Karpal's external verification foundation crate. It introduces:
 
 - a backend-agnostic **proof obligation IR**
 - reusable **algebraic signatures** for trait-level law generation
 - grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
 - exporters for **SMT-LIB2** and **Lean 4**
-- structured Lean module/theorem metadata for a deeper Lean bridge
+- structured Lean module/theorem metadata for a richer Lean bridge
 - Lean import/prelude bridging for module imports and symbol aliases
 - Lean project/package scaffolding for generated modules
 - project-aware Lean execution planning via `lake env lean` or `lake build`
