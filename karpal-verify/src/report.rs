@@ -306,7 +306,7 @@ pub fn execute_report(
             .and_then(|output| {
                 lean_theorem.as_ref().map(|theorem| {
                     output
-                        .theorem_diagnostics(&theorem.theorem_name)
+                        .theorem_diagnostics(theorem)
                         .into_iter()
                         .map(|diagnostic| diagnostic.message.clone())
                         .collect::<Vec<_>>()
@@ -392,7 +392,7 @@ pub fn execute_report(
             (Some(export), Some(output)) => export
                 .theorems
                 .iter()
-                .filter(|theorem| output.has_theorem_failure(&theorem.theorem_name))
+                .filter(|theorem| output.has_theorem_failure(theorem))
                 .map(|theorem| theorem.witness_ref(&export.module_name))
                 .collect::<Vec<_>>(),
             _ => Vec::new(),
@@ -730,6 +730,86 @@ mod tests {
         assert_eq!(
             left_distributivity.lean_diagnostics,
             vec!["unsolved goals in theorem left_distributivity".to_string()]
+        );
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .map(|module| module.theorem_failures.clone()),
+            Some(vec!["KarpalVerify.left_distributivity".to_string()])
+        );
+    }
+
+    #[test]
+    fn theorem_mapping_can_fall_back_to_exported_line_spans() {
+        let sig = AlgebraicSignature::semiring(Sort::Int, "add", "mul", "zero", "one");
+        let bundle = ObligationBundle::semiring(
+            "sum_semiring",
+            Origin::new("karpal-core", "Semiring for Sum<i32>"),
+            &sig,
+        );
+        let layout = ArtifactLayout::new("target/karpal-verify-report-test-4");
+        let artifacts = dry_run_bundle_artifacts(
+            &bundle,
+            &layout,
+            "KarpalVerify",
+            &SmtConfig::default(),
+            &LeanConfig::default(),
+        );
+
+        let failure_line = artifacts
+            .lean_export
+            .as_ref()
+            .and_then(|export| export.theorem_for_obligation("left_distributivity"))
+            .map(|theorem| theorem.declaration_start_line)
+            .expect("left distributivity theorem span should be present");
+
+        struct LocationRunner {
+            failure_line: usize,
+        }
+        impl VerifierRunner for LocationRunner {
+            fn run(&self, plan: &crate::InvocationPlan) -> ExecutionResult {
+                ExecutionResult {
+                    plan: plan.clone(),
+                    status: match plan.kind {
+                        crate::CommandKind::Smt => ExecutionStatus::Unsat,
+                        crate::CommandKind::Lean => ExecutionStatus::Failure,
+                    },
+                    stdout: String::new(),
+                    stderr: String::new(),
+                    exit_code: Some(1),
+                    backend_version: Some("tool 1.0".into()),
+                    smt_output: Some(crate::SmtOutput {
+                        status: Some(ExecutionStatus::Unsat),
+                        model: None,
+                        reason_unknown: None,
+                    }),
+                    lean_output: (plan.kind == crate::CommandKind::Lean).then(|| {
+                        crate::LeanOutput {
+                            diagnostics: vec![crate::LeanDiagnostic {
+                                file: Some("lean/KarpalVerify.lean".into()),
+                                line: Some(self.failure_line),
+                                column: Some(2),
+                                severity: "error".into(),
+                                message: "type mismatch".into(),
+                                theorem_hits: Vec::new(),
+                            }],
+                            theorem_hits: Vec::new(),
+                        }
+                    }),
+                }
+            }
+        }
+
+        let report = execute_report(&bundle, &artifacts, &LocationRunner { failure_line });
+        let left_distributivity = report
+            .obligations
+            .iter()
+            .find(|entry| entry.obligation_name == "left_distributivity")
+            .expect("left distributivity obligation should be present");
+        assert_eq!(
+            left_distributivity.lean_diagnostics,
+            vec!["type mismatch".to_string()]
         );
         assert_eq!(
             report

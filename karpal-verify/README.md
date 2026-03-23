@@ -275,10 +275,11 @@ assert_eq!(report.obligation_count(), 1);
 summaries directly beside generated artifacts. When a Lean module report is
 present it also writes a `*.lean-diagnostics.json` sidecar containing module-
 level diagnostics, theorem failure refs, and per-obligation Lean diagnostic
-groupings. Lean artifact batches now also carry structured theorem metadata,
-prelude/import metadata, generated package metadata, and write a small Lean
-manifest alongside the module source plus `lakefile.lean` / `lean-toolchain`
-scaffolding at the artifact root.
+groupings. The main JSON / Markdown summaries now cross-link both that sidecar
+and the generated Lean manifest path. Lean artifact batches now also carry
+structured theorem metadata, prelude/import metadata, generated package
+metadata, and write a small Lean manifest alongside the module source plus
+`lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
 
 ### Imported trust markers
 

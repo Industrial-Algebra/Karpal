@@ -14,6 +14,7 @@ pub struct ReportFiles {
     pub json_path: String,
     pub markdown_path: String,
     pub lean_diagnostics_json_path: Option<String>,
+    pub lean_manifest_path: Option<String>,
 }
 
 /// End-to-end verification session configuration for a bundle.
@@ -172,10 +173,13 @@ fn write_report_files(
     let root = root.as_ref();
     fs::create_dir_all(root)?;
 
-    let json_path = root.join(format!("{report_stem}.json"));
-    let markdown_path = root.join(format!("{report_stem}.md"));
-    fs::write(&json_path, report.to_json())?;
-    fs::write(&markdown_path, report.to_markdown())?;
+    let lean_manifest_path = report.lean_module.as_ref().map(|module| {
+        path_to_string(
+            &root
+                .join("lean")
+                .join(format!("{}.manifest.json", module.module_name)),
+        )
+    });
 
     let lean_diagnostics_json_path = report
         .lean_module
@@ -187,11 +191,71 @@ fn write_report_files(
         })
         .transpose()?;
 
-    Ok(ReportFiles {
+    let json_path = root.join(format!("{report_stem}.json"));
+    let markdown_path = root.join(format!("{report_stem}.md"));
+    let report_files = ReportFiles {
         json_path: path_to_string(&json_path),
         markdown_path: path_to_string(&markdown_path),
         lean_diagnostics_json_path,
-    })
+        lean_manifest_path,
+    };
+    fs::write(
+        &json_path,
+        render_report_json_with_links(report, &report_files),
+    )?;
+    fs::write(
+        &markdown_path,
+        render_report_markdown_with_links(report, &report_files),
+    )?;
+
+    Ok(report_files)
+}
+
+fn render_report_json_with_links(report: &VerificationReport, files: &ReportFiles) -> String {
+    let mut json = report.to_json();
+    if json.ends_with('}') {
+        json.pop();
+        json.push_str(",\"report_files\":{");
+        json.push_str(&format!(
+            "\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+            escape_json(&files.json_path),
+            escape_json(&files.markdown_path)
+        ));
+        if let Some(path) = &files.lean_diagnostics_json_path {
+            json.push_str(&format!(
+                ",\"lean_diagnostics_json_path\":\"{}\"",
+                escape_json(path)
+            ));
+        }
+        if let Some(path) = &files.lean_manifest_path {
+            json.push_str(&format!(
+                ",\"lean_manifest_path\":\"{}\"",
+                escape_json(path)
+            ));
+        }
+        json.push_str("}}");
+    }
+    json
+}
+
+fn render_report_markdown_with_links(report: &VerificationReport, files: &ReportFiles) -> String {
+    let mut markdown = report.to_markdown();
+    markdown.push_str("\nReport files:\n");
+    markdown.push_str(&format!("- JSON: `{}`\n", files.json_path));
+    markdown.push_str(&format!("- Markdown: `{}`\n", files.markdown_path));
+    if let Some(path) = &files.lean_diagnostics_json_path {
+        markdown.push_str(&format!("- Lean diagnostics JSON: `{}`\n", path));
+    }
+    if let Some(path) = &files.lean_manifest_path {
+        markdown.push_str(&format!("- Lean manifest: `{}`\n", path));
+    }
+    markdown
+}
+
+fn escape_json(s: &str) -> String {
+    s.replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
 }
 
 fn render_lean_diagnostics_json(report: &VerificationReport) -> String {
@@ -377,6 +441,16 @@ mod tests {
             )
             .exists()
         );
+        assert!(
+            Path::new(
+                output
+                    .report_files
+                    .lean_manifest_path
+                    .as_deref()
+                    .expect("lean manifest path should be recorded")
+            )
+            .exists()
+        );
         assert!(output.report_files.json_path.ends_with("summary.json"));
         assert!(output.report_files.markdown_path.ends_with("summary.md"));
         assert!(
@@ -387,6 +461,25 @@ mod tests {
                 .unwrap()
                 .ends_with("summary.lean-diagnostics.json")
         );
+        assert!(
+            output
+                .report_files
+                .lean_manifest_path
+                .as_deref()
+                .unwrap()
+                .ends_with("lean/KarpalVerify.manifest.json")
+        );
+
+        let json = fs::read_to_string(&output.report_files.json_path)
+            .expect("summary json should be readable");
+        let markdown = fs::read_to_string(&output.report_files.markdown_path)
+            .expect("summary markdown should be readable");
+        assert!(json.contains("\"report_files\""));
+        assert!(json.contains("\"lean_manifest_path\""));
+        assert!(json.contains("\"lean_diagnostics_json_path\""));
+        assert!(markdown.contains("Report files:"));
+        assert!(markdown.contains("Lean diagnostics JSON"));
+        assert!(markdown.contains("Lean manifest"));
 
         let _ = fs::remove_dir_all(&temp);
     }

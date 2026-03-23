@@ -1,5 +1,6 @@
 use crate::{
-    Certificate, CommandKind, InvocationPlan, LeanCertificate, SmtCertificate, VerificationBackend,
+    Certificate, CommandKind, InvocationPlan, LeanCertificate, LeanTheorem, SmtCertificate,
+    VerificationBackend,
 };
 
 #[cfg(feature = "std")]
@@ -293,26 +294,34 @@ impl LeanOutput {
             .count()
     }
 
-    pub fn theorem_diagnostics<'a>(&'a self, theorem_name: &str) -> Vec<&'a LeanDiagnostic> {
+    pub fn theorem_diagnostics<'a>(&'a self, theorem: &LeanTheorem) -> Vec<&'a LeanDiagnostic> {
         self.diagnostics
             .iter()
-            .filter(|diagnostic| {
-                diagnostic
-                    .theorem_hits
-                    .iter()
-                    .any(|hit| hit == theorem_name)
-            })
+            .filter(|diagnostic| diagnostic_matches_theorem(diagnostic, theorem))
             .collect()
     }
 
-    pub fn has_theorem_failure(&self, theorem_name: &str) -> bool {
-        self.theorem_hits.iter().any(|hit| hit == theorem_name)
-            || self.diagnostics.iter().any(|diagnostic| {
-                diagnostic
-                    .theorem_hits
-                    .iter()
-                    .any(|hit| hit == theorem_name)
-            })
+    pub fn has_theorem_failure(&self, theorem: &LeanTheorem) -> bool {
+        self.theorem_hits
+            .iter()
+            .any(|hit| hit == &theorem.theorem_name)
+            || self
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic_matches_theorem(diagnostic, theorem))
+    }
+}
+
+fn diagnostic_matches_theorem(diagnostic: &LeanDiagnostic, theorem: &LeanTheorem) -> bool {
+    if !diagnostic.theorem_hits.is_empty() {
+        diagnostic
+            .theorem_hits
+            .iter()
+            .any(|hit| hit == &theorem.theorem_name)
+    } else {
+        diagnostic
+            .line
+            .is_some_and(|line| theorem.contains_line(line))
     }
 }
 
@@ -512,9 +521,54 @@ mod tests {
             parsed.diagnostics[0].theorem_hits,
             vec!["associativity".to_string()]
         );
+        let associativity = LeanTheorem {
+            obligation_name: "associativity".into(),
+            theorem_name: "associativity".into(),
+            property: "karpal_proof::IsAssociative".into(),
+            origin_summary: "demo".into(),
+            declaration_start_line: 7,
+            declaration_end_line: 8,
+        };
+        let left_inverse = LeanTheorem {
+            obligation_name: "left_inverse".into(),
+            theorem_name: "left_inverse".into(),
+            property: "karpal_proof::HasLeftInverse".into(),
+            origin_summary: "demo".into(),
+            declaration_start_line: 12,
+            declaration_end_line: 13,
+        };
+
         assert!(parsed.theorem_hits.iter().any(|hit| hit == "associativity"));
         assert!(parsed.theorem_hits.iter().any(|hit| hit == "left_inverse"));
-        assert_eq!(parsed.theorem_diagnostics("associativity").len(), 1);
-        assert!(parsed.has_theorem_failure("left_inverse"));
+        assert_eq!(parsed.theorem_diagnostics(&associativity).len(), 1);
+        assert!(parsed.has_theorem_failure(&left_inverse));
+    }
+
+    #[test]
+    fn theorem_location_matching_falls_back_to_line_spans() {
+        let parsed = parse_lean_output(
+            "",
+            "lean/KarpalVerify.lean:10:2: error: type mismatch\nlean/KarpalVerify.lean:18:2: warning: declaration uses sorry",
+        );
+        let theorem = LeanTheorem {
+            obligation_name: "left_distributivity".into(),
+            theorem_name: "left_distributivity".into(),
+            property: "karpal_proof::IsLeftDistributive".into(),
+            origin_summary: "demo".into(),
+            declaration_start_line: 9,
+            declaration_end_line: 11,
+        };
+        let other = LeanTheorem {
+            obligation_name: "right_distributivity".into(),
+            theorem_name: "right_distributivity".into(),
+            property: "karpal_proof::IsRightDistributive".into(),
+            origin_summary: "demo".into(),
+            declaration_start_line: 14,
+            declaration_end_line: 16,
+        };
+
+        assert_eq!(parsed.theorem_diagnostics(&theorem).len(), 1);
+        assert!(parsed.has_theorem_failure(&theorem));
+        assert!(!parsed.has_theorem_failure(&other));
     }
 }

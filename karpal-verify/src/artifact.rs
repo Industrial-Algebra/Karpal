@@ -212,10 +212,12 @@ fn render_lean_manifest_json(export: &LeanExport, project: &LeanProject) -> Stri
         .iter()
         .map(|theorem| {
             format!(
-                "{{\"obligation_name\":\"{}\",\"theorem_name\":\"{}\",\"witness_ref\":\"{}\"}}",
+                "{{\"obligation_name\":\"{}\",\"theorem_name\":\"{}\",\"witness_ref\":\"{}\",\"declaration_start_line\":{},\"declaration_end_line\":{}}}",
                 esc(&theorem.obligation_name),
                 esc(&theorem.theorem_name),
-                esc(&theorem.witness_ref(&export.module_name))
+                esc(&theorem.witness_ref(&export.module_name)),
+                theorem.declaration_start_line,
+                theorem.declaration_end_line
             )
         })
         .collect::<Vec<_>>()

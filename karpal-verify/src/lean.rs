@@ -109,11 +109,23 @@ pub struct LeanTheorem {
     pub theorem_name: String,
     pub property: String,
     pub origin_summary: String,
+    pub declaration_start_line: usize,
+    pub declaration_end_line: usize,
 }
 
 impl LeanTheorem {
     pub fn witness_ref(&self, module_name: &str) -> String {
         format!("{module_name}.{}", self.theorem_name)
+    }
+
+    pub fn contains_line(&self, line: usize) -> bool {
+        (self.declaration_start_line..=self.declaration_end_line).contains(&line)
+    }
+
+    pub fn with_line_span(mut self, start_line: usize, end_line: usize) -> Self {
+        self.declaration_start_line = start_line;
+        self.declaration_end_line = end_line.max(start_line);
+        self
     }
 }
 
@@ -264,11 +276,7 @@ pub fn export_with_prelude(
     obligations: &[Obligation],
     prelude: LeanPrelude,
 ) -> LeanExport {
-    let theorems = obligations
-        .iter()
-        .map(LeanTheorem::from)
-        .collect::<Vec<_>>();
-
+    let mut theorems = Vec::new();
     let mut lines = Vec::new();
 
     for import in &prelude.imports {
@@ -292,11 +300,19 @@ pub fn export_with_prelude(
         lines.push(String::new());
     }
 
-    for (obligation, theorem) in obligations.iter().zip(&theorems) {
+    for obligation in obligations {
+        let theorem = LeanTheorem::from(obligation);
+        let theorem_start_line = lines.len() + 3;
+        let theorem_text = render_theorem(obligation, &theorem, &prelude);
+        let theorem_line_count = theorem_text.lines().count();
+        let theorem_end_line = theorem_start_line + theorem_line_count.saturating_sub(1);
+
         lines.push(format!("-- property: {}", obligation.property));
         lines.push(format!("-- origin: {}", obligation.summary()));
-        lines.push(render_theorem(obligation, theorem, &prelude));
+        lines.push(theorem_text);
         lines.push(String::new());
+
+        theorems.push(theorem.with_line_span(theorem_start_line, theorem_end_line));
     }
 
     lines.push(format!("end {}", module_name));
@@ -499,6 +515,8 @@ impl From<&Obligation> for LeanTheorem {
             theorem_name: sanitize(&obligation.name),
             property: obligation.property.into(),
             origin_summary: obligation.summary(),
+            declaration_start_line: 0,
+            declaration_end_line: 0,
         }
     }
 }
@@ -545,6 +563,10 @@ mod tests {
         assert_eq!(
             export.theorems[0].witness_ref("KarpalVerify"),
             "KarpalVerify.sum_assoc"
+        );
+        assert!(export.theorems[0].declaration_start_line > 0);
+        assert!(
+            export.theorems[0].declaration_end_line >= export.theorems[0].declaration_start_line
         );
         assert!(export.source.contains("theorem sum_assoc"));
     }
