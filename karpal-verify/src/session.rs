@@ -5,6 +5,9 @@ use crate::{
 };
 use std::{fs, io, path::Path, string::String};
 
+/// Schema version for CI-oriented verification sidecar/report-file metadata.
+pub const VERIFICATION_SIDECAR_SCHEMA_VERSION: &str = "1";
+
 /// Default file stem used for CI-oriented verification summaries.
 pub const DEFAULT_REPORT_STEM: &str = "verification-report";
 
@@ -233,7 +236,8 @@ fn render_report_json_with_links(report: &VerificationReport, files: &ReportFile
         json.pop();
         json.push_str(",\"report_files\":{");
         json.push_str(&format!(
-            "\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+            "\"schema_version\":\"{}\",\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+            VERIFICATION_SIDECAR_SCHEMA_VERSION,
             escape_json(&files.json_path),
             escape_json(&files.markdown_path)
         ));
@@ -257,6 +261,10 @@ fn render_report_json_with_links(report: &VerificationReport, files: &ReportFile
 fn render_report_markdown_with_links(report: &VerificationReport, files: &ReportFiles) -> String {
     let mut markdown = report.to_markdown();
     markdown.push_str("\nReport files:\n");
+    markdown.push_str(&format!(
+        "- Schema version: `{}`\n",
+        VERIFICATION_SIDECAR_SCHEMA_VERSION
+    ));
     markdown.push_str(&format!("- JSON: `{}`\n", files.json_path));
     markdown.push_str(&format!("- Markdown: `{}`\n", files.markdown_path));
     if let Some(path) = &files.lean_diagnostics_json_path {
@@ -343,7 +351,8 @@ fn render_lean_diagnostics_json(report: &VerificationReport) -> String {
         .join(",");
 
     format!(
-        "{{\"module_name\":\"{}\",\"module_diagnostics\":[{}],\"theorem_failures\":[{}],\"obligations\":[{}]}}",
+        "{{\"schema_version\":\"{}\",\"module_name\":\"{}\",\"module_diagnostics\":[{}],\"theorem_failures\":[{}],\"obligations\":[{}]}}",
+        VERIFICATION_SIDECAR_SCHEMA_VERSION,
         esc(&module.module_name),
         module_diagnostics,
         theorem_failures,
@@ -506,6 +515,14 @@ mod tests {
             .expect("summary json should be readable");
         let markdown = fs::read_to_string(&output.report_files.markdown_path)
             .expect("summary markdown should be readable");
+        let sidecar = fs::read_to_string(
+            output
+                .report_files
+                .lean_diagnostics_json_path
+                .as_deref()
+                .expect("lean diagnostics sidecar path should be present"),
+        )
+        .expect("lean diagnostics sidecar should be readable");
         let manifest = fs::read_to_string(
             output
                 .report_files
@@ -514,12 +531,17 @@ mod tests {
                 .expect("lean manifest path should be present"),
         )
         .expect("lean manifest should be readable");
+        assert!(json.contains("\"schema_version\":\"1\""));
         assert!(json.contains("\"report_files\""));
         assert!(json.contains("\"lean_manifest_path\""));
         assert!(json.contains("\"lean_diagnostics_json_path\""));
+        assert!(json.contains("\"schema_version\":\"1\",\"json_path\""));
         assert!(markdown.contains("Report files:"));
+        assert!(markdown.contains("Schema version: `1`"));
         assert!(markdown.contains("Lean diagnostics JSON"));
         assert!(markdown.contains("Lean manifest"));
+        assert!(sidecar.contains("\"schema_version\":\"1\""));
+        assert!(manifest.contains("\"schema_version\":\"1\""));
         assert!(manifest.contains("\"report_files\""));
         assert!(manifest.contains("\"json_path\""));
         assert!(manifest.contains("\"markdown_path\""));

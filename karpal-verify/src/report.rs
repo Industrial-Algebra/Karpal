@@ -11,6 +11,9 @@ use alloc::{string::String, vec::Vec};
 #[cfg(feature = "std")]
 use std::{string::String, vec::Vec};
 
+/// Schema version for serialized verification report JSON.
+pub const VERIFICATION_REPORT_SCHEMA_VERSION: &str = "1";
+
 /// Per-obligation verification report.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObligationReport {
@@ -105,7 +108,8 @@ impl VerificationReport {
         let mut out = String::new();
         let _ = write!(
             out,
-            "{{\"bundle_name\":\"{}\",\"root\":\"{}\",\"success_count\":{},\"failure_count\":{},\"obligations\":[",
+            "{{\"schema_version\":\"{}\",\"bundle_name\":\"{}\",\"root\":\"{}\",\"success_count\":{},\"failure_count\":{},\"obligations\":[",
+            VERIFICATION_REPORT_SCHEMA_VERSION,
             esc(&self.bundle_name),
             esc(&self.root),
             self.success_count(),
@@ -179,6 +183,11 @@ impl VerificationReport {
         let mut out = String::new();
         let _ = writeln!(out, "# Verification Report");
         let _ = writeln!(out);
+        let _ = writeln!(
+            out,
+            "- Schema version: `{}`",
+            VERIFICATION_REPORT_SCHEMA_VERSION
+        );
         let _ = writeln!(out, "- Bundle: `{}`", self.bundle_name);
         let _ = writeln!(out, "- Root: `{}`", self.root);
         let _ = writeln!(out, "- Successes: {}", self.success_count());
@@ -664,8 +673,10 @@ mod tests {
 
         let json = report.to_json();
         let markdown = report.to_markdown();
+        assert!(json.contains("\"schema_version\":\"1\""));
         assert!(json.contains("\"bundle_name\":\"demo\""));
         assert!(markdown.contains("# Verification Report"));
+        assert!(markdown.contains("Schema version: `1`"));
         assert!(markdown.contains("`assoc`"));
     }
 

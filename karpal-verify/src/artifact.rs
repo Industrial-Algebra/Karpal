@@ -13,6 +13,9 @@ use std::{
     vec::Vec,
 };
 
+/// Schema version for serialized Lean manifest JSON.
+pub const LEAN_MANIFEST_SCHEMA_VERSION: &str = "1";
+
 /// Written artifact metadata.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArtifactRecord {
@@ -23,6 +26,7 @@ pub struct ArtifactRecord {
 /// Report file links attached back onto a generated Lean manifest.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LeanManifestReportFiles {
+    pub schema_version: String,
     pub json_path: String,
     pub markdown_path: String,
     pub lean_diagnostics_json_path: Option<String>,
@@ -63,6 +67,7 @@ pub struct LeanManifestTheorem {
 /// Typed manifest model for generated Lean verification artifacts.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LeanManifest {
+    pub schema_version: String,
     pub module_name: String,
     pub project: LeanManifestProject,
     pub prelude: LeanManifestPrelude,
@@ -104,6 +109,7 @@ impl ArtifactLayout {
 impl LeanManifestReportFiles {
     pub fn new(json_path: impl Into<String>, markdown_path: impl Into<String>) -> Self {
         Self {
+            schema_version: LEAN_MANIFEST_SCHEMA_VERSION.into(),
             json_path: json_path.into(),
             markdown_path: markdown_path.into(),
             lean_diagnostics_json_path: None,
@@ -119,6 +125,7 @@ impl LeanManifestReportFiles {
 impl LeanManifest {
     pub fn from_export(export: &LeanExport, project: &LeanProject) -> Self {
         Self {
+            schema_version: LEAN_MANIFEST_SCHEMA_VERSION.into(),
             module_name: export.module_name.clone(),
             project: LeanManifestProject {
                 package_name: project.package_name.clone(),
@@ -212,7 +219,8 @@ impl LeanManifest {
             .as_ref()
             .map(|report_files| {
                 let mut json = format!(
-                    "\"report_files\":{{\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+                    "\"report_files\":{{\"schema_version\":\"{}\",\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+                    esc(&report_files.schema_version),
                     esc(&report_files.json_path),
                     esc(&report_files.markdown_path)
                 );
@@ -228,7 +236,8 @@ impl LeanManifest {
             .unwrap_or_default();
 
         let mut json = format!(
-            "{{\"module_name\":\"{}\",\"project\":{{\"package_name\":\"{}\",\"toolchain\":\"{}\",\"requires_mathlib\":{}}},\"prelude\":{{\"imports\":[{}],\"aliases\":[{}]}},\"theorems\":[{}]",
+            "{{\"schema_version\":\"{}\",\"module_name\":\"{}\",\"project\":{{\"package_name\":\"{}\",\"toolchain\":\"{}\",\"requires_mathlib\":{}}},\"prelude\":{{\"imports\":[{}],\"aliases\":[{}]}},\"theorems\":[{}]",
+            esc(&self.schema_version),
             esc(&self.module_name),
             esc(&self.project.package_name),
             esc(&self.project.toolchain),
@@ -421,6 +430,10 @@ mod tests {
             "karpalverify"
         );
         assert_eq!(
+            batch.lean_manifest.as_ref().unwrap().schema_version,
+            LEAN_MANIFEST_SCHEMA_VERSION
+        );
+        assert_eq!(
             batch.lean_manifest.as_ref().unwrap().module_name,
             "KarpalVerify"
         );
@@ -474,6 +487,9 @@ mod tests {
         assert!(batch.lean_export.is_some());
         assert!(batch.lean_project.is_some());
         assert!(batch.lean_manifest.is_some());
+        let manifest = fs::read_to_string(temp.join("lean").join("KarpalVerify.manifest.json"))
+            .expect("lean manifest should be readable");
+        assert!(manifest.contains("\"schema_version\":\"1\""));
         assert!(temp.join("lakefile.lean").exists());
         assert!(temp.join("lean-toolchain").exists());
 

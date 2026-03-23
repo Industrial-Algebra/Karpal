@@ -201,6 +201,15 @@ if !output.report.is_success() {
 
     <p>The report includes bundle name, root directory, success/failure counts, per-obligation status, artifact paths, and certificate summaries where available.</p>
 
+    <h3 id="schema-versioning">Schema versioning</h3>
+    <p>The verification report JSON, generated Lean manifest JSON, and Lean diagnostics sidecar each include a top-level <code>schema_version</code> marker. Nested <code>report_files</code> metadata blocks are versioned too.</p>
+    <p>Current schema version is <code>1</code>. Within the <code>1.x</code> line, existing fields are expected to remain stable and new data should be added only through optional fields. Consumers should therefore:</p>
+    <ul>
+      <li>accept <code>schema_version == "1"</code></li>
+      <li>ignore unknown optional fields for forward compatibility</li>
+      <li>treat a future schema bump as a breaking parser boundary</li>
+    </ul>
+
     <h2 id="sample-ci-shape">Sample CI shape</h2>
     <p>A typical CI pipeline might split external verification into two jobs:</p>
 

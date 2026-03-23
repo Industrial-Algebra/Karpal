@@ -31,9 +31,9 @@ pub mod trust;
 
 #[cfg(feature = "std")]
 pub use artifact::{
-    ArtifactBatch, ArtifactLayout, ArtifactRecord, LeanManifest, LeanManifestAlias,
-    LeanManifestPrelude, LeanManifestProject, LeanManifestReportFiles, LeanManifestTheorem,
-    dry_run_bundle_artifacts, write_bundle_artifacts,
+    ArtifactBatch, ArtifactLayout, ArtifactRecord, LEAN_MANIFEST_SCHEMA_VERSION, LeanManifest,
+    LeanManifestAlias, LeanManifestPrelude, LeanManifestProject, LeanManifestReportFiles,
+    LeanManifestTheorem, dry_run_bundle_artifacts, write_bundle_artifacts,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use bundle::ObligationBundle;
@@ -53,7 +53,8 @@ pub use lean::{
 pub use obligation::{Declaration, Obligation, Origin, ProofDialect, Sort, Term, VerificationTier};
 #[cfg(feature = "std")]
 pub use report::{
-    ModuleReport, ObligationReport, VerificationReport, dry_run_report, execute_report,
+    ModuleReport, ObligationReport, VERIFICATION_REPORT_SCHEMA_VERSION, VerificationReport,
+    dry_run_report, execute_report,
 };
 #[cfg(feature = "std")]
 pub use runner::{
@@ -63,8 +64,8 @@ pub use runner::{
 };
 #[cfg(feature = "std")]
 pub use session::{
-    DEFAULT_REPORT_STEM, ReportFiles, VerificationOutput, VerificationSession, verify_bundle,
-    verify_bundle_with_ci_outputs,
+    DEFAULT_REPORT_STEM, ReportFiles, VERIFICATION_SIDECAR_SCHEMA_VERSION, VerificationOutput,
+    VerificationSession, verify_bundle, verify_bundle_with_ci_outputs,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use signature::{AlgebraicSignature, BinarySymbol, ConstantSymbol, UnarySymbol};

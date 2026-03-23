@@ -212,6 +212,7 @@ let lean_module = export_lean_bundle("KarpalVerify", &amp;bundle);</code></pre>
 
     <h3 id="artifacts-execution">Artifacts, planning, and execution</h3>
     <p>With the <code>std</code> feature, <code>karpal-verify</code> can prepare artifact layouts, write files, build invocation plans, and execute those plans either as dry runs or as local processes.</p>
+    <p>Those serialized artifacts are schema-versioned as well: report JSON, Lean manifest JSON, and Lean diagnostics sidecars all carry <code>schema_version</code> markers so CI tooling can detect compatible vs. breaking format changes explicitly.</p>
 
     <table class="instance-table">
       <thead>

@@ -283,11 +283,27 @@ present it also writes a `*.lean-diagnostics.json` sidecar containing module-
 level diagnostics, theorem failure refs, and per-obligation Lean diagnostic
 groupings. The main JSON / Markdown summaries now cross-link both that sidecar
 and the generated Lean manifest path, and the Lean manifest now links back to
-those CI-oriented report files as well. Lean artifact batches now also carry
-structured theorem metadata, prelude/import metadata, generated package
-metadata, and write a small typed Lean manifest model alongside the module
-source plus `lakefile.lean` / `lean-toolchain` scaffolding at the artifact
-root.
+those CI-oriented report files as well. The serialized report JSON, Lean
+manifest JSON, and Lean diagnostics sidecar all now include explicit
+`schema_version` markers. Lean artifact batches now also carry structured
+theorem metadata, prelude/import metadata, generated package metadata, and
+write a small typed Lean manifest model alongside the module source plus
+`lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
+
+#### Schema compatibility
+
+Current serialized verification artifacts use schema version `1`.
+
+Version `1` guarantees:
+- a top-level string `schema_version`
+- stable existing field names within the `1.x` line
+- additive evolution via new optional fields only
+- nested `report_files` objects also include their own `schema_version`
+
+Consumers should accept `schema_version == "1"`, ignore unknown optional
+fields, and treat a future schema bump as a breaking parser boundary. See
+`docs/dev/verification-schema-versioning.md` for the fuller compatibility
+policy.
 
 ### Imported trust markers
 
