@@ -208,7 +208,9 @@ For SMT backends, `parse_smt_status()` recognizes `sat`, `unsat`, and `unknown`,
 while `parse_smt_output()` also extracts simple model / `:reason-unknown`
 information. Lean runs now also support `parse_lean_output(stdout, stderr)`,
 which captures structured diagnostics and theorem-name hits from Lean / lake
-messages. Successful results can be turned into lightweight certificates.
+messages. Reporting then maps those diagnostics back onto exported Lean theorem
+metadata instead of relying only on raw obligation names. Successful results can
+be turned into lightweight certificates.
 
 ### Reporting layer
 
@@ -270,10 +272,13 @@ assert_eq!(report.obligation_count(), 1);
 ```
 
 `VerificationSession::verify_with_ci_outputs(...)` also writes JSON / Markdown
-summaries directly beside generated artifacts. Lean artifact batches now also
-carry structured theorem metadata, prelude/import metadata, generated package
-metadata, and write a small Lean manifest alongside the module source plus
-`lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
+summaries directly beside generated artifacts. When a Lean module report is
+present it also writes a `*.lean-diagnostics.json` sidecar containing module-
+level diagnostics, theorem failure refs, and per-obligation Lean diagnostic
+groupings. Lean artifact batches now also carry structured theorem metadata,
+prelude/import metadata, generated package metadata, and write a small Lean
+manifest alongside the module source plus `lakefile.lean` / `lean-toolchain`
+scaffolding at the artifact root.
 
 ### Imported trust markers
 

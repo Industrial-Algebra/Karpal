@@ -37,6 +37,7 @@ pub struct LeanDiagnostic {
     pub column: Option<usize>,
     pub severity: String,
     pub message: String,
+    pub theorem_hits: Vec<String>,
 }
 
 /// Parsed Lean output details.
@@ -295,8 +296,23 @@ impl LeanOutput {
     pub fn theorem_diagnostics<'a>(&'a self, theorem_name: &str) -> Vec<&'a LeanDiagnostic> {
         self.diagnostics
             .iter()
-            .filter(|diagnostic| diagnostic.message.contains(theorem_name))
+            .filter(|diagnostic| {
+                diagnostic
+                    .theorem_hits
+                    .iter()
+                    .any(|hit| hit == theorem_name)
+            })
             .collect()
+    }
+
+    pub fn has_theorem_failure(&self, theorem_name: &str) -> bool {
+        self.theorem_hits.iter().any(|hit| hit == theorem_name)
+            || self.diagnostics.iter().any(|diagnostic| {
+                diagnostic
+                    .theorem_hits
+                    .iter()
+                    .any(|hit| hit == theorem_name)
+            })
     }
 }
 
@@ -312,7 +328,7 @@ pub fn parse_lean_output(stdout: &str, stderr: &str) -> LeanOutput {
         }
 
         if let Some(diagnostic) = parse_lean_diagnostic_line(trimmed) {
-            theorem_hits.extend(extract_theorem_hits(&diagnostic.message));
+            theorem_hits.extend(diagnostic.theorem_hits.iter().cloned());
             diagnostics.push(diagnostic);
             continue;
         }
@@ -338,6 +354,7 @@ fn parse_lean_diagnostic_line(line: &str) -> Option<LeanDiagnostic> {
         .trim_start_matches(':')
         .trim()
         .to_string();
+    let theorem_hits = extract_theorem_hits(&message);
 
     let mut location_parts = location.split(':');
     let file = location_parts.next()?.to_string();
@@ -350,32 +367,51 @@ fn parse_lean_diagnostic_line(line: &str) -> Option<LeanDiagnostic> {
         column,
         severity: severity.into(),
         message,
+        theorem_hits,
     })
 }
 
 fn extract_theorem_hits(text: &str) -> Vec<String> {
+    fn normalize(token: &str) -> String {
+        token
+            .trim_matches(|c: char| matches!(c, '`' | '"' | '\''))
+            .trim_end_matches(':')
+            .to_string()
+    }
+
+    let tokens = text
+        .split(|c: char| c.is_whitespace() || matches!(c, ',' | ';' | '(' | ')' | '[' | ']'))
+        .map(normalize)
+        .filter(|token| !token.is_empty())
+        .collect::<Vec<_>>();
+
     let mut hits = Vec::new();
 
-    for token in
-        text.split(|c: char| c.is_whitespace() || matches!(c, ',' | ';' | '(' | ')' | '[' | ']'))
-    {
-        let token = token.trim_matches(|c: char| matches!(c, '`' | '"' | '\''));
-        if token.is_empty() {
-            continue;
-        }
-
-        if token
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
-            && token.chars().any(|c| c.is_ascii_alphabetic())
-            && token != "error"
-            && token != "warning"
-            && token != "info"
+    for window in tokens.windows(2) {
+        if let [head, candidate] = window
+            && matches!(head.as_str(), "theorem" | "declaration" | "sorry")
+            && candidate
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
         {
-            hits.push(token.trim_end_matches(':').to_string());
+            hits.push(candidate.clone());
         }
     }
 
+    if hits.is_empty() {
+        for token in tokens {
+            if token
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+                && token.contains('_')
+            {
+                hits.push(token);
+            }
+        }
+    }
+
+    hits.sort();
+    hits.dedup();
     hits
 }
 
@@ -472,8 +508,13 @@ mod tests {
         assert_eq!(parsed.error_count(), 1);
         assert_eq!(parsed.diagnostics.len(), 2);
         assert_eq!(parsed.diagnostics[0].line, Some(7));
+        assert_eq!(
+            parsed.diagnostics[0].theorem_hits,
+            vec!["associativity".to_string()]
+        );
         assert!(parsed.theorem_hits.iter().any(|hit| hit == "associativity"));
         assert!(parsed.theorem_hits.iter().any(|hit| hit == "left_inverse"));
         assert_eq!(parsed.theorem_diagnostics("associativity").len(), 1);
+        assert!(parsed.has_theorem_failure("left_inverse"));
     }
 }

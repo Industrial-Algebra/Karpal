@@ -13,6 +13,7 @@ pub const DEFAULT_REPORT_STEM: &str = "verification-report";
 pub struct ReportFiles {
     pub json_path: String,
     pub markdown_path: String,
+    pub lean_diagnostics_json_path: Option<String>,
 }
 
 /// End-to-end verification session configuration for a bundle.
@@ -176,10 +177,82 @@ fn write_report_files(
     fs::write(&json_path, report.to_json())?;
     fs::write(&markdown_path, report.to_markdown())?;
 
+    let lean_diagnostics_json_path = report
+        .lean_module
+        .as_ref()
+        .map(|_| -> io::Result<String> {
+            let path = root.join(format!("{report_stem}.lean-diagnostics.json"));
+            fs::write(&path, render_lean_diagnostics_json(report))?;
+            Ok(path_to_string(&path))
+        })
+        .transpose()?;
+
     Ok(ReportFiles {
         json_path: path_to_string(&json_path),
         markdown_path: path_to_string(&markdown_path),
+        lean_diagnostics_json_path,
     })
+}
+
+fn render_lean_diagnostics_json(report: &VerificationReport) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+    }
+
+    let module = match &report.lean_module {
+        Some(module) => module,
+        None => return "null".into(),
+    };
+
+    let obligation_entries = report
+        .obligations
+        .iter()
+        .filter(|obligation| {
+            obligation.lean_theorem_ref.is_some() || !obligation.lean_diagnostics.is_empty()
+        })
+        .map(|obligation| {
+            let diagnostics = obligation
+                .lean_diagnostics
+                .iter()
+                .map(|diagnostic| format!("\"{}\"", esc(diagnostic)))
+                .collect::<Vec<_>>()
+                .join(",");
+            format!(
+                "{{\"obligation_name\":\"{}\",\"theorem_ref\":{},\"diagnostics\":[{}]}}",
+                esc(&obligation.obligation_name),
+                obligation
+                    .lean_theorem_ref
+                    .as_ref()
+                    .map(|theorem_ref| format!("\"{}\"", esc(theorem_ref)))
+                    .unwrap_or_else(|| "null".into()),
+                diagnostics
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let module_diagnostics = module
+        .diagnostics
+        .iter()
+        .map(|diagnostic| format!("\"{}\"", esc(diagnostic)))
+        .collect::<Vec<_>>()
+        .join(",");
+    let theorem_failures = module
+        .theorem_failures
+        .iter()
+        .map(|failure| format!("\"{}\"", esc(failure)))
+        .collect::<Vec<_>>()
+        .join(",");
+
+    format!(
+        "{{\"module_name\":\"{}\",\"module_diagnostics\":[{}],\"theorem_failures\":[{}],\"obligations\":[{}]}}",
+        esc(&module.module_name),
+        module_diagnostics,
+        theorem_failures,
+        obligation_entries
+    )
 }
 
 fn path_to_string(path: &Path) -> String {
@@ -231,6 +304,7 @@ mod tests {
                         column: Some(2),
                         severity: "warning".into(),
                         message: "declaration uses sorry: associativity".into(),
+                        theorem_hits: vec!["associativity".into()],
                     }],
                     theorem_hits: vec!["associativity".into()],
                 }),
@@ -267,6 +341,13 @@ mod tests {
         assert!(report.is_success());
         assert!(temp.join("smt").exists());
         assert!(temp.join("lean").exists());
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .map(|module| module.theorem_failures.clone()),
+            Some(vec!["KarpalVerify.associativity".into()])
+        );
 
         let _ = fs::remove_dir_all(&temp);
     }
@@ -286,8 +367,26 @@ mod tests {
         assert!(output.report.is_success());
         assert!(Path::new(&output.report_files.json_path).exists());
         assert!(Path::new(&output.report_files.markdown_path).exists());
+        assert!(
+            Path::new(
+                output
+                    .report_files
+                    .lean_diagnostics_json_path
+                    .as_deref()
+                    .expect("lean diagnostics sidecar should be written")
+            )
+            .exists()
+        );
         assert!(output.report_files.json_path.ends_with("summary.json"));
         assert!(output.report_files.markdown_path.ends_with("summary.md"));
+        assert!(
+            output
+                .report_files
+                .lean_diagnostics_json_path
+                .as_deref()
+                .unwrap()
+                .ends_with("summary.lean-diagnostics.json")
+        );
 
         let _ = fs::remove_dir_all(&temp);
     }

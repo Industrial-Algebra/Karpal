@@ -291,20 +291,26 @@ pub fn execute_report(
         let certificate = result.as_ref().and_then(|result| {
             certificate_for_obligation(result, obligation, artifact_path.clone())
         });
+        let lean_theorem = artifacts
+            .lean_export
+            .as_ref()
+            .and_then(|export| export.theorem_for_obligation(&obligation.name).cloned());
         let lean_theorem_ref = artifacts.lean_export.as_ref().and_then(|export| {
-            export
-                .theorem_for_obligation(&obligation.name)
+            lean_theorem
+                .as_ref()
                 .map(|theorem| theorem.witness_ref(&export.module_name))
         });
         let lean_diagnostics = lean_result
             .as_ref()
             .and_then(|result| result.lean_output.as_ref())
-            .map(|output| {
-                output
-                    .theorem_diagnostics(&obligation.name)
-                    .into_iter()
-                    .map(|diagnostic| diagnostic.message.clone())
-                    .collect::<Vec<_>>()
+            .and_then(|output| {
+                lean_theorem.as_ref().map(|theorem| {
+                    output
+                        .theorem_diagnostics(&theorem.theorem_name)
+                        .into_iter()
+                        .map(|diagnostic| diagnostic.message.clone())
+                        .collect::<Vec<_>>()
+                })
             })
             .unwrap_or_default();
         let lean_certificate = lean_result.as_ref().and_then(|result| {
@@ -377,11 +383,20 @@ pub fn execute_report(
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
-        let theorem_failures = lean_result
-            .as_ref()
-            .and_then(|result| result.lean_output.as_ref())
-            .map(|output| output.theorem_hits.clone())
-            .unwrap_or_default();
+        let theorem_failures = match (
+            artifacts.lean_export.as_ref(),
+            lean_result
+                .as_ref()
+                .and_then(|result| result.lean_output.as_ref()),
+        ) {
+            (Some(export), Some(output)) => export
+                .theorems
+                .iter()
+                .filter(|theorem| output.has_theorem_failure(&theorem.theorem_name))
+                .map(|theorem| theorem.witness_ref(&export.module_name))
+                .collect::<Vec<_>>(),
+            _ => Vec::new(),
+        };
         let certificate = lean_result.as_ref().and_then(|result| {
             certificate_for_module(
                 result,
@@ -571,6 +586,7 @@ mod tests {
                                 column: Some(2),
                                 severity: "error".into(),
                                 message: "unsolved goals in theorem associativity".into(),
+                                theorem_hits: vec!["associativity".into()],
                             }],
                             theorem_hits: vec!["associativity".into()],
                         }
@@ -624,7 +640,7 @@ mod tests {
                 .lean_module
                 .as_ref()
                 .map(|module| module.theorem_failures.clone()),
-            Some(vec!["associativity".to_string()])
+            Some(vec!["KarpalVerify.associativity".to_string()])
         );
     }
 
@@ -651,5 +667,76 @@ mod tests {
         assert!(json.contains("\"bundle_name\":\"demo\""));
         assert!(markdown.contains("# Verification Report"));
         assert!(markdown.contains("`assoc`"));
+    }
+
+    #[test]
+    fn theorem_mapping_uses_exported_theorem_identity_not_obligation_name() {
+        let sig = AlgebraicSignature::semiring(Sort::Int, "add", "mul", "zero", "one");
+        let bundle = ObligationBundle::semiring(
+            "sum_semiring",
+            Origin::new("karpal-core", "Semiring for Sum<i32>"),
+            &sig,
+        );
+        let layout = ArtifactLayout::new("target/karpal-verify-report-test-3");
+        let artifacts = dry_run_bundle_artifacts(
+            &bundle,
+            &layout,
+            "KarpalVerify",
+            &SmtConfig::default(),
+            &LeanConfig::default(),
+        );
+
+        struct TheoremNameRunner;
+        impl VerifierRunner for TheoremNameRunner {
+            fn run(&self, plan: &crate::InvocationPlan) -> ExecutionResult {
+                ExecutionResult {
+                    plan: plan.clone(),
+                    status: match plan.kind {
+                        crate::CommandKind::Smt => ExecutionStatus::Unsat,
+                        crate::CommandKind::Lean => ExecutionStatus::Failure,
+                    },
+                    stdout: String::new(),
+                    stderr: String::new(),
+                    exit_code: Some(1),
+                    backend_version: Some("tool 1.0".into()),
+                    smt_output: Some(crate::SmtOutput {
+                        status: Some(ExecutionStatus::Unsat),
+                        model: None,
+                        reason_unknown: None,
+                    }),
+                    lean_output: (plan.kind == crate::CommandKind::Lean).then(|| {
+                        crate::LeanOutput {
+                            diagnostics: vec![crate::LeanDiagnostic {
+                                file: Some("lean/KarpalVerify.lean".into()),
+                                line: Some(9),
+                                column: Some(2),
+                                severity: "error".into(),
+                                message: "unsolved goals in theorem left_distributivity".into(),
+                                theorem_hits: vec!["left_distributivity".into()],
+                            }],
+                            theorem_hits: vec!["left_distributivity".into()],
+                        }
+                    }),
+                }
+            }
+        }
+
+        let report = execute_report(&bundle, &artifacts, &TheoremNameRunner);
+        let left_distributivity = report
+            .obligations
+            .iter()
+            .find(|entry| entry.obligation_name == "left_distributivity")
+            .expect("left distributivity obligation should be present");
+        assert_eq!(
+            left_distributivity.lean_diagnostics,
+            vec!["unsolved goals in theorem left_distributivity".to_string()]
+        );
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .map(|module| module.theorem_failures.clone()),
+            Some(vec!["KarpalVerify.left_distributivity".to_string()])
+        );
     }
 }
