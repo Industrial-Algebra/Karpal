@@ -1,5 +1,5 @@
 use crate::{
-    InvocationPlan, LeanConfig, LeanExport, ObligationBundle, SmtConfig,
+    InvocationPlan, LeanConfig, LeanExport, LeanProject, ObligationBundle, SmtConfig,
     export_lean_bundle_structured, export_smt_bundle,
 };
 
@@ -27,6 +27,7 @@ pub struct ArtifactBatch {
     pub records: Vec<ArtifactRecord>,
     pub plans: Vec<InvocationPlan>,
     pub lean_export: Option<LeanExport>,
+    pub lean_project: Option<LeanProject>,
 }
 
 #[cfg(feature = "std")]
@@ -74,6 +75,7 @@ pub fn write_bundle_artifacts(
     }
 
     let lean_export = export_lean_bundle_structured(lean_module_name, bundle);
+    let lean_project = lean_export.project();
     let lean_path = layout.lean_dir.join(format!("{lean_module_name}.lean"));
     fs::write(&lean_path, &lean_export.source)?;
     plans.push(InvocationPlan::lean(lean, &lean_path));
@@ -85,10 +87,27 @@ pub fn write_bundle_artifacts(
     let manifest_path = layout
         .lean_dir
         .join(format!("{lean_module_name}.manifest.json"));
-    fs::write(&manifest_path, render_lean_manifest_json(&lean_export))?;
+    fs::write(
+        &manifest_path,
+        render_lean_manifest_json(&lean_export, &lean_project),
+    )?;
     records.push(ArtifactRecord {
         name: format!("{lean_module_name}_manifest"),
         path: path_to_string(&manifest_path),
+    });
+
+    let lakefile_path = layout.root.join("lakefile.lean");
+    fs::write(&lakefile_path, lean_project.render_lakefile())?;
+    records.push(ArtifactRecord {
+        name: "lakefile".into(),
+        path: path_to_string(&lakefile_path),
+    });
+
+    let toolchain_path = layout.root.join("lean-toolchain");
+    fs::write(&toolchain_path, lean_project.render_toolchain())?;
+    records.push(ArtifactRecord {
+        name: "lean_toolchain".into(),
+        path: path_to_string(&toolchain_path),
     });
 
     Ok(ArtifactBatch {
@@ -96,6 +115,7 @@ pub fn write_bundle_artifacts(
         records,
         plans,
         lean_export: Some(lean_export),
+        lean_project: Some(lean_project),
     })
 }
 
@@ -120,6 +140,7 @@ pub fn dry_run_bundle_artifacts(
     }
 
     let lean_export = export_lean_bundle_structured(lean_module_name, bundle);
+    let lean_project = lean_export.project();
     let lean_path = layout.lean_dir.join(format!("{lean_module_name}.lean"));
     plans.push(InvocationPlan::lean(lean, &lean_path));
     records.push(ArtifactRecord {
@@ -135,21 +156,56 @@ pub fn dry_run_bundle_artifacts(
         path: path_to_string(&manifest_path),
     });
 
+    let lakefile_path = layout.root.join("lakefile.lean");
+    records.push(ArtifactRecord {
+        name: "lakefile".into(),
+        path: path_to_string(&lakefile_path),
+    });
+
+    let toolchain_path = layout.root.join("lean-toolchain");
+    records.push(ArtifactRecord {
+        name: "lean_toolchain".into(),
+        path: path_to_string(&toolchain_path),
+    });
+
     ArtifactBatch {
         root: path_to_string(&layout.root),
         records,
         plans,
         lean_export: Some(lean_export),
+        lean_project: Some(lean_project),
     }
 }
 
 #[cfg(feature = "std")]
-fn render_lean_manifest_json(export: &LeanExport) -> String {
+fn render_lean_manifest_json(export: &LeanExport, project: &LeanProject) -> String {
     fn esc(s: &str) -> String {
         s.replace('\\', "\\\\")
             .replace('"', "\\\"")
             .replace('\n', "\\n")
     }
+
+    let import_entries = export
+        .prelude
+        .imports
+        .iter()
+        .map(|import| format!("\"{}\"", esc(&import.module)))
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let alias_entries = export
+        .prelude
+        .aliases
+        .iter()
+        .map(|alias| {
+            format!(
+                "{{\"alias\":\"{}\",\"target\":\"{}\"}}",
+                esc(&alias.alias),
+                esc(&alias.target)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
 
     let theorem_entries = export
         .theorems
@@ -166,8 +222,13 @@ fn render_lean_manifest_json(export: &LeanExport) -> String {
         .join(",");
 
     format!(
-        "{{\"module_name\":\"{}\",\"theorems\":[{}]}}",
+        "{{\"module_name\":\"{}\",\"project\":{{\"package_name\":\"{}\",\"toolchain\":\"{}\",\"requires_mathlib\":{}}},\"prelude\":{{\"imports\":[{}],\"aliases\":[{}]}},\"theorems\":[{}]}}",
         esc(&export.module_name),
+        esc(&project.package_name),
+        esc(&project.toolchain),
+        project.requires_mathlib,
+        import_entries,
+        alias_entries,
         theorem_entries
     )
 }
@@ -193,10 +254,10 @@ mod tests {
             &layout,
             "KarpalVerify",
             &SmtConfig::default(),
-            &LeanConfig::default(),
+            &LeanConfig::default().with_driver(crate::LeanDriver::LakeEnv),
         );
 
-        assert_eq!(batch.records.len(), 5);
+        assert_eq!(batch.records.len(), 7);
         assert_eq!(batch.plans.len(), 4);
         assert!(
             batch
@@ -213,6 +274,28 @@ mod tests {
         assert_eq!(
             batch.lean_export.as_ref().unwrap().module_name,
             "KarpalVerify"
+        );
+        assert_eq!(
+            batch.lean_project.as_ref().unwrap().package_name,
+            "karpalverify"
+        );
+        assert!(
+            batch
+                .records
+                .iter()
+                .any(|r| r.path.ends_with("lakefile.lean"))
+        );
+        assert!(
+            batch
+                .records
+                .iter()
+                .any(|r| r.path.ends_with("lean-toolchain"))
+        );
+        assert!(
+            batch
+                .plans
+                .iter()
+                .any(|plan| plan.kind == crate::CommandKind::Lean && plan.executable == "lake")
         );
     }
 
@@ -244,6 +327,9 @@ mod tests {
                 .all(|record| Path::new(&record.path).exists())
         );
         assert!(batch.lean_export.is_some());
+        assert!(batch.lean_project.is_some());
+        assert!(temp.join("lakefile.lean").exists());
+        assert!(temp.join("lean-toolchain").exists());
 
         let _ = fs::remove_dir_all(&temp);
     }

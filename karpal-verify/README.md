@@ -9,6 +9,9 @@ External prover bridge for the Karpal ecosystem.
 - grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
 - exporters for **SMT-LIB2** and **Lean 4**
 - structured Lean module/theorem metadata for a deeper Lean bridge
+- Lean import/prelude bridging for module imports and symbol aliases
+- Lean project/package scaffolding for generated modules
+- project-aware Lean execution planning via `lake env lean`
 - artifact writers and **dry-run invocation plans** for external tools
 - runner abstractions, backend-specific verification policies, and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
@@ -103,6 +106,28 @@ let structured = karpal_verify::Lean4::export("KarpalVerify", &[obligation]);
 assert_eq!(structured.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.sum_assoc");
 ```
 
+You can also drive the Lean prelude explicitly when a module needs imports or
+raw IR symbols need stable Lean-facing aliases:
+
+```rust
+use karpal_verify::{export_module_with_prelude, LeanPrelude, Obligation, Origin, Sort};
+
+let obligation = Obligation::associativity(
+    "sum_assoc",
+    Origin::new("karpal-algebra", "Semigroup for Sum<i32>"),
+    Sort::Int,
+    "combine-op",
+);
+
+let module = export_module_with_prelude(
+    "KarpalVerify",
+    &[obligation],
+    LeanPrelude::new().with_import("Mathlib"),
+);
+assert!(module.starts_with("import Mathlib"));
+assert!(module.contains("abbrev sym_combine_op := «combine-op»"));
+```
+
 ### Batch export APIs
 
 ```rust
@@ -128,7 +153,9 @@ assert_eq!(lean_export.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.as
 ### Artifact writing and dry runs
 
 With the `std` feature, `karpal-verify` can write export artifacts to disk and
-prepare dry-run command plans for solver / Lean invocation:
+prepare dry-run command plans for solver / Lean invocation. Lean plans can also
+run in project-aware mode through `lake env lean` from the generated artifact
+root:
 
 ```rust
 use karpal_verify::{
@@ -148,9 +175,14 @@ let batch = dry_run_bundle_artifacts(
     &layout,
     "KarpalVerify",
     &SmtConfig::default(),
-    &LeanConfig::default(),
+    &LeanConfig::default().with_driver(karpal_verify::LeanDriver::LakeEnv),
 );
 assert_eq!(batch.plans.len(), 4);
+assert!(batch.lean_project.is_some());
+assert!(batch
+    .plans
+    .iter()
+    .any(|plan| plan.kind == karpal_verify::CommandKind::Lean && plan.executable == "lake"));
 ```
 
 ### Execution model
@@ -174,7 +206,9 @@ assert_eq!(result.status, karpal_verify::ExecutionStatus::DryRun);
 
 For SMT backends, `parse_smt_status()` recognizes `sat`, `unsat`, and `unknown`,
 while `parse_smt_output()` also extracts simple model / `:reason-unknown`
-information. Successful results can be turned into lightweight certificates.
+information. Lean runs now also support `parse_lean_output(stdout, stderr)`,
+which captures structured diagnostics and theorem-name hits from Lean / lake
+messages. Successful results can be turned into lightweight certificates.
 
 ### Reporting layer
 
@@ -237,8 +271,9 @@ assert_eq!(report.obligation_count(), 1);
 
 `VerificationSession::verify_with_ci_outputs(...)` also writes JSON / Markdown
 summaries directly beside generated artifacts. Lean artifact batches now also
-carry structured theorem metadata and write a small Lean manifest alongside the
-module source.
+carry structured theorem metadata, prelude/import metadata, generated package
+metadata, and write a small Lean manifest alongside the module source plus
+`lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
 
 ### Imported trust markers
 
@@ -259,14 +294,15 @@ let _: Proven<IsAssociative, i32> = unsafe { externally_checked.into_proven() };
 
 ## Current scope
 
-This crate currently provides the Phase 12 pre-implementation scaffold:
+This crate currently provides the pre-integration verification scaffold:
 
 - obligation modeling
 - text export backends
+- structured Lean export / prelude metadata
 - explicit trust-model types
 
-Solver invocation, Lean project generation, and amari-flynn integration can
-build on this foundation next.
+Solver invocation, richer Lean project generation, and amari-flynn integration
+can build on this foundation next.
 
 ## License
 

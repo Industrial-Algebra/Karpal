@@ -30,6 +30,10 @@ impl LeanCertificate {
     pub fn witness_ref(module_name: &str, theorem_name: &str) -> String {
         format!("{module_name}.{theorem_name}")
     }
+
+    pub fn module_ref(module_name: &str) -> String {
+        module_name.to_string()
+    }
 }
 
 /// Metadata describing imported external evidence.
@@ -225,5 +229,10 @@ mod tests {
                 .unwrap()
                 .starts_with("fnv1a64:")
         );
+    }
+
+    #[test]
+    fn lean_module_ref_is_stable() {
+        assert_eq!(LeanCertificate::module_ref("KarpalVerify"), "KarpalVerify");
     }
 }

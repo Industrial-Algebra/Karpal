@@ -29,6 +29,23 @@ pub struct SmtOutput {
     pub reason_unknown: Option<String>,
 }
 
+/// One parsed Lean diagnostic line.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LeanDiagnostic {
+    pub file: Option<String>,
+    pub line: Option<usize>,
+    pub column: Option<usize>,
+    pub severity: String,
+    pub message: String,
+}
+
+/// Parsed Lean output details.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LeanOutput {
+    pub diagnostics: Vec<LeanDiagnostic>,
+    pub theorem_hits: Vec<String>,
+}
+
 /// Backend-specific verification policy.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VerificationPolicy {
@@ -68,6 +85,7 @@ pub struct ExecutionResult {
     pub exit_code: Option<i32>,
     pub backend_version: Option<String>,
     pub smt_output: Option<SmtOutput>,
+    pub lean_output: Option<LeanOutput>,
 }
 
 impl ExecutionResult {
@@ -129,6 +147,7 @@ impl VerifierRunner for DryRunner {
             exit_code: None,
             backend_version: None,
             smt_output: None,
+            lean_output: None,
         }
     }
 }
@@ -156,7 +175,11 @@ impl VerifierRunner for LocalProcessRunner {
                     CommandKind::Smt => Some(parse_smt_output(&stdout)),
                     CommandKind::Lean => None,
                 };
-                let status = classify_status(plan.kind, output.status.success(), &stdout);
+                let lean_output = match plan.kind {
+                    CommandKind::Smt => None,
+                    CommandKind::Lean => Some(parse_lean_output(&stdout, &stderr)),
+                };
+                let status = classify_status(plan.kind, output.status.success(), &stdout, &stderr);
                 ExecutionResult {
                     plan: plan.clone(),
                     status,
@@ -165,6 +188,7 @@ impl VerifierRunner for LocalProcessRunner {
                     exit_code: output.status.code(),
                     backend_version,
                     smt_output,
+                    lean_output,
                 }
             }
             Err(err) => ExecutionResult {
@@ -175,12 +199,18 @@ impl VerifierRunner for LocalProcessRunner {
                 exit_code: None,
                 backend_version,
                 smt_output: None,
+                lean_output: None,
             },
         }
     }
 }
 
-fn classify_status(kind: CommandKind, process_success: bool, stdout: &str) -> ExecutionStatus {
+fn classify_status(
+    kind: CommandKind,
+    process_success: bool,
+    stdout: &str,
+    stderr: &str,
+) -> ExecutionStatus {
     match kind {
         CommandKind::Smt => parse_smt_output(stdout)
             .status
@@ -190,7 +220,8 @@ fn classify_status(kind: CommandKind, process_success: bool, stdout: &str) -> Ex
                 ExecutionStatus::Failure
             }),
         CommandKind::Lean => {
-            if process_success {
+            let parsed = parse_lean_output(stdout, stderr);
+            if process_success && parsed.error_count() == 0 {
                 ExecutionStatus::Success
             } else {
                 ExecutionStatus::Failure
@@ -251,6 +282,101 @@ pub fn parse_smt_output(stdout: &str) -> SmtOutput {
 /// Parse the first SMT solver status token from stdout.
 pub fn parse_smt_status(stdout: &str) -> Option<ExecutionStatus> {
     parse_smt_output(stdout).status
+}
+
+impl LeanOutput {
+    pub fn error_count(&self) -> usize {
+        self.diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.severity == "error")
+            .count()
+    }
+
+    pub fn theorem_diagnostics<'a>(&'a self, theorem_name: &str) -> Vec<&'a LeanDiagnostic> {
+        self.diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.message.contains(theorem_name))
+            .collect()
+    }
+}
+
+/// Parse Lean stdout/stderr into structured diagnostics and theorem references.
+pub fn parse_lean_output(stdout: &str, stderr: &str) -> LeanOutput {
+    let mut diagnostics = Vec::new();
+    let mut theorem_hits = Vec::new();
+
+    for line in stdout.lines().chain(stderr.lines()) {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        if let Some(diagnostic) = parse_lean_diagnostic_line(trimmed) {
+            theorem_hits.extend(extract_theorem_hits(&diagnostic.message));
+            diagnostics.push(diagnostic);
+            continue;
+        }
+
+        theorem_hits.extend(extract_theorem_hits(trimmed));
+    }
+
+    theorem_hits.sort();
+    theorem_hits.dedup();
+
+    LeanOutput {
+        diagnostics,
+        theorem_hits,
+    }
+}
+
+fn parse_lean_diagnostic_line(line: &str) -> Option<LeanDiagnostic> {
+    let (location, rest) = line.split_once(": ")?;
+    let severity = ["error", "warning", "info"]
+        .into_iter()
+        .find(|severity| rest.starts_with(severity))?;
+    let message = rest[severity.len()..]
+        .trim_start_matches(':')
+        .trim()
+        .to_string();
+
+    let mut location_parts = location.split(':');
+    let file = location_parts.next()?.to_string();
+    let line_num = location_parts.next()?.parse().ok();
+    let column = location_parts.next()?.parse().ok();
+
+    Some(LeanDiagnostic {
+        file: Some(file),
+        line: line_num,
+        column,
+        severity: severity.into(),
+        message,
+    })
+}
+
+fn extract_theorem_hits(text: &str) -> Vec<String> {
+    let mut hits = Vec::new();
+
+    for token in
+        text.split(|c: char| c.is_whitespace() || matches!(c, ',' | ';' | '(' | ')' | '[' | ']'))
+    {
+        let token = token.trim_matches(|c: char| matches!(c, '`' | '"' | '\''));
+        if token.is_empty() {
+            continue;
+        }
+
+        if token
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.')
+            && token.chars().any(|c| c.is_ascii_alphabetic())
+            && token != "error"
+            && token != "warning"
+            && token != "info"
+        {
+            hits.push(token.trim_end_matches(':').to_string());
+        }
+    }
+
+    hits
 }
 
 #[cfg(feature = "std")]
@@ -318,6 +444,7 @@ mod tests {
             exit_code: Some(0),
             backend_version: Some("Z3 4.13.0".into()),
             smt_output: Some(parse_smt_output("unsat")),
+            lean_output: None,
         };
         let cert = result
             .certificate_for_obligation("karpal-core::Semigroup for i32 [associativity]")
@@ -333,5 +460,20 @@ mod tests {
         assert!(!VerificationPolicy::for_kind(CommandKind::Smt).accepts(ExecutionStatus::Success));
         assert!(VerificationPolicy::for_kind(CommandKind::Lean).accepts(ExecutionStatus::Success));
         assert!(!VerificationPolicy::for_kind(CommandKind::Lean).accepts(ExecutionStatus::Unsat));
+    }
+
+    #[test]
+    fn parses_lean_diagnostics_and_theorem_hits() {
+        let parsed = parse_lean_output(
+            "",
+            "lean/KarpalVerify.lean:7:2: error: unsolved goals in theorem associativity\nlean/KarpalVerify.lean:12:4: warning: declaration uses sorry: left_inverse",
+        );
+
+        assert_eq!(parsed.error_count(), 1);
+        assert_eq!(parsed.diagnostics.len(), 2);
+        assert_eq!(parsed.diagnostics[0].line, Some(7));
+        assert!(parsed.theorem_hits.iter().any(|hit| hit == "associativity"));
+        assert!(parsed.theorem_hits.iter().any(|hit| hit == "left_inverse"));
+        assert_eq!(parsed.theorem_diagnostics("associativity").len(), 1);
     }
 }

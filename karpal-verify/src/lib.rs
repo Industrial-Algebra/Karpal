@@ -36,13 +36,17 @@ pub use artifact::{
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use bundle::ObligationBundle;
 #[cfg(feature = "std")]
-pub use command::{CommandKind, InvocationPlan, LeanConfig, SmtConfig};
+pub use command::{CommandKind, InvocationPlan, LeanConfig, LeanDriver, SmtConfig};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use export::{
-    export_lean_bundle, export_lean_bundle_structured, export_smt_batch, export_smt_bundle,
+    export_lean_bundle, export_lean_bundle_structured, export_lean_bundle_structured_with_prelude,
+    export_lean_bundle_with_prelude, export_smt_batch, export_smt_bundle,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub use lean::{Lean4, LeanExport, LeanTheorem, export, export_module as export_lean_module};
+pub use lean::{
+    Lean4, LeanAlias, LeanExport, LeanImport, LeanPrelude, LeanProject, LeanTheorem, export,
+    export_module as export_lean_module, export_module_with_prelude, export_with_prelude,
+};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use obligation::{Declaration, Obligation, Origin, ProofDialect, Sort, Term, VerificationTier};
 #[cfg(feature = "std")]
@@ -51,8 +55,9 @@ pub use report::{
 };
 #[cfg(feature = "std")]
 pub use runner::{
-    DryRunner, ExecutionResult, ExecutionStatus, LocalProcessRunner, SmtOutput, VerificationPolicy,
-    VerifierRunner, parse_smt_output, parse_smt_status,
+    DryRunner, ExecutionResult, ExecutionStatus, LeanDiagnostic, LeanOutput, LocalProcessRunner,
+    SmtOutput, VerificationPolicy, VerifierRunner, parse_lean_output, parse_smt_output,
+    parse_smt_status,
 };
 #[cfg(feature = "std")]
 pub use session::{

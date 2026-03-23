@@ -17,8 +17,11 @@ pub struct ObligationReport {
     pub obligation_name: String,
     pub summary: String,
     pub artifact_path: Option<String>,
+    pub lean_theorem_ref: Option<String>,
+    pub lean_diagnostics: Vec<String>,
     pub result: Option<ExecutionResult>,
     pub certificate: Option<Certificate>,
+    pub lean_certificate: Option<Certificate>,
 }
 
 impl ObligationReport {
@@ -40,7 +43,12 @@ pub struct ModuleReport {
     pub module_name: String,
     pub artifact_path: Option<String>,
     pub theorem_refs: Vec<String>,
+    pub prelude_imports: Vec<String>,
+    pub prelude_aliases: Vec<String>,
+    pub diagnostics: Vec<String>,
+    pub theorem_failures: Vec<String>,
     pub result: Option<ExecutionResult>,
+    pub certificate: Option<Certificate>,
 }
 
 impl ModuleReport {
@@ -86,6 +94,14 @@ impl VerificationReport {
                 .replace('\n', "\\n")
         }
 
+        fn render_certificate_json(certificate: &Certificate) -> String {
+            format!(
+                "{{\"backend\":\"{}\",\"witness_ref\":\"{}\"}}",
+                esc(certificate.backend),
+                esc(&certificate.witness_ref)
+            )
+        }
+
         let mut out = String::new();
         let _ = write!(
             out,
@@ -102,7 +118,7 @@ impl VerificationReport {
             }
             let _ = write!(
                 out,
-                "{{\"name\":\"{}\",\"summary\":\"{}\",\"status\":\"{}\",\"artifact_path\":{},\"certificate\":{}}}",
+                "{{\"name\":\"{}\",\"summary\":\"{}\",\"status\":\"{}\",\"artifact_path\":{},\"lean_theorem_ref\":{},\"lean_diagnostic_count\":{},\"certificate\":{},\"lean_certificate\":{}}}",
                 esc(&obligation.obligation_name),
                 esc(&obligation.summary),
                 obligation
@@ -115,13 +131,20 @@ impl VerificationReport {
                     .map(|p| format!("\"{}\"", esc(p)))
                     .unwrap_or_else(|| "null".into()),
                 obligation
+                    .lean_theorem_ref
+                    .as_ref()
+                    .map(|r| format!("\"{}\"", esc(r)))
+                    .unwrap_or_else(|| "null".into()),
+                obligation.lean_diagnostics.len(),
+                obligation
                     .certificate
                     .as_ref()
-                    .map(|c| format!(
-                        "{{\"backend\":\"{}\",\"witness_ref\":\"{}\"}}",
-                        esc(c.backend),
-                        esc(&c.witness_ref)
-                    ))
+                    .map(render_certificate_json)
+                    .unwrap_or_else(|| "null".into()),
+                obligation
+                    .lean_certificate
+                    .as_ref()
+                    .map(render_certificate_json)
                     .unwrap_or_else(|| "null".into())
             );
         }
@@ -129,13 +152,22 @@ impl VerificationReport {
         if let Some(module) = &self.lean_module {
             let _ = write!(
                 out,
-                ",\"lean_module\":{{\"module_name\":\"{}\",\"status\":\"{}\",\"theorem_count\":{}}}",
+                ",\"lean_module\":{{\"module_name\":\"{}\",\"status\":\"{}\",\"theorem_count\":{},\"import_count\":{},\"alias_count\":{},\"diagnostic_count\":{},\"theorem_failure_count\":{},\"certificate\":{}}}",
                 esc(&module.module_name),
                 module
                     .status()
                     .map(|s| format!("{s:?}"))
                     .unwrap_or_else(|| "None".into()),
-                module.theorem_refs.len()
+                module.theorem_refs.len(),
+                module.prelude_imports.len(),
+                module.prelude_aliases.len(),
+                module.diagnostics.len(),
+                module.theorem_failures.len(),
+                module
+                    .certificate
+                    .as_ref()
+                    .map(render_certificate_json)
+                    .unwrap_or_else(|| "null".into())
             );
         }
         out.push('}');
@@ -152,20 +184,34 @@ impl VerificationReport {
         let _ = writeln!(out, "- Successes: {}", self.success_count());
         let _ = writeln!(out, "- Failures: {}", self.failure_count());
         let _ = writeln!(out);
-        let _ = writeln!(out, "| Obligation | Status | Artifact | Certificate |");
-        let _ = writeln!(out, "|---|---|---|---|");
+        let _ = writeln!(
+            out,
+            "| Obligation | Status | Artifact | Lean theorem | Lean diagnostics | SMT certificate | Lean certificate |"
+        );
+        let _ = writeln!(out, "|---|---|---|---|---|---|---|");
         for obligation in &self.obligations {
             let _ = writeln!(
                 out,
-                "| `{}` | `{}` | `{}` | `{}` |",
+                "| `{}` | `{}` | `{}` | `{}` | `{}` | `{}` | `{}` |",
                 obligation.obligation_name,
                 obligation
                     .status()
                     .map(|s| format!("{s:?}"))
                     .unwrap_or_else(|| "None".into()),
                 obligation.artifact_path.as_deref().unwrap_or("-"),
+                obligation.lean_theorem_ref.as_deref().unwrap_or("-"),
+                if obligation.lean_diagnostics.is_empty() {
+                    "-".into()
+                } else {
+                    obligation.lean_diagnostics.join("; ")
+                },
                 obligation
                     .certificate
+                    .as_ref()
+                    .map(|c| c.backend)
+                    .unwrap_or("-"),
+                obligation
+                    .lean_certificate
                     .as_ref()
                     .map(|c| c.backend)
                     .unwrap_or("-")
@@ -175,6 +221,23 @@ impl VerificationReport {
             let _ = writeln!(out);
             let _ = writeln!(out, "Lean module: `{}`", module.module_name);
             let _ = writeln!(out, "Lean theorems: {}", module.theorem_refs.len());
+            let _ = writeln!(out, "Lean imports: {}", module.prelude_imports.len());
+            let _ = writeln!(out, "Lean aliases: {}", module.prelude_aliases.len());
+            let _ = writeln!(out, "Lean diagnostics: {}", module.diagnostics.len());
+            let _ = writeln!(
+                out,
+                "Lean theorem failures: {}",
+                module.theorem_failures.len()
+            );
+            let _ = writeln!(
+                out,
+                "Lean certificate: `{}`",
+                module
+                    .certificate
+                    .as_ref()
+                    .map(|c| c.witness_ref.as_str())
+                    .unwrap_or("-")
+            );
         }
         out
     }
@@ -191,6 +254,21 @@ pub fn execute_report(
     artifacts: &ArtifactBatch,
     runner: &impl VerifierRunner,
 ) -> VerificationReport {
+    let lean_record = artifacts
+        .records
+        .iter()
+        .find(|record| record.path.ends_with(".lean"));
+    let lean_result = lean_record.and_then(|record| {
+        artifacts
+            .plans
+            .iter()
+            .find(|plan| {
+                plan.kind == crate::CommandKind::Lean
+                    && plan.input_files.iter().any(|f| f == &record.path)
+            })
+            .map(|plan| runner.run(plan))
+    });
+
     let mut obligations = Vec::new();
 
     for obligation in bundle.obligations() {
@@ -213,46 +291,118 @@ pub fn execute_report(
         let certificate = result.as_ref().and_then(|result| {
             certificate_for_obligation(result, obligation, artifact_path.clone())
         });
+        let lean_theorem_ref = artifacts.lean_export.as_ref().and_then(|export| {
+            export
+                .theorem_for_obligation(&obligation.name)
+                .map(|theorem| theorem.witness_ref(&export.module_name))
+        });
+        let lean_diagnostics = lean_result
+            .as_ref()
+            .and_then(|result| result.lean_output.as_ref())
+            .map(|output| {
+                output
+                    .theorem_diagnostics(&obligation.name)
+                    .into_iter()
+                    .map(|diagnostic| diagnostic.message.clone())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let lean_certificate = lean_result.as_ref().and_then(|result| {
+            lean_theorem_ref.as_ref().and_then(|witness_ref| {
+                certificate_for_witness::<crate::LeanCertificate>(
+                    result,
+                    obligation,
+                    witness_ref.clone(),
+                    lean_record.map(|record| record.path.clone()),
+                )
+            })
+        });
 
         obligations.push(ObligationReport {
             obligation_name: obligation.name.clone(),
             summary: obligation.summary(),
             artifact_path,
+            lean_theorem_ref,
+            lean_diagnostics,
             result,
             certificate,
+            lean_certificate,
         });
     }
 
-    let lean_module = artifacts
-        .records
-        .iter()
-        .find(|record| record.path.ends_with(".lean"))
-        .map(|record| {
-            let result = artifacts
-                .plans
-                .iter()
-                .find(|plan| {
-                    plan.kind == crate::CommandKind::Lean
-                        && plan.input_files.iter().any(|f| f == &record.path)
-                })
-                .map(|plan| runner.run(plan));
-            ModuleReport {
-                module_name: record.name.clone(),
-                artifact_path: Some(record.path.clone()),
-                theorem_refs: artifacts
-                    .lean_export
-                    .as_ref()
-                    .map(|export| {
-                        export
-                            .theorems
-                            .iter()
-                            .map(|theorem| theorem.witness_ref(&export.module_name))
-                            .collect()
-                    })
-                    .unwrap_or_default(),
+    let lean_module = lean_record.map(|record| {
+        let theorem_refs = artifacts
+            .lean_export
+            .as_ref()
+            .map(|export| {
+                export
+                    .theorems
+                    .iter()
+                    .map(|theorem| theorem.witness_ref(&export.module_name))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let prelude_imports = artifacts
+            .lean_export
+            .as_ref()
+            .map(|export| {
+                export
+                    .prelude
+                    .imports
+                    .iter()
+                    .map(|import| import.module.clone())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let prelude_aliases = artifacts
+            .lean_export
+            .as_ref()
+            .map(|export| {
+                export
+                    .prelude
+                    .aliases
+                    .iter()
+                    .map(|alias| format!("{} := {}", alias.alias, alias.target))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let diagnostics = lean_result
+            .as_ref()
+            .and_then(|result| result.lean_output.as_ref())
+            .map(|output| {
+                output
+                    .diagnostics
+                    .iter()
+                    .map(|diagnostic| diagnostic.message.clone())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let theorem_failures = lean_result
+            .as_ref()
+            .and_then(|result| result.lean_output.as_ref())
+            .map(|output| output.theorem_hits.clone())
+            .unwrap_or_default();
+        let certificate = lean_result.as_ref().and_then(|result| {
+            certificate_for_module(
                 result,
-            }
+                &record.name,
+                Some(record.path.clone()),
+                theorem_refs.len(),
+            )
         });
+
+        ModuleReport {
+            module_name: record.name.clone(),
+            artifact_path: Some(record.path.clone()),
+            theorem_refs,
+            prelude_imports,
+            prelude_aliases,
+            diagnostics,
+            theorem_failures,
+            result: lean_result.clone(),
+            certificate,
+        }
+    });
 
     VerificationReport {
         bundle_name: bundle.name.clone(),
@@ -267,21 +417,65 @@ fn certificate_for_obligation(
     obligation: &Obligation,
     artifact_path: Option<String>,
 ) -> Option<Certificate> {
+    let policy = result.verification_policy();
+    let witness_ref = format!("{}:{}", result.plan.executable, policy.witness_suffix);
+    match result.plan.kind {
+        crate::CommandKind::Smt => certificate_for_witness::<crate::SmtCertificate>(
+            result,
+            obligation,
+            witness_ref,
+            artifact_path,
+        ),
+        crate::CommandKind::Lean => certificate_for_witness::<crate::LeanCertificate>(
+            result,
+            obligation,
+            witness_ref,
+            artifact_path,
+        ),
+    }
+}
+
+fn certificate_for_witness<B: crate::VerificationBackend>(
+    result: &ExecutionResult,
+    obligation: &Obligation,
+    witness_ref: String,
+    artifact_path: Option<String>,
+) -> Option<Certificate> {
     if !result.is_success() {
         return None;
     }
 
-    let policy = result.verification_policy();
-    let mut cert = match result.plan.kind {
-        crate::CommandKind::Smt => Certificate::from_obligation::<crate::SmtCertificate>(
-            obligation,
-            format!("{}:{}", result.plan.executable, policy.witness_suffix),
-        ),
-        crate::CommandKind::Lean => Certificate::from_obligation::<crate::LeanCertificate>(
-            obligation,
-            format!("{}:{}", result.plan.executable, policy.witness_suffix),
-        ),
-    };
+    let mut cert = Certificate::from_obligation::<B>(obligation, witness_ref);
+
+    if let Some(version) = &result.backend_version {
+        cert = cert.with_backend_version(version.clone());
+    }
+
+    if let Some(path) = artifact_path {
+        cert = cert.with_artifact_path(path);
+    }
+
+    Some(cert)
+}
+
+fn certificate_for_module(
+    result: &ExecutionResult,
+    module_name: &str,
+    artifact_path: Option<String>,
+    theorem_count: usize,
+) -> Option<Certificate> {
+    if !result.is_success() {
+        return None;
+    }
+
+    let mut cert = Certificate::new(
+        <crate::LeanCertificate as crate::VerificationBackend>::NAME,
+        format!("Lean module {module_name}"),
+        crate::LeanCertificate::module_ref(module_name),
+    )
+    .with_notes(format!(
+        "verified module containing {theorem_count} theorem(s)"
+    ));
 
     if let Some(version) = &result.backend_version {
         cert = cert.with_backend_version(version.clone());
@@ -369,6 +563,18 @@ mod tests {
                         model: None,
                         reason_unknown: None,
                     }),
+                    lean_output: (plan.kind == crate::CommandKind::Lean).then(|| {
+                        crate::LeanOutput {
+                            diagnostics: vec![crate::LeanDiagnostic {
+                                file: Some("lean/KarpalVerify.lean".into()),
+                                line: Some(7),
+                                column: Some(2),
+                                severity: "error".into(),
+                                message: "unsolved goals in theorem associativity".into(),
+                            }],
+                            theorem_hits: vec!["associativity".into()],
+                        }
+                    }),
                 }
             }
         }
@@ -390,6 +596,36 @@ mod tests {
                 .map(|module| module.theorem_refs.len()),
             Some(1)
         );
+        assert_eq!(
+            report.obligations[0].lean_theorem_ref.as_deref(),
+            Some("KarpalVerify.associativity")
+        );
+        assert_eq!(
+            report.obligations[0].lean_diagnostics,
+            vec!["unsolved goals in theorem associativity".to_string()]
+        );
+        assert_eq!(
+            report.obligations[0]
+                .lean_certificate
+                .as_ref()
+                .map(|certificate| certificate.backend),
+            Some("lean4")
+        );
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .and_then(|module| module.certificate.as_ref())
+                .map(|certificate| certificate.witness_ref.as_str()),
+            Some("KarpalVerify")
+        );
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .map(|module| module.theorem_failures.clone()),
+            Some(vec!["associativity".to_string()])
+        );
     }
 
     #[test]
@@ -401,8 +637,11 @@ mod tests {
                 obligation_name: "assoc".into(),
                 summary: "demo::assoc [associativity]".into(),
                 artifact_path: Some("target/demo/smt/assoc.smt2".into()),
+                lean_theorem_ref: None,
+                lean_diagnostics: Vec::new(),
                 result: None,
                 certificate: None,
+                lean_certificate: None,
             }],
             lean_module: None,
         };

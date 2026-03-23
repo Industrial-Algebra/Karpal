@@ -189,7 +189,10 @@ fn path_to_string(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AlgebraicSignature, ExecutionResult, ExecutionStatus, Origin, SmtOutput, Sort};
+    use crate::{
+        AlgebraicSignature, ExecutionResult, ExecutionStatus, LeanDiagnostic, LeanOutput, Origin,
+        SmtOutput, Sort,
+    };
 
     fn sample_session(root: &Path) -> VerificationSession {
         let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
@@ -220,6 +223,16 @@ mod tests {
                     status: Some(ExecutionStatus::Unsat),
                     model: None,
                     reason_unknown: None,
+                }),
+                lean_output: (plan.kind == crate::CommandKind::Lean).then(|| LeanOutput {
+                    diagnostics: vec![LeanDiagnostic {
+                        file: Some("lean/KarpalVerify.lean".into()),
+                        line: Some(4),
+                        column: Some(2),
+                        severity: "warning".into(),
+                        message: "declaration uses sorry: associativity".into(),
+                    }],
+                    theorem_hits: vec!["associativity".into()],
                 }),
             }
         }

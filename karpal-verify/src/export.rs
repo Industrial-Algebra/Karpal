@@ -3,7 +3,10 @@ use alloc::{string::String, vec::Vec};
 #[cfg(feature = "std")]
 use std::{string::String, vec::Vec};
 
-use crate::{LeanExport, Obligation, ObligationBundle, export_lean_module, export_smt_obligation};
+use crate::{
+    LeanExport, LeanPrelude, Obligation, ObligationBundle, export_lean_module,
+    export_module_with_prelude as export_lean_module_with_prelude, export_smt_obligation,
+};
 
 /// Export an entire bundle as one SMT-LIB2 script per obligation.
 pub fn export_smt_bundle(bundle: &ObligationBundle) -> Vec<(String, String)> {
@@ -19,9 +22,27 @@ pub fn export_lean_bundle(module_name: &str, bundle: &ObligationBundle) -> Strin
     export_lean_module(module_name, bundle.obligations())
 }
 
+/// Export a whole bundle as a single Lean 4 module with explicit prelude metadata.
+pub fn export_lean_bundle_with_prelude(
+    module_name: &str,
+    bundle: &ObligationBundle,
+    prelude: LeanPrelude,
+) -> String {
+    export_lean_module_with_prelude(module_name, bundle.obligations(), prelude)
+}
+
 /// Export a whole bundle as structured Lean module metadata plus source.
 pub fn export_lean_bundle_structured(module_name: &str, bundle: &ObligationBundle) -> LeanExport {
     crate::lean::export(module_name, bundle.obligations())
+}
+
+/// Export a whole bundle as structured Lean module metadata plus source with explicit prelude metadata.
+pub fn export_lean_bundle_structured_with_prelude(
+    module_name: &str,
+    bundle: &ObligationBundle,
+    prelude: LeanPrelude,
+) -> LeanExport {
+    crate::lean::export_with_prelude(module_name, bundle.obligations(), prelude)
 }
 
 /// Export a list of obligations as one SMT-LIB2 script per obligation.
@@ -63,5 +84,19 @@ mod tests {
                 .map(|t| t.witness_ref("KarpalVerify")),
             Some("KarpalVerify.left_inverse".into())
         );
+    }
+
+    #[test]
+    fn lean_bundle_export_with_prelude_renders_imports() {
+        let sig = AlgebraicSignature::semigroup(Sort::Int, "combine");
+        let bundle =
+            ObligationBundle::semigroup("sum", Origin::new("karpal-core", "Sum<i32>"), &sig);
+        let module = export_lean_bundle_with_prelude(
+            "KarpalVerify",
+            &bundle,
+            LeanPrelude::new().with_import("Mathlib"),
+        );
+
+        assert!(module.starts_with("import Mathlib\n\nnamespace KarpalVerify"));
     }
 }
