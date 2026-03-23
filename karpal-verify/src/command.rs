@@ -45,6 +45,7 @@ impl SmtConfig {
 pub enum LeanDriver {
     Direct,
     LakeEnv,
+    LakeBuild,
 }
 
 /// Command-line configuration for Lean 4.
@@ -178,6 +179,29 @@ impl InvocationPlan {
                     ],
                 }
             }
+            LeanDriver::LakeBuild => {
+                let lean_dir = module.parent().unwrap_or_else(|| Path::new("."));
+                let root = lean_dir.parent().unwrap_or(lean_dir);
+                let module_target = module
+                    .file_stem()
+                    .and_then(|stem| stem.to_str())
+                    .unwrap_or("Main")
+                    .to_string();
+                let mut args = config.lake_args.clone();
+                args.push("build".into());
+                args.push(module_target);
+                Self {
+                    kind: CommandKind::Lean,
+                    executable: config.lake_executable.clone(),
+                    args,
+                    working_directory: Some(path_to_string(root)),
+                    input_files: vec![
+                        path_to_string(&module),
+                        path_to_string(&root.join("lakefile.lean")),
+                        path_to_string(&root.join("lean-toolchain")),
+                    ],
+                }
+            }
         }
     }
 }
@@ -236,6 +260,29 @@ mod tests {
         assert_eq!(plan.executable, "lake");
         assert_eq!(plan.working_directory.as_deref(), Some("target/verify"));
         assert_eq!(plan.args, vec!["env", "lean", "lean/KarpalVerify.lean"]);
+        assert!(
+            plan.input_files
+                .iter()
+                .any(|path| path.ends_with("lakefile.lean"))
+        );
+        assert!(
+            plan.input_files
+                .iter()
+                .any(|path| path.ends_with("lean-toolchain"))
+        );
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn lean_project_plan_can_use_lake_build() {
+        let plan = InvocationPlan::lean(
+            &LeanConfig::default().with_driver(LeanDriver::LakeBuild),
+            std::path::PathBuf::from("target/verify/lean/KarpalVerify.lean"),
+        );
+        assert_eq!(plan.kind, CommandKind::Lean);
+        assert_eq!(plan.executable, "lake");
+        assert_eq!(plan.working_directory.as_deref(), Some("target/verify"));
+        assert_eq!(plan.args, vec!["build", "KarpalVerify"]);
         assert!(
             plan.input_files
                 .iter()

@@ -1,7 +1,7 @@
 use crate::{
-    ArtifactLayout, DryRunner, LeanConfig, LocalProcessRunner, ObligationBundle, SmtConfig,
-    VerificationReport, VerifierRunner, dry_run_bundle_artifacts, dry_run_report, execute_report,
-    write_bundle_artifacts,
+    ArtifactLayout, DryRunner, LeanConfig, LeanManifestReportFiles, LocalProcessRunner,
+    ObligationBundle, SmtConfig, VerificationReport, VerifierRunner, dry_run_bundle_artifacts,
+    dry_run_report, execute_report, write_bundle_artifacts,
 };
 use std::{fs, io, path::Path, string::String};
 
@@ -109,8 +109,20 @@ impl VerificationSession {
         &self,
         runner: &impl VerifierRunner,
     ) -> io::Result<VerificationOutput> {
-        let report = self.verify_report(runner)?;
-        let report_files = write_report_files(&self.layout.root, &self.report_stem, &report)?;
+        let artifacts = write_bundle_artifacts(
+            &self.bundle,
+            &self.layout,
+            &self.lean_module_name,
+            &self.smt,
+            &self.lean,
+        )?;
+        let report = execute_report(&self.bundle, &artifacts, runner);
+        let report_files = write_report_files(
+            &self.layout.root,
+            &self.report_stem,
+            &report,
+            artifacts.lean_manifest.as_ref(),
+        )?;
         Ok(VerificationOutput {
             report,
             report_files,
@@ -169,6 +181,7 @@ fn write_report_files(
     root: impl AsRef<Path>,
     report_stem: &str,
     report: &VerificationReport,
+    lean_manifest: Option<&crate::artifact::LeanManifest>,
 ) -> io::Result<ReportFiles> {
     let root = root.as_ref();
     fs::create_dir_all(root)?;
@@ -207,6 +220,9 @@ fn write_report_files(
         &markdown_path,
         render_report_markdown_with_links(report, &report_files),
     )?;
+    if let (Some(path), Some(manifest)) = (&report_files.lean_manifest_path, lean_manifest) {
+        write_lean_manifest_with_report_links(path, manifest, &report_files)?;
+    }
 
     Ok(report_files)
 }
@@ -256,6 +272,22 @@ fn escape_json(s: &str) -> String {
     s.replace('\\', "\\\\")
         .replace('"', "\\\"")
         .replace('\n', "\\n")
+}
+
+fn write_lean_manifest_with_report_links(
+    manifest_path: &str,
+    manifest: &crate::artifact::LeanManifest,
+    files: &ReportFiles,
+) -> io::Result<()> {
+    let manifest = manifest.clone().with_report_files({
+        let report_files =
+            LeanManifestReportFiles::new(files.json_path.clone(), files.markdown_path.clone());
+        match &files.lean_diagnostics_json_path {
+            Some(path) => report_files.with_lean_diagnostics_json_path(path.clone()),
+            None => report_files,
+        }
+    });
+    fs::write(manifest_path, manifest.to_json())
 }
 
 fn render_lean_diagnostics_json(report: &VerificationReport) -> String {
@@ -474,12 +506,24 @@ mod tests {
             .expect("summary json should be readable");
         let markdown = fs::read_to_string(&output.report_files.markdown_path)
             .expect("summary markdown should be readable");
+        let manifest = fs::read_to_string(
+            output
+                .report_files
+                .lean_manifest_path
+                .as_deref()
+                .expect("lean manifest path should be present"),
+        )
+        .expect("lean manifest should be readable");
         assert!(json.contains("\"report_files\""));
         assert!(json.contains("\"lean_manifest_path\""));
         assert!(json.contains("\"lean_diagnostics_json_path\""));
         assert!(markdown.contains("Report files:"));
         assert!(markdown.contains("Lean diagnostics JSON"));
         assert!(markdown.contains("Lean manifest"));
+        assert!(manifest.contains("\"report_files\""));
+        assert!(manifest.contains("\"json_path\""));
+        assert!(manifest.contains("\"markdown_path\""));
+        assert!(manifest.contains("\"lean_diagnostics_json_path\""));
 
         let _ = fs::remove_dir_all(&temp);
     }

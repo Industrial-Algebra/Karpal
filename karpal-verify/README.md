@@ -11,7 +11,7 @@ External prover bridge for the Karpal ecosystem.
 - structured Lean module/theorem metadata for a deeper Lean bridge
 - Lean import/prelude bridging for module imports and symbol aliases
 - Lean project/package scaffolding for generated modules
-- project-aware Lean execution planning via `lake env lean`
+- project-aware Lean execution planning via `lake env lean` or `lake build`
 - artifact writers and **dry-run invocation plans** for external tools
 - runner abstractions, backend-specific verification policies, and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
@@ -154,8 +154,8 @@ assert_eq!(lean_export.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.as
 
 With the `std` feature, `karpal-verify` can write export artifacts to disk and
 prepare dry-run command plans for solver / Lean invocation. Lean plans can also
-run in project-aware mode through `lake env lean` from the generated artifact
-root:
+run in project-aware mode through `lake env lean` or whole-package `lake build`
+from the generated artifact root:
 
 ```rust
 use karpal_verify::{
@@ -175,15 +175,21 @@ let batch = dry_run_bundle_artifacts(
     &layout,
     "KarpalVerify",
     &SmtConfig::default(),
-    &LeanConfig::default().with_driver(karpal_verify::LeanDriver::LakeEnv),
+    &LeanConfig::default().with_driver(karpal_verify::LeanDriver::LakeBuild),
 );
 assert_eq!(batch.plans.len(), 4);
 assert!(batch.lean_project.is_some());
-assert!(batch
-    .plans
-    .iter()
-    .any(|plan| plan.kind == karpal_verify::CommandKind::Lean && plan.executable == "lake"));
+assert!(batch.plans.iter().any(|plan| {
+    plan.kind == karpal_verify::CommandKind::Lean
+        && plan.executable == "lake"
+        && plan.args == vec!["build", "KarpalVerify"]
+}));
 ```
+
+Use `LeanDriver::LakeEnv` when you want `lake env lean lean/<Module>.lean`, or
+`LeanDriver::LakeBuild` when you want package-aware target builds through
+`lake build <Module>`.
+
 
 ### Execution model
 
@@ -276,10 +282,12 @@ summaries directly beside generated artifacts. When a Lean module report is
 present it also writes a `*.lean-diagnostics.json` sidecar containing module-
 level diagnostics, theorem failure refs, and per-obligation Lean diagnostic
 groupings. The main JSON / Markdown summaries now cross-link both that sidecar
-and the generated Lean manifest path. Lean artifact batches now also carry
+and the generated Lean manifest path, and the Lean manifest now links back to
+those CI-oriented report files as well. Lean artifact batches now also carry
 structured theorem metadata, prelude/import metadata, generated package
-metadata, and write a small Lean manifest alongside the module source plus
-`lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
+metadata, and write a small typed Lean manifest model alongside the module
+source plus `lakefile.lean` / `lean-toolchain` scaffolding at the artifact
+root.
 
 ### Imported trust markers
 

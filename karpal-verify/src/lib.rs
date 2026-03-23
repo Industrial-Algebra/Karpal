@@ -31,7 +31,9 @@ pub mod trust;
 
 #[cfg(feature = "std")]
 pub use artifact::{
-    ArtifactBatch, ArtifactLayout, ArtifactRecord, dry_run_bundle_artifacts, write_bundle_artifacts,
+    ArtifactBatch, ArtifactLayout, ArtifactRecord, LeanManifest, LeanManifestAlias,
+    LeanManifestPrelude, LeanManifestProject, LeanManifestReportFiles, LeanManifestTheorem,
+    dry_run_bundle_artifacts, write_bundle_artifacts,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use bundle::ObligationBundle;
