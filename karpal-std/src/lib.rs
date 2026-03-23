@@ -142,6 +142,14 @@ pub mod prelude {
         parse_lean_output, parse_smt_output, parse_smt_status, verify_bundle,
         verify_bundle_with_ci_outputs, write_bundle_artifacts,
     };
+    #[cfg(feature = "amari")]
+    pub use karpal_verify::{
+        AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
+        AmariStatisticalProperty, AmariVerificationResult, StatisticalBound,
+        StatisticalVerification, classify_tier, concentration_obligation_for, ensures_expected,
+        expected_value_obligation_for, postcondition_obligation_for, precondition_obligation_for,
+        prob_ensures, prob_requires, verify_rare_event,
+    };
 
     // Macros
     pub use karpal_core::{ado_, do_};

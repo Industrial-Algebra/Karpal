@@ -69,7 +69,7 @@
     </nav>
 
     <h1>Proof &amp; Verification</h1>
-    <p>Karpal now has two complementary layers for reasoning about laws. <code>karpal-proof</code> provides in-Rust witnesses, refinement types, and derive-based law checks. <code>karpal-verify</code> extends that story outward with an obligation IR, exporters for SMT-LIB2 and Lean 4, artifact generation, execution planning, reporting, and an explicit trust boundary for imported certificates.</p>
+    <p>Karpal now has complementary layers for reasoning about laws. <code>karpal-proof</code> provides in-Rust witnesses, refinement types, and derive-based law checks. <code>karpal-verify</code> extends that story outward with an obligation IR, exporters for SMT-LIB2 and Lean 4, optional amari-flynn statistical verification hooks, artifact generation, execution planning, reporting, and an explicit trust boundary for imported certificates.</p>
 
     <h2 id="overview">Overview</h2>
     <table class="instance-table">
@@ -90,7 +90,7 @@
         <tr>
           <td><code>karpal-verify</code></td>
           <td>External verification bridge</td>
-          <td>Export obligations to external provers and import certificates explicitly</td>
+          <td>Export obligations to external provers, bridge rare-event checks through amari-flynn, and import certificates explicitly</td>
         </tr>
       </tbody>
     </table>

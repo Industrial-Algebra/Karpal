@@ -4,6 +4,8 @@
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 
+#[cfg(feature = "amari")]
+pub mod amari;
 #[cfg(feature = "std")]
 pub mod artifact;
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -29,6 +31,15 @@ pub mod smt;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod trust;
 
+#[cfg(feature = "amari")]
+pub use amari::{
+    AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
+    AmariStatisticalProperty, AmariVerificationResult, StatisticalBound, StatisticalVerification,
+    classify_tier, concentration_obligation_for, expected_value_obligation_for,
+    postcondition_obligation_for, precondition_obligation_for, verify_rare_event,
+};
+#[cfg(feature = "amari")]
+pub use amari_flynn::{ensures_expected, prob_ensures, prob_requires};
 #[cfg(feature = "std")]
 pub use artifact::{
     ArtifactBatch, ArtifactLayout, ArtifactRecord, LEAN_MANIFEST_SCHEMA_VERSION, LeanManifest,
