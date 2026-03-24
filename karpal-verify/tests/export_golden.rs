@@ -5,6 +5,8 @@ use karpal_verify::{
     LeanProject, Obligation, ObligationBundle, Origin, Sort, VerificationSession,
     export_lean_module, export_smt_obligation,
 };
+#[cfg(feature = "amari")]
+use karpal_verify::{StatisticalBound, verify_rare_event};
 
 #[derive(Clone, Copy)]
 enum GoldenFixture {
@@ -14,6 +16,10 @@ enum GoldenFixture {
     VerificationReportJson,
     VerificationReportMarkdown,
     LeanDiagnosticsJson,
+    #[cfg(feature = "amari")]
+    ThreeTierReportJson,
+    #[cfg(feature = "amari")]
+    ThreeTierReportMarkdown,
 }
 
 fn golden(fixture: GoldenFixture) -> &'static str {
@@ -30,6 +36,10 @@ fn golden(fixture: GoldenFixture) -> &'static str {
             include_str!("golden/verification_report.md")
         }
         GoldenFixture::LeanDiagnosticsJson => include_str!("golden/lean_diagnostics.json"),
+        #[cfg(feature = "amari")]
+        GoldenFixture::ThreeTierReportJson => include_str!("golden/three_tier_report.json"),
+        #[cfg(feature = "amari")]
+        GoldenFixture::ThreeTierReportMarkdown => include_str!("golden/three_tier_report.md"),
     }
 }
 
@@ -114,6 +124,55 @@ fn verification_report_json_files_match_expected_shape() {
         golden(GoldenFixture::VerificationReportMarkdown)
     );
     assert_eq!(diagnostics_json, golden(GoldenFixture::LeanDiagnosticsJson));
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(feature = "amari")]
+#[test]
+fn three_tier_report_sidecars_match_expected_shape() {
+    let root = "target/karpal-verify-golden";
+    let _ = fs::remove_dir_all(root);
+
+    let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+    let bundle = ObligationBundle::monoid(
+        "sum_monoid",
+        Origin::new("karpal-core", "Monoid for Sum<i32>"),
+        &sig,
+    );
+    let statistical = verify_rare_event(
+        &bundle.obligations()[0],
+        &StatisticalBound::new(0.05).with_samples(128),
+        || false,
+    );
+    let output = VerificationSession::new(bundle, ArtifactLayout::new(root), "KarpalVerify")
+        .with_report_stem("summary")
+        .with_statistical_verification(statistical)
+        .verify_with_ci_outputs(&DryRunner)
+        .expect("ci outputs should be written");
+
+    let three_tier_json = fs::read_to_string(
+        output
+            .report_files
+            .three_tier_json_path
+            .as_deref()
+            .expect("three-tier json path should be present"),
+    )
+    .expect("three-tier json should be readable");
+    let three_tier_markdown = fs::read_to_string(
+        output
+            .report_files
+            .three_tier_markdown_path
+            .as_deref()
+            .expect("three-tier markdown path should be present"),
+    )
+    .expect("three-tier markdown should be readable");
+
+    assert_eq!(three_tier_json, golden(GoldenFixture::ThreeTierReportJson));
+    assert_eq!(
+        three_tier_markdown,
+        golden(GoldenFixture::ThreeTierReportMarkdown)
+    );
 
     let _ = fs::remove_dir_all(root);
 }

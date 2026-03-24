@@ -386,9 +386,11 @@ This crate now provides the external-verification foundation for Karpal:
 - optional amari-flynn statistical integration for rare-event bounds and
   probabilistic contract helpers
 
-The remaining roadmap work is primarily about broadening that statistical bridge
-and connecting it to the fuller three-tier verification story across more of
-Karpal's trait and derive surface.
+The core roadmap work for `karpal-verify` is now implemented: obligation IR,
+SMT/Lean export, artifact/report/session orchestration, optional amari-flynn
+integration, and CI-oriented three-tier summaries. Future work can deepen that
+coverage across more derive and trait workflows, but the external verification
+foundation is now in place.
 
 ## License
 
