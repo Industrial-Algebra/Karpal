@@ -1,9 +1,12 @@
 use crate::{
-    ArtifactLayout, DryRunner, LeanConfig, LocalProcessRunner, ObligationBundle, SmtConfig,
-    VerificationReport, VerifierRunner, dry_run_bundle_artifacts, dry_run_report, execute_report,
-    write_bundle_artifacts,
+    ArtifactLayout, DryRunner, LeanConfig, LeanManifestReportFiles, LocalProcessRunner,
+    ObligationBundle, SmtConfig, VerificationReport, VerifierRunner, dry_run_bundle_artifacts,
+    dry_run_report, execute_report, write_bundle_artifacts,
 };
 use std::{fs, io, path::Path, string::String};
+
+/// Schema version for CI-oriented verification sidecar/report-file metadata.
+pub const VERIFICATION_SIDECAR_SCHEMA_VERSION: &str = "1";
 
 /// Default file stem used for CI-oriented verification summaries.
 pub const DEFAULT_REPORT_STEM: &str = "verification-report";
@@ -13,6 +16,8 @@ pub const DEFAULT_REPORT_STEM: &str = "verification-report";
 pub struct ReportFiles {
     pub json_path: String,
     pub markdown_path: String,
+    pub lean_diagnostics_json_path: Option<String>,
+    pub lean_manifest_path: Option<String>,
 }
 
 /// End-to-end verification session configuration for a bundle.
@@ -107,8 +112,20 @@ impl VerificationSession {
         &self,
         runner: &impl VerifierRunner,
     ) -> io::Result<VerificationOutput> {
-        let report = self.verify_report(runner)?;
-        let report_files = write_report_files(&self.layout.root, &self.report_stem, &report)?;
+        let artifacts = write_bundle_artifacts(
+            &self.bundle,
+            &self.layout,
+            &self.lean_module_name,
+            &self.smt,
+            &self.lean,
+        )?;
+        let report = execute_report(&self.bundle, &artifacts, runner);
+        let report_files = write_report_files(
+            &self.layout.root,
+            &self.report_stem,
+            &report,
+            artifacts.lean_manifest.as_ref(),
+        )?;
         Ok(VerificationOutput {
             report,
             report_files,
@@ -167,19 +184,180 @@ fn write_report_files(
     root: impl AsRef<Path>,
     report_stem: &str,
     report: &VerificationReport,
+    lean_manifest: Option<&crate::artifact::LeanManifest>,
 ) -> io::Result<ReportFiles> {
     let root = root.as_ref();
     fs::create_dir_all(root)?;
 
+    let lean_manifest_path = report.lean_module.as_ref().map(|module| {
+        path_to_string(
+            &root
+                .join("lean")
+                .join(format!("{}.manifest.json", module.module_name)),
+        )
+    });
+
+    let lean_diagnostics_json_path = report
+        .lean_module
+        .as_ref()
+        .map(|_| -> io::Result<String> {
+            let path = root.join(format!("{report_stem}.lean-diagnostics.json"));
+            fs::write(&path, render_lean_diagnostics_json(report))?;
+            Ok(path_to_string(&path))
+        })
+        .transpose()?;
+
     let json_path = root.join(format!("{report_stem}.json"));
     let markdown_path = root.join(format!("{report_stem}.md"));
-    fs::write(&json_path, report.to_json())?;
-    fs::write(&markdown_path, report.to_markdown())?;
-
-    Ok(ReportFiles {
+    let report_files = ReportFiles {
         json_path: path_to_string(&json_path),
         markdown_path: path_to_string(&markdown_path),
-    })
+        lean_diagnostics_json_path,
+        lean_manifest_path,
+    };
+    fs::write(
+        &json_path,
+        render_report_json_with_links(report, &report_files),
+    )?;
+    fs::write(
+        &markdown_path,
+        render_report_markdown_with_links(report, &report_files),
+    )?;
+    if let (Some(path), Some(manifest)) = (&report_files.lean_manifest_path, lean_manifest) {
+        write_lean_manifest_with_report_links(path, manifest, &report_files)?;
+    }
+
+    Ok(report_files)
+}
+
+fn render_report_json_with_links(report: &VerificationReport, files: &ReportFiles) -> String {
+    let mut json = report.to_json();
+    if json.ends_with('}') {
+        json.pop();
+        json.push_str(",\"report_files\":{");
+        json.push_str(&format!(
+            "\"schema_version\":\"{}\",\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+            VERIFICATION_SIDECAR_SCHEMA_VERSION,
+            escape_json(&files.json_path),
+            escape_json(&files.markdown_path)
+        ));
+        if let Some(path) = &files.lean_diagnostics_json_path {
+            json.push_str(&format!(
+                ",\"lean_diagnostics_json_path\":\"{}\"",
+                escape_json(path)
+            ));
+        }
+        if let Some(path) = &files.lean_manifest_path {
+            json.push_str(&format!(
+                ",\"lean_manifest_path\":\"{}\"",
+                escape_json(path)
+            ));
+        }
+        json.push_str("}}");
+    }
+    json
+}
+
+fn render_report_markdown_with_links(report: &VerificationReport, files: &ReportFiles) -> String {
+    let mut markdown = report.to_markdown();
+    markdown.push_str("\nReport files:\n");
+    markdown.push_str(&format!(
+        "- Schema version: `{}`\n",
+        VERIFICATION_SIDECAR_SCHEMA_VERSION
+    ));
+    markdown.push_str(&format!("- JSON: `{}`\n", files.json_path));
+    markdown.push_str(&format!("- Markdown: `{}`\n", files.markdown_path));
+    if let Some(path) = &files.lean_diagnostics_json_path {
+        markdown.push_str(&format!("- Lean diagnostics JSON: `{}`\n", path));
+    }
+    if let Some(path) = &files.lean_manifest_path {
+        markdown.push_str(&format!("- Lean manifest: `{}`\n", path));
+    }
+    markdown
+}
+
+fn escape_json(s: &str) -> String {
+    s.replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+}
+
+fn write_lean_manifest_with_report_links(
+    manifest_path: &str,
+    manifest: &crate::artifact::LeanManifest,
+    files: &ReportFiles,
+) -> io::Result<()> {
+    let manifest = manifest.clone().with_report_files({
+        let report_files =
+            LeanManifestReportFiles::new(files.json_path.clone(), files.markdown_path.clone());
+        match &files.lean_diagnostics_json_path {
+            Some(path) => report_files.with_lean_diagnostics_json_path(path.clone()),
+            None => report_files,
+        }
+    });
+    fs::write(manifest_path, manifest.to_json())
+}
+
+fn render_lean_diagnostics_json(report: &VerificationReport) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+    }
+
+    let module = match &report.lean_module {
+        Some(module) => module,
+        None => return "null".into(),
+    };
+
+    let obligation_entries = report
+        .obligations
+        .iter()
+        .filter(|obligation| {
+            obligation.lean_theorem_ref.is_some() || !obligation.lean_diagnostics.is_empty()
+        })
+        .map(|obligation| {
+            let diagnostics = obligation
+                .lean_diagnostics
+                .iter()
+                .map(|diagnostic| format!("\"{}\"", esc(diagnostic)))
+                .collect::<Vec<_>>()
+                .join(",");
+            format!(
+                "{{\"obligation_name\":\"{}\",\"theorem_ref\":{},\"diagnostics\":[{}]}}",
+                esc(&obligation.obligation_name),
+                obligation
+                    .lean_theorem_ref
+                    .as_ref()
+                    .map(|theorem_ref| format!("\"{}\"", esc(theorem_ref)))
+                    .unwrap_or_else(|| "null".into()),
+                diagnostics
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let module_diagnostics = module
+        .diagnostics
+        .iter()
+        .map(|diagnostic| format!("\"{}\"", esc(diagnostic)))
+        .collect::<Vec<_>>()
+        .join(",");
+    let theorem_failures = module
+        .theorem_failures
+        .iter()
+        .map(|failure| format!("\"{}\"", esc(failure)))
+        .collect::<Vec<_>>()
+        .join(",");
+
+    format!(
+        "{{\"schema_version\":\"{}\",\"module_name\":\"{}\",\"module_diagnostics\":[{}],\"theorem_failures\":[{}],\"obligations\":[{}]}}",
+        VERIFICATION_SIDECAR_SCHEMA_VERSION,
+        esc(&module.module_name),
+        module_diagnostics,
+        theorem_failures,
+        obligation_entries
+    )
 }
 
 fn path_to_string(path: &Path) -> String {
@@ -189,7 +367,10 @@ fn path_to_string(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AlgebraicSignature, ExecutionResult, ExecutionStatus, Origin, SmtOutput, Sort};
+    use crate::{
+        AlgebraicSignature, ExecutionResult, ExecutionStatus, LeanDiagnostic, LeanOutput, Origin,
+        SmtOutput, Sort,
+    };
 
     fn sample_session(root: &Path) -> VerificationSession {
         let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
@@ -220,6 +401,17 @@ mod tests {
                     status: Some(ExecutionStatus::Unsat),
                     model: None,
                     reason_unknown: None,
+                }),
+                lean_output: (plan.kind == crate::CommandKind::Lean).then(|| LeanOutput {
+                    diagnostics: vec![LeanDiagnostic {
+                        file: Some("lean/KarpalVerify.lean".into()),
+                        line: Some(4),
+                        column: Some(2),
+                        severity: "warning".into(),
+                        message: "declaration uses sorry: associativity".into(),
+                        theorem_hits: vec!["associativity".into()],
+                    }],
+                    theorem_hits: vec!["associativity".into()],
                 }),
             }
         }
@@ -254,6 +446,13 @@ mod tests {
         assert!(report.is_success());
         assert!(temp.join("smt").exists());
         assert!(temp.join("lean").exists());
+        assert_eq!(
+            report
+                .lean_module
+                .as_ref()
+                .map(|module| module.theorem_failures.clone()),
+            Some(vec!["KarpalVerify.associativity".into()])
+        );
 
         let _ = fs::remove_dir_all(&temp);
     }
@@ -273,8 +472,80 @@ mod tests {
         assert!(output.report.is_success());
         assert!(Path::new(&output.report_files.json_path).exists());
         assert!(Path::new(&output.report_files.markdown_path).exists());
+        assert!(
+            Path::new(
+                output
+                    .report_files
+                    .lean_diagnostics_json_path
+                    .as_deref()
+                    .expect("lean diagnostics sidecar should be written")
+            )
+            .exists()
+        );
+        assert!(
+            Path::new(
+                output
+                    .report_files
+                    .lean_manifest_path
+                    .as_deref()
+                    .expect("lean manifest path should be recorded")
+            )
+            .exists()
+        );
         assert!(output.report_files.json_path.ends_with("summary.json"));
         assert!(output.report_files.markdown_path.ends_with("summary.md"));
+        assert!(
+            output
+                .report_files
+                .lean_diagnostics_json_path
+                .as_deref()
+                .unwrap()
+                .ends_with("summary.lean-diagnostics.json")
+        );
+        assert!(
+            output
+                .report_files
+                .lean_manifest_path
+                .as_deref()
+                .unwrap()
+                .ends_with("lean/KarpalVerify.manifest.json")
+        );
+
+        let json = fs::read_to_string(&output.report_files.json_path)
+            .expect("summary json should be readable");
+        let markdown = fs::read_to_string(&output.report_files.markdown_path)
+            .expect("summary markdown should be readable");
+        let sidecar = fs::read_to_string(
+            output
+                .report_files
+                .lean_diagnostics_json_path
+                .as_deref()
+                .expect("lean diagnostics sidecar path should be present"),
+        )
+        .expect("lean diagnostics sidecar should be readable");
+        let manifest = fs::read_to_string(
+            output
+                .report_files
+                .lean_manifest_path
+                .as_deref()
+                .expect("lean manifest path should be present"),
+        )
+        .expect("lean manifest should be readable");
+        assert!(json.contains("\"schema_version\":\"1\""));
+        assert!(json.contains("\"report_files\""));
+        assert!(json.contains("\"lean_manifest_path\""));
+        assert!(json.contains("\"lean_diagnostics_json_path\""));
+        assert!(json.contains("\"schema_version\":\"1\",\"json_path\""));
+        assert!(markdown.contains("Report files:"));
+        assert!(markdown.contains("Schema version: `1`"));
+        assert!(markdown.contains("Lean diagnostics JSON"));
+        assert!(markdown.contains("Lean manifest"));
+        assert!(sidecar.contains("\"schema_version\":\"1\""));
+        assert!(manifest.contains("\"schema_version\":\"1\""));
+        assert!(manifest.contains("\"report_files\""));
+        assert!(manifest.contains("\"json_path\""));
+        assert!(manifest.contains("\"markdown_path\""));
+        assert!(manifest.contains("\"lean_diagnostics_json_path\""));
 
         let _ = fs::remove_dir_all(&temp);
     }

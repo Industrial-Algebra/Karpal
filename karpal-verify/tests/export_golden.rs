@@ -1,6 +1,37 @@
+use std::fs;
+
 use karpal_verify::{
-    AlgebraicSignature, Obligation, Origin, Sort, export_lean_module, export_smt_obligation,
+    AlgebraicSignature, ArtifactLayout, DryRunner, LeanManifest, LeanManifestReportFiles,
+    LeanProject, Obligation, ObligationBundle, Origin, Sort, VerificationSession,
+    export_lean_module, export_smt_obligation,
 };
+
+#[derive(Clone, Copy)]
+enum GoldenFixture {
+    GroupLeftInverseSmt,
+    LeftDistributivityLean,
+    LeanManifestJson,
+    VerificationReportJson,
+    VerificationReportMarkdown,
+    LeanDiagnosticsJson,
+}
+
+fn golden(fixture: GoldenFixture) -> &'static str {
+    match fixture {
+        GoldenFixture::GroupLeftInverseSmt => include_str!("golden/group_left_inverse.smt2"),
+        GoldenFixture::LeftDistributivityLean => {
+            include_str!("golden/left_distributivity.lean")
+        }
+        GoldenFixture::LeanManifestJson => include_str!("golden/lean_manifest.json"),
+        GoldenFixture::VerificationReportJson => {
+            include_str!("golden/verification_report.json")
+        }
+        GoldenFixture::VerificationReportMarkdown => {
+            include_str!("golden/verification_report.md")
+        }
+        GoldenFixture::LeanDiagnosticsJson => include_str!("golden/lean_diagnostics.json"),
+    }
+}
 
 #[test]
 fn smt_export_for_group_left_inverse_matches_expected_shape() {
@@ -12,18 +43,8 @@ fn smt_export_for_group_left_inverse_matches_expected_shape() {
     );
 
     let rendered = export_smt_obligation(&obligation);
-    let expected = r#"; obligation: group_left_inverse
-; property: left inverse
-; origin: karpal-algebra::Group for i32 [left inverse]
-(set-logic ALL)
-(declare-const a Int)
-(declare-const e Int)
-; ask the solver for a counterexample to the law
-(assert (not (= (combine (inv a) a) e)))
-(check-sat)
-(get-model)"#;
 
-    assert_eq!(rendered, expected);
+    assert_eq!(rendered, golden(GoldenFixture::GroupLeftInverseSmt));
 }
 
 #[test]
@@ -36,14 +57,63 @@ fn lean_export_for_semiring_left_distributivity_matches_expected_shape() {
     );
 
     let rendered = export_lean_module("KarpalVerify", &[obligation]);
-    let expected = r#"namespace KarpalVerify
 
--- property: distributive
--- origin: karpal-algebra::Semiring for i32 [distributive]
-theorem left_distributivity (a : Int) (b : Int) (c : Int) : (mul a (add b c)) = (add (mul a b) (mul a c)) := by
-  sorry
+    assert_eq!(rendered, golden(GoldenFixture::LeftDistributivityLean));
+}
 
-end KarpalVerify"#;
+#[test]
+fn lean_manifest_json_matches_expected_shape() {
+    let obligation = Obligation::associativity(
+        "sum_assoc",
+        Origin::new("karpal-algebra", "Semigroup for Sum<i32>"),
+        Sort::Int,
+        "combine",
+    );
+    let export = karpal_verify::Lean4::export("KarpalVerify", &[obligation]);
+    let project = LeanProject::for_export(&export);
+    let manifest = LeanManifest::from_export(&export, &project).with_report_files(
+        LeanManifestReportFiles::new("target/verify/report.json", "target/verify/report.md")
+            .with_lean_diagnostics_json_path("target/verify/report.lean-diagnostics.json"),
+    );
 
-    assert_eq!(rendered, expected);
+    assert_eq!(manifest.to_json(), golden(GoldenFixture::LeanManifestJson));
+}
+
+#[test]
+fn verification_report_json_files_match_expected_shape() {
+    let root = "target/karpal-verify-golden";
+    let _ = fs::remove_dir_all(root);
+
+    let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+    let bundle = ObligationBundle::monoid(
+        "sum_monoid",
+        Origin::new("karpal-core", "Monoid for Sum<i32>"),
+        &sig,
+    );
+    let output = VerificationSession::new(bundle, ArtifactLayout::new(root), "KarpalVerify")
+        .with_report_stem("summary")
+        .verify_with_ci_outputs(&DryRunner)
+        .expect("ci outputs should be written");
+
+    let report_json =
+        fs::read_to_string(&output.report_files.json_path).expect("report json should be readable");
+    let report_markdown = fs::read_to_string(&output.report_files.markdown_path)
+        .expect("report markdown should be readable");
+    let diagnostics_json = fs::read_to_string(
+        output
+            .report_files
+            .lean_diagnostics_json_path
+            .as_deref()
+            .expect("lean diagnostics path should be present"),
+    )
+    .expect("lean diagnostics json should be readable");
+
+    assert_eq!(report_json, golden(GoldenFixture::VerificationReportJson));
+    assert_eq!(
+        report_markdown,
+        golden(GoldenFixture::VerificationReportMarkdown)
+    );
+    assert_eq!(diagnostics_json, golden(GoldenFixture::LeanDiagnosticsJson));
+
+    let _ = fs::remove_dir_all(root);
 }

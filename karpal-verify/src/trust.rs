@@ -26,6 +26,16 @@ impl VerificationBackend for LeanCertificate {
     const NAME: &'static str = "lean4";
 }
 
+impl LeanCertificate {
+    pub fn witness_ref(module_name: &str, theorem_name: &str) -> String {
+        format!("{module_name}.{theorem_name}")
+    }
+
+    pub fn module_ref(module_name: &str) -> String {
+        module_name.to_string()
+    }
+}
+
 /// Metadata describing imported external evidence.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Certificate {
@@ -163,10 +173,14 @@ mod tests {
 
     #[test]
     fn certificate_stores_metadata() {
-        let cert = Certificate::new("lean4", "sum_assoc", "theorem Sum.assoc")
-            .with_backend_version("4.15.0")
-            .with_artifact_path(".artifacts/SumAssoc.lean")
-            .with_notes("ported from generated module");
+        let cert = Certificate::new(
+            "lean4",
+            "sum_assoc",
+            LeanCertificate::witness_ref("Sum", "assoc"),
+        )
+        .with_backend_version("4.15.0")
+        .with_artifact_path(".artifacts/SumAssoc.lean")
+        .with_notes("ported from generated module");
         assert_eq!(cert.backend, "lean4");
         assert_eq!(cert.backend_version.as_deref(), Some("4.15.0"));
         assert_eq!(
@@ -186,7 +200,11 @@ mod tests {
 
     #[test]
     fn trust_boundary_can_be_crossed_explicitly() {
-        let cert = Certificate::new("lean4", "sum_assoc", "Sum.assoc");
+        let cert = Certificate::new(
+            "lean4",
+            "sum_assoc",
+            LeanCertificate::witness_ref("Sum", "assoc"),
+        );
         let verified =
             unsafe { Certified::<LeanCertificate, IsAssociative, i32>::assume(11, cert) };
         let proven: Proven<IsAssociative, i32> = unsafe { verified.into_proven() };
@@ -211,5 +229,10 @@ mod tests {
                 .unwrap()
                 .starts_with("fnv1a64:")
         );
+    }
+
+    #[test]
+    fn lean_module_ref_is_stable() {
+        assert_eq!(LeanCertificate::module_ref("KarpalVerify"), "KarpalVerify");
     }
 }

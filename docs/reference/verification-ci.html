@@ -42,6 +42,7 @@
           <li><a href="effect-system.html">Effect System</a></li>
           <li><a href="proof-verification.html">Proof &amp; Verification</a></li>
           <li><a href="verification-ci.html" class="active">Verification CI Workflow</a></li>
+          <li><a href="verification-schemas.html">Verification Schemas</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -88,9 +89,13 @@
 │   ├── left_identity.smt2
 │   └── right_identity.smt2
 ├── lean/
-│   └── KarpalVerify.lean
+│   ├── KarpalVerify.lean
+│   └── KarpalVerify.manifest.json
+├── lakefile.lean
+├── lean-toolchain
 ├── verification-report.json
-└── verification-report.md</code></pre>
+├── verification-report.md
+└── verification-report.lean-diagnostics.json</code></pre>
 
     <p>This layout is useful in CI because a single directory can be attached as an artifact bundle for later inspection.</p>
 
@@ -121,10 +126,10 @@ let output = verify_bundle_with_ci_outputs(
 assert!(output.report_files.json_path.ends_with("verification-report.json"));
 assert!(output.report_files.markdown_path.ends_with("verification-report.md"));</code></pre>
 
-    <p>This function builds artifacts, runs plans with the supplied runner, and writes CI-oriented summaries directly beside the generated files.</p>
+    <p>This function builds artifacts, runs plans with the supplied runner, and writes CI-oriented summaries directly beside the generated files. When Lean artifacts are present, the output set also includes a typed Lean manifest and a Lean diagnostics sidecar so CI systems can archive both the source-level proof context and the parsed failure surface.</p>
 
     <h2 id="session-api">Session API</h2>
-    <p>For more control, use <code>VerificationSession</code>. It lets you customize solver binaries, Lean arguments, and the report file stem.</p>
+    <p>For more control, use <code>VerificationSession</code>. It lets you customize solver binaries, Lean arguments, Lean execution drivers such as direct <code>lean</code>, <code>lake env lean</code>, or <code>lake build</code>, and the report file stem.</p>
 
 <pre><code class="language-rust">use karpal_verify::{
     AlgebraicSignature, ArtifactLayout, LeanConfig, ObligationBundle, Origin,
@@ -201,6 +206,16 @@ if !output.report.is_success() {
 
     <p>The report includes bundle name, root directory, success/failure counts, per-obligation status, artifact paths, and certificate summaries where available.</p>
 
+    <h3 id="schema-versioning">Schema versioning</h3>
+    <p>The verification report JSON, generated Lean manifest JSON, and Lean diagnostics sidecar each include a top-level <code>schema_version</code> marker. Nested <code>report_files</code> metadata blocks are versioned too.</p>
+    <p>Current schema version is <code>1</code>. Within the <code>1.x</code> line, existing fields are expected to remain stable and new data should be added only through optional fields. Consumers should therefore:</p>
+    <ul>
+      <li>accept <code>schema_version == "1"</code></li>
+      <li>ignore unknown optional fields for forward compatibility</li>
+      <li>treat a future schema bump as a breaking parser boundary</li>
+    </ul>
+    <p>For the fuller compatibility policy and migration expectations, see <a href="verification-schemas.html">Verification Schemas</a>.</p>
+
     <h2 id="sample-ci-shape">Sample CI shape</h2>
     <p>A typical CI pipeline might split external verification into two jobs:</p>
 
@@ -230,7 +245,7 @@ if !output.report.is_success() {
       <li>Treat <code>Certified&lt;...&gt;</code> as an explicit trust handoff, not as an automatic theorem import.</li>
     </ul>
 
-    <p>For an end-to-end example with SMT and Lean-oriented snippets, see the <a href="../examples/verification-workflow.html">Verification Workflow example</a>. For the higher-level API overview, return to <a href="proof-verification.html">Proof &amp; Verification</a>.</p>
+    <p>For an end-to-end example with SMT and Lean-oriented snippets, see the <a href="../examples/verification-workflow.html">Verification Workflow example</a>. For the higher-level API overview, return to <a href="proof-verification.html">Proof &amp; Verification</a>. For the serialized schema contract, see <a href="verification-schemas.html">Verification Schemas</a>.</p>
 
     <div class="footer">
       <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>

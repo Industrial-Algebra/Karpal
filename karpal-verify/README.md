@@ -2,12 +2,16 @@
 
 External prover bridge for the Karpal ecosystem.
 
-`karpal-verify` is the Phase 12 foundation crate. It introduces:
+`karpal-verify` is Karpal's external verification foundation crate. It introduces:
 
 - a backend-agnostic **proof obligation IR**
 - reusable **algebraic signatures** for trait-level law generation
 - grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
 - exporters for **SMT-LIB2** and **Lean 4**
+- structured Lean module/theorem metadata for a richer Lean bridge
+- Lean import/prelude bridging for module imports and symbol aliases
+- Lean project/package scaffolding for generated modules
+- project-aware Lean execution planning via `lake env lean` or `lake build`
 - artifact writers and **dry-run invocation plans** for external tools
 - runner abstractions, backend-specific verification policies, and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
@@ -97,6 +101,31 @@ let obligation = Obligation::associativity(
 
 let lean = export_lean_module("KarpalVerify", &[obligation]);
 assert!(lean.contains("namespace KarpalVerify"));
+
+let structured = karpal_verify::Lean4::export("KarpalVerify", &[obligation]);
+assert_eq!(structured.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.sum_assoc");
+```
+
+You can also drive the Lean prelude explicitly when a module needs imports or
+raw IR symbols need stable Lean-facing aliases:
+
+```rust
+use karpal_verify::{export_module_with_prelude, LeanPrelude, Obligation, Origin, Sort};
+
+let obligation = Obligation::associativity(
+    "sum_assoc",
+    Origin::new("karpal-algebra", "Semigroup for Sum<i32>"),
+    Sort::Int,
+    "combine-op",
+);
+
+let module = export_module_with_prelude(
+    "KarpalVerify",
+    &[obligation],
+    LeanPrelude::new().with_import("Mathlib"),
+);
+assert!(module.starts_with("import Mathlib"));
+assert!(module.contains("abbrev sym_combine_op := «combine-op»"));
 ```
 
 ### Batch export APIs
@@ -115,14 +144,18 @@ let bundle = ObligationBundle::group(
 
 let smt_scripts = export_smt_bundle(&bundle);
 let lean_module = export_lean_bundle("KarpalVerify", &bundle);
+let lean_export = karpal_verify::export_lean_bundle_structured("KarpalVerify", &bundle);
 assert_eq!(smt_scripts.len(), 5);
 assert!(lean_module.contains("theorem left_inverse"));
+assert_eq!(lean_export.theorems[0].witness_ref("KarpalVerify"), "KarpalVerify.associativity");
 ```
 
 ### Artifact writing and dry runs
 
 With the `std` feature, `karpal-verify` can write export artifacts to disk and
-prepare dry-run command plans for solver / Lean invocation:
+prepare dry-run command plans for solver / Lean invocation. Lean plans can also
+run in project-aware mode through `lake env lean` or whole-package `lake build`
+from the generated artifact root:
 
 ```rust
 use karpal_verify::{
@@ -142,10 +175,21 @@ let batch = dry_run_bundle_artifacts(
     &layout,
     "KarpalVerify",
     &SmtConfig::default(),
-    &LeanConfig::default(),
+    &LeanConfig::default().with_driver(karpal_verify::LeanDriver::LakeBuild),
 );
 assert_eq!(batch.plans.len(), 4);
+assert!(batch.lean_project.is_some());
+assert!(batch.plans.iter().any(|plan| {
+    plan.kind == karpal_verify::CommandKind::Lean
+        && plan.executable == "lake"
+        && plan.args == vec!["build", "KarpalVerify"]
+}));
 ```
+
+Use `LeanDriver::LakeEnv` when you want `lake env lean lean/<Module>.lean`, or
+`LeanDriver::LakeBuild` when you want package-aware target builds through
+`lake build <Module>`.
+
 
 ### Execution model
 
@@ -168,7 +212,11 @@ assert_eq!(result.status, karpal_verify::ExecutionStatus::DryRun);
 
 For SMT backends, `parse_smt_status()` recognizes `sat`, `unsat`, and `unknown`,
 while `parse_smt_output()` also extracts simple model / `:reason-unknown`
-information. Successful results can be turned into lightweight certificates.
+information. Lean runs now also support `parse_lean_output(stdout, stderr)`,
+which captures structured diagnostics and theorem-name hits from Lean / lake
+messages. Reporting then maps those diagnostics back onto exported Lean theorem
+metadata instead of relying only on raw obligation names. Successful results can
+be turned into lightweight certificates.
 
 ### Reporting layer
 
@@ -230,7 +278,32 @@ assert_eq!(report.obligation_count(), 1);
 ```
 
 `VerificationSession::verify_with_ci_outputs(...)` also writes JSON / Markdown
-summaries directly beside generated artifacts.
+summaries directly beside generated artifacts. When a Lean module report is
+present it also writes a `*.lean-diagnostics.json` sidecar containing module-
+level diagnostics, theorem failure refs, and per-obligation Lean diagnostic
+groupings. The main JSON / Markdown summaries now cross-link both that sidecar
+and the generated Lean manifest path, and the Lean manifest now links back to
+those CI-oriented report files as well. The serialized report JSON, Lean
+manifest JSON, and Lean diagnostics sidecar all now include explicit
+`schema_version` markers. Lean artifact batches now also carry structured
+theorem metadata, prelude/import metadata, generated package metadata, and
+write a small typed Lean manifest model alongside the module source plus
+`lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
+
+#### Schema compatibility
+
+Current serialized verification artifacts use schema version `1`.
+
+Version `1` guarantees:
+- a top-level string `schema_version`
+- stable existing field names within the `1.x` line
+- additive evolution via new optional fields only
+- nested `report_files` objects also include their own `schema_version`
+
+Consumers should accept `schema_version == "1"`, ignore unknown optional
+fields, and treat a future schema bump as a breaking parser boundary. See
+`docs/dev/verification-schema-versioning.md` for the fuller compatibility
+policy.
 
 ### Imported trust markers
 
@@ -251,14 +324,15 @@ let _: Proven<IsAssociative, i32> = unsafe { externally_checked.into_proven() };
 
 ## Current scope
 
-This crate currently provides the Phase 12 pre-implementation scaffold:
+This crate currently provides the pre-integration verification scaffold:
 
 - obligation modeling
 - text export backends
+- structured Lean export / prelude metadata
 - explicit trust-model types
 
-Solver invocation, Lean project generation, and amari-flynn integration can
-build on this foundation next.
+Solver invocation, richer Lean project generation, and amari-flynn integration
+can build on this foundation next.
 
 ## License
 
