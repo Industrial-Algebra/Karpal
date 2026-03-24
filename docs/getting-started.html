@@ -13,7 +13,7 @@
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a href="index.html" class="logo">Karpal</a>
-      <span class="version">v0.3.0</span>
+      <span class="version">v0.4.0</span>
     </div>
     <ul class="nav-list">
       <li><a href="index.html">Home</a></li>
@@ -38,9 +38,11 @@
           <li><a href="reference/recursion-schemes.html">Recursion Schemes</a></li>
           <li><a href="reference/optics.html">Optics</a></li>
           <li><a href="reference/abstract-algebra.html">Abstract Algebra</a></li>
-                    <li><a href="reference/adjunctions.html">Adjunctions</a></li>
-          <li><a href="reference/effect-system.html">Effect System</a></li>
           <li><a href="reference/adjunctions.html">Adjunctions</a></li>
+          <li><a href="reference/effect-system.html">Effect System</a></li>
+          <li><a href="reference/proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="reference/verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="reference/verification-schemas.html">Verification Schemas</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -50,6 +52,8 @@
           <li><a href="examples/data-transformation.html">Data Transformation</a></li>
           <li><a href="examples/cellular-automaton.html">Cellular Automaton</a></li>
           <li><a href="examples/domain-model-optics.html">Domain Model</a></li>
+          <li><a href="examples/verification-workflow.html">Verification Workflow</a></li>
+          <li><a href="examples/verified-domain-api.html">Verified Domain API</a></li>
         </ul>
       </li>
     </ul>
@@ -282,17 +286,50 @@ assert_eq!(config, Some("localhost:8080 (4 workers)".to_string()));</code></pre>
 
     <p>In practice, <code>ado_!</code> documents intent: it tells the reader that the computations have no data dependencies. For types where order does not matter (like <code>Option</code>), the runtime behavior is identical, but the semantic clarity is valuable.</p>
 
-    <h2 id="next-steps">6. Next Steps</h2>
+    <h2 id="proof-and-external-verification">6. Proof and External Verification</h2>
 
-    <p>Now that you can install Karpal, map over containers generically, and flatten monadic chains, here is where to go next:</p>
+    <p>Once you are comfortable with Karpal's core abstractions, the next layer is reasoning about laws explicitly.</p>
+
+    <p><code>karpal-proof</code> gives you Rust-native evidence types like <code>Proven&lt;P, T&gt;</code>, refinement wrappers like <code>NonEmpty&lt;T&gt;</code> and <code>Positive&lt;T&gt;</code>, and derive helpers that generate algebraic law tests.</p>
+
+    <p><code>karpal-verify</code> takes the next step outward: it lets you model proof obligations, export them to SMT-LIB2 or Lean 4, write artifacts, execute verification runs, and collect JSON / Markdown reports suitable for CI. Imported certificates remain explicit and do not silently become Rust proof witnesses.</p>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+let bundle = ObligationBundle::monoid(
+    "sum_monoid",
+    Origin::new("karpal-core", "Monoid for Sum&lt;i32&gt;"),
+    &sig,
+);
+let report = verify_bundle(
+    &bundle,
+    &ArtifactLayout::new("target/karpal-verify"),
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+    &DryRunner,
+).expect("verification session should succeed");
+assert_eq!(report.obligation_count(), 3);</code></pre>
+
+    <p>See the <a href="reference/proof-verification.html">Proof &amp; Verification reference</a> for the full workflow and trust model, the <a href="reference/verification-ci.html">Verification CI Workflow</a> guide for artifact/report orchestration, and the <a href="reference/verification-schemas.html">Verification Schemas</a> page for serialized compatibility details.</p>
+
+    <h2 id="next-steps">7. Next Steps</h2>
+
+    <p>Now that you can install Karpal, map over containers generically, flatten monadic chains, and understand where proofs fit into the ecosystem, here is where to go next:</p>
 
     <ul>
       <li><a href="architecture.html"><strong>Architecture</strong></a> &mdash; understand the full functor hierarchy, from <code>Functor</code> through <code>Monad</code>, and the Alt/Alternative branch. See how the traits relate and which type constructors implement each one.</li>
       <li><a href="reference/functor-family.html"><strong>Functor Family reference</strong></a> &mdash; detailed documentation for <code>Functor</code>, <code>Apply</code>, <code>Applicative</code>, <code>Chain</code>, and <code>Monad</code>, including all method signatures and implementation notes.</li>
       <li><a href="reference/macros.html"><strong>Macros reference</strong></a> &mdash; the full syntax and edge cases for <code>do_!</code> and <code>ado_!</code>, including usage with <code>ResultF</code> and <code>VecF</code>.</li>
       <li><a href="reference/optics.html"><strong>Optics</strong></a> &mdash; profunctor-based Lens and Prism for composable, first-class field access and pattern matching.</li>
+      <li><a href="reference/proof-verification.html"><strong>Proof &amp; Verification reference</strong></a> &mdash; law witnesses, derive-based checks, Lean/SMT obligation export, project-aware Lean execution, diagnostics mapping, trust boundaries, and CI-oriented verification reports.</li>
+      <li><a href="reference/verification-ci.html"><strong>Verification CI Workflow</strong></a> &mdash; artifact layout, report writing, backend policies, Lean manifest/sidecar generation, and CI integration guidance for <code>karpal-verify</code>.</li>
+      <li><a href="reference/verification-schemas.html"><strong>Verification Schemas</strong></a> &mdash; schema-versioned report, manifest, and diagnostics formats plus compatibility guidance for consumers.</li>
       <li><a href="examples/config-pipeline.html"><strong>Config Pipeline example</strong></a> &mdash; a realistic end-to-end example combining Functor, Applicative, and monadic chaining to build a configuration loader.</li>
       <li><a href="examples/data-transformation.html"><strong>Data Transformation example</strong></a> &mdash; using Foldable, Traversable, and FunctorFilter to process collections generically.</li>
+      <li><a href="examples/verification-workflow.html"><strong>Verification Workflow example</strong></a> &mdash; a full <code>karpal-verify</code> walkthrough from obligation bundle to CI report files and explicit certificate import.</li>
+      <li><a href="examples/verified-domain-api.html"><strong>Verified Domain API example</strong></a> &mdash; how <code>karpal-proof</code> <code>Proven&lt;...&gt;</code>-based APIs and <code>karpal-verify</code> <code>Certified&lt;...&gt;</code> imports fit together at a domain boundary.</li>
     </ul>
 
     <div class="footer">

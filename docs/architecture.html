@@ -13,7 +13,7 @@
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a href="index.html" class="logo">Karpal</a>
-      <span class="version">v0.3.0</span>
+      <span class="version">v0.4.0</span>
     </div>
     <ul class="nav-list">
       <li><a href="index.html">Home</a></li>
@@ -38,9 +38,11 @@
           <li><a href="reference/recursion-schemes.html">Recursion Schemes</a></li>
           <li><a href="reference/optics.html">Optics</a></li>
           <li><a href="reference/abstract-algebra.html">Abstract Algebra</a></li>
-                    <li><a href="reference/adjunctions.html">Adjunctions</a></li>
-          <li><a href="reference/effect-system.html">Effect System</a></li>
           <li><a href="reference/adjunctions.html">Adjunctions</a></li>
+          <li><a href="reference/effect-system.html">Effect System</a></li>
+          <li><a href="reference/proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="reference/verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="reference/verification-schemas.html">Verification Schemas</a></li>
         </ul>
       </li>
       <li class="nav-section">
@@ -50,6 +52,8 @@
           <li><a href="examples/data-transformation.html">Data Transformation</a></li>
           <li><a href="examples/cellular-automaton.html">Cellular Automaton</a></li>
           <li><a href="examples/domain-model-optics.html">Domain Model</a></li>
+          <li><a href="examples/verification-workflow.html">Verification Workflow</a></li>
+          <li><a href="examples/verified-domain-api.html">Verified Domain API</a></li>
         </ul>
       </li>
     </ul>
@@ -451,6 +455,49 @@ impl&lt;F: Applicative + Chain&gt; Monad for F {}</code></pre>
 }</code></pre>
 
     <p>This approach catches subtle bugs that unit tests miss &mdash; such as associativity violations in <code>Semigroup</code> implementations or distributivity failures in <code>Alternative</code>.</p>
+
+    <h2 id="proof-and-verification-layering">Proof and Verification Layering</h2>
+    <p><code>karpal-proof</code> and <code>karpal-verify</code> extend this architecture above the trait hierarchy with two distinct reasoning layers.</p>
+
+    <table class="instance-table">
+      <thead>
+        <tr><th>Layer</th><th>Crate</th><th>Architectural role</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Internal evidence</td>
+          <td><code>karpal-proof</code></td>
+          <td>Encodes law witnesses, rewrites, and refinement types directly in Rust APIs</td>
+        </tr>
+        <tr>
+          <td>External verification</td>
+          <td><code>karpal-verify</code></td>
+          <td>Bridges Karpal obligations to SMT and Lean, then reports results and imported certificates explicitly</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Why two layers?</h3>
+    <p><code>karpal-proof</code> and <code>karpal-verify</code> intentionally solve different problems. The first lets Rust code carry structured evidence after local checks, trait-derived witnesses, or audited assumptions. The second lets Karpal talk to external provers without pretending that a solver result is the same thing as compiler-checked evidence.</p>
+
+    <h3><code>karpal-verify</code> pipeline</h3>
+    <p>The external verification layer is organized as a pipeline:</p>
+    <ol>
+      <li>Model a goal as an <code>Obligation</code> or <code>ObligationBundle</code>.</li>
+      <li>Export the bundle to SMT-LIB2 scripts or a Lean module.</li>
+      <li>Attach structured Lean metadata such as theorem identities, declaration spans, imports, aliases, and package/project scaffold data.</li>
+      <li>Write artifacts and build <code>InvocationPlan</code> values.</li>
+      <li>Execute those plans through a <code>VerifierRunner</code>, including project-aware <code>lake env lean</code> or <code>lake build</code> flows when desired.</li>
+      <li>Parse solver or Lean output, including Lean diagnostics and theorem-aware failure mapping.</li>
+      <li>Interpret success through an explicit <code>VerificationPolicy</code> per backend.</li>
+      <li>Aggregate results into a <code>VerificationReport</code>, Lean manifest, and diagnostics sidecar, all suitable for CI serialization.</li>
+      <li>Import successful evidence as <code>Certified&lt;B, P, T&gt;</code>, not directly as <code>Proven&lt;P, T&gt;</code>.</li>
+    </ol>
+
+    <h3>Trust boundary</h3>
+    <p>This separation is deliberate. External evidence crosses a visible boundary through <code>Certified&lt;...&gt;</code> and only becomes <code>Proven&lt;...&gt;</code> via an explicit <code>unsafe</code> conversion. That keeps imported trust searchable in code review and avoids conflating theorem prover output with Rust-native guarantees.</p>
+
+    <p>For API details, see the <a href="reference/proof-verification.html">Proof &amp; Verification reference</a>. For CI-specific execution/reporting guidance, see <a href="reference/verification-ci.html">Verification CI Workflow</a>. For serialized artifact compatibility, see <a href="reference/verification-schemas.html">Verification Schemas</a>. For a walkthrough example, see <a href="examples/verification-workflow.html">Verification Workflow</a>. For a domain-boundary example that combines <code>karpal-proof</code> and <code>karpal-verify</code>, see <a href="examples/verified-domain-api.html">Verified Domain API</a>. For the design note focused on imported trust, see <a href="dev/phase-12-trust-model.md">Trust Model</a>.</p>
 
     <div class="footer">
       <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>

@@ -92,6 +92,66 @@ pub mod prelude {
         ApplicativeSt, ChainSt, ExceptTF, FunctorSt, MonadTrans, ReaderTF, StateTF, WriterTF,
     };
 
+    // Proof system / Algebraic witnesses
+    pub use karpal_proof::{
+        And,
+        Implies,
+        IsAbelianGroup,
+        // Property markers
+        IsAssociative,
+        IsBoundedLattice,
+        IsCommutative,
+        IsField,
+        IsGroup,
+        IsLattice,
+        IsLawfulFunctor,
+        IsLawfulMonad,
+        IsMonoid,
+        IsRing,
+        IsSemiring,
+        Justifies,
+        NonEmpty,
+        Positive,
+        Property,
+        Proven,
+        Rewrite,
+        // Derive macros
+        VerifyCommutative,
+        VerifyGroup,
+        VerifyLattice,
+        VerifyMonoid,
+        VerifyRing,
+        VerifySemigroup,
+        VerifySemiring,
+    };
+
+    // External verification / proof obligations
+    pub use karpal_verify::{
+        AlgebraicSignature, ArtifactBatch, ArtifactLayout, ArtifactRecord, BinarySymbol,
+        Certificate, Certified, CommandKind, ConstantSymbol, DEFAULT_REPORT_STEM, Declaration,
+        DryRunner, ExecutionResult, ExecutionStatus, InvocationPlan, Lean4, LeanAlias,
+        LeanCertificate, LeanConfig, LeanDiagnostic, LeanDriver, LeanExport, LeanImport,
+        LeanOutput, LeanPrelude, LeanProject, LeanTheorem, LocalProcessRunner, ModuleReport,
+        Obligation, ObligationBundle, ObligationReport, Origin, ProofDialect, ReportFiles,
+        SmtCertificate, SmtConfig, SmtLib2, SmtOutput, Sort, Term, UnarySymbol,
+        VerificationBackend, VerificationOutput, VerificationPolicy, VerificationReport,
+        VerificationSession, VerificationTier, VerifierRunner, dry_run_bundle_artifacts,
+        dry_run_report, execute_report, export_lean_bundle, export_lean_bundle_structured,
+        export_lean_bundle_structured_with_prelude, export_lean_bundle_with_prelude,
+        export_module_with_prelude, export_smt_batch, export_smt_bundle, export_with_prelude,
+        parse_lean_output, parse_smt_output, parse_smt_status, verify_bundle,
+        verify_bundle_with_ci_outputs, write_bundle_artifacts,
+    };
+    #[cfg(feature = "amari")]
+    pub use karpal_verify::{
+        AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
+        AmariStatisticalProperty, AmariVerificationResult, StatisticalBound,
+        StatisticalVerification, ThreeTierObligationReport, ThreeTierVerificationReport,
+        classify_tier, concentration_obligation_for, ensures_expected,
+        expected_value_obligation_for, postcondition_obligation_for, precondition_obligation_for,
+        prob_ensures, prob_requires, three_tier_report, verify_rare_event,
+    };
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -104,7 +164,9 @@ pub use karpal_effect;
 pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;
+pub use karpal_proof;
 pub use karpal_recursion;
+pub use karpal_verify;
 
 // Macro re-exports
 pub use karpal_core::ado_;
@@ -158,5 +220,17 @@ mod tests {
         let inc = <FnA as Arrow>::arr(|x: i32| x + 1);
         let composed = <FnA as Semigroupoid>::compose(inc, double);
         assert_eq!(composed(5), 11); // (5 * 2) + 1
+    }
+
+    #[test]
+    fn prelude_verify_accessible() {
+        let obligation = Obligation::associativity(
+            "sum_assoc",
+            Origin::new("karpal-core", "Semigroup for i32"),
+            Sort::Int,
+            "combine",
+        );
+        let exported = SmtLib2::export(&obligation);
+        assert!(exported.contains("check-sat"));
     }
 }

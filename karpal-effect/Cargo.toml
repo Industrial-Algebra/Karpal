@@ -11,7 +11,7 @@ readme = "README.md"
 description = "Monad transformers and effect system for the Industrial Algebra ecosystem"
 
 [dependencies]
-karpal-core = { version = "0.3.0", path = "../karpal-core", default-features = false }
+karpal-core = { version = "0.4.0", path = "../karpal-core", default-features = false }
 
 [features]
 default = ["std"]

@@ -25,6 +25,12 @@ jobs:
       - name: cargo test --workspace
         run: cargo test --workspace
 
+      - name: cargo clippy -p karpal-verify --features amari
+        run: cargo clippy -p karpal-verify --features amari -- -D warnings
+
+      - name: cargo test -p karpal-verify --features amari
+        run: cargo test -p karpal-verify --features amari
+
       - name: no_std check (karpal-core)
         run: cargo build --no-default-features -p karpal-core
 
@@ -45,3 +51,9 @@ jobs:
 
       - name: no_std check (karpal-effect)
         run: cargo build --no-default-features -p karpal-effect
+
+      - name: no_std check (karpal-proof)
+        run: cargo build --no-default-features -p karpal-proof
+
+      - name: no_std check (karpal-verify)
+        run: cargo build --no-default-features -p karpal-verify

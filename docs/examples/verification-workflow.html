@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification Workflow - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.4.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="../reference/functor-family.html">Functor Family</a></li>
+          <li><a href="../reference/alt-family.html">Alt Family</a></li>
+          <li><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="../reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="../reference/macros.html">Macros</a></li>
+          <li><a href="../reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="../reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="../reference/invariant.html">Invariant</a></li>
+          <li><a href="../reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="../reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="../reference/arrow-family.html">Arrow Family</a></li>
+          <li><a href="../reference/free-constructions.html">Free Constructions</a></li>
+          <li><a href="../reference/recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="../reference/optics.html">Optics</a></li>
+          <li><a href="../reference/abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="../reference/adjunctions.html">Adjunctions</a></li>
+          <li><a href="../reference/effect-system.html">Effect System</a></li>
+          <li><a href="../reference/proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="../reference/verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="../reference/verification-schemas.html">Verification Schemas</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="data-transformation.html">Data Transformation</a></li>
+          <li><a href="cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="domain-model-optics.html">Domain Model</a></li>
+          <li><a href="verification-workflow.html" class="active">Verification Workflow</a></li>
+          <li><a href="verified-domain-api.html">Verified Domain API</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="config-pipeline.html">Examples</a> &gt; <span>Verification Workflow</span>
+    </nav>
+
+    <h1>Verification Workflow</h1>
+    <p>This example walks through a realistic <code>karpal-verify</code> workflow: define a bundle of algebraic obligations, export SMT and Lean artifacts, preview commands with a dry run, produce CI-oriented summaries, and finally import an external certificate through the explicit trust boundary.</p>
+
+    <h2 id="scenario">Scenario</h2>
+    <p>Suppose you have a type that behaves like an additive monoid and you want three things:</p>
+    <ul>
+      <li>a machine-readable description of its laws,</li>
+      <li>export artifacts for SMT and Lean, and</li>
+      <li>a reviewable path from external verification back into Rust.</li>
+    </ul>
+
+    <p>The <code>karpal-verify</code> stack is designed exactly for this flow.</p>
+
+    <h2 id="step-1-bundle">1. Build an obligation bundle</h2>
+
+<pre><code class="language-rust">use karpal_std::prelude::*;
+
+let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
+let bundle = ObligationBundle::monoid(
+    "sum_monoid",
+    Origin::new("karpal-core", "Monoid for Sum&lt;i32&gt;"),
+    &sig,
+);
+
+assert_eq!(bundle.obligations().len(), 3);</code></pre>
+
+    <p>The resulting bundle contains associativity, left identity, and right identity. The bundle becomes the shared source for every downstream step.</p>
+
+    <h2 id="step-2-export">2. Export SMT and Lean artifacts</h2>
+
+<pre><code class="language-rust">let smt_scripts = export_smt_bundle(&bundle);
+let lean_module = export_lean_bundle("KarpalVerify", &bundle);
+
+assert_eq!(smt_scripts.len(), 3);
+assert!(lean_module.contains("namespace KarpalVerify"));</code></pre>
+
+    <p>At this stage you still have plain strings in memory. This is useful when integrating with other tools or building higher-level export pipelines.</p>
+
+    <h2 id="step-3-write-and-plan">3. Write artifacts and inspect invocation plans</h2>
+    <p>Once you choose a root layout, <code>karpal-verify</code> can materialize files and the command plans needed to run them.</p>
+
+<pre><code class="language-rust">let layout = ArtifactLayout::new("target/karpal-verify-example");
+let batch = dry_run_bundle_artifacts(
+    &bundle,
+    &layout,
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+);
+
+for plan in &batch.plans {
+    println!("{}", plan.render_shell());
+}</code></pre>
+
+    <p>A dry-run batch is especially useful while wiring CI, because it validates paths and exporter output without requiring solver binaries to be available. The batch also carries structured Lean export metadata, generated Lean project data, and a typed Lean manifest model that will later be serialized beside the generated module.</p>
+
+    <h2 id="step-4-orchestrate">4. Orchestrate build → run → report</h2>
+    <p>The orchestration layer wraps the lower-level pieces into one cohesive flow. For example, here is a dry-run CI-style session:</p>
+
+<pre><code class="language-rust">let output = verify_bundle_with_ci_outputs(
+    &bundle,
+    &ArtifactLayout::new("target/karpal-verify-example"),
+    "KarpalVerify",
+    &SmtConfig::default(),
+    &LeanConfig::default(),
+    &DryRunner,
+).expect("verification session should succeed");
+
+assert_eq!(output.report.obligation_count(), 3);
+assert!(output.report_files.json_path.ends_with("verification-report.json"));
+assert!(output.report_files.markdown_path.ends_with("verification-report.md"));</code></pre>
+
+    <p>This one call does all of the following:</p>
+    <ul>
+      <li>writes SMT and Lean artifacts,</li>
+      <li>creates invocation plans,</li>
+      <li>runs them with the supplied runner,</li>
+      <li>builds a <code>VerificationReport</code>,</li>
+      <li>writes JSON / Markdown summaries beside the generated artifacts,</li>
+      <li>writes a schema-versioned Lean diagnostics sidecar, and</li>
+      <li>cross-links a schema-versioned Lean manifest back to those report files.</li>
+    </ul>
+
+    <h2 id="step-5-backend-semantics">5. Understand backend semantics</h2>
+    <p>The same word “success” means different things depending on the backend:</p>
+
+<pre><code class="language-rust">assert!(VerificationPolicy::for_kind(CommandKind::Smt)
+    .accepts(ExecutionStatus::Unsat));
+assert!(VerificationPolicy::for_kind(CommandKind::Lean)
+    .accepts(ExecutionStatus::Success));</code></pre>
+
+    <p>For SMT backends, Karpal exports the negation of the law, so <code>unsat</code> is the success case. For Lean, success is an accepted module together with parsed diagnostics that report no errors. Lean diagnostics are then mapped back to exported theorem identities, using source-line spans as a fallback when the diagnostic message does not name the theorem directly.</p>
+
+    <h2 id="step-6-session-builder">6. Use the session builder for more control</h2>
+    <p>If you need to configure tool names, extra arguments, or custom report names, use <code>VerificationSession</code> directly:</p>
+
+<pre><code class="language-rust">let session = VerificationSession::new(
+    bundle.clone(),
+    ArtifactLayout::new("target/karpal-verify-example-2"),
+    "KarpalVerify",
+)
+.with_smt_config(SmtConfig::new("z3").with_arg("-smt2"))
+.with_lean_config(
+    LeanConfig::new("lean")
+        .with_driver(LeanDriver::LakeBuild)
+)
+.with_report_stem("nightly-summary");
+
+let dry_report = session.dry_run_report();
+assert!(dry_report.obligations.iter().all(|o| o.status().is_some()));</code></pre>
+
+    <h2 id="step-7-trust-boundary">7. Import external evidence explicitly</h2>
+    <p>The final step is intentionally explicit. External evidence first becomes a certificate and a <code>Certified&lt;...&gt;</code> wrapper, not a <code>Proven&lt;...&gt;</code> value.</p>
+
+<pre><code class="language-rust">use karpal_proof::{IsAssociative, Proven};
+use karpal_verify::{Certificate, Certified, SmtCertificate};
+
+let cert = Certificate::new("smtlib2", "sum_assoc", "z3:unsat");
+let imported =
+    unsafe { Certified::&lt;SmtCertificate, IsAssociative, i32&gt;::assume(1, cert) };
+let _: Proven&lt;IsAssociative, i32&gt; = unsafe { imported.into_proven() };</code></pre>
+
+    <p>This is the deliberate trust handoff in <code>karpal-verify</code>: external evidence is useful, but it is not silently conflated with Rust-native proof evidence.</p>
+
+    <h2 id="where-next">Where to go next</h2>
+    <ul>
+      <li><a href="../reference/proof-verification.html">Proof &amp; Verification</a> for the full API overview.</li>
+      <li><a href="../reference/verification-ci.html">Verification CI Workflow</a> for CI-focused layout and reporting guidance.</li>
+      <li><a href="../reference/verification-schemas.html">Verification Schemas</a> for report/manifest/sidecar compatibility details.</li>
+      <li><a href="../dev/phase-12-trust-model.md">Trust Model</a> for the imported-proof boundary design note.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

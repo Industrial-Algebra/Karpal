@@ -1,0 +1,21 @@
+[package]
+name = "karpal-verify"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "External prover bridge and trust model for the Industrial Algebra ecosystem"
+
+[features]
+default = ["std"]
+std = ["alloc", "karpal-proof/std"]
+alloc = ["karpal-proof/alloc"]
+amari = ["std", "dep:amari-flynn"]
+
+[dependencies]
+karpal-proof = { version = "0.4.0", path = "../karpal-proof", default-features = false }
+amari-flynn = { version = "0.19.1", optional = true }

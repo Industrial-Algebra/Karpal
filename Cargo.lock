@@ -3,6 +3,28 @@
 version = 4
 
 [[package]]
+name = "amari-flynn"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab96dd8fcac3276cda10e6cf1ce00b5b7a401c4990422a84a1fa32f8d9588dc1"
+dependencies = [
+ "amari-flynn-macros",
+ "rand 0.10.0",
+ "rand_distr",
+]
+
+[[package]]
+name = "amari-flynn-macros"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab66e73ff3a58adf1e3a2c292293a433009748358e0c2c397a11a80c2131f946"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -40,6 +62,26 @@ name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+
+[[package]]
+name = "chacha20"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f8d983286843e49675a4b7a2d174efe136dc93a18d69130dd18198a6c167601"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "rand_core 0.10.0",
+]
+
+[[package]]
+name = "cpufeatures"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b2a41393f66f16b0823bb79094d54ac5fbd34ab292ddafb9a0456ac9f87d201"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "equivalent"
@@ -96,6 +138,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "r-efi 6.0.0",
+ "rand_core 0.10.0",
  "wasip2",
  "wasip3",
 ]
@@ -147,7 +190,7 @@ checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
 name = "karpal-algebra"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -155,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-arrow"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -163,14 +206,14 @@ dependencies = [
 
 [[package]]
 name = "karpal-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "proptest",
 ]
 
 [[package]]
 name = "karpal-effect"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -178,7 +221,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-free"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -186,7 +229,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-optics"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "karpal-profunctor",
@@ -195,15 +238,34 @@ dependencies = [
 
 [[package]]
 name = "karpal-profunctor"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "proptest",
 ]
 
 [[package]]
+name = "karpal-proof"
+version = "0.4.0"
+dependencies = [
+ "karpal-algebra",
+ "karpal-core",
+ "karpal-proof-derive",
+ "proptest",
+]
+
+[[package]]
+name = "karpal-proof-derive"
+version = "0.4.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "karpal-recursion"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-core",
  "karpal-free",
@@ -212,7 +274,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-std"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "karpal-algebra",
  "karpal-arrow",
@@ -221,7 +283,17 @@ dependencies = [
  "karpal-free",
  "karpal-optics",
  "karpal-profunctor",
+ "karpal-proof",
  "karpal-recursion",
+ "karpal-verify",
+]
+
+[[package]]
+name = "karpal-verify"
+version = "0.4.0"
+dependencies = [
+ "amari-flynn",
+ "karpal-proof",
 ]
 
 [[package]]
@@ -235,6 +307,12 @@ name = "libc"
 version = "0.2.182"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112"
+
+[[package]]
+name = "libm"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "linux-raw-sys"
@@ -261,6 +339,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
+ "libm",
 ]
 
 [[package]]
@@ -307,7 +386,7 @@ dependencies = [
  "bit-vec",
  "bitflags",
  "num-traits",
- "rand",
+ "rand 0.9.2",
  "rand_chacha",
  "rand_xorshift",
  "regex-syntax",
@@ -324,9 +403,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.44"
+version = "1.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21b2ebcf727b7760c461f091f9f0f539b77b8e87f2fd88131e7f1b433b3cece4"
+checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
 ]
@@ -350,7 +429,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6db2770f06117d490610c7488547d543617b21bfa07796d7a12f6f1bd53850d1"
 dependencies = [
  "rand_chacha",
- "rand_core",
+ "rand_core 0.9.5",
+]
+
+[[package]]
+name = "rand"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc266eb313df6c5c09c1c7b1fbe2510961e5bcd3add930c1e31f7ed9da0feff8"
+dependencies = [
+ "chacha20",
+ "getrandom 0.4.2",
+ "rand_core 0.10.0",
 ]
 
 [[package]]
@@ -360,7 +450,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3022b5f1df60f26e1ffddd6c66e8aa15de382ae63b3a0c1bfc0e4d3e3f325cb"
 dependencies = [
  "ppv-lite86",
- "rand_core",
+ "rand_core 0.9.5",
 ]
 
 [[package]]
@@ -373,12 +463,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_core"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c8d0fd677905edcbeedbf2edb6494d676f0e98d54d5cf9bda0b061cb8fb8aba"
+
+[[package]]
+name = "rand_distr"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d431c2703ccf129de4d45253c03f49ebb22b97d6ad79ee3ecfc7e3f4862c1d8"
+dependencies = [
+ "num-traits",
+ "rand 0.10.0",
+]
+
+[[package]]
 name = "rand_xorshift"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "513962919efc330f829edb2535844d1b912b0fbe2ca165d613e4e8788bb05a5a"
 dependencies = [
- "rand_core",
+ "rand_core 0.9.5",
 ]
 
 [[package]]

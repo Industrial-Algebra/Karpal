@@ -1,9 +1,9 @@
 [workspace]
-members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-std"]
+members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-proof", "karpal-proof-derive", "karpal-verify", "karpal-std"]
 resolver = "3"
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Industrial-Algebra/Karpal"
@@ -12,12 +12,15 @@ keywords = ["hkt", "functor", "algebraic", "category-theory", "fp"]
 categories = ["no-std", "rust-patterns"]
 
 [workspace.dependencies]
-karpal-core = { version = "0.3.0", path = "karpal-core" }
-karpal-profunctor = { version = "0.3.0", path = "karpal-profunctor" }
-karpal-optics = { version = "0.3.0", path = "karpal-optics" }
-karpal-arrow = { version = "0.3.0", path = "karpal-arrow" }
-karpal-free = { version = "0.3.0", path = "karpal-free" }
-karpal-recursion = { version = "0.3.0", path = "karpal-recursion" }
-karpal-algebra = { version = "0.3.0", path = "karpal-algebra" }
-karpal-effect = { version = "0.3.0", path = "karpal-effect" }
+karpal-core = { version = "0.4.0", path = "karpal-core" }
+karpal-profunctor = { version = "0.4.0", path = "karpal-profunctor" }
+karpal-optics = { version = "0.4.0", path = "karpal-optics" }
+karpal-arrow = { version = "0.4.0", path = "karpal-arrow" }
+karpal-free = { version = "0.4.0", path = "karpal-free" }
+karpal-recursion = { version = "0.4.0", path = "karpal-recursion" }
+karpal-algebra = { version = "0.4.0", path = "karpal-algebra" }
+karpal-effect = { version = "0.4.0", path = "karpal-effect" }
+karpal-proof = { version = "0.4.0", path = "karpal-proof" }
+karpal-proof-derive = { version = "0.4.0", path = "karpal-proof-derive" }
+karpal-verify = { version = "0.4.0", path = "karpal-verify" }
 proptest = "1"
