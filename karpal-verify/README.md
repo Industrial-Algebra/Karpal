@@ -17,6 +17,7 @@ External prover bridge for the Karpal ecosystem.
 - reporting types that attach execution outcomes and certificates back to obligations
 - session/orchestration helpers for build → run → report flows
 - report serialization helpers for CI-friendly JSON / Markdown summaries
+- optional **amari-flynn** integration for statistical contracts, Monte Carlo law-bound checks, and probabilistic contract macros
 - an explicit **external trust boundary** for importing certificates back into Rust
 
 ## What's inside
@@ -290,6 +291,57 @@ theorem metadata, prelude/import metadata, generated package metadata, and
 write a small typed Lean manifest model alongside the module source plus
 `lakefile.lean` / `lean-toolchain` scaffolding at the artifact root.
 
+### amari-flynn statistical integration
+
+Enable the optional `amari` feature when you want to layer statistical
+verification on top of the obligation IR:
+
+```toml
+karpal-verify = { version = "0.3.0", features = ["amari"] }
+```
+
+This exposes:
+
+- `verify_rare_event(...)` for Monte Carlo checking of law-violation predicates
+- `StatisticalBound` / `StatisticalVerification` for probability bounds,
+  event classification, and Karpal tier mapping
+- `precondition_obligation_for(...)`, `postcondition_obligation_for(...)`,
+  `concentration_obligation_for(...)`, and `expected_value_obligation_for(...)`
+  for bridging Karpal obligations into amari-flynn SMT proof obligations
+- re-exported `#[prob_requires(...)]`, `#[prob_ensures(...)]`, and
+  `#[ensures_expected(...)]` macros for probabilistic contract helpers
+
+```rust
+use karpal_verify::{
+    verify_rare_event, Obligation, Origin, Sort, StatisticalBound, VerificationTier,
+};
+
+let obligation = Obligation::commutativity(
+    "sum_comm",
+    Origin::new("karpal-algebra", "AbelianGroup for i32"),
+    Sort::Int,
+    "combine",
+);
+let verification = verify_rare_event(
+    &obligation,
+    &StatisticalBound::new(0.05).with_samples(4096),
+    || false,
+);
+assert_eq!(verification.tier(), VerificationTier::Impossible);
+```
+
+This gives `karpal-verify` a concrete bridge for the roadmap's three-tier
+story:
+
+- **Impossible** → type-level / zero-probability exclusion
+- **Rare** → amari-flynn statistical bounds over violating events
+- **Emergent** → behavior that remains possible and therefore observable
+
+For bundle-level summaries, `three_tier_report(...)` combines declared
+obligation tiers, amari statistical evidence, and successful external
+verification results into a single aggregate report with JSON / Markdown
+rendering helpers.
+
 #### Schema compatibility
 
 Current serialized verification artifacts use schema version `1`.
@@ -324,15 +376,21 @@ let _: Proven<IsAssociative, i32> = unsafe { externally_checked.into_proven() };
 
 ## Current scope
 
-This crate currently provides the pre-integration verification scaffold:
+This crate now provides the external-verification foundation for Karpal:
 
 - obligation modeling
-- text export backends
-- structured Lean export / prelude metadata
+- SMT-LIB2 export
+- structured Lean 4 export, project scaffolding, and project-aware execution
+- CI/report artifact generation with schema-versioned JSON / Markdown outputs
 - explicit trust-model types
+- optional amari-flynn statistical integration for rare-event bounds and
+  probabilistic contract helpers
 
-Solver invocation, richer Lean project generation, and amari-flynn integration
-can build on this foundation next.
+The core roadmap work for `karpal-verify` is now implemented: obligation IR,
+SMT/Lean export, artifact/report/session orchestration, optional amari-flynn
+integration, and CI-oriented three-tier summaries. Future work can deepen that
+coverage across more derive and trait workflows, but the external verification
+foundation is now in place.
 
 ## License
 

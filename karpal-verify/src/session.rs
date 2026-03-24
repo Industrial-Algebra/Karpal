@@ -3,6 +3,8 @@ use crate::{
     ObligationBundle, SmtConfig, VerificationReport, VerifierRunner, dry_run_bundle_artifacts,
     dry_run_report, execute_report, write_bundle_artifacts,
 };
+#[cfg(feature = "amari")]
+use crate::{StatisticalVerification, ThreeTierVerificationReport, three_tier_report};
 use std::{fs, io, path::Path, string::String};
 
 /// Schema version for CI-oriented verification sidecar/report-file metadata.
@@ -18,6 +20,8 @@ pub struct ReportFiles {
     pub markdown_path: String,
     pub lean_diagnostics_json_path: Option<String>,
     pub lean_manifest_path: Option<String>,
+    pub three_tier_json_path: Option<String>,
+    pub three_tier_markdown_path: Option<String>,
 }
 
 /// End-to-end verification session configuration for a bundle.
@@ -29,6 +33,8 @@ pub struct VerificationSession {
     smt: SmtConfig,
     lean: LeanConfig,
     report_stem: String,
+    #[cfg(feature = "amari")]
+    statistical_verifications: Vec<StatisticalVerification>,
 }
 
 impl VerificationSession {
@@ -44,6 +50,8 @@ impl VerificationSession {
             smt: SmtConfig::default(),
             lean: LeanConfig::default(),
             report_stem: DEFAULT_REPORT_STEM.into(),
+            #[cfg(feature = "amari")]
+            statistical_verifications: Vec::new(),
         }
     }
 
@@ -59,6 +67,21 @@ impl VerificationSession {
 
     pub fn with_report_stem(mut self, report_stem: impl Into<String>) -> Self {
         self.report_stem = report_stem.into();
+        self
+    }
+
+    #[cfg(feature = "amari")]
+    pub fn with_statistical_verification(mut self, verification: StatisticalVerification) -> Self {
+        self.statistical_verifications.push(verification);
+        self
+    }
+
+    #[cfg(feature = "amari")]
+    pub fn with_statistical_verifications(
+        mut self,
+        verifications: impl IntoIterator<Item = StatisticalVerification>,
+    ) -> Self {
+        self.statistical_verifications.extend(verifications);
         self
     }
 
@@ -123,8 +146,11 @@ impl VerificationSession {
         let report_files = write_report_files(
             &self.layout.root,
             &self.report_stem,
+            &self.bundle,
             &report,
             artifacts.lean_manifest.as_ref(),
+            #[cfg(feature = "amari")]
+            &self.statistical_verifications,
         )?;
         Ok(VerificationOutput {
             report,
@@ -183,9 +209,13 @@ pub fn verify_bundle_with_ci_outputs(
 fn write_report_files(
     root: impl AsRef<Path>,
     report_stem: &str,
+    bundle: &ObligationBundle,
     report: &VerificationReport,
     lean_manifest: Option<&crate::artifact::LeanManifest>,
+    #[cfg(feature = "amari")] statistical_verifications: &[StatisticalVerification],
 ) -> io::Result<ReportFiles> {
+    #[cfg(not(feature = "amari"))]
+    let _ = bundle;
     let root = root.as_ref();
     fs::create_dir_all(root)?;
 
@@ -207,6 +237,36 @@ fn write_report_files(
         })
         .transpose()?;
 
+    #[cfg(feature = "amari")]
+    let three_tier = (!statistical_verifications.is_empty())
+        .then(|| three_tier_report(bundle, statistical_verifications, Some(report)));
+    #[cfg(feature = "amari")]
+    let three_tier_json_path = if let Some(three_tier) = &three_tier {
+        let path = root.join(format!("{report_stem}.three-tier.json"));
+        fs::write(
+            &path,
+            render_three_tier_json_with_links(three_tier, report_stem, root),
+        )?;
+        Some(path_to_string(&path))
+    } else {
+        None
+    };
+    #[cfg(feature = "amari")]
+    let three_tier_markdown_path = if let Some(three_tier) = &three_tier {
+        let path = root.join(format!("{report_stem}.three-tier.md"));
+        fs::write(
+            &path,
+            render_three_tier_markdown_with_links(three_tier, report_stem, root),
+        )?;
+        Some(path_to_string(&path))
+    } else {
+        None
+    };
+    #[cfg(not(feature = "amari"))]
+    let three_tier_json_path = None;
+    #[cfg(not(feature = "amari"))]
+    let three_tier_markdown_path = None;
+
     let json_path = root.join(format!("{report_stem}.json"));
     let markdown_path = root.join(format!("{report_stem}.md"));
     let report_files = ReportFiles {
@@ -214,6 +274,8 @@ fn write_report_files(
         markdown_path: path_to_string(&markdown_path),
         lean_diagnostics_json_path,
         lean_manifest_path,
+        three_tier_json_path,
+        three_tier_markdown_path,
     };
     fs::write(
         &json_path,
@@ -253,6 +315,18 @@ fn render_report_json_with_links(report: &VerificationReport, files: &ReportFile
                 escape_json(path)
             ));
         }
+        if let Some(path) = &files.three_tier_json_path {
+            json.push_str(&format!(
+                ",\"three_tier_json_path\":\"{}\"",
+                escape_json(path)
+            ));
+        }
+        if let Some(path) = &files.three_tier_markdown_path {
+            json.push_str(&format!(
+                ",\"three_tier_markdown_path\":\"{}\"",
+                escape_json(path)
+            ));
+        }
         json.push_str("}}");
     }
     json
@@ -273,6 +347,60 @@ fn render_report_markdown_with_links(report: &VerificationReport, files: &Report
     if let Some(path) = &files.lean_manifest_path {
         markdown.push_str(&format!("- Lean manifest: `{}`\n", path));
     }
+    if let Some(path) = &files.three_tier_json_path {
+        markdown.push_str(&format!("- Three-tier JSON: `{}`\n", path));
+    }
+    if let Some(path) = &files.three_tier_markdown_path {
+        markdown.push_str(&format!("- Three-tier Markdown: `{}`\n", path));
+    }
+    markdown
+}
+
+#[cfg(feature = "amari")]
+fn render_three_tier_json_with_links(
+    report: &ThreeTierVerificationReport,
+    report_stem: &str,
+    root: &Path,
+) -> String {
+    let mut json = report.to_json();
+    if json.ends_with('}') {
+        json.pop();
+        json.push_str(",\"report_files\":{");
+        json.push_str(&format!(
+            "\"schema_version\":\"{}\",\"json_path\":\"{}\",\"markdown_path\":\"{}\"",
+            VERIFICATION_SIDECAR_SCHEMA_VERSION,
+            escape_json(&path_to_string(
+                &root.join(format!("{report_stem}.three-tier.json"))
+            )),
+            escape_json(&path_to_string(
+                &root.join(format!("{report_stem}.three-tier.md"))
+            ))
+        ));
+        json.push_str("}}");
+    }
+    json
+}
+
+#[cfg(feature = "amari")]
+fn render_three_tier_markdown_with_links(
+    report: &ThreeTierVerificationReport,
+    report_stem: &str,
+    root: &Path,
+) -> String {
+    let mut markdown = report.to_markdown();
+    markdown.push_str("\nReport files:\n");
+    markdown.push_str(&format!(
+        "- Schema version: `{}`\n",
+        VERIFICATION_SIDECAR_SCHEMA_VERSION
+    ));
+    markdown.push_str(&format!(
+        "- JSON: `{}`\n",
+        path_to_string(&root.join(format!("{report_stem}.three-tier.json")))
+    ));
+    markdown.push_str(&format!(
+        "- Markdown: `{}`\n",
+        path_to_string(&root.join(format!("{report_stem}.three-tier.md")))
+    ));
     markdown
 }
 
@@ -371,6 +499,8 @@ mod tests {
         AlgebraicSignature, ExecutionResult, ExecutionStatus, LeanDiagnostic, LeanOutput, Origin,
         SmtOutput, Sort,
     };
+    #[cfg(feature = "amari")]
+    use crate::{StatisticalBound, verify_rare_event};
 
     fn sample_session(root: &Path) -> VerificationSession {
         let sig = AlgebraicSignature::monoid(Sort::Int, "combine", "e");
@@ -494,6 +624,11 @@ mod tests {
         );
         assert!(output.report_files.json_path.ends_with("summary.json"));
         assert!(output.report_files.markdown_path.ends_with("summary.md"));
+        #[cfg(not(feature = "amari"))]
+        {
+            assert!(output.report_files.three_tier_json_path.is_none());
+            assert!(output.report_files.three_tier_markdown_path.is_none());
+        }
         assert!(
             output
                 .report_files
@@ -546,6 +681,63 @@ mod tests {
         assert!(manifest.contains("\"json_path\""));
         assert!(manifest.contains("\"markdown_path\""));
         assert!(manifest.contains("\"lean_diagnostics_json_path\""));
+
+        let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[cfg(feature = "amari")]
+    #[test]
+    fn verify_with_ci_outputs_writes_three_tier_sidecars_when_statistical_evidence_exists() {
+        let temp = std::env::temp_dir().join("karpal_verify_session_three_tier_test");
+        if temp.exists() {
+            let _ = fs::remove_dir_all(&temp);
+        }
+
+        let bundle = sample_session(&temp).bundle().clone();
+        let statistical = verify_rare_event(
+            &bundle.obligations()[0],
+            &StatisticalBound::new(0.05).with_samples(128),
+            || false,
+        );
+
+        let output = sample_session(&temp)
+            .with_report_stem("summary")
+            .with_statistical_verification(statistical)
+            .verify_with_ci_outputs(&DryRunner)
+            .expect("ci outputs should be written");
+
+        let three_tier_json_path = output
+            .report_files
+            .three_tier_json_path
+            .as_deref()
+            .expect("three-tier json should be written");
+        let three_tier_markdown_path = output
+            .report_files
+            .three_tier_markdown_path
+            .as_deref()
+            .expect("three-tier markdown should be written");
+        assert!(Path::new(three_tier_json_path).exists());
+        assert!(Path::new(three_tier_markdown_path).exists());
+        assert!(three_tier_json_path.ends_with("summary.three-tier.json"));
+        assert!(three_tier_markdown_path.ends_with("summary.three-tier.md"));
+
+        let json = fs::read_to_string(three_tier_json_path).expect("three-tier json readable");
+        let markdown =
+            fs::read_to_string(three_tier_markdown_path).expect("three-tier markdown readable");
+        let main_json =
+            fs::read_to_string(&output.report_files.json_path).expect("main report json readable");
+        let main_markdown = fs::read_to_string(&output.report_files.markdown_path)
+            .expect("main report markdown readable");
+
+        assert!(json.contains("\"impossible_count\":1"));
+        assert!(json.contains("\"external_count\":2"));
+        assert!(json.contains("\"report_files\""));
+        assert!(markdown.contains("Three-Tier Verification Report"));
+        assert!(markdown.contains("Schema version: `1`"));
+        assert!(main_json.contains("\"three_tier_json_path\""));
+        assert!(main_json.contains("\"three_tier_markdown_path\""));
+        assert!(main_markdown.contains("Three-tier JSON"));
+        assert!(main_markdown.contains("Three-tier Markdown"));
 
         let _ = fs::remove_dir_all(&temp);
     }

@@ -246,10 +246,14 @@ providing a vocabulary for algebraic reasoning within Rust's type system.
 | Refinement newtypes | `NonEmpty<Vec<T>>`, `Associative<Op>`, `Commutative<Op>` composable with all Karpal traits |
 | Auto-derive law checks | Proc macros generating proptest + Monte Carlo law verification for user-defined instances |
 
-### Phase 12 — `karpal-verify`: External Prover Bridge
+### Phase 12 — `karpal-verify`: External Prover Bridge (complete)
 
 Formal verification via external tools, following the architecture
 pioneered in [amari-flynn](https://github.com/Industrial-Algebra/amari-flynn).
+
+Status: implemented through `karpal-verify` obligation/export/report/session APIs,
+structured Lean integration, optional amari-flynn statistical verification,
+and CI-oriented three-tier summary artifacts.
 
 | Capability | Description |
 |-----------|-------------|

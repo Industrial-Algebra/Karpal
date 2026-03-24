@@ -10,6 +10,10 @@ categories.workspace = true
 readme = "README.md"
 description = "Standard prelude re-exports for the Karpal ecosystem"
 
+[features]
+default = []
+amari = ["karpal-verify/amari"]
+
 [dependencies]
 karpal-core.workspace = true
 karpal-profunctor.workspace = true
