@@ -1,4 +1,7 @@
-use std::fs;
+use std::{
+    fs,
+    sync::{Mutex, MutexGuard, OnceLock},
+};
 
 use karpal_verify::{
     AlgebraicSignature, ArtifactLayout, DryRunner, LeanManifest, LeanManifestReportFiles,
@@ -41,6 +44,14 @@ fn golden(fixture: GoldenFixture) -> &'static str {
         #[cfg(feature = "amari")]
         GoldenFixture::ThreeTierReportMarkdown => include_str!("golden/three_tier_report.md"),
     }
+}
+
+fn golden_root_guard() -> MutexGuard<'static, ()> {
+    static GOLDEN_ROOT_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    GOLDEN_ROOT_LOCK
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .expect("golden root lock should not be poisoned")
 }
 
 #[test]
@@ -91,6 +102,7 @@ fn lean_manifest_json_matches_expected_shape() {
 
 #[test]
 fn verification_report_json_files_match_expected_shape() {
+    let _guard = golden_root_guard();
     let root = "target/karpal-verify-golden";
     let _ = fs::remove_dir_all(root);
 
@@ -131,6 +143,7 @@ fn verification_report_json_files_match_expected_shape() {
 #[cfg(feature = "amari")]
 #[test]
 fn three_tier_report_sidecars_match_expected_shape() {
+    let _guard = golden_root_guard();
     let root = "target/karpal-verify-golden";
     let _ = fs::remove_dir_all(root);
 
