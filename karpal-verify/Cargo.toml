@@ -17,5 +17,5 @@ alloc = ["karpal-proof/alloc"]
 amari = ["std", "dep:amari-flynn"]
 
 [dependencies]
-karpal-proof = { version = "0.3.0", path = "../karpal-proof", default-features = false }
+karpal-proof = { version = "0.4.0", path = "../karpal-proof", default-features = false }
 amari-flynn = { version = "0.19.1", optional = true }

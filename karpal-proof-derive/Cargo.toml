@@ -5,6 +5,9 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
 description = "Derive macros for algebraic law verification in the Industrial Algebra ecosystem"
 
 [lib]

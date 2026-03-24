@@ -297,7 +297,7 @@ Enable the optional `amari` feature when you want to layer statistical
 verification on top of the obligation IR:
 
 ```toml
-karpal-verify = { version = "0.3.0", features = ["amari"] }
+karpal-verify = { version = "0.4.0", features = ["amari"] }
 ```
 
 This exposes:

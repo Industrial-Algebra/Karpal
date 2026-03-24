@@ -17,9 +17,9 @@ alloc = ["karpal-core/alloc", "karpal-algebra/alloc"]
 derive = ["karpal-proof-derive"]
 
 [dependencies]
-karpal-core = { version = "0.3.0", path = "../karpal-core", default-features = false }
-karpal-algebra = { version = "0.3.0", path = "../karpal-algebra", default-features = false }
-karpal-proof-derive = { version = "0.3.0", path = "../karpal-proof-derive", optional = true }
+karpal-core = { version = "0.4.0", path = "../karpal-core", default-features = false }
+karpal-algebra = { version = "0.4.0", path = "../karpal-algebra", default-features = false }
+karpal-proof-derive = { version = "0.4.0", path = "../karpal-proof-derive", optional = true }
 
 [dev-dependencies]
 proptest.workspace = true
