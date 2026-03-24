@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verified Domain API - Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.3.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="../reference/functor-family.html">Functor Family</a></li>
+          <li><a href="../reference/alt-family.html">Alt Family</a></li>
+          <li><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="../reference/functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="../reference/macros.html">Macros</a></li>
+          <li><a href="../reference/comonad-family.html">Comonad Family</a></li>
+          <li><a href="../reference/contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="../reference/invariant.html">Invariant</a></li>
+          <li><a href="../reference/bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="../reference/profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="../reference/arrow-family.html">Arrow Family</a></li>
+          <li><a href="../reference/free-constructions.html">Free Constructions</a></li>
+          <li><a href="../reference/recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="../reference/optics.html">Optics</a></li>
+          <li><a href="../reference/abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="../reference/adjunctions.html">Adjunctions</a></li>
+          <li><a href="../reference/effect-system.html">Effect System</a></li>
+          <li><a href="../reference/proof-verification.html">Proof &amp; Verification</a></li>
+          <li><a href="../reference/verification-ci.html">Verification CI Workflow</a></li>
+        </ul>
+      </li>
+      <li class="nav-section">
+        <span class="nav-section-title">Examples</span>
+        <ul>
+          <li><a href="config-pipeline.html">Config Pipeline</a></li>
+          <li><a href="data-transformation.html">Data Transformation</a></li>
+          <li><a href="cellular-automaton.html">Cellular Automaton</a></li>
+          <li><a href="domain-model-optics.html">Domain Model</a></li>
+          <li><a href="verification-workflow.html">Verification Workflow</a></li>
+          <li><a href="verified-domain-api.html" class="active">Verified Domain API</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <main class="content">
+    <nav class="breadcrumb">
+      <a href="../index.html">Home</a> &gt; <a href="verification-workflow.html">Examples</a> &gt; <span>Verified Domain API</span>
+    </nav>
+
+    <h1>Verified Domain API</h1>
+    <p>This example shows how <code>karpal-proof</code> and <code>karpal-verify</code> fit together at an API boundary: a domain type accepts <code>Proven&lt;P, T&gt;</code> internally, but externally produced evidence must first cross through <code>Certified&lt;B, P, T&gt;</code> and an explicit trust handoff.</p>
+
+    <h2 id="domain-goal">Domain goal</h2>
+    <p>Suppose your domain wants to work only with values whose combine operation is known to be associative. Instead of accepting a raw <code>T</code>, you can require <code>Proven&lt;IsAssociative, T&gt;</code>.</p>
+
+<pre><code class="language-rust">use karpal_proof::{IsAssociative, Proven};
+
+#[derive(Debug, Clone)]
+struct VerifiedAccumulator&lt;T&gt; {
+    inner: Proven&lt;IsAssociative, T&gt;,
+}
+
+impl&lt;T&gt; VerifiedAccumulator&lt;T&gt; {
+    fn new(inner: Proven&lt;IsAssociative, T&gt;) -&gt; Self {
+        Self { inner }
+    }
+}</code></pre>
+
+    <p>This is the <code>karpal-proof</code> style: the domain API states the required law as a type-level precondition.</p>
+
+    <h2 id="rust-native-entry">Rust-native entry point</h2>
+    <p>If the value already comes from a trusted Rust-side witness constructor, the API is straightforward:</p>
+
+<pre><code class="language-rust">use karpal_proof::Proven;
+
+let proven = Proven::from_semigroup(5i32);
+let acc = VerifiedAccumulator::new(proven);</code></pre>
+
+    <p>Here the value enters through Rust-native evidence. No external trust boundary is involved.</p>
+
+    <h2 id="external-entry">External certificate entry point</h2>
+    <p>Now consider the case where associativity was established by an external prover. <code>karpal-verify</code> deliberately prevents that evidence from silently becoming <code>Proven&lt;...&gt;</code>.</p>
+
+<pre><code class="language-rust">use karpal_proof::{IsAssociative, Proven};
+use karpal_verify::{Certificate, Certified, SmtCertificate};
+
+let cert = Certificate::new("smtlib2", "sum_assoc", "z3:unsat");
+let certified = unsafe {
+    Certified::&lt;SmtCertificate, IsAssociative, i32&gt;::assume(5, cert)
+};
+
+// Still not a Proven&lt;...&gt; value.
+let proven: Proven&lt;IsAssociative, i32&gt; = unsafe { certified.into_proven() };
+let acc = VerifiedAccumulator::new(proven);</code></pre>
+
+    <p>The two explicit <code>unsafe</code> steps are the point: code review can find and audit imported trust boundaries.</p>
+
+    <h2 id="boundary-design">Boundary design pattern</h2>
+    <p>A useful pattern is to keep the unsafe conversion at one narrow boundary function and expose only safe APIs elsewhere:</p>
+
+<pre><code class="language-rust">use karpal_proof::{IsAssociative, Proven};
+use karpal_verify::{Certified, SmtCertificate};
+
+fn import_associative_i32(
+    certified: Certified&lt;SmtCertificate, IsAssociative, i32&gt;,
+) -&gt; VerifiedAccumulator&lt;i32&gt; {
+    let proven = unsafe { certified.into_proven() };
+    VerifiedAccumulator::new(proven)
+}</code></pre>
+
+    <p>This keeps the imported-proof decision explicit and localized.</p>
+
+    <h2 id="why-this-matters">Why this matters</h2>
+    <ul>
+      <li><strong><code>karpal-proof</code></strong> gives your domain rich law-aware APIs.</li>
+      <li><strong><code>karpal-verify</code></strong> lets external provers feed those APIs without erasing trust provenance.</li>
+      <li><strong>The combination</strong> means you can keep public APIs principled while still integrating with SMT and Lean workflows.</li>
+    </ul>
+
+    <h2 id="recommended-usage">Recommended usage</h2>
+    <ol>
+      <li>Design internal domain APIs around <code>Proven&lt;P, T&gt;</code> and refinement wrappers.</li>
+      <li>Model and discharge external obligations with <code>karpal-verify</code>.</li>
+      <li>Import certificates as <code>Certified&lt;B, P, T&gt;</code>.</li>
+      <li>Convert to <code>Proven&lt;P, T&gt;</code> only in a small, audited boundary layer.</li>
+    </ol>
+
+    <p>For the broader export/execution workflow, see <a href="verification-workflow.html">Verification Workflow</a>. For the API overview, see <a href="../reference/proof-verification.html">Proof &amp; Verification</a>.</p>
+
+    <div class="footer">
+      <p>Karpal is licensed under MIT OR Apache-2.0. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>

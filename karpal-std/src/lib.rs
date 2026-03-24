@@ -125,6 +125,20 @@ pub mod prelude {
         VerifySemiring,
     };
 
+    // External verification / proof obligations
+    pub use karpal_verify::{
+        AlgebraicSignature, ArtifactBatch, ArtifactLayout, ArtifactRecord, BinarySymbol,
+        Certificate, Certified, CommandKind, ConstantSymbol, DEFAULT_REPORT_STEM, Declaration,
+        DryRunner, ExecutionResult, ExecutionStatus, InvocationPlan, Lean4, LeanCertificate,
+        LeanConfig, LocalProcessRunner, ModuleReport, Obligation, ObligationBundle,
+        ObligationReport, Origin, ProofDialect, ReportFiles, SmtCertificate, SmtConfig, SmtLib2,
+        SmtOutput, Sort, Term, UnarySymbol, VerificationBackend, VerificationOutput,
+        VerificationPolicy, VerificationReport, VerificationSession, VerificationTier,
+        VerifierRunner, dry_run_bundle_artifacts, dry_run_report, execute_report,
+        export_lean_bundle, export_smt_batch, export_smt_bundle, parse_smt_output,
+        parse_smt_status, verify_bundle, verify_bundle_with_ci_outputs, write_bundle_artifacts,
+    };
+
     // Macros
     pub use karpal_core::{ado_, do_};
 }
@@ -139,6 +153,7 @@ pub use karpal_optics;
 pub use karpal_profunctor;
 pub use karpal_proof;
 pub use karpal_recursion;
+pub use karpal_verify;
 
 // Macro re-exports
 pub use karpal_core::ado_;
@@ -192,5 +207,17 @@ mod tests {
         let inc = <FnA as Arrow>::arr(|x: i32| x + 1);
         let composed = <FnA as Semigroupoid>::compose(inc, double);
         assert_eq!(composed(5), 11); // (5 * 2) + 1
+    }
+
+    #[test]
+    fn prelude_verify_accessible() {
+        let obligation = Obligation::associativity(
+            "sum_assoc",
+            Origin::new("karpal-core", "Semigroup for i32"),
+            Sort::Int,
+            "combine",
+        );
+        let exported = SmtLib2::export(&obligation);
+        assert!(exported.contains("check-sat"));
     }
 }

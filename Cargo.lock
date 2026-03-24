@@ -242,6 +242,14 @@ dependencies = [
  "karpal-profunctor",
  "karpal-proof",
  "karpal-recursion",
+ "karpal-verify",
+]
+
+[[package]]
+name = "karpal-verify"
+version = "0.3.0"
+dependencies = [
+ "karpal-proof",
 ]
 
 [[package]]

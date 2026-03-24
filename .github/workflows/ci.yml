@@ -48,3 +48,6 @@ jobs:
 
       - name: no_std check (karpal-proof)
         run: cargo build --no-default-features -p karpal-proof
+
+      - name: no_std check (karpal-verify)
+        run: cargo build --no-default-features -p karpal-verify
