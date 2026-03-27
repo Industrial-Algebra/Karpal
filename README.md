@@ -27,12 +27,13 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 | [`karpal-effect`](karpal-effect/) | Monad transformers (ExceptT, WriterT, ReaderT, StateT) and static-bound functor hierarchy |
 | [`karpal-proof`](karpal-proof/) | Algebraic law witnesses, rewrite witnesses, refinement types, and derive-based law verification |
 | [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 export, structured Lean 4 integration, optional amari-flynn statistical verification, runners/reporting, and explicit trust model |
+| [`karpal-diagram`](karpal-diagram/) | Monoidal categories, string-diagram DSL, and text/SVG rendering |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
 `karpal-recursion`, `karpal-algebra`, `karpal-effect`, `karpal-proof`,
-and `karpal-verify` are `no_std` compatible with optional `std`/`alloc`
-feature gates.
+`karpal-verify`, and `karpal-diagram` are `no_std` compatible with optional
+`std`/`alloc` feature gates.
 
 ## Why Karpal?
 

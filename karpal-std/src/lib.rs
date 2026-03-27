@@ -142,6 +142,11 @@ pub mod prelude {
         parse_lean_output, parse_smt_output, parse_smt_status, verify_bundle,
         verify_bundle_with_ci_outputs, write_bundle_artifacts,
     };
+
+    // Monoidal categories and string diagrams
+    pub use karpal_diagram::{
+        Braiding, Diagram, DiagramKind, SvgRenderer, Symmetry, Tensor, TextRenderer,
+    };
     #[cfg(feature = "amari")]
     pub use karpal_verify::{
         AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
@@ -160,6 +165,7 @@ pub mod prelude {
 pub use karpal_algebra;
 pub use karpal_arrow;
 pub use karpal_core;
+pub use karpal_diagram;
 pub use karpal_effect;
 pub use karpal_free;
 pub use karpal_optics;
@@ -232,5 +238,11 @@ mod tests {
         );
         let exported = SmtLib2::export(&obligation);
         assert!(exported.contains("check-sat"));
+    }
+
+    #[test]
+    fn prelude_diagram_accessible() {
+        let diagram = Diagram::box_("double", 1, 1).then(Diagram::swap(1, 0));
+        assert!(diagram.render_text().contains("double"));
     }
 }

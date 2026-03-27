@@ -34,6 +34,8 @@ This gives you access to:
 - **Optional amari-flynn bridge** (`karpal-std` feature `amari`): statistical
   rare-event verification helpers, amari SMT obligation adapters, and
   probabilistic contract macros
+- **Diagramming**: `Tensor`, `Braiding`, `Symmetry`, `Diagram`, `TextRenderer`,
+  and `SvgRenderer` for monoidal composition and string-diagram rendering
 - **Profunctor**: `Profunctor`, `Strong`, `Choice`, `Traversing`, `FnP`, `ForgetF`, `TaggedF`
 - **Optics**: `Iso`, `Lens`, `Prism`, `Traversal`, `Fold`, `Getter`, `Setter`, `Review`, and composed variants
 - **Arrow hierarchy**: `Semigroupoid`, `Category`, `Arrow`, `ArrowChoice`, `ArrowApply`,
@@ -57,6 +59,7 @@ use karpal_std::karpal_algebra;
 use karpal_std::karpal_effect;
 use karpal_std::karpal_proof;
 use karpal_std::karpal_verify;
+use karpal_std::karpal_diagram;
 ```
 
 The `do_!` and `ado_!` macros are available directly:
