@@ -72,35 +72,22 @@ impl Diagram {
                 Self::box_(label.clone(), self.input_arity, self.output_arity)
             }
             DiagramKind::Swap { left, right } => Self::swap(*left, *right),
-            DiagramKind::Sequence(left, right) => {
-                let left = left.normalize();
-                let right = right.normalize();
-                match (&left.kind, &right.kind) {
-                    (DiagramKind::Identity, _) => right,
-                    (_, DiagramKind::Identity) => left,
-                    (
-                        DiagramKind::Swap {
-                            left: ll,
-                            right: lr,
-                        },
-                        DiagramKind::Swap {
-                            left: rl,
-                            right: rr,
-                        },
-                    ) if ll == rr && lr == rl => Self::identity(left.input_arity),
-                    _ => left.then(right),
-                }
-            }
-            DiagramKind::Parallel(left, right) => {
-                let left = left.normalize();
-                let right = right.normalize();
-                match (&left.kind, &right.kind) {
-                    (DiagramKind::Identity, DiagramKind::Identity) => {
-                        Self::identity(left.input_arity + right.input_arity)
-                    }
-                    _ => left.parallel(right),
-                }
-            }
+            DiagramKind::Sequence(_, _) => Self::normalize_sequence(
+                self.sequence_chain()
+                    .into_iter()
+                    .map(Diagram::normalize)
+                    .collect(),
+                self.input_arity,
+                self.output_arity,
+            ),
+            DiagramKind::Parallel(_, _) => Self::normalize_parallel(
+                self.parallel_chain()
+                    .into_iter()
+                    .map(Diagram::normalize)
+                    .collect(),
+                self.input_arity,
+                self.output_arity,
+            ),
         }
     }
 
@@ -122,6 +109,12 @@ impl Diagram {
         out
     }
 
+    pub(crate) fn parallel_chain(&self) -> Vec<&Diagram> {
+        let mut out = Vec::new();
+        self.collect_parallel_chain(&mut out);
+        out
+    }
+
     fn collect_sequence_chain<'a>(&'a self, out: &mut Vec<&'a Diagram>) {
         match &self.kind {
             DiagramKind::Sequence(left, right) => {
@@ -129,6 +122,84 @@ impl Diagram {
                 right.collect_sequence_chain(out);
             }
             _ => out.push(self),
+        }
+    }
+
+    fn collect_parallel_chain<'a>(&'a self, out: &mut Vec<&'a Diagram>) {
+        match &self.kind {
+            DiagramKind::Parallel(left, right) => {
+                left.collect_parallel_chain(out);
+                right.collect_parallel_chain(out);
+            }
+            _ => out.push(self),
+        }
+    }
+
+    fn normalize_sequence(stages: Vec<Self>, input_arity: usize, output_arity: usize) -> Self {
+        let mut reduced: Vec<Self> = Vec::new();
+
+        for stage in stages {
+            if stage.kind == DiagramKind::Identity {
+                continue;
+            }
+
+            if let Some(previous) = reduced.last()
+                && previous.cancels_with(&stage)
+            {
+                reduced.pop();
+                continue;
+            }
+
+            reduced.push(stage);
+        }
+
+        Self::rebuild_sequence(reduced, input_arity, output_arity)
+    }
+
+    fn normalize_parallel(branches: Vec<Self>, input_arity: usize, output_arity: usize) -> Self {
+        if branches
+            .iter()
+            .all(|branch| branch.kind == DiagramKind::Identity)
+        {
+            return Self::identity(input_arity);
+        }
+
+        Self::rebuild_parallel(branches, input_arity, output_arity)
+    }
+
+    fn rebuild_sequence(stages: Vec<Self>, input_arity: usize, output_arity: usize) -> Self {
+        let mut iter = stages.into_iter();
+        let Some(first) = iter.next() else {
+            debug_assert_eq!(input_arity, output_arity);
+            return Self::identity(input_arity);
+        };
+
+        iter.fold(first, Self::then)
+    }
+
+    fn rebuild_parallel(branches: Vec<Self>, input_arity: usize, output_arity: usize) -> Self {
+        let mut iter = branches.into_iter();
+        let Some(first) = iter.next() else {
+            debug_assert_eq!(input_arity, output_arity);
+            return Self::identity(input_arity);
+        };
+
+        iter.fold(first, Self::parallel)
+    }
+
+    fn cancels_with(&self, other: &Self) -> bool {
+        match (&self.kind, &other.kind) {
+            (
+                DiagramKind::Swap {
+                    left: left_left,
+                    right: left_right,
+                },
+                DiagramKind::Swap {
+                    left: right_left,
+                    right: right_right,
+                },
+            ) => left_left == right_right && left_right == right_left,
+            _ => false,
         }
     }
 }
@@ -155,5 +226,42 @@ mod tests {
     fn double_swap_normalizes_to_identity() {
         let diagram = Diagram::swap(1, 2).then(Diagram::swap(2, 1));
         assert_eq!(diagram.normalize(), Diagram::identity(3));
+    }
+
+    #[test]
+    fn sequence_associativity_normalizes_to_canonical_form() {
+        let left =
+            Diagram::box_("f", 1, 1).then(Diagram::box_("g", 1, 1).then(Diagram::box_("h", 1, 1)));
+        let right = Diagram::box_("f", 1, 1)
+            .then(Diagram::box_("g", 1, 1))
+            .then(Diagram::box_("h", 1, 1));
+
+        assert_eq!(left.normalize(), right.normalize());
+        assert!(left.equivalent_to(&right));
+    }
+
+    #[test]
+    fn parallel_associativity_normalizes_to_canonical_form() {
+        let left = Diagram::box_("f", 1, 1)
+            .parallel(Diagram::box_("g", 1, 1).parallel(Diagram::box_("h", 1, 1)));
+        let right = Diagram::box_("f", 1, 1)
+            .parallel(Diagram::box_("g", 1, 1))
+            .parallel(Diagram::box_("h", 1, 1));
+
+        assert_eq!(left.normalize(), right.normalize());
+        assert!(left.equivalent_to(&right));
+    }
+
+    #[test]
+    fn sequence_normalization_cancels_swaps_inside_longer_chain() {
+        let diagram = Diagram::box_("f", 3, 3)
+            .then(Diagram::swap(1, 2))
+            .then(Diagram::swap(2, 1))
+            .then(Diagram::box_("g", 3, 3));
+
+        assert_eq!(
+            diagram.normalize(),
+            Diagram::box_("f", 3, 3).then(Diagram::box_("g", 3, 3))
+        );
     }
 }
