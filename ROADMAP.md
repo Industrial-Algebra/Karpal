@@ -378,6 +378,45 @@ infrastructure that Phase 15 and structured emptiness ultimately rest on.
 - **Phase 14 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 15's LR-enriched categories
 - **Phase 15 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
 
+### Phase 17 — `karpal-e2e`: End-to-End Validation & Release Readiness
+
+**Crate**: `karpal-e2e` (new, std-only integration harness)
+
+Before Karpal can credibly ship a `1.0.0`, the library needs more than unit
+laws and crate-local tests. It needs whole-workspace, cross-crate,
+real-execution validation that proves the abstractions hold up when composed
+in realistic pipelines, external verification flows, and CI environments.
+
+This phase focuses on battle-testing the ecosystem end to end.
+
+| Capability | Description |
+|-----------|-------------|
+| Cross-crate integration scenarios | Exercise `karpal-core`, `karpal-arrow`, `karpal-profunctor`, `karpal-optics`, `karpal-effect`, `karpal-proof`, `karpal-verify`, and `karpal-diagram` together in realistic workflows rather than isolated unit tests |
+| Optics with real data | Run concrete records/enums/collections through `Lens`, `Prism`, `Traversal`, `Fold`, and composed optics, asserting actual value flow and round-trip behavior |
+| Arrow / effect pipeline execution | Validate end-to-end arrow and transformer pipelines with real state, environment, logging, and failure paths |
+| Verification CI contracts | Run `karpal-verify` in meaningful CI-style scenarios, producing artifacts, reports, Lean sidecars, and checking report/schema compatibility across runs |
+| Lean 4 bridge smoke + contract tests | Exercise generated Lean projects/modules against an actual Lean toolchain in CI, with expected-pass examples and theorem/report/diagnostic mapping assertions |
+| SMT / external prover integration | Run representative obligations through configured SMT solvers when available, with deterministic fallbacks and clear capability gating when tools are absent |
+| Golden workflow fixtures | Maintain stable end-to-end fixtures for reports, manifests, diagrams, and rendered outputs so regressions surface at the workflow boundary |
+| Compatibility matrix | Validate `std`, `alloc`, and `no_std` boundaries where applicable, plus optional feature combinations such as `amari` |
+| Release readiness gates | Define the final pre-`1.0.0` confidence bar: workspace integration suite, external-tool smoke coverage, documentation example verification, and artifact contract stability |
+
+**Sub-phases**:
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — Integration harness** | Add `karpal-e2e` with reusable scenario fixtures, test data builders, and workspace-level smoke tests | Phases 1-13 |
+| **B — Real data optics + arrows** | Add realistic business-domain and transformation-pipeline scenarios that move actual data through optics and arrow compositions | Phases 4, 7, 13 |
+| **C — External verification in CI** | Run Lean/SMT-backed verification scenarios in CI with capability detection, expected-pass contracts, and artifact assertions | Phase 12 |
+| **D — Release hardening** | Promote the end-to-end suite into `1.0.0` release gates with compatibility matrix coverage and docs/example validation | All prior phases |
+
+**Key outcomes for `1.0.0`**:
+- optics are validated on real nested data rather than only law-shaped examples
+- the Lean 4 bridge is exercised by CI as an actual verification path, not just an export format
+- report, manifest, and sidecar artifacts are treated as stable integration contracts
+- examples in the docs become executable confidence checks rather than aspirational snippets
+- the workspace has a clear, automated definition of “release ready”
+
 ---
 
 ## Structured Emptiness: Zero-Intersection Semantics
@@ -505,7 +544,8 @@ karpal/
 ├── karpal-diagram/        # Phase 13: Monoidal categories, string diagrams
 ├── karpal-higher/         # Phase 14: 2-categories, enriched categories
 ├── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
-└── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
+├── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
+└── karpal-e2e/            # Phase 17: End-to-end validation, CI/release readiness
 ```
 
 ## Syntax & Ergonomics
