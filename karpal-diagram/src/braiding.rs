@@ -23,6 +23,7 @@ impl Braiding for FnA {}
 #[cfg(all(test, any(feature = "std", feature = "alloc")))]
 mod tests {
     use super::*;
+    use karpal_arrow::Semigroupoid;
 
     #[test]
     fn braid_swaps_tuple_positions() {
@@ -34,5 +35,21 @@ mod tests {
     fn hexagon_forward_has_expected_shape() {
         let hex = FnA::hexagon_forward::<i32, bool, &'static str>();
         assert_eq!(hex(((1, true), "x")), (true, ("x", 1)));
+    }
+
+    #[test]
+    fn hexagon_forward_matches_composed_braiding_path() {
+        let composed = FnA::compose(
+            FnA::associate::<bool, &'static str, i32>(),
+            FnA::compose(
+                FnA::braid::<i32, (bool, &'static str)>(),
+                FnA::associate::<i32, bool, &'static str>(),
+            ),
+        );
+
+        let direct = FnA::hexagon_forward::<i32, bool, &'static str>();
+        let input = ((1, true), "x");
+
+        assert_eq!(direct(input), composed(input));
     }
 }
