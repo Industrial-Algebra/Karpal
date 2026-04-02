@@ -8,6 +8,29 @@ pub struct Diagram {
     pub output_arity: usize,
 }
 
+/// Individual rewrite rules applied during normalization.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NormalizationRule {
+    FlattenSequence,
+    FlattenParallel,
+    ElideIdentitySequenceStage,
+    CollapseIdentityParallel,
+    CancelAdjacentSwaps,
+}
+
+/// Trace of rewrite rules applied while normalizing a diagram.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NormalizationTrace {
+    pub normalized: Diagram,
+    pub rules: Vec<NormalizationRule>,
+}
+
+impl NormalizationTrace {
+    pub fn applied(&self, rule: NormalizationRule) -> bool {
+        self.rules.contains(&rule)
+    }
+}
+
 /// Primitive diagram nodes and combinators.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DiagramKind {
@@ -66,28 +89,46 @@ impl Diagram {
     }
 
     pub fn normalize(&self) -> Self {
+        self.normalize_with_trace().normalized
+    }
+
+    pub fn normalize_with_trace(&self) -> NormalizationTrace {
+        let mut rules = Vec::new();
+        let normalized = self.normalize_into(&mut rules);
+        NormalizationTrace { normalized, rules }
+    }
+
+    fn normalize_into(&self, rules: &mut Vec<NormalizationRule>) -> Self {
         match &self.kind {
             DiagramKind::Identity => Self::identity(self.input_arity),
             DiagramKind::Box { label } => {
                 Self::box_(label.clone(), self.input_arity, self.output_arity)
             }
             DiagramKind::Swap { left, right } => Self::swap(*left, *right),
-            DiagramKind::Sequence(_, _) => Self::normalize_sequence(
-                self.sequence_chain()
-                    .into_iter()
-                    .map(Diagram::normalize)
-                    .collect(),
-                self.input_arity,
-                self.output_arity,
-            ),
-            DiagramKind::Parallel(_, _) => Self::normalize_parallel(
-                self.parallel_chain()
-                    .into_iter()
-                    .map(Diagram::normalize)
-                    .collect(),
-                self.input_arity,
-                self.output_arity,
-            ),
+            DiagramKind::Sequence(_, _) => {
+                rules.push(NormalizationRule::FlattenSequence);
+                Self::normalize_sequence(
+                    self.sequence_chain()
+                        .into_iter()
+                        .map(|diagram| diagram.normalize_into(rules))
+                        .collect(),
+                    self.input_arity,
+                    self.output_arity,
+                    rules,
+                )
+            }
+            DiagramKind::Parallel(_, _) => {
+                rules.push(NormalizationRule::FlattenParallel);
+                Self::normalize_parallel(
+                    self.parallel_chain()
+                        .into_iter()
+                        .map(|diagram| diagram.normalize_into(rules))
+                        .collect(),
+                    self.input_arity,
+                    self.output_arity,
+                    rules,
+                )
+            }
         }
     }
 
@@ -135,17 +176,24 @@ impl Diagram {
         }
     }
 
-    fn normalize_sequence(stages: Vec<Self>, input_arity: usize, output_arity: usize) -> Self {
+    fn normalize_sequence(
+        stages: Vec<Self>,
+        input_arity: usize,
+        output_arity: usize,
+        rules: &mut Vec<NormalizationRule>,
+    ) -> Self {
         let mut reduced: Vec<Self> = Vec::new();
 
         for stage in stages {
             if stage.kind == DiagramKind::Identity {
+                rules.push(NormalizationRule::ElideIdentitySequenceStage);
                 continue;
             }
 
             if let Some(previous) = reduced.last()
                 && previous.cancels_with(&stage)
             {
+                rules.push(NormalizationRule::CancelAdjacentSwaps);
                 reduced.pop();
                 continue;
             }
@@ -156,11 +204,17 @@ impl Diagram {
         Self::rebuild_sequence(reduced, input_arity, output_arity)
     }
 
-    fn normalize_parallel(branches: Vec<Self>, input_arity: usize, output_arity: usize) -> Self {
+    fn normalize_parallel(
+        branches: Vec<Self>,
+        input_arity: usize,
+        output_arity: usize,
+        rules: &mut Vec<NormalizationRule>,
+    ) -> Self {
         if branches
             .iter()
             .all(|branch| branch.kind == DiagramKind::Identity)
         {
+            rules.push(NormalizationRule::CollapseIdentityParallel);
             return Self::identity(input_arity);
         }
 
@@ -263,5 +317,29 @@ mod tests {
             diagram.normalize(),
             Diagram::box_("f", 3, 3).then(Diagram::box_("g", 3, 3))
         );
+    }
+
+    #[test]
+    fn normalization_trace_records_sequence_rules() {
+        let trace = Diagram::identity(2)
+            .then(Diagram::swap(1, 1))
+            .then(Diagram::swap(1, 1))
+            .normalize_with_trace();
+
+        assert_eq!(trace.normalized, Diagram::identity(2));
+        assert!(trace.applied(NormalizationRule::FlattenSequence));
+        assert!(trace.applied(NormalizationRule::ElideIdentitySequenceStage));
+        assert!(trace.applied(NormalizationRule::CancelAdjacentSwaps));
+    }
+
+    #[test]
+    fn normalization_trace_records_parallel_rules() {
+        let trace = Diagram::identity(1)
+            .parallel(Diagram::identity(2))
+            .normalize_with_trace();
+
+        assert_eq!(trace.normalized, Diagram::identity(3));
+        assert!(trace.applied(NormalizationRule::FlattenParallel));
+        assert!(trace.applied(NormalizationRule::CollapseIdentityParallel));
     }
 }
