@@ -144,6 +144,10 @@ impl Diagram {
         crate::render::SvgRenderer::render(self)
     }
 
+    pub fn render_normalization_trace(&self) -> String {
+        crate::render::TextRenderer::render_trace(&self.normalize_with_trace())
+    }
+
     pub(crate) fn sequence_chain(&self) -> Vec<&Diagram> {
         let mut out = Vec::new();
         self.collect_sequence_chain(&mut out);
