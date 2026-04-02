@@ -145,7 +145,8 @@ pub mod prelude {
 
     // Monoidal categories and string diagrams
     pub use karpal_diagram::{
-        Braiding, Diagram, DiagramKind, SvgRenderer, Symmetry, Tensor, TextRenderer,
+        Braiding, Diagram, DiagramKind, NormalizationRule, NormalizationTrace, SvgRenderer,
+        Symmetry, Tensor, TextRenderer,
     };
     #[cfg(feature = "amari")]
     pub use karpal_verify::{
@@ -242,7 +243,10 @@ mod tests {
 
     #[test]
     fn prelude_diagram_accessible() {
-        let diagram = Diagram::box_("double", 1, 1).then(Diagram::swap(1, 0));
-        assert!(diagram.render_text().contains("double"));
+        let trace = Diagram::identity(1)
+            .then(Diagram::box_("double", 1, 1))
+            .normalize_with_trace();
+        assert_eq!(trace.normalized, Diagram::box_("double", 1, 1));
+        assert!(trace.applied(NormalizationRule::ElideIdentitySequenceStage));
     }
 }

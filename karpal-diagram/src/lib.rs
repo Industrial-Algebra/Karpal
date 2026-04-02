@@ -13,7 +13,7 @@ pub mod tensor;
 
 pub use braiding::Braiding;
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub use diagram::{Diagram, DiagramKind};
+pub use diagram::{Diagram, DiagramKind, NormalizationRule, NormalizationTrace};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use render::{SvgRenderer, TextRenderer};
 pub use symmetry::Symmetry;
