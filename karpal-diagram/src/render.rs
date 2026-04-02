@@ -1,6 +1,6 @@
 use alloc::{format, string::String};
 
-use crate::diagram::{Diagram, DiagramKind};
+use crate::diagram::{Diagram, DiagramKind, NormalizationRule, NormalizationTrace};
 
 pub struct TextRenderer;
 pub struct SvgRenderer;
@@ -18,6 +18,22 @@ impl TextRenderer {
         out
     }
 
+    pub fn render_trace(trace: &NormalizationTrace) -> String {
+        let mut out = String::new();
+        out.push_str("normalization trace\n");
+        out.push_str("rules:\n");
+        if trace.rules.is_empty() {
+            out.push_str("- none\n");
+        } else {
+            for rule in &trace.rules {
+                out.push_str(&format!("- {}\n", Self::rule_name(*rule)));
+            }
+        }
+        out.push_str("normalized:\n");
+        out.push_str(&Self::render(&trace.normalized));
+        out
+    }
+
     fn stage(diagram: &Diagram) -> String {
         match &diagram.kind {
             DiagramKind::Identity => format!("id[{}]", diagram.input_arity),
@@ -32,6 +48,16 @@ impl TextRenderer {
             DiagramKind::Sequence(_, _) => {
                 unreachable!("sequence chains are flattened before stage rendering")
             }
+        }
+    }
+
+    fn rule_name(rule: NormalizationRule) -> &'static str {
+        match rule {
+            NormalizationRule::FlattenSequence => "flatten-sequence",
+            NormalizationRule::FlattenParallel => "flatten-parallel",
+            NormalizationRule::ElideIdentitySequenceStage => "elide-identity-sequence-stage",
+            NormalizationRule::CollapseIdentityParallel => "collapse-identity-parallel",
+            NormalizationRule::CancelAdjacentSwaps => "cancel-adjacent-swaps",
         }
     }
 }
@@ -91,5 +117,19 @@ mod tests {
         let rendered = SvgRenderer::render(&diagram);
         assert!(rendered.starts_with("<svg"));
         assert!(rendered.contains("box(double)"));
+    }
+
+    #[test]
+    fn text_renderer_trace_lists_applied_rules() {
+        let trace = Diagram::identity(2)
+            .then(Diagram::swap(1, 1))
+            .then(Diagram::swap(1, 1))
+            .normalize_with_trace();
+
+        let rendered = TextRenderer::render_trace(&trace);
+        assert!(rendered.contains("normalization trace"));
+        assert!(rendered.contains("flatten-sequence"));
+        assert!(rendered.contains("cancel-adjacent-swaps"));
+        assert!(rendered.contains("diagram 2 -> 2"));
     }
 }

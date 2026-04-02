@@ -8,6 +8,7 @@ Monoidal categories and string diagrams for the Karpal ecosystem.
 - a small string-diagram DSL
 - text and SVG rendering helpers
 - diagram normalization for simple equivalence checking
+- normalization tracing for rewrite/debug visibility
 
 ## Example
 
@@ -27,6 +28,12 @@ let diagram = Diagram::box_("double", 1, 1)
     .parallel(Diagram::box_("increment", 1, 1))
     .then(Diagram::swap(1, 1));
 assert!(diagram.render_text().contains("swap[1|1]"));
+
+let trace = Diagram::identity(1)
+    .then(Diagram::box_("double", 1, 1))
+    .normalize_with_trace();
+assert!(trace.applied(karpal_diagram::NormalizationRule::ElideIdentitySequenceStage));
+assert!(diagram.render_normalization_trace().contains("normalization trace"));
 ```
 
 ## License
