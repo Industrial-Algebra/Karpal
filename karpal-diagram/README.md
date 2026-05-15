@@ -31,4 +31,4 @@ assert!(diagram.render_text().contains("swap[1|1]"));
 
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later

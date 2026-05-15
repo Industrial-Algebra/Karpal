@@ -70,4 +70,4 @@ Implements `Profunctor`, `Strong`, `Choice`, and `Traversing`. Gated behind the 
 
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later
