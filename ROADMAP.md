@@ -47,7 +47,7 @@ formal verification.
 |-------|----------|
 | `karpal-verify` | Obligation IR, SMT-LIB2 export, Lean 4 export with project scaffolding, amari-flynn statistical integration, artifact management, session orchestration, trust boundary (`Certificate`, `Certified`, `unsafe into_proven`) |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (in progress)
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (30% complete, detailed below)
 
 ---
 
