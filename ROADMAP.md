@@ -262,14 +262,30 @@ and CI-oriented three-tier summary artifacts.
 | amari-flynn integration | Reuse contract macros (`#[prob_requires]`, `#[prob_ensures]`) on Karpal trait impls for statistical guarantees on law compliance |
 | Three-tier verification | Following amari-flynn's philosophy: **Impossible** (type-level — unrepresentable states), **Rare** (statistical — Monte Carlo + Hoeffding bounds), **Emergent** (runtime — property-test discovery) |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (30% complete)
+
+Status: **in progress** — this branch.
+6 source files, 677 lines, builds with `cargo check -p karpal-diagram`.
+
+**What's built:**
 
 | Concept | Description |
 |---------|-------------|
-| Monoidal category traits | `Tensor`, `Braiding`, `Symmetry` with coherence laws (pentagon, triangle, hexagon identities) |
-| String diagram DSL | Compose morphisms and render corresponding string diagrams (SVG/text) for debugging optic compositions and arrow pipelines |
-| Diagrammatic rewriting | Encode diagram equivalences as type-level rewrite rules; two compositions producing the same diagram type are proven equivalent |
-| Compact closed categories | Trace / duality structures for quantum-inspired computation patterns |
+| `Tensor` trait | Associator, left/right unitors, `tensor()` for parallel composition. `FnA` impl with tests |
+| `Braiding` trait | `braid()` for swap, `hexagon_forward()` for coherence. `FnA` impl with hexagon composition test |
+| `Symmetry` trait | `braid ∘ braid = id`. `FnA` impl with involutive test |
+| `Diagram` DSL | `Identity`, `Box`, `Sequence`, `Parallel`, `Swap` nodes. Normalization with `NormalizationRule` enum and `NormalizationTrace` for rewrite visibility |
+| Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
+
+**Still needed:**
+
+| Concept | Description |
+|---------|-------------|
+| Coherence law proofs | Pentagon identity and triangle identity as type-level `Rewrite` proofs, not just runtime tests |
+| Hexagon identity proof | Encode `s_A,B⊗C = a_B,C,A ∘ (id_B ⊗ s_A,C) ∘ a_B,A,C⁻¹ ∘ (s_A,B ⊗ id_C) ∘ a_A,B,C` as a `Justifies` witness |
+| Compact closed categories | `Trace` trait, duality cups/caps, yanking equations |
+| Diagrammatic rewriting | Type-level `Rewrite<Diagram1, Diagram2, ByCoherence>` proofs bridging to karpal-proof's `Justifies` |
+| Verification integration | Phase 12 `ObligationBundle` export for coherence laws. Generate `Certificate` witnesses for pentagon/triangle/hexagon |
 
 ### Phase 14 — `karpal-higher`: 2-Categories & Enriched Categories
 
