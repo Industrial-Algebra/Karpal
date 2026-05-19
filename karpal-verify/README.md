@@ -6,17 +6,19 @@ External prover bridge for the Karpal ecosystem.
 
 - a backend-agnostic **proof obligation IR**
 - reusable **algebraic signatures** for trait-level law generation
-- grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Lattice laws
-- exporters for **SMT-LIB2** and **Lean 4**
+- grouped **obligation bundles** for Semigroup / Monoid / Group / Semiring / Ring / Lattice laws
+- exporters for **SMT-LIB2**, **Lean 4**, and generated **Kani** harnesses
 - structured Lean module/theorem metadata for a richer Lean bridge
 - Lean import/prelude bridging for module imports and symbol aliases
 - Lean project/package scaffolding for generated modules
 - project-aware Lean execution planning via `lake env lean` or `lake build`
+- Kani invocation planning via `cargo kani --harness <name>`
 - artifact writers and **dry-run invocation plans** for external tools
 - runner abstractions, backend-specific verification policies, and basic SMT result parsing
 - reporting types that attach execution outcomes and certificates back to obligations
 - session/orchestration helpers for build → run → report flows
 - report serialization helpers for CI-friendly JSON / Markdown summaries
+- `#[export_obligations]` macro re-export backed by the `karpal-verify-derive` companion crate
 - optional **amari-flynn** integration for statistical contracts, Monte Carlo law-bound checks, and probabilistic contract macros
 - an explicit **external trust boundary** for importing certificates back into Rust
 
@@ -178,7 +180,7 @@ let batch = dry_run_bundle_artifacts(
     &SmtConfig::default(),
     &LeanConfig::default().with_driver(karpal_verify::LeanDriver::LakeBuild),
 );
-assert_eq!(batch.plans.len(), 4);
+assert_eq!(batch.plans.len(), 7);
 assert!(batch.lean_project.is_some());
 assert!(batch.plans.iter().any(|plan| {
     plan.kind == karpal_verify::CommandKind::Lean
@@ -189,7 +191,34 @@ assert!(batch.plans.iter().any(|plan| {
 
 Use `LeanDriver::LakeEnv` when you want `lake env lean lean/<Module>.lean`, or
 `LeanDriver::LakeBuild` when you want package-aware target builds through
-`lake build <Module>`.
+`lake build <Module>`. Kani harness plans are generated beside SMT and Lean
+artifacts under the artifact layout's `kani/` directory.
+
+### Trait-to-obligation macro
+
+`karpal-verify` re-exports the Rust-idiomatic companion proc-macro crate
+`karpal-verify-derive`, so callers can write explicit obligation metadata next
+to a Rust item:
+
+```rust,ignore
+use karpal_verify::export_obligations;
+
+struct Additive;
+
+#[export_obligations(
+    crate_name = "example",
+    item_path = "Additive",
+    carrier = "Int",
+    monoid(op = "combine", identity = "empty")
+)]
+impl Additive {}
+
+let bundle = Additive::karpal_obligation_bundle();
+assert_eq!(bundle.obligations().len(), 3);
+```
+
+Supported families currently include `semigroup`, `monoid`, `group`,
+`semiring`, `ring`, and `lattice`.
 
 
 ### Execution model

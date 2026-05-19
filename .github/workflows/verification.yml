@@ -1,0 +1,41 @@
+name: Verification
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  verification:
+    name: Verification contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+
+      - name: karpal-verify unit and golden tests
+        run: cargo test -p karpal-verify
+
+      - name: karpal-verify derive macro tests
+        run: cargo test -p karpal-verify-derive
+
+      - name: Lean smoke check when available
+        run: |
+          if command -v lake >/dev/null 2>&1; then
+            lake --version
+            cargo test -p karpal-verify lean
+          else
+            echo "Lean/lake unavailable; skipping Lean smoke check"
+          fi
+
+      - name: Kani smoke check when available
+        run: |
+          if cargo kani --version >/dev/null 2>&1; then
+            cargo kani --version
+          else
+            echo "cargo-kani unavailable; skipping Kani smoke check"
+          fi
