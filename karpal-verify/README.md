@@ -394,4 +394,4 @@ foundation is now in place.
 
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later

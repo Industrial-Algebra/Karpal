@@ -38,4 +38,4 @@ assert!(diagram.render_normalization_trace().contains("normalization trace"));
 
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later
