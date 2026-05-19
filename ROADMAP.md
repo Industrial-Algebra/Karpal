@@ -291,16 +291,30 @@ and CI-oriented three-tier summary artifacts.
 | **12d — Continuous verification CI** | GitHub Actions workflow that runs SMT/Lean/Kani verification on every PR. `VerificationSession::verify_with_ci_outputs()` already exists — wire it into required status checks. Golden-file regression tests for SMT-LIB2 and Lean 4 output. | Medium |
 | **12e — GPU compute obligations** | Extension for Borsalino: `IsMSLKernelDeterministic`, `IsBufferAlignedTo16`, `IsWorkgroupSizeDivisible`, `IsDispatchWithinLimits`. GPU safety properties integrated with the existing obligation IR via `Sort::Named("MTLBuffer")` and custom `Term::app` operators. See [Borsalino verification integration](../../Borsalino/docs/verification-integration.md). | Medium |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (in progress)
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (30% complete)
+
+Status: **in progress** on `feature/phase-13-karpal-diagram-part-3`.
+6 source files, 677 lines, builds with `cargo check -p karpal-diagram`.
+
+**What's built:**
 
 | Concept | Description |
 |---------|-------------|
-| Monoidal category traits | `Tensor`, `Braiding`, `Symmetry` with coherence laws (pentagon, triangle, hexagon identities) |
-| String diagram DSL | Compose morphisms and render corresponding string diagrams (SVG/text) for debugging optic compositions and arrow pipelines |
-| Diagrammatic rewriting | Encode diagram equivalences as type-level rewrite rules; two compositions producing the same diagram type are proven equivalent |
-| Compact closed categories | Trace / duality structures for quantum-inspired computation patterns |
+| `Tensor` trait | Associator, left/right unitors, `tensor()` for parallel composition. `FnA` impl with tests |
+| `Braiding` trait | `braid()` for swap, `hexagon_forward()` for coherence. `FnA` impl with hexagon composition test |
+| `Symmetry` trait | `braid ∘ braid = id`. `FnA` impl with involutive test |
+| `Diagram` DSL | `Identity`, `Box`, `Sequence`, `Parallel`, `Swap` nodes. Normalization with `NormalizationRule` enum and `NormalizationTrace` for rewrite visibility |
+| Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
 
-**Verification integration**: All coherence laws (pentagon, triangle, hexagon) are exported as `Obligation` values via Phase 12. The string diagram DSL generates `Rewrite<Lhs, Rhs, Via>` witnesses for each equivalence proved. Diagrammatic rewriting composes with `karpal-proof`'s `ByTransitivity` to chain multi-step proofs.
+**Still needed:**
+
+| Concept | Description |
+|---------|-------------|
+| Coherence law proofs | Pentagon identity and triangle identity as type-level `Rewrite` proofs, not just runtime tests |
+| Hexagon identity proof | Encode `s_A,B⊗C = a_B,C,A ∘ (id_B ⊗ s_A,C) ∘ a_B,A,C⁻¹ ∘ (s_A,B ⊗ id_C) ∘ a_A,B,C` as a `Justifies` witness |
+| Compact closed categories | `Trace` trait, duality cups/caps, yanking equations |
+| Diagrammatic rewriting | Type-level `Rewrite<Diagram1, Diagram2, ByCoherence>` proofs bridging to karpal-proof's `Justifies` |
+| Verification integration | Phase 12 `ObligationBundle` export for coherence laws. Generate `Certificate` witnesses for pentagon/triangle/hexagon |
 
 ### Phase 14 — `karpal-higher`: 2-Categories & Enriched Categories
 
