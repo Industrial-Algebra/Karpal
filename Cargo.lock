@@ -303,6 +303,17 @@ version = "0.4.0"
 dependencies = [
  "amari-flynn",
  "karpal-proof",
+ "karpal-verify-derive",
+]
+
+[[package]]
+name = "karpal-verify-derive"
+version = "0.4.0"
+dependencies = [
+ "karpal-verify",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

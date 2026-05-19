@@ -60,6 +60,8 @@ pub use export::{
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use kani::{Kani, KaniHarness, export_kani_bundle, export_kani_harness};
+#[cfg(feature = "derive")]
+pub use karpal_verify_derive::export_obligations;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use lean::{
     Lean4, LeanAlias, LeanExport, LeanImport, LeanPrelude, LeanProject, LeanTheorem, export,
