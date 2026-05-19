@@ -20,6 +20,8 @@ pub mod kani;
 pub mod lean;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod obligation;
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub mod proof_bridge;
 #[cfg(feature = "std")]
 pub mod report;
 #[cfg(feature = "std")]
@@ -69,6 +71,8 @@ pub use lean::{
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use obligation::{Declaration, Obligation, Origin, ProofDialect, Sort, Term, VerificationTier};
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use proof_bridge::{ProofBridge, ProofEvidence};
 #[cfg(feature = "std")]
 pub use report::{
     ModuleReport, ObligationReport, VERIFICATION_REPORT_SCHEMA_VERSION, VerificationReport,
@@ -91,6 +95,6 @@ pub use signature::{AlgebraicSignature, BinarySymbol, ConstantSymbol, UnarySymbo
 pub use smt::{SmtLib2, export_obligation as export_smt_obligation};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use trust::{
-    Certificate, Certified, ExternalTrust, KaniCertificate, LeanCertificate, SmtCertificate,
-    VerificationBackend,
+    Certificate, Certified, ExternalTrust, KaniCertificate, LeanCertificate, ProofTestCertificate,
+    SmtCertificate, VerificationBackend,
 };

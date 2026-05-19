@@ -32,6 +32,12 @@ impl VerificationBackend for KaniCertificate {
     const NAME: &'static str = "kani";
 }
 
+/// `karpal-proof` / proptest-derived verification evidence.
+pub struct ProofTestCertificate;
+impl VerificationBackend for ProofTestCertificate {
+    const NAME: &'static str = "karpal-proof";
+}
+
 impl LeanCertificate {
     pub fn witness_ref(module_name: &str, theorem_name: &str) -> String {
         format!("{module_name}.{theorem_name}")
@@ -245,5 +251,10 @@ mod tests {
     #[test]
     fn kani_certificate_has_stable_backend_name() {
         assert_eq!(KaniCertificate::NAME, "kani");
+    }
+
+    #[test]
+    fn proof_test_certificate_has_stable_backend_name() {
+        assert_eq!(ProofTestCertificate::NAME, "karpal-proof");
     }
 }
