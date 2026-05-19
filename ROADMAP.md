@@ -34,6 +34,21 @@ formal verification.
 | `karpal-optics` | Optic marker, Lens (getter/setter + profunctor transform) |
 | `karpal-std` | Stub for prelude re-exports |
 
+### Phase 11 — `karpal-proof`: Algebraic Law Witnesses (complete)
+
+| Crate | Contents |
+|-------|----------|
+| `karpal-proof` | `Proven<P, T>`, `Implies` chains, `Rewrite<Lhs, Rhs, Via>`, `law_check` |
+| `karpal-proof-derive` | `#[derive(VerifySemigroup)]`, `VerifyMonoid`, `VerifyGroup`, `VerifySemiring`, `VerifyRing`, `VerifyLattice`, `VerifyCommutative` |
+
+### Phase 12 — `karpal-verify`: External Prover Bridge (complete)
+
+| Crate | Contents |
+|-------|----------|
+| `karpal-verify` | Obligation IR, SMT-LIB2 export, Lean 4 export with project scaffolding, amari-flynn statistical integration, artifact management, session orchestration, trust boundary (`Certificate`, `Certified`, `unsafe into_proven`) |
+
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (in progress)
+
 ---
 
 ## Near-term Phases
@@ -234,7 +249,7 @@ Newtype markers: `Sum<T>`, `Product<T>`, `Min<T>`, `Max<T>`, `First<T>`,
 
 ## Far-future Phases
 
-### Phase 11 — `karpal-proof`: Algebraic Law Witnesses & Refinement Types
+### Phase 11 — `karpal-proof`: Algebraic Law Witnesses & Refinement Types (complete)
 
 Type-level proof encoding — making illegal states unrepresentable and
 providing a vocabulary for algebraic reasoning within Rust's type system.
@@ -257,12 +272,26 @@ and CI-oriented three-tier summary artifacts.
 
 | Capability | Description |
 |-----------|-------------|
-| SMT-LIB2 export | Generate proof obligations for algebraic laws as SMT-LIB2 (Z3, CVC5). Inspired by amari-flynn's `smt.rs` backend |
-| Lean 4 bridge | Export Karpal typeclass hierarchies as Lean 4 structures; verify laws in Lean; import trust markers back as Rust phantom types |
-| amari-flynn integration | Reuse contract macros (`#[prob_requires]`, `#[prob_ensures]`) on Karpal trait impls for statistical guarantees on law compliance |
-| Three-tier verification | Following amari-flynn's philosophy: **Impossible** (type-level — unrepresentable states), **Rare** (statistical — Monte Carlo + Hoeffding bounds), **Emergent** (runtime — property-test discovery) |
+| Obligation IR | Backend-agnostic `Obligation` type with `Term` language, `AlgebraicSignature`, `ObligationBundle` for Semigroup/Monoid/Group/Semiring/Lattice |
+| SMT-LIB2 export | Generate proof obligations for algebraic laws as SMT-LIB2 (Z3, CVC5) |
+| Lean 4 bridge | Export Karpal typeclass hierarchies as Lean 4 structures; verify laws in Lean; import trust markers back as Rust phantom types via `Certified<B, P, T>` |
+| amari-flynn integration | Statistical contracts (`#[prob_requires]`, `#[prob_ensures]`), Monte Carlo law-bound checks, Hoeffding-bound confidence intervals |
+| Three-tier verification | **Impossible** (type-level), **Rare** (statistical), **Emergent** (runtime proptest) |
+| Artifact management | `ArtifactLayout`, dry-run invocation plans, Lean project scaffolding (`lakefile.lean`, `lean-toolchain`) |
+| Session orchestration | `VerificationSession`, `verify_bundle()`, CI-oriented JSON/Markdown/Lean-diagnostics outputs |
+| Trust boundary | `Certificate` → `Certified<B, P, T>` → `unsafe into_proven()` — external evidence crosses an explicit, auditable boundary |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams
+#### Phase 12 Extensions (planned)
+
+| Extension | Description | Priority |
+|-----------|-------------|----------|
+| **12a — Kani backend** | Generate `#[kani::proof]` harnesses from `Obligation`. Unlike SMT/Lean which verify abstracted models, Kani verifies the actual Rust trait implementation through bounded model checking. A `KaniBackend` + `KaniCertificate` pair mirroring `SmtLib2`/`Lean4`. | High |
+| **12b — Trait-to-obligation derive** | `#[karpal_verify::export_obligations]` proc-macro on trait impls. Examines the impl, extracts the `AlgebraicSignature`, generates the `ObligationBundle`, and exports to all configured backends. Makes verification a one-line annotation. | High |
+| **12c — karpal-proof bridge** | When `karpal-proof-derive`'s proptest harnesses pass, auto-generate the corresponding `Certificate` and `Certified` witness. Closes the "Emergent → External" verification loop. A `#[derive(CertifiedSemigroup)]` macro that wraps both proptest generation and certificate creation. | Medium |
+| **12d — Continuous verification CI** | GitHub Actions workflow that runs SMT/Lean/Kani verification on every PR. `VerificationSession::verify_with_ci_outputs()` already exists — wire it into required status checks. Golden-file regression tests for SMT-LIB2 and Lean 4 output. | Medium |
+| **12e — GPU compute obligations** | Extension for Borsalino: `IsMSLKernelDeterministic`, `IsBufferAlignedTo16`, `IsWorkgroupSizeDivisible`, `IsDispatchWithinLimits`. GPU safety properties integrated with the existing obligation IR via `Sort::Named("MTLBuffer")` and custom `Term::app` operators. See [Borsalino verification integration](../../Borsalino/docs/verification-integration.md). | Medium |
+
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (in progress)
 
 | Concept | Description |
 |---------|-------------|
@@ -270,6 +299,8 @@ and CI-oriented three-tier summary artifacts.
 | String diagram DSL | Compose morphisms and render corresponding string diagrams (SVG/text) for debugging optic compositions and arrow pipelines |
 | Diagrammatic rewriting | Encode diagram equivalences as type-level rewrite rules; two compositions producing the same diagram type are proven equivalent |
 | Compact closed categories | Trace / duality structures for quantum-inspired computation patterns |
+
+**Verification integration**: All coherence laws (pentagon, triangle, hexagon) are exported as `Obligation` values via Phase 12. The string diagram DSL generates `Rewrite<Lhs, Rhs, Via>` witnesses for each equivalence proved. Diagrammatic rewriting composes with `karpal-proof`'s `ByTransitivity` to chain multi-step proofs.
 
 ### Phase 14 — `karpal-higher`: 2-Categories & Enriched Categories
 
@@ -309,8 +340,33 @@ Subtyping becomes `σ_A · σ_B ≠ 0`, with the LR coefficient giving the
 |-----------|-------------|--------------|
 | **A — Core engine** | `SchubertType`, `Intersection`, `check_intersection()` backed by amari-enumerative | karpal-core, karpal-algebra, amari-enumerative |
 | **B — Proof integration** | `SchubertProven<λ, T>` witness type, composition of proofs via LR | Phase 11 (karpal-proof) |
-| **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule | Phase 12 (karpal-verify) |
+| **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule, domain-specific obligation bundles for Schubert calculus | Phase 12 (karpal-verify) |
 | **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 14 (karpal-higher) |
+
+#### Sub-phase 15C — Schubert Calculus Verification (detailed)
+
+Generate `Obligation` and `ObligationBundle` values for the mathematical
+operations in amari-enumerative. This closes the gap between "the library
+computes Schubert classes" and "we have external proof that it computes
+them correctly."
+
+| Obligation bundle | What it verifies | Backend | Tier |
+|---|---|---|---|
+| `schubert_lr_consistency` | Littlewood-Richardson coefficients match known tables for Gr(2,4), Gr(3,6), Gr(4,8) | SMT (finite, exhaustive) | External |
+| `schubert_partition_validity` | All partitions up to box bound are valid for Gr(k,n) | SMT (exhaustive) | External |
+| `schubert_intersection_emptiness` | σ_λ · σ_μ = 0 when codim > dim | SMT + Lean (dimension argument) | External |
+| `schubert_lr_associativity` | (σ_α · σ_β) · σ_γ = σ_α · (σ_β · σ_γ) | Lean 4 (requires induction) | External |
+| `schubert_intersection_commutativity` | σ_λ · σ_μ = σ_μ · σ_λ | Lean 4 (structural) | External |
+| `schubert_dimension_formula` | dim(σ_λ) = k(n−k) − |λ| | Lean 4 | External |
+| `schubert_tropical_stability` | Wall-crossing thresholds match analytical predictions | amari-flynn (statistical) | Rare |
+| `schubert_giambelli_formula` | σ_λ expressed as determinant of special classes | Lean 4 | External |
+
+**Integration with Schubert crate**: The `schubert` access-control crate
+consumes amari-enumerative's Schubert calculus. Phase 15C verification
+obligations feed directly into Schubert's `proof.rs` module — a
+`Certificate` from SMT/Lean that the LR computation is correct auto-generates
+a `Proven<IsValidCapability, Capability>` witness via the Phase 12 trust
+boundary. See [Schubert verification integration](../../Schubert/docs/verification-integration.md).
 
 **Benefits beyond ShaperOS**:
 - **Multiplicity-aware compatibility**: formalizes what newtypes (`Sum<T>`, `Product<T>`) do informally — multiplicity > 1 means multiple valid instances
@@ -377,6 +433,23 @@ infrastructure that Phase 15 and structured emptiness ultimately rest on.
 - **Phase 5 (Free Constructions)**: Presheaves *are* the free cocompletion; the Yoneda lemma (karpal-free's `Yoneda<F, A>`) is the embedding theorem for presheaf topoi
 - **Phase 14 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 15's LR-enriched categories
 - **Phase 15 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
+
+### Phase 17 — Ecosystem Integration: Schubert, Borsalino & Beyond
+
+Verification infrastructure deployed across the Industrial Algebra ecosystem.
+Each consuming crate publishes its `ObligationBundle` exports, CI-verified
+certificates, and trust-boundary crossing points.
+
+| Integration | Crate | Obligation bundles | Verification tier |
+|-------------|-------|--------------------|
+| **Schubert access control** | `schubert` | Capability validity, LR consistency, workspace law idempotency | SMT + Lean 4 + karpal-proof |
+| **Borsalino GPU compute** | `borsalino` | MSL kernel determinism, buffer alignment, workgroup divisibility, dispatch limits | Kani + amari-flynn + type-level |
+| **amari-enumerative** | `amari-enumerative` | Schubert calculus (see Phase 15C) | SMT + Lean 4 + amari-flynn |
+| **ShaperOS** | `ShaperOS` (gp-gpu) | Blade encoding roundtrips, GF(2) arithmetic, signature format validation | Kani + SMT |
+
+See integration documents:
+- [Schubert verification integration](../../Schubert/docs/verification-integration.md)
+- [Borsalino verification integration](../../Borsalino/docs/verification-integration.md)
 
 ---
 
@@ -501,11 +574,13 @@ karpal/
 ├── karpal-algebra/        # Phase 8: Groups, rings, fields, lattices
 ├── karpal-effect/         # Phase 10: Monad transformers, effect system
 ├── karpal-proof/          # Phase 11: Type-level witnesses, refinements
+├── karpal-proof-derive/   # Phase 11: Proptest derive macros
 ├── karpal-verify/         # Phase 12: SMT/Lean bridge, amari-flynn integration
 ├── karpal-diagram/        # Phase 13: Monoidal categories, string diagrams
 ├── karpal-higher/         # Phase 14: 2-categories, enriched categories
 ├── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
-└── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
+├── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
+└── karpal-verify-gpu/     # Phase 17e (ex-Borsalino): GPU compute obligations (optional extension)
 ```
 
 ## Syntax & Ergonomics
@@ -593,7 +668,7 @@ abstract.
 | Multiple instances per type | Newtype markers (`Sum<T>`, `Product<T>`) following Haskell convention |
 | No do-notation | Macro-based `do!` block, lean on `?` for Result/Option |
 | Compile-time cost | Feature-gate advanced modules, keep core lean |
-| Proofs beyond Rust's type system | Export to external provers (SMT, Lean 4), import trust via phantom types |
+| Proofs beyond Rust's type system | Export to external provers (SMT, Lean 4, Kani), import trust via phantom types |
 
 ## Research References
 
@@ -720,6 +795,19 @@ abstract.
   [arXiv:2601.20370](https://arxiv.org/abs/2601.20370v1).
   Unifying Hoare-style logic for program correctness verification.
 
+### Papers — GPU Compute Correctness (Phase 17)
+
+- **GPUVerify: A Verifier for GPU Kernels** — Betts, Chong, Donaldson et al.
+  (OOPSLA 2012). Formal verification of GPU kernels written in CUDA/OpenCL.
+  Barrier divergence, data race detection. Directly applicable to Borsalino
+  kernel verification.
+- **GKLEE: Concolic Verification of GPU Programs** — Li, Li, Ghosh et al.
+  (ATC 2013). Dynamic symbolic execution for GPU kernels. Statistical
+  guarantee model relevant to the Borsalino amari-flynn integration.
+- Apple Metal Shading Language Specification (v3.2) — Formal semantics of
+  the MSL execution model. Source of truth for Borsalino buffer alignment,
+  threadgroup, and dispatch constraints.
+
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later
