@@ -15,6 +15,8 @@ pub mod command;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod export;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub mod gpu;
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub mod kani;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod lean;
@@ -59,6 +61,11 @@ pub use command::{CommandKind, InvocationPlan, KaniConfig, LeanConfig, LeanDrive
 pub use export::{
     export_lean_bundle, export_lean_bundle_structured, export_lean_bundle_structured_with_prelude,
     export_lean_bundle_with_prelude, export_smt_batch, export_smt_bundle,
+};
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use gpu::{
+    GpuObligationBundle, IsBufferAlignedTo16, IsDispatchWithinLimits, IsMSLKernelDeterministic,
+    IsWorkgroupSizeDivisible,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use kani::{Kani, KaniHarness, export_kani_bundle, export_kani_harness};

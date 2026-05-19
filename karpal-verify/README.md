@@ -19,6 +19,7 @@ External prover bridge for the Karpal ecosystem.
 - session/orchestration helpers for build → run → report flows
 - report serialization helpers for CI-friendly JSON / Markdown summaries
 - `#[export_obligations]` macro re-export backed by the `karpal-verify-derive` companion crate
+- GPU compute obligation builders for Metal/MSL-style kernel contracts
 - optional **amari-flynn** integration for statistical contracts, Monte Carlo law-bound checks, and probabilistic contract macros
 - an explicit **external trust boundary** for importing certificates back into Rust
 
@@ -220,6 +221,27 @@ assert_eq!(bundle.obligations().len(), 3);
 Supported families currently include `semigroup`, `monoid`, `group`,
 `semiring`, `ring`, and `lattice`.
 
+### GPU compute obligations
+
+GPU-oriented consumers can build ordinary `ObligationBundle` values for
+Metal/MSL-style contracts and export them through the same SMT, Lean, and Kani
+paths:
+
+```rust
+use karpal_verify::{GpuObligationBundle, Origin};
+
+let bundle = GpuObligationBundle::metal_kernel(
+    "borsalino_kernel",
+    Origin::new("borsalino", "kernels::reduce"),
+)
+.with_buffer_alignment("input", 16)
+.with_workgroup_divisibility("threads_per_group", 32)
+.with_dispatch_limit("grid_size", 65_535)
+.with_kernel_determinism("reduce_kernel")
+.into_bundle();
+
+assert_eq!(bundle.obligations().len(), 4);
+```
 
 ### Execution model
 
