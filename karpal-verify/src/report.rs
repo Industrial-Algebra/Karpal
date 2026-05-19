@@ -24,6 +24,8 @@ pub struct ObligationReport {
     pub lean_diagnostics: Vec<String>,
     pub result: Option<ExecutionResult>,
     pub certificate: Option<Certificate>,
+    pub kani_result: Option<ExecutionResult>,
+    pub kani_certificate: Option<Certificate>,
     pub lean_certificate: Option<Certificate>,
 }
 
@@ -122,7 +124,7 @@ impl VerificationReport {
             }
             let _ = write!(
                 out,
-                "{{\"name\":\"{}\",\"summary\":\"{}\",\"status\":\"{}\",\"artifact_path\":{},\"lean_theorem_ref\":{},\"lean_diagnostic_count\":{},\"certificate\":{},\"lean_certificate\":{}}}",
+                "{{\"name\":\"{}\",\"summary\":\"{}\",\"status\":\"{}\",\"artifact_path\":{},\"lean_theorem_ref\":{},\"lean_diagnostic_count\":{},\"certificate\":{},\"kani_certificate\":{},\"lean_certificate\":{}}}",
                 esc(&obligation.obligation_name),
                 esc(&obligation.summary),
                 obligation
@@ -142,6 +144,11 @@ impl VerificationReport {
                 obligation.lean_diagnostics.len(),
                 obligation
                     .certificate
+                    .as_ref()
+                    .map(render_certificate_json)
+                    .unwrap_or_else(|| "null".into()),
+                obligation
+                    .kani_certificate
                     .as_ref()
                     .map(render_certificate_json)
                     .unwrap_or_else(|| "null".into()),
@@ -195,13 +202,13 @@ impl VerificationReport {
         let _ = writeln!(out);
         let _ = writeln!(
             out,
-            "| Obligation | Status | Artifact | Lean theorem | Lean diagnostics | SMT certificate | Lean certificate |"
+            "| Obligation | Status | Artifact | Lean theorem | Lean diagnostics | SMT certificate | Kani certificate | Lean certificate |"
         );
-        let _ = writeln!(out, "|---|---|---|---|---|---|---|");
+        let _ = writeln!(out, "|---|---|---|---|---|---|---|---|");
         for obligation in &self.obligations {
             let _ = writeln!(
                 out,
-                "| `{}` | `{}` | `{}` | `{}` | `{}` | `{}` | `{}` |",
+                "| `{}` | `{}` | `{}` | `{}` | `{}` | `{}` | `{}` | `{}` |",
                 obligation.obligation_name,
                 obligation
                     .status()
@@ -216,6 +223,11 @@ impl VerificationReport {
                 },
                 obligation
                     .certificate
+                    .as_ref()
+                    .map(|c| c.backend)
+                    .unwrap_or("-"),
+                obligation
+                    .kani_certificate
                     .as_ref()
                     .map(|c| c.backend)
                     .unwrap_or("-"),
@@ -300,6 +312,25 @@ pub fn execute_report(
         let certificate = result.as_ref().and_then(|result| {
             certificate_for_obligation(result, obligation, artifact_path.clone())
         });
+        let kani_artifact_path = artifacts
+            .records
+            .iter()
+            .find(|record| record.name == format!("{}_kani", obligation.name))
+            .map(|record| record.path.clone());
+        let kani_result = artifacts
+            .plans
+            .iter()
+            .find(|plan| {
+                plan.kind == crate::CommandKind::Kani
+                    && plan
+                        .input_files
+                        .iter()
+                        .any(|f| kani_artifact_path.as_ref() == Some(f))
+            })
+            .map(|plan| runner.run(plan));
+        let kani_certificate = kani_result.as_ref().and_then(|result| {
+            certificate_for_obligation(result, obligation, kani_artifact_path.clone())
+        });
         let lean_theorem = artifacts
             .lean_export
             .as_ref()
@@ -341,6 +372,8 @@ pub fn execute_report(
             lean_diagnostics,
             result,
             certificate,
+            kani_result,
+            kani_certificate,
             lean_certificate,
         });
     }
@@ -451,6 +484,12 @@ fn certificate_for_obligation(
             artifact_path,
         ),
         crate::CommandKind::Lean => certificate_for_witness::<crate::LeanCertificate>(
+            result,
+            obligation,
+            witness_ref,
+            artifact_path,
+        ),
+        crate::CommandKind::Kani => certificate_for_witness::<crate::KaniCertificate>(
             result,
             obligation,
             witness_ref,
@@ -576,7 +615,9 @@ mod tests {
                     plan: plan.clone(),
                     status: match plan.kind {
                         crate::CommandKind::Smt => ExecutionStatus::Unsat,
-                        crate::CommandKind::Lean => ExecutionStatus::Success,
+                        crate::CommandKind::Lean | crate::CommandKind::Kani => {
+                            ExecutionStatus::Success
+                        }
                     },
                     stdout: String::new(),
                     stderr: String::new(),
@@ -666,6 +707,8 @@ mod tests {
                 lean_diagnostics: Vec::new(),
                 result: None,
                 certificate: None,
+                kani_result: None,
+                kani_certificate: None,
                 lean_certificate: None,
             }],
             lean_module: None,
@@ -705,6 +748,7 @@ mod tests {
                     status: match plan.kind {
                         crate::CommandKind::Smt => ExecutionStatus::Unsat,
                         crate::CommandKind::Lean => ExecutionStatus::Failure,
+                        crate::CommandKind::Kani => ExecutionStatus::Success,
                     },
                     stdout: String::new(),
                     stderr: String::new(),
@@ -785,6 +829,7 @@ mod tests {
                     status: match plan.kind {
                         crate::CommandKind::Smt => ExecutionStatus::Unsat,
                         crate::CommandKind::Lean => ExecutionStatus::Failure,
+                        crate::CommandKind::Kani => ExecutionStatus::Success,
                     },
                     stdout: String::new(),
                     stderr: String::new(),

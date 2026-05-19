@@ -64,7 +64,7 @@ impl VerificationPolicy {
                 success_status: ExecutionStatus::Unsat,
                 witness_suffix: "unsat",
             },
-            CommandKind::Lean => Self {
+            CommandKind::Lean | CommandKind::Kani => Self {
                 kind,
                 success_status: ExecutionStatus::Success,
                 witness_suffix: "ok",
@@ -107,6 +107,7 @@ impl ExecutionResult {
         let backend = match self.plan.kind {
             CommandKind::Smt => SmtCertificate::NAME,
             CommandKind::Lean => LeanCertificate::NAME,
+            CommandKind::Kani => crate::KaniCertificate::NAME,
         };
 
         let witness = format!(
@@ -175,11 +176,11 @@ impl VerifierRunner for LocalProcessRunner {
                 let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
                 let smt_output = match plan.kind {
                     CommandKind::Smt => Some(parse_smt_output(&stdout)),
-                    CommandKind::Lean => None,
+                    CommandKind::Lean | CommandKind::Kani => None,
                 };
                 let lean_output = match plan.kind {
-                    CommandKind::Smt => None,
                     CommandKind::Lean => Some(parse_lean_output(&stdout, &stderr)),
+                    CommandKind::Smt | CommandKind::Kani => None,
                 };
                 let status = classify_status(plan.kind, output.status.success(), &stdout, &stderr);
                 ExecutionResult {
@@ -224,6 +225,13 @@ fn classify_status(
         CommandKind::Lean => {
             let parsed = parse_lean_output(stdout, stderr);
             if process_success && parsed.error_count() == 0 {
+                ExecutionStatus::Success
+            } else {
+                ExecutionStatus::Failure
+            }
+        }
+        CommandKind::Kani => {
+            if process_success {
                 ExecutionStatus::Success
             } else {
                 ExecutionStatus::Failure
@@ -505,6 +513,12 @@ mod tests {
         assert!(!VerificationPolicy::for_kind(CommandKind::Smt).accepts(ExecutionStatus::Success));
         assert!(VerificationPolicy::for_kind(CommandKind::Lean).accepts(ExecutionStatus::Success));
         assert!(!VerificationPolicy::for_kind(CommandKind::Lean).accepts(ExecutionStatus::Unsat));
+        assert!(VerificationPolicy::for_kind(CommandKind::Kani).accepts(ExecutionStatus::Success));
+        assert!(!VerificationPolicy::for_kind(CommandKind::Kani).accepts(ExecutionStatus::Unsat));
+        assert_eq!(
+            VerificationPolicy::for_kind(CommandKind::Kani).witness_suffix,
+            "ok"
+        );
     }
 
     #[test]

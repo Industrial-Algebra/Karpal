@@ -521,7 +521,7 @@ mod tests {
                 plan: plan.clone(),
                 status: match plan.kind {
                     crate::CommandKind::Smt => ExecutionStatus::Unsat,
-                    crate::CommandKind::Lean => ExecutionStatus::Success,
+                    crate::CommandKind::Lean | crate::CommandKind::Kani => ExecutionStatus::Success,
                 },
                 stdout: String::new(),
                 stderr: String::new(),

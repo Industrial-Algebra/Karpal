@@ -8,6 +8,7 @@ use std::{path::Path, string::String, vec::Vec};
 pub enum CommandKind {
     Smt,
     Lean,
+    Kani,
 }
 
 /// Command-line configuration for an SMT solver.
@@ -95,6 +96,36 @@ impl LeanConfig {
 
     pub fn with_lake_arg(mut self, arg: impl Into<String>) -> Self {
         self.lake_args.push(arg.into());
+        self
+    }
+}
+
+/// Command-line configuration for Kani bounded model checking.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KaniConfig {
+    pub executable: String,
+    pub args: Vec<String>,
+}
+
+impl Default for KaniConfig {
+    fn default() -> Self {
+        Self {
+            executable: "cargo".into(),
+            args: vec!["kani".into()],
+        }
+    }
+}
+
+impl KaniConfig {
+    pub fn new(executable: impl Into<String>) -> Self {
+        Self {
+            executable: executable.into(),
+            args: Vec::new(),
+        }
+    }
+
+    pub fn with_arg(mut self, arg: impl Into<String>) -> Self {
+        self.args.push(arg.into());
         self
     }
 }
@@ -204,6 +235,20 @@ impl InvocationPlan {
             }
         }
     }
+
+    pub fn kani(config: &KaniConfig, harness: impl AsRef<Path>, harness_name: &str) -> Self {
+        let harness = harness.as_ref().to_path_buf();
+        let mut args = config.args.clone();
+        args.push("--harness".into());
+        args.push(harness_name.into());
+        Self {
+            kind: CommandKind::Kani,
+            executable: config.executable.clone(),
+            args,
+            working_directory: harness.parent().map(path_to_string),
+            input_files: vec![path_to_string(&harness)],
+        }
+    }
 }
 
 #[cfg(feature = "std")]
@@ -293,5 +338,23 @@ mod tests {
                 .iter()
                 .any(|path| path.ends_with("lean-toolchain"))
         );
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn kani_plan_invokes_cargo_kani_for_harness() {
+        let plan = InvocationPlan::kani(
+            &KaniConfig::default(),
+            std::path::PathBuf::from("target/verify/kani/sum_assoc.rs"),
+            "sum_assoc",
+        );
+        assert_eq!(plan.kind, CommandKind::Kani);
+        assert_eq!(plan.executable, "cargo");
+        assert_eq!(plan.args, vec!["kani", "--harness", "sum_assoc"]);
+        assert_eq!(
+            plan.working_directory.as_deref(),
+            Some("target/verify/kani")
+        );
+        assert!(plan.input_files[0].ends_with("sum_assoc.rs"));
     }
 }

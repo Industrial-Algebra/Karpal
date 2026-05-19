@@ -52,7 +52,7 @@ pub use artifact::{
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use bundle::ObligationBundle;
 #[cfg(feature = "std")]
-pub use command::{CommandKind, InvocationPlan, LeanConfig, LeanDriver, SmtConfig};
+pub use command::{CommandKind, InvocationPlan, KaniConfig, LeanConfig, LeanDriver, SmtConfig};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use export::{
     export_lean_bundle, export_lean_bundle_structured, export_lean_bundle_structured_with_prelude,
