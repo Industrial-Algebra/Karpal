@@ -23,14 +23,6 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-algebra
-        run: cargo publish -p karpal-algebra
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-
-      - name: Wait for crates.io index
-        run: sleep 30
-
       - name: Publish karpal-profunctor
         run: cargo publish -p karpal-profunctor
         env:
@@ -55,8 +47,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-effect
-        run: cargo publish -p karpal-effect
+      - name: Publish karpal-algebra
+        run: cargo publish -p karpal-algebra
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -79,24 +71,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-proof-derive
-        run: cargo publish -p karpal-proof-derive
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-
-      - name: Wait for crates.io index
-        run: sleep 30
-
-      - name: Publish karpal-proof
-        run: cargo publish -p karpal-proof
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-
-      - name: Wait for crates.io index
-        run: sleep 30
-
-      - name: Publish karpal-verify
-        run: cargo publish -p karpal-verify
+      - name: Publish karpal-effect
+        run: cargo publish -p karpal-effect
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 

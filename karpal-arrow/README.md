@@ -197,4 +197,4 @@ cannot be expressed generically with GATs. Pre-generated instances:
 
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later

@@ -57,3 +57,6 @@ jobs:
 
       - name: no_std check (karpal-verify)
         run: cargo build --no-default-features -p karpal-verify
+
+      - name: no_std check (karpal-diagram)
+        run: cargo build --no-default-features -p karpal-diagram

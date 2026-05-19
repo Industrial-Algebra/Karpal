@@ -110,4 +110,4 @@ All traits are `no_std` compatible with no feature gates.
 
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later

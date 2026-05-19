@@ -212,6 +212,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-diagram"
+version = "0.4.0"
+dependencies = [
+ "karpal-arrow",
+ "proptest",
+]
+
+[[package]]
 name = "karpal-effect"
 version = "0.4.0"
 dependencies = [
@@ -279,6 +287,7 @@ dependencies = [
  "karpal-algebra",
  "karpal-arrow",
  "karpal-core",
+ "karpal-diagram",
  "karpal-effect",
  "karpal-free",
  "karpal-optics",
