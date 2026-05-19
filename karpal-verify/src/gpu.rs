@@ -52,10 +52,7 @@ impl GpuObligationBundle {
             property,
             declarations: vec![Declaration::new(buffer.clone(), Sort::named("MTLBuffer"))],
             assumptions: Vec::new(),
-            conclusion: Term::app(
-                "aligned_to",
-                [Term::var(buffer), Term::int(alignment)].into_iter(),
-            ),
+            conclusion: Term::app("aligned_to", [Term::var(buffer), Term::int(alignment)]),
             origin: self.bundle.origin.clone(),
             tier: VerificationTier::External,
         });
@@ -69,10 +66,7 @@ impl GpuObligationBundle {
             property: IsWorkgroupSizeDivisible::NAME,
             declarations: vec![Declaration::new(symbol.clone(), Sort::Int)],
             assumptions: Vec::new(),
-            conclusion: Term::app(
-                "divisible_by",
-                [Term::var(symbol), Term::int(divisor)].into_iter(),
-            ),
+            conclusion: Term::app("divisible_by", [Term::var(symbol), Term::int(divisor)]),
             origin: self.bundle.origin.clone(),
             tier: VerificationTier::External,
         });
@@ -88,7 +82,7 @@ impl GpuObligationBundle {
             assumptions: Vec::new(),
             conclusion: Term::app(
                 "within_dispatch_limit",
-                [Term::var(symbol), Term::int(limit)].into_iter(),
+                [Term::var(symbol), Term::int(limit)],
             ),
             origin: self.bundle.origin.clone(),
             tier: VerificationTier::External,
@@ -103,7 +97,7 @@ impl GpuObligationBundle {
             property: IsMSLKernelDeterministic::NAME,
             declarations: vec![Declaration::new(kernel.clone(), Sort::named("MSLKernel"))],
             assumptions: Vec::new(),
-            conclusion: Term::app("deterministic_kernel", [Term::var(kernel)].into_iter()),
+            conclusion: Term::app("deterministic_kernel", [Term::var(kernel)]),
             origin: self.bundle.origin.clone(),
             tier: VerificationTier::External,
         });

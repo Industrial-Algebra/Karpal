@@ -163,7 +163,7 @@ fn expand_impl(config: ExportConfig, item_impl: ItemImpl) -> proc_macro2::TokenS
         }
     } else {
         return syn::Error::new_spanned(
-            &item_impl.impl_token,
+            item_impl.impl_token,
             "expected semigroup(...) or monoid(...) obligation family",
         )
         .to_compile_error();
