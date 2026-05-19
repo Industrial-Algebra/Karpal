@@ -26,6 +26,12 @@ impl VerificationBackend for LeanCertificate {
     const NAME: &'static str = "lean4";
 }
 
+/// Kani bounded model checking verification.
+pub struct KaniCertificate;
+impl VerificationBackend for KaniCertificate {
+    const NAME: &'static str = "kani";
+}
+
 impl LeanCertificate {
     pub fn witness_ref(module_name: &str, theorem_name: &str) -> String {
         format!("{module_name}.{theorem_name}")
@@ -234,5 +240,10 @@ mod tests {
     #[test]
     fn lean_module_ref_is_stable() {
         assert_eq!(LeanCertificate::module_ref("KarpalVerify"), "KarpalVerify");
+    }
+
+    #[test]
+    fn kani_certificate_has_stable_backend_name() {
+        assert_eq!(KaniCertificate::NAME, "kani");
     }
 }

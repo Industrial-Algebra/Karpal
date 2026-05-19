@@ -15,6 +15,8 @@ pub mod command;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod export;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub mod kani;
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub mod lean;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod obligation;
@@ -57,6 +59,8 @@ pub use export::{
     export_lean_bundle_with_prelude, export_smt_batch, export_smt_bundle,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub use kani::{Kani, KaniHarness, export_kani_bundle, export_kani_harness};
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub use lean::{
     Lean4, LeanAlias, LeanExport, LeanImport, LeanPrelude, LeanProject, LeanTheorem, export,
     export_module as export_lean_module, export_module_with_prelude, export_with_prelude,
@@ -85,5 +89,6 @@ pub use signature::{AlgebraicSignature, BinarySymbol, ConstantSymbol, UnarySymbo
 pub use smt::{SmtLib2, export_obligation as export_smt_obligation};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use trust::{
-    Certificate, Certified, ExternalTrust, LeanCertificate, SmtCertificate, VerificationBackend,
+    Certificate, Certified, ExternalTrust, KaniCertificate, LeanCertificate, SmtCertificate,
+    VerificationBackend,
 };
