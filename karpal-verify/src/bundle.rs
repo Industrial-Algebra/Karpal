@@ -153,6 +153,26 @@ impl ObligationBundle {
             ))
     }
 
+    pub fn ring(name: impl Into<String>, origin: Origin, signature: &AlgebraicSignature) -> Self {
+        Self::semiring(name, origin.clone(), signature)
+            .with(Obligation::left_inverse(
+                "add_left_inverse",
+                origin.clone(),
+                signature.carrier.clone(),
+                signature.require_binary("add"),
+                signature.require_unary("neg"),
+                signature.require_constant("zero"),
+            ))
+            .with(Obligation::right_inverse(
+                "add_right_inverse",
+                origin,
+                signature.carrier.clone(),
+                signature.require_binary("add"),
+                signature.require_unary("neg"),
+                signature.require_constant("zero"),
+            ))
+    }
+
     pub fn lattice(
         name: impl Into<String>,
         origin: Origin,
@@ -216,5 +236,18 @@ mod tests {
         let sig = AlgebraicSignature::semiring(Sort::Int, "add", "mul", "zero", "one");
         let bundle = ObligationBundle::semiring("ring", Origin::new("karpal-algebra", "i32"), &sig);
         assert_eq!(bundle.obligations().len(), 9);
+    }
+
+    #[test]
+    fn ring_bundle_contains_additive_inverse_laws() {
+        let sig = AlgebraicSignature::ring(Sort::Int, "add", "mul", "zero", "one", "neg");
+        let bundle = ObligationBundle::ring("ring", Origin::new("karpal-algebra", "i32"), &sig);
+        assert_eq!(bundle.obligations().len(), 11);
+        assert!(
+            bundle
+                .obligations()
+                .iter()
+                .any(|obligation| obligation.name == "add_left_inverse")
+        );
     }
 }
