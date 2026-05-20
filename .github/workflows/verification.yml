@@ -34,8 +34,9 @@ jobs:
 
       - name: Kani smoke check when available
         run: |
-          if cargo kani --version >/dev/null 2>&1; then
-            cargo kani --version
+          if kani --version >/dev/null 2>&1; then
+            kani --version
+            cargo test -p karpal-verify kani_provider
           else
-            echo "cargo-kani unavailable; skipping Kani smoke check"
+            echo "kani unavailable; skipping Kani smoke check"
           fi
