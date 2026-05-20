@@ -1,4 +1,6 @@
 use crate::hkt::HKT;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::{vec, vec::Vec};
 
 /// Natural transformation: a mapping between two functors that preserves structure.
 ///

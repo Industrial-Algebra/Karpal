@@ -2,6 +2,8 @@
 use crate::hkt::VecF;
 use crate::hkt::{HKT, OptionF, ResultF};
 use crate::monoid::Monoid;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
 
 /// Foldable: a structure that can be folded to a summary value.
 ///

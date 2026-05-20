@@ -1,7 +1,10 @@
 use core::marker::PhantomData;
 
 #[cfg(not(feature = "std"))]
-use alloc::string::String;
+use alloc::{
+    format,
+    string::{String, ToString},
+};
 #[cfg(feature = "std")]
 use std::string::String;
 

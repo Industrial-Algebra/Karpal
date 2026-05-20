@@ -1,3 +1,5 @@
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::{boxed::Box, vec::Vec};
 use core::marker::PhantomData;
 
 /// Higher-Kinded Type encoding via GATs.

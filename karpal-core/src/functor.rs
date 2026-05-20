@@ -1,6 +1,8 @@
 use crate::hkt::{EnvF, HKT, IdentityF, OptionF, ResultF};
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::{NonEmptyVec, NonEmptyVecF};
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
 
 /// Covariant functor: lifts a function `A -> B` into `F<A> -> F<B>`.
 pub trait Functor: HKT {

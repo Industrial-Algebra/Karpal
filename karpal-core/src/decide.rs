@@ -1,4 +1,6 @@
 use crate::contravariant::{Contravariant, PredicateF};
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// Decide: the contravariant analogue of Alt.
 ///

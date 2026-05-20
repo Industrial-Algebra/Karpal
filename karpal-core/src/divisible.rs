@@ -1,5 +1,7 @@
 use crate::contravariant::PredicateF;
 use crate::divide::Divide;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// Divisible: the contravariant analogue of Applicative.
 ///
