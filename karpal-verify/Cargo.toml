@@ -20,4 +20,4 @@ amari = ["std", "dep:amari-flynn"]
 [dependencies]
 karpal-proof = { version = "0.5.0", path = "../karpal-proof", default-features = false }
 karpal-verify-derive = { version = "0.5.0", path = "../karpal-verify-derive", optional = true }
-amari-flynn = { version = "0.19.1", optional = true }
+amari-flynn = { version = "0.22.0", optional = true }
