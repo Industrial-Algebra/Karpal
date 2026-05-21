@@ -16,6 +16,7 @@ pub enum NormalizationRule {
     ElideIdentitySequenceStage,
     CollapseIdentityParallel,
     CancelAdjacentSwaps,
+    YankCupCap,
 }
 
 /// Trace of rewrite rules applied while normalizing a diagram.
@@ -39,6 +40,8 @@ pub enum DiagramKind {
     Sequence(Box<Diagram>, Box<Diagram>),
     Parallel(Box<Diagram>, Box<Diagram>),
     Swap { left: usize, right: usize },
+    Cup { arity: usize },
+    Cap { arity: usize },
 }
 
 impl Diagram {
@@ -65,6 +68,24 @@ impl Diagram {
             kind: DiagramKind::Swap { left, right },
             input_arity: left + right,
             output_arity: left + right,
+        }
+    }
+
+    /// Unit of a compact-closed duality, drawn as a cup: `I -> A* ⊗ A`.
+    pub fn cup(arity: usize) -> Self {
+        Self {
+            kind: DiagramKind::Cup { arity },
+            input_arity: 0,
+            output_arity: arity * 2,
+        }
+    }
+
+    /// Counit of a compact-closed duality, drawn as a cap: `A ⊗ A* -> I`.
+    pub fn cap(arity: usize) -> Self {
+        Self {
+            kind: DiagramKind::Cap { arity },
+            input_arity: arity * 2,
+            output_arity: 0,
         }
     }
 
@@ -105,6 +126,8 @@ impl Diagram {
                 Self::box_(label.clone(), self.input_arity, self.output_arity)
             }
             DiagramKind::Swap { left, right } => Self::swap(*left, *right),
+            DiagramKind::Cup { arity } => Self::cup(*arity),
+            DiagramKind::Cap { arity } => Self::cap(*arity),
             DiagramKind::Sequence(_, _) => {
                 rules.push(NormalizationRule::FlattenSequence);
                 Self::normalize_sequence(
@@ -202,6 +225,14 @@ impl Diagram {
                 continue;
             }
 
+            if let Some(previous) = reduced.last()
+                && previous.yanks_with(&stage)
+            {
+                rules.push(NormalizationRule::YankCupCap);
+                reduced.pop();
+                continue;
+            }
+
             reduced.push(stage);
         }
 
@@ -259,6 +290,52 @@ impl Diagram {
             ) => left_left == right_right && left_right == right_left,
             _ => false,
         }
+    }
+
+    fn yanks_with(&self, other: &Self) -> bool {
+        Self::left_yanking_pair(self, other) || Self::right_yanking_pair(self, other)
+    }
+
+    fn left_yanking_pair(first: &Self, second: &Self) -> bool {
+        let DiagramKind::Parallel(first_left, first_right) = &first.kind else {
+            return false;
+        };
+        let DiagramKind::Parallel(second_left, second_right) = &second.kind else {
+            return false;
+        };
+
+        matches!(
+            (&first_left.kind, &first_right.kind, &second_left.kind, &second_right.kind),
+            (
+                DiagramKind::Cup { arity: cup_arity },
+                DiagramKind::Identity,
+                DiagramKind::Identity,
+                DiagramKind::Cap { arity: cap_arity },
+            ) if cup_arity == cap_arity
+                && first_right.input_arity == *cup_arity
+                && second_left.input_arity == *cup_arity
+        )
+    }
+
+    fn right_yanking_pair(first: &Self, second: &Self) -> bool {
+        let DiagramKind::Parallel(first_left, first_right) = &first.kind else {
+            return false;
+        };
+        let DiagramKind::Parallel(second_left, second_right) = &second.kind else {
+            return false;
+        };
+
+        matches!(
+            (&first_left.kind, &first_right.kind, &second_left.kind, &second_right.kind),
+            (
+                DiagramKind::Identity,
+                DiagramKind::Cup { arity: cup_arity },
+                DiagramKind::Cap { arity: cap_arity },
+                DiagramKind::Identity,
+            ) if cup_arity == cap_arity
+                && first_left.input_arity == *cup_arity
+                && second_right.input_arity == *cup_arity
+        )
     }
 }
 
@@ -345,5 +422,35 @@ mod tests {
         assert_eq!(trace.normalized, Diagram::identity(3));
         assert!(trace.applied(NormalizationRule::FlattenParallel));
         assert!(trace.applied(NormalizationRule::CollapseIdentityParallel));
+    }
+
+    #[test]
+    fn cup_and_cap_have_expected_arities() {
+        assert_eq!(Diagram::cup(2).input_arity, 0);
+        assert_eq!(Diagram::cup(2).output_arity, 4);
+        assert_eq!(Diagram::cap(2).input_arity, 4);
+        assert_eq!(Diagram::cap(2).output_arity, 0);
+    }
+
+    #[test]
+    fn left_yanking_normalizes_to_identity() {
+        let yanking = Diagram::cup(1)
+            .parallel(Diagram::identity(1))
+            .then(Diagram::identity(1).parallel(Diagram::cap(1)));
+
+        let trace = yanking.normalize_with_trace();
+        assert_eq!(trace.normalized, Diagram::identity(1));
+        assert!(trace.applied(NormalizationRule::YankCupCap));
+    }
+
+    #[test]
+    fn right_yanking_normalizes_to_identity() {
+        let yanking = Diagram::identity(1)
+            .parallel(Diagram::cup(1))
+            .then(Diagram::cap(1).parallel(Diagram::identity(1)));
+
+        let trace = yanking.normalize_with_trace();
+        assert_eq!(trace.normalized, Diagram::identity(1));
+        assert!(trace.applied(NormalizationRule::YankCupCap));
     }
 }

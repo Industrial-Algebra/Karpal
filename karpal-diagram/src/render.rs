@@ -45,6 +45,8 @@ impl TextRenderer {
                 format!("parallel({}, {})", Self::stage(left), Self::stage(right))
             }
             DiagramKind::Swap { left, right } => format!("swap[{left}|{right}]"),
+            DiagramKind::Cup { arity } => format!("cup[{arity}]"),
+            DiagramKind::Cap { arity } => format!("cap[{arity}]"),
             DiagramKind::Sequence(_, _) => {
                 unreachable!("sequence chains are flattened before stage rendering")
             }
@@ -58,6 +60,7 @@ impl TextRenderer {
             NormalizationRule::ElideIdentitySequenceStage => "elide-identity-sequence-stage",
             NormalizationRule::CollapseIdentityParallel => "collapse-identity-parallel",
             NormalizationRule::CancelAdjacentSwaps => "cancel-adjacent-swaps",
+            NormalizationRule::YankCupCap => "yank-cup-cap",
         }
     }
 }
@@ -131,5 +134,27 @@ mod tests {
         assert!(rendered.contains("flatten-sequence"));
         assert!(rendered.contains("cancel-adjacent-swaps"));
         assert!(rendered.contains("diagram 2 -> 2"));
+    }
+
+    #[test]
+    fn text_renderer_includes_cups_and_caps() {
+        let diagram = Diagram::cup(1)
+            .parallel(Diagram::identity(1))
+            .then(Diagram::identity(1).parallel(Diagram::cap(1)));
+
+        let rendered = TextRenderer::render(&diagram);
+        assert!(rendered.contains("cup[1]"));
+        assert!(rendered.contains("cap[1]"));
+    }
+
+    #[test]
+    fn text_renderer_trace_lists_yanking_rule() {
+        let trace = Diagram::cup(1)
+            .parallel(Diagram::identity(1))
+            .then(Diagram::identity(1).parallel(Diagram::cap(1)))
+            .normalize_with_trace();
+
+        let rendered = TextRenderer::render_trace(&trace);
+        assert!(rendered.contains("yank-cup-cap"));
     }
 }
