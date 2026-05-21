@@ -146,7 +146,7 @@ pub mod prelude {
     // Monoidal categories and string diagrams
     pub use karpal_diagram::{
         Braiding, Diagram, DiagramKind, NormalizationRule, NormalizationTrace, SvgRenderer,
-        Symmetry, Tensor, TextRenderer,
+        Symmetry, Tensor, TextRenderer, Trace,
     };
     #[cfg(feature = "amari")]
     pub use karpal_verify::{
