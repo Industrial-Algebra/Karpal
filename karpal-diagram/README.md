@@ -6,6 +6,7 @@ Monoidal categories and string diagrams for the Karpal ecosystem.
 
 - monoidal category traits: `Tensor`, `Braiding`, `Symmetry`
 - a small string-diagram DSL
+- compact-closed cup/cap nodes with basic yanking normalization
 - text and SVG rendering helpers
 - diagram normalization for simple equivalence checking
 - normalization tracing for rewrite/debug visibility
@@ -34,6 +35,13 @@ let trace = Diagram::identity(1)
     .normalize_with_trace();
 assert!(trace.applied(karpal_diagram::NormalizationRule::ElideIdentitySequenceStage));
 assert!(diagram.render_normalization_trace().contains("normalization trace"));
+
+let yanking = Diagram::cup(1)
+    .parallel(Diagram::identity(1))
+    .then(Diagram::identity(1).parallel(Diagram::cap(1)));
+let yanking_trace = yanking.normalize_with_trace();
+assert_eq!(yanking_trace.normalized, Diagram::identity(1));
+assert!(yanking_trace.applied(karpal_diagram::NormalizationRule::YankCupCap));
 ```
 
 ## License
