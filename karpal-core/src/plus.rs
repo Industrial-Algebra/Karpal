@@ -2,6 +2,8 @@ use crate::alt::Alt;
 use crate::hkt::OptionF;
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::VecF;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
 
 /// Plus: an Alt with a zero/empty element.
 ///

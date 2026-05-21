@@ -1,6 +1,8 @@
 use crate::hkt::HKT;
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::StoreF;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// ComonadStore: a comonad with a notion of position and peeking.
 ///

@@ -1,5 +1,11 @@
 #[cfg(not(feature = "std"))]
-use alloc::{collections::BTreeSet, format, string::String, vec::Vec};
+use alloc::{
+    collections::BTreeSet,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 #[cfg(feature = "std")]
 use std::{collections::BTreeSet, format, string::String, vec::Vec};
 

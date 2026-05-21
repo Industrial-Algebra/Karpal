@@ -1,4 +1,6 @@
 use crate::semigroup::Semigroup;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::{string::String, vec::Vec};
 
 /// A `Semigroup` with an identity element.
 pub trait Monoid: Semigroup {

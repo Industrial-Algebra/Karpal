@@ -1,3 +1,6 @@
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::{string::String, vec::Vec};
+
 /// A type with an associative binary operation.
 pub trait Semigroup {
     fn combine(self, other: Self) -> Self;

@@ -3,6 +3,8 @@ use crate::hkt::OptionF;
 use crate::hkt::ResultF;
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::VecF;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
 
 /// Alt: a Functor with an associative choice operation.
 ///

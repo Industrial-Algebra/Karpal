@@ -2,6 +2,8 @@ use crate::hkt::HKT;
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::TracedF;
 use crate::monoid::Monoid;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// ComonadTraced: a comonad with a monoidal trace/accumulator.
 ///

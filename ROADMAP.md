@@ -267,29 +267,34 @@ Formal verification via external tools, following the architecture
 pioneered in [amari-flynn](https://github.com/Industrial-Algebra/amari-flynn).
 
 Status: implemented through `karpal-verify` obligation/export/report/session APIs,
-structured Lean integration, optional amari-flynn statistical verification,
-and CI-oriented three-tier summary artifacts.
+structured Lean integration, Kani harness generation, obligation-export macros,
+proof-derived certificates, optional amari-flynn statistical verification,
+GPU compute obligations, and CI-oriented verification summary artifacts.
 
 | Capability | Description |
 |-----------|-------------|
-| Obligation IR | Backend-agnostic `Obligation` type with `Term` language, `AlgebraicSignature`, `ObligationBundle` for Semigroup/Monoid/Group/Semiring/Lattice |
+| Obligation IR | Backend-agnostic `Obligation` type with `Term` language, `AlgebraicSignature`, `ObligationBundle` for Semigroup/Monoid/Group/Semiring/Ring/Lattice |
 | SMT-LIB2 export | Generate proof obligations for algebraic laws as SMT-LIB2 (Z3, CVC5) |
 | Lean 4 bridge | Export Karpal typeclass hierarchies as Lean 4 structures; verify laws in Lean; import trust markers back as Rust phantom types via `Certified<B, P, T>` |
+| Kani backend | Generate `#[kani::proof]` harnesses and invocation plans from obligation bundles |
+| Obligation macros | `#[karpal_verify::export_obligations]` via the `karpal-verify-derive` companion crate |
 | amari-flynn integration | Statistical contracts (`#[prob_requires]`, `#[prob_ensures]`), Monte Carlo law-bound checks, Hoeffding-bound confidence intervals |
 | Three-tier verification | **Impossible** (type-level), **Rare** (statistical), **Emergent** (runtime proptest) |
-| Artifact management | `ArtifactLayout`, dry-run invocation plans, Lean project scaffolding (`lakefile.lean`, `lean-toolchain`) |
+| Artifact management | `ArtifactLayout`, dry-run invocation plans, Kani harnesses, Lean project scaffolding (`lakefile.lean`, `lean-toolchain`) |
 | Session orchestration | `VerificationSession`, `verify_bundle()`, CI-oriented JSON/Markdown/Lean-diagnostics outputs |
+| Proof bridge | `ProofEvidence` and `ProofBridge` convert passing law-check/proptest evidence into auditable `Certificate` metadata |
+| GPU obligations | `GpuObligationBundle` models Metal/MSL-style alignment, workgroup, dispatch, and determinism contracts |
 | Trust boundary | `Certificate` → `Certified<B, P, T>` → `unsafe into_proven()` — external evidence crosses an explicit, auditable boundary |
 
-#### Phase 12 Extensions (planned)
+#### Phase 12 Extensions (implemented for 0.5.0)
 
-| Extension | Description | Priority |
-|-----------|-------------|----------|
-| **12a — Kani backend** | Generate `#[kani::proof]` harnesses from `Obligation`. Unlike SMT/Lean which verify abstracted models, Kani verifies the actual Rust trait implementation through bounded model checking. A `KaniBackend` + `KaniCertificate` pair mirroring `SmtLib2`/`Lean4`. | High |
-| **12b — Trait-to-obligation derive** | `#[karpal_verify::export_obligations]` proc-macro on trait impls. Examines the impl, extracts the `AlgebraicSignature`, generates the `ObligationBundle`, and exports to all configured backends. Makes verification a one-line annotation. | High |
-| **12c — karpal-proof bridge** | When `karpal-proof-derive`'s proptest harnesses pass, auto-generate the corresponding `Certificate` and `Certified` witness. Closes the "Emergent → External" verification loop. A `#[derive(CertifiedSemigroup)]` macro that wraps both proptest generation and certificate creation. | Medium |
-| **12d — Continuous verification CI** | GitHub Actions workflow that runs SMT/Lean/Kani verification on every PR. `VerificationSession::verify_with_ci_outputs()` already exists — wire it into required status checks. Golden-file regression tests for SMT-LIB2 and Lean 4 output. | Medium |
-| **12e — GPU compute obligations** | Extension for Borsalino: `IsMSLKernelDeterministic`, `IsBufferAlignedTo16`, `IsWorkgroupSizeDivisible`, `IsDispatchWithinLimits`. GPU safety properties integrated with the existing obligation IR via `Sort::Named("MTLBuffer")` and custom `Term::app` operators. See [Borsalino verification integration](../../Borsalino/docs/verification-integration.md). | Medium |
+| Extension | Description | Status |
+|-----------|-------------|--------|
+| **12a — Kani backend** | Generate `#[kani::proof]` harnesses from `Obligation` and plan `cargo kani --harness <name>` invocations. | Implemented |
+| **12b — Trait-to-obligation derive** | `#[karpal_verify::export_obligations]` re-exported from the Rust-idiomatic `karpal-verify-derive` proc-macro crate. | Implemented |
+| **12c — karpal-proof bridge** | `ProofEvidence`, `ProofBridge`, and `ProofTestCertificate` convert proof-derived test evidence into certificates while preserving the explicit unsafe trust boundary. | Implemented |
+| **12d — Continuous verification CI** | Added a verification workflow with unit/golden tests plus capability-gated Lean and Kani smoke checks. | Implemented |
+| **12e — GPU compute obligations** | `GpuObligationBundle` exposes `IsMSLKernelDeterministic`, `IsBufferAlignedTo16`, `IsWorkgroupSizeDivisible`, and `IsDispatchWithinLimits` obligations over the existing IR. | Implemented |
 
 ### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (30% complete)
 

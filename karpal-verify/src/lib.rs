@@ -1,5 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(all(not(feature = "std"), feature = "alloc"), feature(alloc))]
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
@@ -15,9 +14,15 @@ pub mod command;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod export;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub mod gpu;
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub mod kani;
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub mod lean;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod obligation;
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub mod proof_bridge;
 #[cfg(feature = "std")]
 pub mod report;
 #[cfg(feature = "std")]
@@ -50,12 +55,21 @@ pub use artifact::{
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use bundle::ObligationBundle;
 #[cfg(feature = "std")]
-pub use command::{CommandKind, InvocationPlan, LeanConfig, LeanDriver, SmtConfig};
+pub use command::{CommandKind, InvocationPlan, KaniConfig, LeanConfig, LeanDriver, SmtConfig};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use export::{
     export_lean_bundle, export_lean_bundle_structured, export_lean_bundle_structured_with_prelude,
     export_lean_bundle_with_prelude, export_smt_batch, export_smt_bundle,
 };
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use gpu::{
+    GpuObligationBundle, IsBufferAlignedTo16, IsDispatchWithinLimits, IsMSLKernelDeterministic,
+    IsWorkgroupSizeDivisible,
+};
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use kani::{Kani, KaniHarness, export_kani_bundle, export_kani_harness};
+#[cfg(feature = "derive")]
+pub use karpal_verify_derive::export_obligations;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use lean::{
     Lean4, LeanAlias, LeanExport, LeanImport, LeanPrelude, LeanProject, LeanTheorem, export,
@@ -63,6 +77,8 @@ pub use lean::{
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use obligation::{Declaration, Obligation, Origin, ProofDialect, Sort, Term, VerificationTier};
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use proof_bridge::{ProofBridge, ProofEvidence};
 #[cfg(feature = "std")]
 pub use report::{
     ModuleReport, ObligationReport, VERIFICATION_REPORT_SCHEMA_VERSION, VerificationReport,
@@ -85,5 +101,6 @@ pub use signature::{AlgebraicSignature, BinarySymbol, ConstantSymbol, UnarySymbo
 pub use smt::{SmtLib2, export_obligation as export_smt_obligation};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use trust::{
-    Certificate, Certified, ExternalTrust, LeanCertificate, SmtCertificate, VerificationBackend,
+    Certificate, Certified, ExternalTrust, KaniCertificate, LeanCertificate, ProofTestCertificate,
+    SmtCertificate, VerificationBackend,
 };

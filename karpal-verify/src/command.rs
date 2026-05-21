@@ -8,6 +8,7 @@ use std::{path::Path, string::String, vec::Vec};
 pub enum CommandKind {
     Smt,
     Lean,
+    Kani,
 }
 
 /// Command-line configuration for an SMT solver.
@@ -99,6 +100,36 @@ impl LeanConfig {
     }
 }
 
+/// Command-line configuration for Kani bounded model checking.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KaniConfig {
+    pub executable: String,
+    pub args: Vec<String>,
+}
+
+impl Default for KaniConfig {
+    fn default() -> Self {
+        Self {
+            executable: "kani".into(),
+            args: Vec::new(),
+        }
+    }
+}
+
+impl KaniConfig {
+    pub fn new(executable: impl Into<String>) -> Self {
+        Self {
+            executable: executable.into(),
+            args: Vec::new(),
+        }
+    }
+
+    pub fn with_arg(mut self, arg: impl Into<String>) -> Self {
+        self.args.push(arg.into());
+        self
+    }
+}
+
 /// Dry-run invocation plan for an external tool.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvocationPlan {
@@ -129,13 +160,17 @@ impl InvocationPlan {
 impl InvocationPlan {
     pub fn smt(config: &SmtConfig, script: impl AsRef<Path>) -> Self {
         let script = script.as_ref().to_path_buf();
+        let working_directory = working_directory_for(&script);
         let mut args = config.args.clone();
-        args.push(script.to_string_lossy().into_owned());
+        args.push(path_arg_for_working_directory(
+            &script,
+            working_directory.as_deref(),
+        ));
         Self {
             kind: CommandKind::Smt,
             executable: config.executable.clone(),
             args,
-            working_directory: script.parent().map(path_to_string),
+            working_directory,
             input_files: vec![path_to_string(&script)],
         }
     }
@@ -144,13 +179,17 @@ impl InvocationPlan {
         let module = module.as_ref().to_path_buf();
         match config.driver {
             LeanDriver::Direct => {
+                let working_directory = working_directory_for(&module);
                 let mut args = config.args.clone();
-                args.push(module.to_string_lossy().into_owned());
+                args.push(path_arg_for_working_directory(
+                    &module,
+                    working_directory.as_deref(),
+                ));
                 Self {
                     kind: CommandKind::Lean,
                     executable: config.executable.clone(),
                     args,
-                    working_directory: module.parent().map(path_to_string),
+                    working_directory,
                     input_files: vec![path_to_string(&module)],
                 }
             }
@@ -203,6 +242,44 @@ impl InvocationPlan {
                 }
             }
         }
+    }
+
+    pub fn kani(config: &KaniConfig, harness: impl AsRef<Path>, harness_name: &str) -> Self {
+        let harness = harness.as_ref().to_path_buf();
+        let working_directory = working_directory_for(&harness);
+        let mut args = config.args.clone();
+        args.push("--harness".into());
+        args.push(harness_name.into());
+        args.push(path_arg_for_working_directory(
+            &harness,
+            working_directory.as_deref(),
+        ));
+        Self {
+            kind: CommandKind::Kani,
+            executable: config.executable.clone(),
+            args,
+            working_directory,
+            input_files: vec![path_to_string(&harness)],
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+fn working_directory_for(path: &Path) -> Option<String> {
+    path.parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .map(path_to_string)
+}
+
+#[cfg(feature = "std")]
+fn path_arg_for_working_directory(path: &Path, working_directory: Option<&str>) -> String {
+    if working_directory.is_some() {
+        path.file_name()
+            .and_then(|file_name| file_name.to_str())
+            .map(String::from)
+            .unwrap_or_else(|| path_to_string(path))
+    } else {
+        path_to_string(path)
     }
 }
 
@@ -293,5 +370,23 @@ mod tests {
                 .iter()
                 .any(|path| path.ends_with("lean-toolchain"))
         );
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn kani_plan_invokes_standalone_kani_for_generated_harness() {
+        let plan = InvocationPlan::kani(
+            &KaniConfig::default(),
+            std::path::PathBuf::from("target/verify/kani/sum_assoc.rs"),
+            "sum_assoc",
+        );
+        assert_eq!(plan.kind, CommandKind::Kani);
+        assert_eq!(plan.executable, "kani");
+        assert_eq!(plan.args, vec!["--harness", "sum_assoc", "sum_assoc.rs"]);
+        assert_eq!(
+            plan.working_directory.as_deref(),
+            Some("target/verify/kani")
+        );
+        assert!(plan.input_files[0].ends_with("sum_assoc.rs"));
     }
 }
