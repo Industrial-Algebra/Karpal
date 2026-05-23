@@ -47,7 +47,7 @@ formal verification.
 |-------|----------|
 | `karpal-verify` | Obligation IR, SMT-LIB2 export, Lean 4 export with project scaffolding, amari-flynn statistical integration, artifact management, session orchestration, trust boundary (`Certificate`, `Certified`, `unsafe into_proven`) |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (40% complete, detailed below)
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (45% complete, detailed below)
 
 ---
 
@@ -296,10 +296,10 @@ GPU compute obligations, and CI-oriented verification summary artifacts.
 | **12d — Continuous verification CI** | Added a verification workflow with unit/golden tests plus capability-gated Lean and Kani smoke checks. | Implemented |
 | **12e — GPU compute obligations** | `GpuObligationBundle` exposes `IsMSLKernelDeterministic`, `IsBufferAlignedTo16`, `IsWorkgroupSizeDivisible`, and `IsDispatchWithinLimits` obligations over the existing IR. | Implemented |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (40% complete)
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (45% complete)
 
 Status: **in progress** — initial `karpal-diagram` foundation implemented across the Phase 13 part branches.
-Runtime diagram normalization now includes trace visibility and basic compact-closed yanking rewrites. The categorical API now includes a first executable `Trace` trait backed by `ArrowLoop` for `FnA`.
+Runtime diagram normalization now includes trace visibility and basic compact-closed yanking rewrites. The categorical API now includes a first executable `Trace` trait backed by `ArrowLoop` for `FnA`. Type-level coherence witnesses are now available for the pentagon and triangle identities.
 
 **What's built:**
 
@@ -309,6 +309,7 @@ Runtime diagram normalization now includes trace visibility and basic compact-cl
 | `Braiding` trait | `braid()` for swap, `hexagon_forward()` for coherence. `FnA` impl with hexagon composition test |
 | `Symmetry` trait | `braid ∘ braid = id`. `FnA` impl with involutive test |
 | `Trace` trait | Close a feedback wire `(A, D) -> (B, D)` into `A -> B`; `FnA` delegates to `ArrowLoop` with `D: Default` seed |
+| Coherence witnesses | Type-level `PentagonIdentity` and `TriangleIdentity` proofs via `karpal-proof::Justifies`; `verify_pentagon()` / `verify_triangle()` construct `Rewrite` terms |
 | `Diagram` DSL | `Identity`, `Box`, `Sequence`, `Parallel`, `Swap`, `Cup`, and `Cap` nodes. Normalization with `NormalizationRule` enum and `NormalizationTrace` for rewrite visibility |
 | Compact yanking normalization | Cup/cap yanking pairs normalize back to identity with an explicit `YankCupCap` trace rule |
 | Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
@@ -317,7 +318,6 @@ Runtime diagram normalization now includes trace visibility and basic compact-cl
 
 | Concept | Description |
 |---------|-------------|
-| Coherence law proofs | Pentagon identity and triangle identity as type-level `Rewrite` proofs, not just runtime tests |
 | Hexagon identity proof | Encode `s_A,B⊗C = a_B,C,A ∘ (id_B ⊗ s_A,C) ∘ a_B,A,C⁻¹ ∘ (s_A,B ⊗ id_C) ∘ a_A,B,C` as a `Justifies` witness |
 | Compact closed categories | Type-level duality/yanking witnesses beyond the current runtime cup/cap normalization and executable `Trace` trait |
 | Diagrammatic rewriting | Type-level `Rewrite<Diagram1, Diagram2, ByCoherence>` proofs bridging to karpal-proof's `Justifies` |

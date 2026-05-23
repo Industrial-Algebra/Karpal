@@ -5,6 +5,7 @@ Monoidal categories and string diagrams for the Karpal ecosystem.
 `karpal-diagram` begins Phase 13 of the Karpal roadmap with:
 
 - monoidal category traits: `Tensor`, `Braiding`, `Symmetry`, `Trace`
+- coherence law witnesses: `PentagonIdentity`, `TriangleIdentity`
 - a small string-diagram DSL
 - compact-closed cup/cap nodes with basic yanking normalization
 - text and SVG rendering helpers
