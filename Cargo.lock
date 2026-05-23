@@ -217,6 +217,7 @@ version = "0.5.0"
 dependencies = [
  "karpal-arrow",
  "karpal-proof",
+ "karpal-verify",
  "proptest",
 ]
 
