@@ -1,0 +1,16 @@
+[package]
+name = "karpal-schubert-types"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Schubert intersection type system for the Industrial Algebra ecosystem"
+
+[dependencies]
+karpal-core = { version = "0.5.0", path = "../karpal-core" }
+karpal-algebra = { version = "0.5.0", path = "../karpal-algebra" }
+amari-enumerative = { path = "../../../../working/industrial-algebra/Amari/amari-enumerative" }
