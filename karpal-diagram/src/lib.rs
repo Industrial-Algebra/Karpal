@@ -14,9 +14,13 @@ pub mod tensor;
 pub mod trace;
 
 pub use braiding::Braiding;
-pub use coherence::{ByNormalization, HexagonIdentity, PentagonIdentity, TriangleIdentity};
+pub use coherence::{
+    ByNormalization, ByYanking, HexagonIdentity, PentagonIdentity, TriangleIdentity,
+};
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub use coherence::{equivalent_proved, verify_hexagon, verify_pentagon, verify_triangle};
+pub use coherence::{
+    equivalent_proved, prove_yanking, verify_hexagon, verify_pentagon, verify_triangle,
+};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use diagram::{Diagram, DiagramKind, NormalizationRule, NormalizationTrace};
 #[cfg(any(feature = "std", feature = "alloc"))]

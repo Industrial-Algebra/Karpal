@@ -51,3 +51,37 @@ fn equivalent_proved_handles_associativity_equivalence() {
 
     let _ = witness;
 }
+
+// ---------------------------------------------------------------------------
+// Compact-closed / yanking witnesses
+// ---------------------------------------------------------------------------
+
+use karpal_diagram::coherence::{ByYanking, prove_yanking};
+
+struct YankLeft;
+struct YankRight;
+
+#[test]
+fn prove_yanking_produces_witness_for_arity_1() {
+    let _: Rewrite<YankLeft, YankRight, ByYanking> = prove_yanking::<YankLeft, YankRight>(1);
+}
+
+#[test]
+fn prove_yanking_produces_witness_for_arity_2() {
+    let _: Rewrite<YankLeft, YankRight, ByYanking> = prove_yanking::<YankLeft, YankRight>(2);
+}
+
+#[test]
+fn yanking_diagrams_normalize_to_identity() {
+    // Left yanking
+    let left = Diagram::cup(1)
+        .parallel(Diagram::identity(1))
+        .then(Diagram::identity(1).parallel(Diagram::cap(1)));
+    assert!(left.equivalent_to(&Diagram::identity(1)));
+
+    // Right yanking
+    let right = Diagram::identity(1)
+        .parallel(Diagram::cup(1))
+        .then(Diagram::cap(1).parallel(Diagram::identity(1)));
+    assert!(right.equivalent_to(&Diagram::identity(1)));
+}

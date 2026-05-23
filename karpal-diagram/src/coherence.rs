@@ -108,6 +108,50 @@ pub fn equivalent_proved<A, B>(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Compact-closed / yanking witnesses
+// ---------------------------------------------------------------------------
+
+/// Justification: cup/cap yanking equation verified by normalization.
+///
+/// The yanking equation `(cup ⊗ id) ; (id ⊗ cap) = id` is a defining
+/// axiom of compact-closed categories. This witness asserts it holds
+/// for the given diagram arity.
+pub struct ByYanking;
+
+impl<A, B> Justifies<A, B> for ByYanking {}
+
+/// Prove the yanking equation for the given arity.
+///
+/// Builds both left and right yanking diagrams, verifies they normalize
+/// to identity, and returns a type-level `Rewrite` witness.
+///
+/// # Panics
+///
+/// Panics if the yanking diagram fails to normalize to identity —
+/// this should never happen for a correct monoidal diagram implementation.
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub fn prove_yanking<A, B>(arity: usize) -> Rewrite<A, B, ByYanking> {
+    let left_yank = crate::Diagram::cup(arity)
+        .parallel(crate::Diagram::identity(arity))
+        .then(crate::Diagram::identity(arity).parallel(crate::Diagram::cap(arity)));
+
+    let right_yank = crate::Diagram::identity(arity)
+        .parallel(crate::Diagram::cup(arity))
+        .then(crate::Diagram::cap(arity).parallel(crate::Diagram::identity(arity)));
+
+    assert!(
+        left_yank.equivalent_to(&crate::Diagram::identity(arity)),
+        "left yanking equation failed for arity {arity}"
+    );
+    assert!(
+        right_yank.equivalent_to(&crate::Diagram::identity(arity)),
+        "right yanking equation failed for arity {arity}"
+    );
+
+    Rewrite::witness()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
