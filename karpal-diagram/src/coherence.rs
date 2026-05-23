@@ -75,6 +75,39 @@ pub fn verify_hexagon<A, B, C>() -> Rewrite<((A, B), C), ((B, C), A), HexagonIde
     Rewrite::witness()
 }
 
+// ---------------------------------------------------------------------------
+// Diagrammatic rewriting bridge
+// ---------------------------------------------------------------------------
+
+/// Justification: diagram equivalence established by runtime normalization.
+///
+/// This bridges the runtime `Diagram::equivalent_to` check with the
+/// `karpal-proof` type-level `Justifies`/`Rewrite` framework. Any two
+/// types `A` and `B` can serve as phantom markers — the real evidence
+/// comes from normalizing the two diagrams and checking they match.
+pub struct ByNormalization;
+
+impl<A, B> Justifies<A, B> for ByNormalization {}
+
+/// Prove two diagrams are equivalent via normalization.
+///
+/// Normalizes both diagrams and, if they match, returns a type-level
+/// `Rewrite` witness. The type parameters `A` and `B` are phantom markers
+/// that let callers distinguish different proof instances.
+///
+/// Returns `None` when the diagrams differ after normalization.
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub fn equivalent_proved<A, B>(
+    a: &crate::Diagram,
+    b: &crate::Diagram,
+) -> Option<Rewrite<A, B, ByNormalization>> {
+    if a.equivalent_to(b) {
+        Some(Rewrite::witness())
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
