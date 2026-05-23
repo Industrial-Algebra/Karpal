@@ -216,6 +216,7 @@ name = "karpal-diagram"
 version = "0.5.0"
 dependencies = [
  "karpal-arrow",
+ "karpal-proof",
  "proptest",
 ]
 
