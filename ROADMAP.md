@@ -49,6 +49,14 @@ formal verification.
 
 ### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (100% complete ✅)
 
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (0% complete, target 0.5.0)
+
+**Crate**: `karpal-schubert-types` (new, experimental)
+
+Schubert intersection type system for the 0.5.0 release (sub-phases A–C).
+Types are Schubert classes in Grassmannians; type checking computes intersection
+numbers via Littlewood-Richardson coefficients. See the detailed section below.
+
 ---
 
 ## Near-term Phases
@@ -316,7 +324,11 @@ Runtime diagram normalization includes trace visibility and compact-closed yanki
 | Compact yanking normalization | Cup/cap yanking pairs normalize back to identity with an explicit `YankCupCap` trace rule |
 | Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
 
-### Phase 14 — `karpal-higher`: 2-Categories & Enriched Categories
+### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (deferred to 0.6.0)
+
+**Crate**: `karpal-higher` (new)
+
+**Note**: Previously Phase 14, deferred to 0.6.0 to prioritize Schubert types for 0.5.0.
 
 | Concept | Description |
 |---------|-------------|
@@ -325,7 +337,7 @@ Runtime diagram normalization includes trace visibility and compact-closed yanki
 | Bicategories | Weakened 2-categories where composition is associative only up to isomorphism — relevant for profunctor composition |
 | FFunctor / FMonad | Functor and Monad at the functor-category level; maps natural transformations |
 
-### Phase 15 — `karpal-schubert-types`: Schubert Intersection Type System
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System
 
 **Crate**: `karpal-schubert-types` (new, experimental)
 
@@ -355,9 +367,9 @@ Subtyping becomes `σ_A · σ_B ≠ 0`, with the LR coefficient giving the
 | **A — Core engine** | `SchubertType`, `Intersection`, `check_intersection()` backed by amari-enumerative | karpal-core, karpal-algebra, amari-enumerative |
 | **B — Proof integration** | `SchubertProven<λ, T>` witness type, composition of proofs via LR | Phase 11 (karpal-proof) |
 | **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule, domain-specific obligation bundles for Schubert calculus | Phase 12 (karpal-verify) |
-| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 14 (karpal-higher) |
+| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 15 (karpal-higher) |
 
-#### Sub-phase 15C — Schubert Calculus Verification (detailed)
+#### Sub-phase 14C — Schubert Calculus Verification (detailed)
 
 Generate `Obligation` and `ObligationBundle` values for the mathematical
 operations in amari-enumerative. This closes the gap between "the library
@@ -376,7 +388,7 @@ them correctly."
 | `schubert_giambelli_formula` | σ_λ expressed as determinant of special classes | Lean 4 | External |
 
 **Integration with Schubert crate**: The `schubert` access-control crate
-consumes amari-enumerative's Schubert calculus. Phase 15C verification
+consumes amari-enumerative's Schubert calculus. Phase 14C verification
 obligations feed directly into Schubert's `proof.rs` module — a
 `Certificate` from SMT/Lean that the LR computation is correct auto-generates
 a `Proven<IsValidCapability, Capability>` witness via the Phase 12 trust
@@ -396,17 +408,17 @@ for the full synopsis.
 | Extension | Description | Dependencies |
 |-----------|-------------|--------------|
 | **E — Topos-theoretic grounding** | Schubert intersection as pullback in a presheaf topos; IntersectionKind as Heyting-valued subobject classifier; enables internal logic over Schubert classes | Phase 16 (karpal-topos) |
-| **F — K-theoretic refinement** | Replace cohomology classes with K-theory classes; Grothendieck ring structure on type lattice; quantum deformation parameter for refined multiplicity | karpal-algebra (Ring), Phase 14 |
+| **F — K-theoretic refinement** | Replace cohomology classes with K-theory classes; Grothendieck ring structure on type lattice; quantum deformation parameter for refined multiplicity | karpal-algebra (Ring), Phase 15 |
 | **G — Equivariant Schubert calculus** | Torus-equivariant intersection theory; localization formulas (Atiyah-Bott) for efficient computation; polynomial representatives (Schubert polynomials) via karpal-algebra | karpal-algebra (Ring, Module), amari-enumerative |
 | **H — Motivic measures** | Motivic integration over Schubert varieties; connects structured emptiness to measure-theoretic "weight of emptiness"; virtual motives as universal additive invariant | Phase 16 (karpal-topos), karpal-algebra |
 
 Extensions E and F are the most immediately meaningful:
-- **E** gives Phase 15 a rigorous categorical home — Schubert intersection *is*
+- **E** gives Phase 14 a rigorous categorical home — Schubert intersection *is*
   pullback in the right topos, and `IntersectionKind` *is* the subobject
   classifier of that topos. This collapses the gap between "structured emptiness
   as a design pattern" and "structured emptiness as categorical truth".
 - **F** refines the coarse intersection number into a polynomial invariant. Where
-  Phase 15A gives `σ_λ · σ_μ = 2`, K-theoretic refinement gives
+  Phase 14A gives `σ_λ · σ_μ = 2`, K-theoretic refinement gives
   `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
   deformation parameter, which maps to distinct coercion paths at the type level.
 
@@ -417,7 +429,7 @@ Extensions E and F are the most immediately meaningful:
 Topos theory unifies logic, geometry, and category theory. A topos is a
 category that "behaves like Set" — it has all finite limits, exponentials,
 and a subobject classifier Ω. This phase provides the categorical
-infrastructure that Phase 15 and structured emptiness ultimately rest on.
+infrastructure that Phase 14 and structured emptiness ultimately rest on.
 
 | Concept | Description |
 |---------|-------------|
@@ -445,8 +457,8 @@ infrastructure that Phase 15 and structured emptiness ultimately rest on.
 - **Phase 8 (Abstract Algebra)**: `BoundedLattice` → `HeytingAlgebra` is a direct extension; the structured emptiness lattice `Ω = { Denied, Granted(0), Granted(n), Granted(∞) }` becomes a concrete subobject classifier
 - **Phase 9 (Adjunctions)**: Sheafification is a left adjoint to the inclusion of sheaves into presheaves; this is a new `Adjunction` instance with deep computational content
 - **Phase 5 (Free Constructions)**: Presheaves *are* the free cocompletion; the Yoneda lemma (karpal-free's `Yoneda<F, A>`) is the embedding theorem for presheaf topoi
-- **Phase 14 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 15's LR-enriched categories
-- **Phase 15 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
+- **Phase 15 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 14's LR-enriched categories
+- **Phase 14 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
 
 ### Phase 17 — `karpal-e2e`: End-to-End Validation & Release Readiness
 
@@ -497,7 +509,7 @@ certificates, and trust-boundary crossing points.
 |-------------|-------|--------------------|-------------------|
 | **Schubert access control** | `schubert` | Capability validity, LR consistency, workspace law idempotency | SMT + Lean 4 + karpal-proof |
 | **Borsalino GPU compute** | `borsalino` | MSL kernel determinism, buffer alignment, workgroup divisibility, dispatch limits | Kani + amari-flynn + type-level |
-| **amari-enumerative** | `amari-enumerative` | Schubert calculus (see Phase 15C) | SMT + Lean 4 + amari-flynn |
+| **amari-enumerative** | `amari-enumerative` | Schubert calculus (see Phase 14C) | SMT + Lean 4 + amari-flynn |
 | **ShaperOS** | `ShaperOS` (gp-gpu) | Blade encoding roundtrips, GF(2) arithmetic, signature format validation | Kani + SMT |
 
 See integration documents:
@@ -555,7 +567,7 @@ This pattern is not specific to Schubert calculus. It appears anywhere
 No widely-used programming language or algebraic library formalizes this
 distinction. Karpal can be the first.
 
-**Phase 15 (`karpal-schubert-types`)** is the concrete realization of this
+**Phase 14 (`karpal-schubert-types`)** is the concrete realization of this
 vision: types as Schubert classes, type checking as intersection computation,
 and `IntersectionKind` as the structured emptiness lattice made computable.
 The `BoundedLattice` from Phase 8 isn't just a library curiosity — it's the
@@ -587,7 +599,7 @@ type Recall<A> = Graded<FidelityGrade, Option<A>>
 // where FidelityGrade: Monoid (worst degradation wins)
 ```
 
-**Enriched categories (Phase 14).** The deepest connection. Standard
+**Enriched categories (Phase 15).** The deepest connection. Standard
 categories have hom-*sets* — morphisms either exist or don't. But when
 hom-objects carry richer structure (the enumeration lattice), you get
 a category *enriched* over that lattice. Composition must respect the
@@ -630,8 +642,8 @@ karpal/
 ├── karpal-proof-derive/   # Phase 11: Proptest derive macros
 ├── karpal-verify/         # Phase 12: SMT/Lean bridge, amari-flynn integration
 ├── karpal-diagram/        # Phase 13: Monoidal categories, string diagrams
-├── karpal-higher/         # Phase 14: 2-categories, enriched categories
-├── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
+├── karpal-higher/         # Phase 15: 2-categories, enriched categories
+├── karpal-schubert-types/ # Phase 14: Schubert intersection type system (experimental)
 ├── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
 ├── karpal-e2e/            # Phase 17: End-to-end validation, CI/release readiness
 └── karpal-verify-gpu/     # Phase 18 extension: GPU compute obligations (optional)
@@ -757,7 +769,7 @@ abstract.
   Gratzer, Weinberger, Buchholtz
   [arXiv:2602.02218](https://arxiv.org/abs/2602.02218v1).
   Higher category theory done purely type-theoretically. Informs
-  2-category and enriched category encoding in Phase 14.
+  2-category and enriched category encoding in Phase 15.
 
 - **The Leibniz adjunction in HoTT** — de Jong, Kraus, Ljungstrom
   [arXiv:2601.21843](https://arxiv.org/abs/2601.21843v1).
@@ -818,7 +830,7 @@ abstract.
   [arXiv:2601.22393](https://arxiv.org/abs/2601.22393v1).
   Linear logic proof-size bounds. Informs resource-aware type reasoning.
 
-### Papers — Schubert Calculus & Intersection Types (Phase 15)
+### Papers — Schubert Calculus & Intersection Types (Phase 14)
 
 - Fulton, *Young Tableaux* — Schubert calculus foundations (Littlewood-Richardson
   rule, cohomology of Grassmannians)
