@@ -10,6 +10,7 @@ pub mod diagram;
 pub mod render;
 pub mod symmetry;
 pub mod tensor;
+pub mod trace;
 
 pub use braiding::Braiding;
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -18,3 +19,4 @@ pub use diagram::{Diagram, DiagramKind, NormalizationRule, NormalizationTrace};
 pub use render::{SvgRenderer, TextRenderer};
 pub use symmetry::Symmetry;
 pub use tensor::Tensor;
+pub use trace::Trace;

@@ -4,7 +4,7 @@ Monoidal categories and string diagrams for the Karpal ecosystem.
 
 `karpal-diagram` begins Phase 13 of the Karpal roadmap with:
 
-- monoidal category traits: `Tensor`, `Braiding`, `Symmetry`
+- monoidal category traits: `Tensor`, `Braiding`, `Symmetry`, `Trace`
 - a small string-diagram DSL
 - compact-closed cup/cap nodes with basic yanking normalization
 - text and SVG rendering helpers
@@ -15,7 +15,7 @@ Monoidal categories and string diagrams for the Karpal ecosystem.
 
 ```rust
 use karpal_arrow::{Arrow, FnA};
-use karpal_diagram::{Braiding, Diagram, Tensor};
+use karpal_diagram::{Braiding, Diagram, Tensor, Trace};
 
 let double = FnA::arr(|x: i32| x * 2);
 let increment = FnA::arr(|x: i32| x + 1);
@@ -24,6 +24,11 @@ assert_eq!(parallel((3, 4)), (6, 5));
 
 let swap = FnA::braid::<i32, bool>();
 assert_eq!(swap((7, true)), (true, 7));
+
+let traced = FnA::trace::<i32, i32, i32>(FnA::arr(|(input, feedback)| {
+    (input + feedback, feedback + 1)
+}));
+assert_eq!(traced(7), 7);
 
 let diagram = Diagram::box_("double", 1, 1)
     .parallel(Diagram::box_("increment", 1, 1))
