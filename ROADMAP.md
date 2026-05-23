@@ -330,12 +330,27 @@ Runtime diagram normalization includes trace visibility and compact-closed yanki
 
 **Note**: Previously Phase 14, deferred to 0.6.0 to prioritize Schubert types for 0.5.0.
 
+Formalizes the 2-categorical structure already present across the ecosystem
+(`NaturalTransformation`, profunctor composition, adjunctions, coends/ends,
+Day convolution, Kan extensions) and extends it with enriched categories,
+bicategories, and higher functors/monads.
+
 | Concept | Description |
 |---------|-------------|
-| 2-category encoding | Objects = types, 1-morphisms = functions/traits, 2-morphisms = natural transformations. GAT encoding supports 2 levels deep. |
-| Enriched categories | Categories where hom-sets carry algebraic structure (monoids, lattices, metric spaces) |
-| Bicategories | Weakened 2-categories where composition is associative only up to isomorphism — relevant for profunctor composition |
-| FFunctor / FMonad | Functor and Monad at the functor-category level; maps natural transformations |
+| 2-category encoding | `TwoCategory` trait: `Obj`, `Hom1<A,B>` (1-morphisms), `Hom2<f,g>` (2-morphisms). Vertical/horizontal composition, whiskering, interchange law |
+| Enriched categories | `EnrichedCategory<V>` where hom-objects carry structure from a monoidal base `V`. Concrete enrichments: Set, Monoid, Lattice, Metric, LRRing (Schubert) |
+| Bicategories | Weakened 2-categories with associator/unitors as isomorphisms. Pentagon/triangle coherence proofs. Profunctor composition as canonical bicategory |
+| FFunctor / FMonad | Functor/monad at the functor-category level. Connects to karpal-effect monad transformers as FMonad instances |
+
+**Sub-phases**:
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — TwoCategory core** | `TwoCategory` trait, vertical/horizontal composition, whiskering, interchange law. Connects `NaturalTransformation` and `DinaturalTransformation` as canonical 2-morphisms in `Cat` | karpal-core |
+| **B — Bicategories** | `Bicategory` trait with associator/unitors as isomorphisms. Pentagon and triangle coherence as type-level witnesses. Profunctor composition as canonical bicategory. Coends/ends re-expressed | A, karpal-profunctor, karpal-diagram |
+| **C — Enriched categories** | `EnrichedCategory<V>` trait. Concrete enrichments (Set, Monoid, Lattice, Metric, LRRing). Enriched functors. Day convolution as enriched Kan extension. Connection to Schubert LR ring | A, karpal-algebra, karpal-free, karpal-schubert-types |
+| **D — FFunctor / FMonad** | `FFunctor` between 2-categories. `FMonad` in `Endo(C)`. Concrete instances for karpal-effect transformers. FMonad law witnesses | A, karpal-effect |
+| **E — Coherence + verification** | Type-level witnesses for interchange, pentagon, triangle. `ObligationBundle` export for enriched category axioms. `Certificate` via karpal-verify/ProofBridge | B, C, D, karpal-verify |
 
 ### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System
 
