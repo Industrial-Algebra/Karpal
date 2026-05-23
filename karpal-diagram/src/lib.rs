@@ -19,7 +19,8 @@ pub use coherence::{
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use coherence::{
-    equivalent_proved, prove_yanking, verify_hexagon, verify_pentagon, verify_triangle,
+    CoherenceCertificate, coherence_certificates, equivalent_proved, prove_yanking, verify_hexagon,
+    verify_pentagon, verify_triangle,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use diagram::{Diagram, DiagramKind, NormalizationRule, NormalizationTrace};
