@@ -1,7 +1,10 @@
 use core::marker::PhantomData;
 
 #[cfg(not(feature = "std"))]
-use alloc::string::String;
+use alloc::{
+    format,
+    string::{String, ToString},
+};
 #[cfg(feature = "std")]
 use std::string::String;
 
@@ -24,6 +27,18 @@ impl VerificationBackend for SmtCertificate {
 pub struct LeanCertificate;
 impl VerificationBackend for LeanCertificate {
     const NAME: &'static str = "lean4";
+}
+
+/// Kani bounded model checking verification.
+pub struct KaniCertificate;
+impl VerificationBackend for KaniCertificate {
+    const NAME: &'static str = "kani";
+}
+
+/// `karpal-proof` / proptest-derived verification evidence.
+pub struct ProofTestCertificate;
+impl VerificationBackend for ProofTestCertificate {
+    const NAME: &'static str = "karpal-proof";
 }
 
 impl LeanCertificate {
@@ -234,5 +249,15 @@ mod tests {
     #[test]
     fn lean_module_ref_is_stable() {
         assert_eq!(LeanCertificate::module_ref("KarpalVerify"), "KarpalVerify");
+    }
+
+    #[test]
+    fn kani_certificate_has_stable_backend_name() {
+        assert_eq!(KaniCertificate::NAME, "kani");
+    }
+
+    #[test]
+    fn proof_test_certificate_has_stable_backend_name() {
+        assert_eq!(ProofTestCertificate::NAME, "karpal-proof");
     }
 }

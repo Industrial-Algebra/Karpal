@@ -1,6 +1,6 @@
 use crate::{
-    InvocationPlan, LeanConfig, LeanExport, LeanProject, ObligationBundle, SmtConfig,
-    export_lean_bundle_structured, export_smt_bundle,
+    InvocationPlan, KaniConfig, LeanConfig, LeanExport, LeanProject, ObligationBundle, SmtConfig,
+    export_kani_bundle, export_lean_bundle_structured, export_smt_bundle,
 };
 
 #[cfg(not(feature = "std"))]
@@ -92,6 +92,7 @@ pub struct ArtifactLayout {
     pub root: PathBuf,
     pub smt_dir: PathBuf,
     pub lean_dir: PathBuf,
+    pub kani_dir: PathBuf,
 }
 
 #[cfg(feature = "std")]
@@ -101,6 +102,7 @@ impl ArtifactLayout {
         Self {
             smt_dir: root.join("smt"),
             lean_dir: root.join("lean"),
+            kani_dir: root.join("kani"),
             root,
         }
     }
@@ -265,9 +267,11 @@ pub fn write_bundle_artifacts(
 ) -> std::io::Result<ArtifactBatch> {
     fs::create_dir_all(&layout.smt_dir)?;
     fs::create_dir_all(&layout.lean_dir)?;
+    fs::create_dir_all(&layout.kani_dir)?;
 
     let mut records = Vec::new();
     let mut plans = Vec::new();
+    let kani = KaniConfig::default();
 
     for (name, script) in export_smt_bundle(bundle) {
         let path = layout.smt_dir.join(format!("{name}.smt2"));
@@ -275,6 +279,16 @@ pub fn write_bundle_artifacts(
         plans.push(InvocationPlan::smt(smt, &path));
         records.push(ArtifactRecord {
             name,
+            path: path_to_string(&path),
+        });
+    }
+
+    for harness in export_kani_bundle(bundle) {
+        let path = layout.kani_dir.join(format!("{}.rs", harness.harness_name));
+        fs::write(&path, harness.source)?;
+        plans.push(InvocationPlan::kani(&kani, &path, &harness.harness_name));
+        records.push(ArtifactRecord {
+            name: format!("{}_kani", harness.obligation_name),
             path: path_to_string(&path),
         });
     }
@@ -333,12 +347,22 @@ pub fn dry_run_bundle_artifacts(
 ) -> ArtifactBatch {
     let mut records = Vec::new();
     let mut plans = Vec::new();
+    let kani = KaniConfig::default();
 
     for (name, _) in export_smt_bundle(bundle) {
         let path = layout.smt_dir.join(format!("{name}.smt2"));
         plans.push(InvocationPlan::smt(smt, &path));
         records.push(ArtifactRecord {
             name,
+            path: path_to_string(&path),
+        });
+    }
+
+    for harness in export_kani_bundle(bundle) {
+        let path = layout.kani_dir.join(format!("{}.rs", harness.harness_name));
+        plans.push(InvocationPlan::kani(&kani, &path, &harness.harness_name));
+        records.push(ArtifactRecord {
+            name: format!("{}_kani", harness.obligation_name),
             path: path_to_string(&path),
         });
     }
@@ -407,8 +431,20 @@ mod tests {
             &LeanConfig::default().with_driver(crate::LeanDriver::LakeEnv),
         );
 
-        assert_eq!(batch.records.len(), 7);
-        assert_eq!(batch.plans.len(), 4);
+        assert_eq!(batch.records.len(), 10);
+        assert_eq!(batch.plans.len(), 7);
+        assert!(
+            batch
+                .records
+                .iter()
+                .any(|r| r.path.ends_with("kani/associativity.rs"))
+        );
+        assert!(
+            batch
+                .plans
+                .iter()
+                .any(|plan| plan.kind == crate::CommandKind::Kani)
+        );
         assert!(
             batch
                 .records

@@ -5,7 +5,7 @@ use crate::hkt::EnvF;
 use crate::hkt::{HKT, HKT2, IdentityF};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::rc::Rc;
+use alloc::{boxed::Box, rc::Rc};
 #[cfg(feature = "std")]
 use std::rc::Rc;
 

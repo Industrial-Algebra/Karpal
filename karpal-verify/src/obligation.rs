@@ -1,5 +1,5 @@
 #[cfg(not(feature = "std"))]
-use alloc::{format, string::String, vec, vec::Vec};
+use alloc::{boxed::Box, format, string::String, vec, vec::Vec};
 #[cfg(feature = "std")]
 use std::{format, string::String, vec, vec::Vec};
 

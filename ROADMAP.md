@@ -34,6 +34,29 @@ formal verification.
 | `karpal-optics` | Optic marker, Lens (getter/setter + profunctor transform) |
 | `karpal-std` | Stub for prelude re-exports |
 
+### Phase 11 — `karpal-proof`: Algebraic Law Witnesses (complete)
+
+| Crate | Contents |
+|-------|----------|
+| `karpal-proof` | `Proven<P, T>`, `Implies` chains, `Rewrite<Lhs, Rhs, Via>`, `law_check` |
+| `karpal-proof-derive` | `#[derive(VerifySemigroup)]`, `VerifyMonoid`, `VerifyGroup`, `VerifySemiring`, `VerifyRing`, `VerifyLattice`, `VerifyCommutative` |
+
+### Phase 12 — `karpal-verify`: External Prover Bridge (complete)
+
+| Crate | Contents |
+|-------|----------|
+| `karpal-verify` | Obligation IR, SMT-LIB2 export, Lean 4 export with project scaffolding, amari-flynn statistical integration, artifact management, session orchestration, trust boundary (`Certificate`, `Certified`, `unsafe into_proven`) |
+
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (100% complete ✅)
+
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (sub-phase C in progress)
+
+**Crate**: `karpal-schubert-types` (new, experimental)
+
+Schubert intersection type system for the 0.5.0 release (sub-phases A–C).
+Types are Schubert classes in Grassmannians; type checking computes intersection
+numbers via Littlewood-Richardson coefficients. See the detailed section below.
+
 ---
 
 ## Near-term Phases
@@ -234,7 +257,7 @@ Newtype markers: `Sum<T>`, `Product<T>`, `Min<T>`, `Max<T>`, `First<T>`,
 
 ## Far-future Phases
 
-### Phase 11 — `karpal-proof`: Algebraic Law Witnesses & Refinement Types
+### Phase 11 — `karpal-proof`: Algebraic Law Witnesses & Refinement Types (complete)
 
 Type-level proof encoding — making illegal states unrepresentable and
 providing a vocabulary for algebraic reasoning within Rust's type system.
@@ -252,35 +275,84 @@ Formal verification via external tools, following the architecture
 pioneered in [amari-flynn](https://github.com/Industrial-Algebra/amari-flynn).
 
 Status: implemented through `karpal-verify` obligation/export/report/session APIs,
-structured Lean integration, optional amari-flynn statistical verification,
-and CI-oriented three-tier summary artifacts.
+structured Lean integration, Kani harness generation, obligation-export macros,
+proof-derived certificates, optional amari-flynn statistical verification,
+GPU compute obligations, and CI-oriented verification summary artifacts.
 
 | Capability | Description |
 |-----------|-------------|
-| SMT-LIB2 export | Generate proof obligations for algebraic laws as SMT-LIB2 (Z3, CVC5). Inspired by amari-flynn's `smt.rs` backend |
-| Lean 4 bridge | Export Karpal typeclass hierarchies as Lean 4 structures; verify laws in Lean; import trust markers back as Rust phantom types |
-| amari-flynn integration | Reuse contract macros (`#[prob_requires]`, `#[prob_ensures]`) on Karpal trait impls for statistical guarantees on law compliance |
-| Three-tier verification | Following amari-flynn's philosophy: **Impossible** (type-level — unrepresentable states), **Rare** (statistical — Monte Carlo + Hoeffding bounds), **Emergent** (runtime — property-test discovery) |
+| Obligation IR | Backend-agnostic `Obligation` type with `Term` language, `AlgebraicSignature`, `ObligationBundle` for Semigroup/Monoid/Group/Semiring/Ring/Lattice |
+| SMT-LIB2 export | Generate proof obligations for algebraic laws as SMT-LIB2 (Z3, CVC5) |
+| Lean 4 bridge | Export Karpal typeclass hierarchies as Lean 4 structures; verify laws in Lean; import trust markers back as Rust phantom types via `Certified<B, P, T>` |
+| Kani backend | Generate `#[kani::proof]` harnesses and invocation plans from obligation bundles |
+| Obligation macros | `#[karpal_verify::export_obligations]` via the `karpal-verify-derive` companion crate |
+| amari-flynn integration | Statistical contracts (`#[prob_requires]`, `#[prob_ensures]`), Monte Carlo law-bound checks, Hoeffding-bound confidence intervals |
+| Three-tier verification | **Impossible** (type-level), **Rare** (statistical), **Emergent** (runtime proptest) |
+| Artifact management | `ArtifactLayout`, dry-run invocation plans, Kani harnesses, Lean project scaffolding (`lakefile.lean`, `lean-toolchain`) |
+| Session orchestration | `VerificationSession`, `verify_bundle()`, CI-oriented JSON/Markdown/Lean-diagnostics outputs |
+| Proof bridge | `ProofEvidence` and `ProofBridge` convert passing law-check/proptest evidence into auditable `Certificate` metadata |
+| GPU obligations | `GpuObligationBundle` models Metal/MSL-style alignment, workgroup, dispatch, and determinism contracts |
+| Trust boundary | `Certificate` → `Certified<B, P, T>` → `unsafe into_proven()` — external evidence crosses an explicit, auditable boundary |
 
-### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams
+#### Phase 12 Extensions (implemented for 0.5.0)
+
+| Extension | Description | Status |
+|-----------|-------------|--------|
+| **12a — Kani backend** | Generate `#[kani::proof]` harnesses from `Obligation` and plan `cargo kani --harness <name>` invocations. | Implemented |
+| **12b — Trait-to-obligation derive** | `#[karpal_verify::export_obligations]` re-exported from the Rust-idiomatic `karpal-verify-derive` proc-macro crate. | Implemented |
+| **12c — karpal-proof bridge** | `ProofEvidence`, `ProofBridge`, and `ProofTestCertificate` convert proof-derived test evidence into certificates while preserving the explicit unsafe trust boundary. | Implemented |
+| **12d — Continuous verification CI** | Added a verification workflow with unit/golden tests plus capability-gated Lean and Kani smoke checks. | Implemented |
+| **12e — GPU compute obligations** | `GpuObligationBundle` exposes `IsMSLKernelDeterministic`, `IsBufferAlignedTo16`, `IsWorkgroupSizeDivisible`, and `IsDispatchWithinLimits` obligations over the existing IR. | Implemented |
+
+### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (100% complete ✅)
+
+Status: **complete** — fully implemented across 7 PR-sized branches.
+Runtime diagram normalization includes trace visibility and compact-closed yanking rewrites. The categorical API includes Tensor, Braiding, Symmetry, and Trace traits. Type-level coherence witnesses exist for pentagon, triangle, hexagon, and yanking identities. Coherence laws export as verification certificates via `karpal-verify`.
+
+**What's built:**
 
 | Concept | Description |
 |---------|-------------|
-| Monoidal category traits | `Tensor`, `Braiding`, `Symmetry` with coherence laws (pentagon, triangle, hexagon identities) |
-| String diagram DSL | Compose morphisms and render corresponding string diagrams (SVG/text) for debugging optic compositions and arrow pipelines |
-| Diagrammatic rewriting | Encode diagram equivalences as type-level rewrite rules; two compositions producing the same diagram type are proven equivalent |
-| Compact closed categories | Trace / duality structures for quantum-inspired computation patterns |
+| `Tensor` trait | Associator, left/right unitors, `tensor()` for parallel composition. `FnA` impl with tests |
+| `Braiding` trait | `braid()` for swap, `hexagon_forward()` for coherence. `FnA` impl with hexagon composition test |
+| `Symmetry` trait | `braid ∘ braid = id`. `FnA` impl with involutive test |
+| `Trace` trait | Close a feedback wire `(A, D) -> (B, D)` into `A -> B`; `FnA` delegates to `ArrowLoop` with `D: Default` seed |
+| Coherence witnesses | Type-level `PentagonIdentity`, `TriangleIdentity`, and `HexagonIdentity` proofs via `karpal-proof::Justifies`; `verify_*()` construct `Rewrite` terms |
+| Diagrammatic rewriting | `ByNormalization` + `ByYanking` justifications with blanket `Justifies` impls; `equivalent_proved()` and `prove_yanking()` bridge runtime normalization to type-level `Rewrite` |
+| Verification integration | `CoherenceCertificate` backend; `coherence_certificates()` exports pentagon/triangle/hexagon as `Certificate` witnesses via `karpal-verify::ProofBridge` |
+| `Diagram` DSL | `Identity`, `Box`, `Sequence`, `Parallel`, `Swap`, `Cup`, and `Cap` nodes. Normalization with `NormalizationRule` enum and `NormalizationTrace` for rewrite visibility |
+| Compact yanking normalization | Cup/cap yanking pairs normalize back to identity with an explicit `YankCupCap` trace rule |
+| Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
 
-### Phase 14 — `karpal-higher`: 2-Categories & Enriched Categories
+### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (deferred to 0.6.0)
+
+**Crate**: `karpal-higher` (new)
+
+**Note**: Previously Phase 14, deferred to 0.6.0 to prioritize Schubert types for 0.5.0.
+
+Formalizes the 2-categorical structure already present across the ecosystem
+(`NaturalTransformation`, profunctor composition, adjunctions, coends/ends,
+Day convolution, Kan extensions) and extends it with enriched categories,
+bicategories, and higher functors/monads.
 
 | Concept | Description |
 |---------|-------------|
-| 2-category encoding | Objects = types, 1-morphisms = functions/traits, 2-morphisms = natural transformations. GAT encoding supports 2 levels deep. |
-| Enriched categories | Categories where hom-sets carry algebraic structure (monoids, lattices, metric spaces) |
-| Bicategories | Weakened 2-categories where composition is associative only up to isomorphism — relevant for profunctor composition |
-| FFunctor / FMonad | Functor and Monad at the functor-category level; maps natural transformations |
+| 2-category encoding | `TwoCategory` trait: `Obj`, `Hom1<A,B>` (1-morphisms), `Hom2<f,g>` (2-morphisms). Vertical/horizontal composition, whiskering, interchange law |
+| Enriched categories | `EnrichedCategory<V>` where hom-objects carry structure from a monoidal base `V`. Concrete enrichments: Set, Monoid, Lattice, Metric, LRRing (Schubert) |
+| Bicategories | Weakened 2-categories with associator/unitors as isomorphisms. Pentagon/triangle coherence proofs. Profunctor composition as canonical bicategory |
+| FFunctor / FMonad | Functor/monad at the functor-category level. Connects to karpal-effect monad transformers as FMonad instances |
 
-### Phase 15 — `karpal-schubert-types`: Schubert Intersection Type System
+**Sub-phases**:
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — TwoCategory core** | `TwoCategory` trait, vertical/horizontal composition, whiskering, interchange law. Connects `NaturalTransformation` and `DinaturalTransformation` as canonical 2-morphisms in `Cat` | karpal-core |
+| **B — Bicategories** | `Bicategory` trait with associator/unitors as isomorphisms. Pentagon and triangle coherence as type-level witnesses. Profunctor composition as canonical bicategory. Coends/ends re-expressed | A, karpal-profunctor, karpal-diagram |
+| **C — Enriched categories** | `EnrichedCategory<V>` trait. Concrete enrichments (Set, Monoid, Lattice, Metric, LRRing). Enriched functors. Day convolution as enriched Kan extension. Connection to Schubert LR ring | A, karpal-algebra, karpal-free, karpal-schubert-types |
+| **D — FFunctor / FMonad** | `FFunctor` between 2-categories. `FMonad` in `Endo(C)`. Concrete instances for karpal-effect transformers. FMonad law witnesses | A, karpal-effect |
+| **E — Coherence + verification** | Type-level witnesses for interchange, pentagon, triangle. `ObligationBundle` export for enriched category axioms. `Certificate` via karpal-verify/ProofBridge | B, C, D, karpal-verify |
+
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System
 
 **Crate**: `karpal-schubert-types` (new, experimental)
 
@@ -309,8 +381,33 @@ Subtyping becomes `σ_A · σ_B ≠ 0`, with the LR coefficient giving the
 |-----------|-------------|--------------|
 | **A — Core engine** | `SchubertType`, `Intersection`, `check_intersection()` backed by amari-enumerative | karpal-core, karpal-algebra, amari-enumerative |
 | **B — Proof integration** | `SchubertProven<λ, T>` witness type, composition of proofs via LR | Phase 11 (karpal-proof) |
-| **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule | Phase 12 (karpal-verify) |
-| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 14 (karpal-higher) |
+| **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule, domain-specific obligation bundles for Schubert calculus | Phase 12 (karpal-verify) |
+| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 15 (karpal-higher) |
+
+#### Sub-phase 14C — Schubert Calculus Verification (detailed)
+
+Generate `Obligation` and `ObligationBundle` values for the mathematical
+operations in amari-enumerative. This closes the gap between "the library
+computes Schubert classes" and "we have external proof that it computes
+them correctly."
+
+| Obligation bundle | What it verifies | Backend | Tier |
+|---|---|---|---|
+| `schubert_lr_consistency` | Littlewood-Richardson coefficients match known tables for Gr(2,4), Gr(3,6), Gr(4,8) | SMT (finite, exhaustive) | External |
+| `schubert_partition_validity` | All partitions up to box bound are valid for Gr(k,n) | SMT (exhaustive) | External |
+| `schubert_intersection_emptiness` | σ_λ · σ_μ = 0 when codim > dim | SMT + Lean (dimension argument) | External |
+| `schubert_lr_associativity` | (σ_α · σ_β) · σ_γ = σ_α · (σ_β · σ_γ) | Lean 4 (requires induction) | External |
+| `schubert_intersection_commutativity` | σ_λ · σ_μ = σ_μ · σ_λ | Lean 4 (structural) | External |
+| `schubert_dimension_formula` | dim(σ_λ) = k(n−k) − |λ| | Lean 4 | External |
+| `schubert_tropical_stability` | Wall-crossing thresholds match analytical predictions | amari-flynn (statistical) | Rare |
+| `schubert_giambelli_formula` | σ_λ expressed as determinant of special classes | Lean 4 | External |
+
+**Integration with Schubert crate**: The `schubert` access-control crate
+consumes amari-enumerative's Schubert calculus. Phase 14C verification
+obligations feed directly into Schubert's `proof.rs` module — a
+`Certificate` from SMT/Lean that the LR computation is correct auto-generates
+a `Proven<IsValidCapability, Capability>` witness via the Phase 12 trust
+boundary. See [Schubert verification integration](../../Schubert/docs/verification-integration.md).
 
 **Benefits beyond ShaperOS**:
 - **Multiplicity-aware compatibility**: formalizes what newtypes (`Sum<T>`, `Product<T>`) do informally — multiplicity > 1 means multiple valid instances
@@ -326,17 +423,17 @@ for the full synopsis.
 | Extension | Description | Dependencies |
 |-----------|-------------|--------------|
 | **E — Topos-theoretic grounding** | Schubert intersection as pullback in a presheaf topos; IntersectionKind as Heyting-valued subobject classifier; enables internal logic over Schubert classes | Phase 16 (karpal-topos) |
-| **F — K-theoretic refinement** | Replace cohomology classes with K-theory classes; Grothendieck ring structure on type lattice; quantum deformation parameter for refined multiplicity | karpal-algebra (Ring), Phase 14 |
+| **F — K-theoretic refinement** | Replace cohomology classes with K-theory classes; Grothendieck ring structure on type lattice; quantum deformation parameter for refined multiplicity | karpal-algebra (Ring), Phase 15 |
 | **G — Equivariant Schubert calculus** | Torus-equivariant intersection theory; localization formulas (Atiyah-Bott) for efficient computation; polynomial representatives (Schubert polynomials) via karpal-algebra | karpal-algebra (Ring, Module), amari-enumerative |
 | **H — Motivic measures** | Motivic integration over Schubert varieties; connects structured emptiness to measure-theoretic "weight of emptiness"; virtual motives as universal additive invariant | Phase 16 (karpal-topos), karpal-algebra |
 
 Extensions E and F are the most immediately meaningful:
-- **E** gives Phase 15 a rigorous categorical home — Schubert intersection *is*
+- **E** gives Phase 14 a rigorous categorical home — Schubert intersection *is*
   pullback in the right topos, and `IntersectionKind` *is* the subobject
   classifier of that topos. This collapses the gap between "structured emptiness
   as a design pattern" and "structured emptiness as categorical truth".
 - **F** refines the coarse intersection number into a polynomial invariant. Where
-  Phase 15A gives `σ_λ · σ_μ = 2`, K-theoretic refinement gives
+  Phase 14A gives `σ_λ · σ_μ = 2`, K-theoretic refinement gives
   `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
   deformation parameter, which maps to distinct coercion paths at the type level.
 
@@ -347,7 +444,7 @@ Extensions E and F are the most immediately meaningful:
 Topos theory unifies logic, geometry, and category theory. A topos is a
 category that "behaves like Set" — it has all finite limits, exponentials,
 and a subobject classifier Ω. This phase provides the categorical
-infrastructure that Phase 15 and structured emptiness ultimately rest on.
+infrastructure that Phase 14 and structured emptiness ultimately rest on.
 
 | Concept | Description |
 |---------|-------------|
@@ -375,8 +472,64 @@ infrastructure that Phase 15 and structured emptiness ultimately rest on.
 - **Phase 8 (Abstract Algebra)**: `BoundedLattice` → `HeytingAlgebra` is a direct extension; the structured emptiness lattice `Ω = { Denied, Granted(0), Granted(n), Granted(∞) }` becomes a concrete subobject classifier
 - **Phase 9 (Adjunctions)**: Sheafification is a left adjoint to the inclusion of sheaves into presheaves; this is a new `Adjunction` instance with deep computational content
 - **Phase 5 (Free Constructions)**: Presheaves *are* the free cocompletion; the Yoneda lemma (karpal-free's `Yoneda<F, A>`) is the embedding theorem for presheaf topoi
-- **Phase 14 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 15's LR-enriched categories
-- **Phase 15 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
+- **Phase 15 (Enriched Categories)**: Enriched topoi generalize to categories enriched over the subobject classifier — connecting directly to Phase 14's LR-enriched categories
+- **Phase 14 (Schubert Types)**: `IntersectionKind` is literally a subobject classifier; Schubert intersection is pullback; structured emptiness is the internal logic of a non-Boolean topos
+
+### Phase 17 — `karpal-e2e`: End-to-End Validation & Release Readiness
+
+**Crate**: `karpal-e2e` (new, std-only integration harness)
+
+Before Karpal can credibly ship a `1.0.0`, the library needs more than unit
+laws and crate-local tests. It needs whole-workspace, cross-crate,
+real-execution validation that proves the abstractions hold up when composed
+in realistic pipelines, external verification flows, and CI environments.
+
+This phase focuses on battle-testing the ecosystem end to end.
+
+| Capability | Description |
+|-----------|-------------|
+| Cross-crate integration scenarios | Exercise `karpal-core`, `karpal-arrow`, `karpal-profunctor`, `karpal-optics`, `karpal-effect`, `karpal-proof`, `karpal-verify`, and `karpal-diagram` together in realistic workflows rather than isolated unit tests |
+| Optics with real data | Run concrete records/enums/collections through `Lens`, `Prism`, `Traversal`, `Fold`, and composed optics, asserting actual value flow and round-trip behavior |
+| Arrow / effect pipeline execution | Validate end-to-end arrow and transformer pipelines with real state, environment, logging, and failure paths |
+| Verification CI contracts | Run `karpal-verify` in meaningful CI-style scenarios, producing artifacts, reports, Lean sidecars, and checking report/schema compatibility across runs |
+| Lean 4 bridge smoke + contract tests | Exercise generated Lean projects/modules against an actual Lean toolchain in CI, with expected-pass examples and theorem/report/diagnostic mapping assertions |
+| SMT / external prover integration | Run representative obligations through configured SMT solvers when available, with deterministic fallbacks and clear capability gating when tools are absent |
+| Golden workflow fixtures | Maintain stable end-to-end fixtures for reports, manifests, diagrams, and rendered outputs so regressions surface at the workflow boundary |
+| Compatibility matrix | Validate `std`, `alloc`, and `no_std` boundaries where applicable, plus optional feature combinations such as `amari` |
+| Release readiness gates | Define the final pre-`1.0.0` confidence bar: workspace integration suite, external-tool smoke coverage, documentation example verification, and artifact contract stability |
+
+**Sub-phases**:
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — Integration harness** | Add `karpal-e2e` with reusable scenario fixtures, test data builders, and workspace-level smoke tests | Phases 1-13 |
+| **B — Real data optics + arrows** | Add realistic business-domain and transformation-pipeline scenarios that move actual data through optics and arrow compositions | Phases 4, 7, 13 |
+| **C — External verification in CI** | Run Lean/SMT-backed verification scenarios in CI with capability detection, expected-pass contracts, and artifact assertions | Phase 12 |
+| **D — Release hardening** | Promote the end-to-end suite into `1.0.0` release gates with compatibility matrix coverage and docs/example validation | All prior phases |
+
+**Key outcomes for `1.0.0`**:
+- optics are validated on real nested data rather than only law-shaped examples
+- the Lean 4 bridge is exercised by CI as an actual verification path, not just an export format
+- report, manifest, and sidecar artifacts are treated as stable integration contracts
+- examples in the docs become executable confidence checks rather than aspirational snippets
+- the workspace has a clear, automated definition of “release ready”
+
+### Phase 18 — Ecosystem Verification Integrations: Schubert, Borsalino & Beyond
+
+Verification infrastructure deployed across the Industrial Algebra ecosystem.
+Each consuming crate publishes its `ObligationBundle` exports, CI-verified
+certificates, and trust-boundary crossing points.
+
+| Integration | Crate | Obligation bundles | Verification tier |
+|-------------|-------|--------------------|-------------------|
+| **Schubert access control** | `schubert` | Capability validity, LR consistency, workspace law idempotency | SMT + Lean 4 + karpal-proof |
+| **Borsalino GPU compute** | `borsalino` | MSL kernel determinism, buffer alignment, workgroup divisibility, dispatch limits | Kani + amari-flynn + type-level |
+| **amari-enumerative** | `amari-enumerative` | Schubert calculus (see Phase 14C) | SMT + Lean 4 + amari-flynn |
+| **ShaperOS** | `ShaperOS` (gp-gpu) | Blade encoding roundtrips, GF(2) arithmetic, signature format validation | Kani + SMT |
+
+See integration documents:
+- [Schubert verification integration](../../Schubert/docs/verification-integration.md)
+- [Borsalino verification integration](../../Borsalino/docs/verification-integration.md)
 
 ---
 
@@ -429,7 +582,7 @@ This pattern is not specific to Schubert calculus. It appears anywhere
 No widely-used programming language or algebraic library formalizes this
 distinction. Karpal can be the first.
 
-**Phase 15 (`karpal-schubert-types`)** is the concrete realization of this
+**Phase 14 (`karpal-schubert-types`)** is the concrete realization of this
 vision: types as Schubert classes, type checking as intersection computation,
 and `IntersectionKind` as the structured emptiness lattice made computable.
 The `BoundedLattice` from Phase 8 isn't just a library curiosity — it's the
@@ -461,7 +614,7 @@ type Recall<A> = Graded<FidelityGrade, Option<A>>
 // where FidelityGrade: Monoid (worst degradation wins)
 ```
 
-**Enriched categories (Phase 14).** The deepest connection. Standard
+**Enriched categories (Phase 15).** The deepest connection. Standard
 categories have hom-*sets* — morphisms either exist or don't. But when
 hom-objects carry richer structure (the enumeration lattice), you get
 a category *enriched* over that lattice. Composition must respect the
@@ -501,11 +654,14 @@ karpal/
 ├── karpal-algebra/        # Phase 8: Groups, rings, fields, lattices
 ├── karpal-effect/         # Phase 10: Monad transformers, effect system
 ├── karpal-proof/          # Phase 11: Type-level witnesses, refinements
+├── karpal-proof-derive/   # Phase 11: Proptest derive macros
 ├── karpal-verify/         # Phase 12: SMT/Lean bridge, amari-flynn integration
 ├── karpal-diagram/        # Phase 13: Monoidal categories, string diagrams
-├── karpal-higher/         # Phase 14: 2-categories, enriched categories
-├── karpal-schubert-types/ # Phase 15: Schubert intersection type system (experimental)
-└── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
+├── karpal-higher/         # Phase 15: 2-categories, enriched categories
+├── karpal-schubert-types/ # Phase 14: Schubert intersection type system (experimental)
+├── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
+├── karpal-e2e/            # Phase 17: End-to-end validation, CI/release readiness
+└── karpal-verify-gpu/     # Phase 18 extension: GPU compute obligations (optional)
 ```
 
 ## Syntax & Ergonomics
@@ -593,7 +749,7 @@ abstract.
 | Multiple instances per type | Newtype markers (`Sum<T>`, `Product<T>`) following Haskell convention |
 | No do-notation | Macro-based `do!` block, lean on `?` for Result/Option |
 | Compile-time cost | Feature-gate advanced modules, keep core lean |
-| Proofs beyond Rust's type system | Export to external provers (SMT, Lean 4), import trust via phantom types |
+| Proofs beyond Rust's type system | Export to external provers (SMT, Lean 4, Kani), import trust via phantom types |
 
 ## Research References
 
@@ -628,7 +784,7 @@ abstract.
   Gratzer, Weinberger, Buchholtz
   [arXiv:2602.02218](https://arxiv.org/abs/2602.02218v1).
   Higher category theory done purely type-theoretically. Informs
-  2-category and enriched category encoding in Phase 14.
+  2-category and enriched category encoding in Phase 15.
 
 - **The Leibniz adjunction in HoTT** — de Jong, Kraus, Ljungstrom
   [arXiv:2601.21843](https://arxiv.org/abs/2601.21843v1).
@@ -689,7 +845,7 @@ abstract.
   [arXiv:2601.22393](https://arxiv.org/abs/2601.22393v1).
   Linear logic proof-size bounds. Informs resource-aware type reasoning.
 
-### Papers — Schubert Calculus & Intersection Types (Phase 15)
+### Papers — Schubert Calculus & Intersection Types (Phase 14)
 
 - Fulton, *Young Tableaux* — Schubert calculus foundations (Littlewood-Richardson
   rule, cohomology of Grassmannians)
@@ -720,6 +876,19 @@ abstract.
   [arXiv:2601.20370](https://arxiv.org/abs/2601.20370v1).
   Unifying Hoare-style logic for program correctness verification.
 
+### Papers — GPU Compute Correctness (Phase 18)
+
+- **GPUVerify: A Verifier for GPU Kernels** — Betts, Chong, Donaldson et al.
+  (OOPSLA 2012). Formal verification of GPU kernels written in CUDA/OpenCL.
+  Barrier divergence, data race detection. Directly applicable to Borsalino
+  kernel verification.
+- **GKLEE: Concolic Verification of GPU Programs** — Li, Li, Ghosh et al.
+  (ATC 2013). Dynamic symbolic execution for GPU kernels. Statistical
+  guarantee model relevant to the Borsalino amari-flynn integration.
+- Apple Metal Shading Language Specification (v3.2) — Formal semantics of
+  the MSL execution model. Source of truth for Borsalino buffer alignment,
+  threadgroup, and dispatch constraints.
+
 ## License
 
-MIT OR Apache-2.0
+AGPL-3.0-or-later

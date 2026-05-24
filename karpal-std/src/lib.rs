@@ -142,6 +142,35 @@ pub mod prelude {
         parse_lean_output, parse_smt_output, parse_smt_status, verify_bundle,
         verify_bundle_with_ci_outputs, write_bundle_artifacts,
     };
+
+    // Monoidal categories and string diagrams
+    pub use karpal_diagram::{
+        Braiding,
+        // Phase 13 coherence types
+        ByNormalization,
+        ByYanking,
+        CoherenceCertificate,
+        Diagram,
+        DiagramKind,
+        HexagonIdentity,
+        NormalizationRule,
+        NormalizationTrace,
+        PentagonIdentity,
+        SvgRenderer,
+        Symmetry,
+        Tensor,
+        TextRenderer,
+        Trace,
+        TriangleIdentity,
+        coherence_certificates,
+        equivalent_proved,
+        prove_yanking,
+    };
+    pub use karpal_schubert_types::verification::{schubert_bundle, verify_schubert};
+    pub use karpal_schubert_types::{
+        Intersection, IntersectionKind, SchubertProven, SchubertType, SchubertTyped,
+        check_intersection, compose_checks,
+    }; // Phase 14
     #[cfg(feature = "amari")]
     pub use karpal_verify::{
         AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
@@ -160,12 +189,14 @@ pub mod prelude {
 pub use karpal_algebra;
 pub use karpal_arrow;
 pub use karpal_core;
+pub use karpal_diagram;
 pub use karpal_effect;
 pub use karpal_free;
 pub use karpal_optics;
 pub use karpal_profunctor;
 pub use karpal_proof;
 pub use karpal_recursion;
+pub use karpal_schubert_types;
 pub use karpal_verify;
 
 // Macro re-exports
@@ -232,5 +263,21 @@ mod tests {
         );
         let exported = SmtLib2::export(&obligation);
         assert!(exported.contains("check-sat"));
+    }
+
+    #[test]
+    fn prelude_diagram_accessible() {
+        let trace = Diagram::identity(1)
+            .then(Diagram::box_("double", 1, 1))
+            .normalize_with_trace();
+        assert_eq!(trace.normalized, Diagram::box_("double", 1, 1));
+        assert!(trace.applied(NormalizationRule::ElideIdentitySequenceStage));
+    }
+
+    #[test]
+    fn prelude_schubert_accessible() {
+        let sigma_1 = SchubertType::new(vec![1], (2, 4)).expect("σ₁");
+        let result = check_intersection(&sigma_1, &sigma_1);
+        assert_eq!(result.kind(), IntersectionKind::Positive);
     }
 }

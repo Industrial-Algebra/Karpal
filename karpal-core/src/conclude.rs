@@ -1,5 +1,7 @@
 use crate::contravariant::PredicateF;
 use crate::decide::Decide;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// Conclude: the contravariant analogue of Plus.
 ///

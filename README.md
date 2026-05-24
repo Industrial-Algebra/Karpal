@@ -26,13 +26,15 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 | [`karpal-algebra`](karpal-algebra/) | Abstract algebra (Group, Semiring, Ring, Field, Lattice, Module, VectorSpace) |
 | [`karpal-effect`](karpal-effect/) | Monad transformers (ExceptT, WriterT, ReaderT, StateT) and static-bound functor hierarchy |
 | [`karpal-proof`](karpal-proof/) | Algebraic law witnesses, rewrite witnesses, refinement types, and derive-based law verification |
-| [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 export, structured Lean 4 integration, optional amari-flynn statistical verification, runners/reporting, and explicit trust model |
+| [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 / Lean 4 / Kani export, GPU compute obligations, `karpal-verify-derive` macros, optional amari-flynn statistical verification, proof bridge, runners/reporting, and explicit trust model |
+| [`karpal-diagram`](karpal-diagram/) | Monoidal/traced categories, string-diagram DSL, compact cup/cap yanking, normalization tracing, type-level coherence witnesses (pentagon/triangle/hexagon), `ByNormalization`/`ByYanking` proof bridges, verification integration, and text/SVG rendering |
+| [`karpal-schubert-types`](karpal-schubert-types/) | Schubert intersection type system: `SchubertType`, `Intersection`, `SchubertProven<M,T>`, `compose_checks()`, external verification (Phase 14 A–C) |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
 `karpal-recursion`, `karpal-algebra`, `karpal-effect`, `karpal-proof`,
-and `karpal-verify` are `no_std` compatible with optional `std`/`alloc`
-feature gates.
+`karpal-verify`, and `karpal-diagram` are `no_std` compatible with optional
+`std`/`alloc` feature gates. `karpal-schubert-types` is std-only (depends on `amari-enumerative`).
 
 ## Why Karpal?
 
@@ -456,6 +458,9 @@ assert_eq!(updated.ceo.age, 31);
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch policy, `0.4.x` support
+rules, contribution licensing, and verification expectations.
+
 ```sh
 # Set up pre-commit hooks
 ./scripts/setup-hooks.sh
@@ -473,4 +478,9 @@ cargo fmt --check --all
 
 ## License
 
-MIT OR Apache-2.0
+Starting with `0.5.0`, Karpal is licensed under `AGPL-3.0-or-later`.
+
+Earlier `0.4.x` releases remain available under `MIT OR Apache-2.0`. Downstream
+users who require the earlier permissive licensing terms may continue using
+those published versions, while new development proceeds under the AGPL license
+line.

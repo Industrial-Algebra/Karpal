@@ -592,6 +592,8 @@ mod tests {
                     lean_output: None,
                 }),
                 certificate: None,
+                kani_result: None,
+                kani_certificate: None,
                 lean_certificate: None,
             }],
             lean_module: None,

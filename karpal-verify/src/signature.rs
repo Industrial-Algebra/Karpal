@@ -94,6 +94,17 @@ impl AlgebraicSignature {
             .with_constant("one", one)
     }
 
+    pub fn ring(
+        carrier: Sort,
+        add: impl Into<String>,
+        mul: impl Into<String>,
+        zero: impl Into<String>,
+        one: impl Into<String>,
+        neg: impl Into<String>,
+    ) -> Self {
+        Self::semiring(carrier, add, mul, zero, one).with_unary("neg", neg)
+    }
+
     pub fn lattice(carrier: Sort, meet: impl Into<String>, join: impl Into<String>) -> Self {
         Self::new(carrier)
             .with_binary("meet", meet)

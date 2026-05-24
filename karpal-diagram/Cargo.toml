@@ -1,0 +1,24 @@
+[package]
+name = "karpal-diagram"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Monoidal categories and string diagrams for the Industrial Algebra ecosystem"
+
+[features]
+default = ["std"]
+std = ["alloc", "karpal-arrow/std", "karpal-proof/std", "karpal-verify/std"]
+alloc = ["karpal-arrow/alloc", "karpal-proof/alloc", "karpal-verify/alloc"]
+
+[dependencies]
+karpal-arrow = { version = "0.5.0", path = "../karpal-arrow", default-features = false }
+karpal-proof = { version = "0.5.0", path = "../karpal-proof", default-features = false }
+karpal-verify = { version = "0.5.0", path = "../karpal-verify", default-features = false }
+
+[dev-dependencies]
+proptest.workspace = true

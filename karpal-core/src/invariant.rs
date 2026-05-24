@@ -1,6 +1,8 @@
 use crate::hkt::{EnvF, HKT, IdentityF, OptionF, ResultF};
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::{NonEmptyVec, NonEmptyVecF, VecF};
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
 
 /// Invariant functor: maps with both a covariant and contravariant function.
 ///

@@ -6,11 +6,11 @@
 - Successes: 0
 - Failures: 3
 
-| Obligation | Status | Artifact | Lean theorem | Lean diagnostics | SMT certificate | Lean certificate |
-|---|---|---|---|---|---|---|
-| `associativity` | `DryRun` | `target/karpal-verify-golden/smt/associativity.smt2` | `KarpalVerify.associativity` | `-` | `-` | `-` |
-| `left_identity` | `DryRun` | `target/karpal-verify-golden/smt/left_identity.smt2` | `KarpalVerify.left_identity` | `-` | `-` | `-` |
-| `right_identity` | `DryRun` | `target/karpal-verify-golden/smt/right_identity.smt2` | `KarpalVerify.right_identity` | `-` | `-` | `-` |
+| Obligation | Status | Artifact | Lean theorem | Lean diagnostics | SMT certificate | Kani certificate | Lean certificate |
+|---|---|---|---|---|---|---|---|
+| `associativity` | `DryRun` | `target/karpal-verify-golden/smt/associativity.smt2` | `KarpalVerify.associativity` | `-` | `-` | `-` | `-` |
+| `left_identity` | `DryRun` | `target/karpal-verify-golden/smt/left_identity.smt2` | `KarpalVerify.left_identity` | `-` | `-` | `-` | `-` |
+| `right_identity` | `DryRun` | `target/karpal-verify-golden/smt/right_identity.smt2` | `KarpalVerify.right_identity` | `-` | `-` | `-` | `-` |
 
 Lean module: `KarpalVerify`
 Lean theorems: 3

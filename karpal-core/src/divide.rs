@@ -1,4 +1,6 @@
 use crate::contravariant::{Contravariant, PredicateF};
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// Divide: the contravariant analogue of Apply.
 ///

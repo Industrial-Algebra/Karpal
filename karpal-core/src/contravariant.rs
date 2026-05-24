@@ -1,4 +1,6 @@
 use crate::hkt::HKT;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
 
 /// Contravariant functor: lifts a function `B -> A` into `F<A> -> F<B>`.
 ///

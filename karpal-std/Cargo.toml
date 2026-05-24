@@ -25,3 +25,5 @@ karpal-algebra.workspace = true
 karpal-effect.workspace = true
 karpal-proof.workspace = true
 karpal-verify.workspace = true
+karpal-diagram.workspace = true
+karpal-schubert-types.workspace = true

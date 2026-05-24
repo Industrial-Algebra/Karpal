@@ -4,6 +4,8 @@ use crate::functor::Functor;
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::VecF;
 use crate::hkt::{OptionF, ResultF};
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
 
 /// Traversable: a Functor + Foldable that can be traversed with an effect.
 ///
