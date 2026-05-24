@@ -1,0 +1,11 @@
+//! Schubert intersection type system for the Industrial Algebra ecosystem.
+//!
+//! `karpal-schubert-types` (Phase 14) wraps `amari-enumerative`'s Schubert
+//! calculus as type-level markers for use in Karpal's proof and verification
+//! infrastructure.
+
+pub mod intersection;
+pub mod schubert_type;
+
+pub use intersection::{Intersection, IntersectionKind, check_intersection};
+pub use schubert_type::SchubertType;
