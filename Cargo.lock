@@ -362,6 +362,7 @@ dependencies = [
  "amari-enumerative",
  "karpal-algebra",
  "karpal-core",
+ "karpal-verify",
 ]
 
 [[package]]
