@@ -26,9 +26,9 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 | [`karpal-algebra`](karpal-algebra/) | Abstract algebra (Group, Semiring, Ring, Field, Lattice, Module, VectorSpace) |
 | [`karpal-effect`](karpal-effect/) | Monad transformers (ExceptT, WriterT, ReaderT, StateT) and static-bound functor hierarchy |
 | [`karpal-proof`](karpal-proof/) | Algebraic law witnesses, rewrite witnesses, refinement types, and derive-based law verification |
-| [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 / Lean 4 / Kani export, obligation macros, optional amari-flynn statistical verification, runners/reporting, and explicit trust model |
-| [`karpal-diagram`](karpal-diagram/) | Monoidal/traced categories, string-diagram DSL, compact cup/cap yanking, normalization tracing, and text/SVG rendering |
-| [`karpal-schubert-types`](karpal-schubert-types/) | Schubert intersection type system (experimental, Phase 14) |
+| [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 / Lean 4 / Kani export, GPU compute obligations, `karpal-verify-derive` macros, optional amari-flynn statistical verification, proof bridge, runners/reporting, and explicit trust model |
+| [`karpal-diagram`](karpal-diagram/) | Monoidal/traced categories, string-diagram DSL, compact cup/cap yanking, normalization tracing, type-level coherence witnesses (pentagon/triangle/hexagon), `ByNormalization`/`ByYanking` proof bridges, verification integration, and text/SVG rendering |
+| [`karpal-schubert-types`](karpal-schubert-types/) | Schubert intersection type system: `SchubertType`, `Intersection`, `SchubertProven<M,T>`, `compose_checks()`, external verification (Phase 14 A–C) |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
