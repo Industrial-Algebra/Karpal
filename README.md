@@ -34,7 +34,7 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
 `karpal-recursion`, `karpal-algebra`, `karpal-effect`, `karpal-proof`,
 `karpal-verify`, and `karpal-diagram` are `no_std` compatible with optional
-`std`/`alloc` feature gates.
+`std`/`alloc` feature gates. `karpal-schubert-types` is std-only (depends on `amari-enumerative`).
 
 ## Why Karpal?
 
