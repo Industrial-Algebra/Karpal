@@ -145,9 +145,32 @@ pub mod prelude {
 
     // Monoidal categories and string diagrams
     pub use karpal_diagram::{
-        Braiding, Diagram, DiagramKind, NormalizationRule, NormalizationTrace, SvgRenderer,
-        Symmetry, Tensor, TextRenderer, Trace,
+        Braiding,
+        // Phase 13 coherence types
+        ByNormalization,
+        ByYanking,
+        CoherenceCertificate,
+        Diagram,
+        DiagramKind,
+        HexagonIdentity,
+        NormalizationRule,
+        NormalizationTrace,
+        PentagonIdentity,
+        SvgRenderer,
+        Symmetry,
+        Tensor,
+        TextRenderer,
+        Trace,
+        TriangleIdentity,
+        coherence_certificates,
+        equivalent_proved,
+        prove_yanking,
     };
+    pub use karpal_schubert_types::verification::{schubert_bundle, verify_schubert};
+    pub use karpal_schubert_types::{
+        Intersection, IntersectionKind, SchubertProven, SchubertType, SchubertTyped,
+        check_intersection, compose_checks,
+    }; // Phase 14
     #[cfg(feature = "amari")]
     pub use karpal_verify::{
         AmariMonteCarloVerifier, AmariObligationKind, AmariSmtProofObligation,
@@ -173,6 +196,7 @@ pub use karpal_optics;
 pub use karpal_profunctor;
 pub use karpal_proof;
 pub use karpal_recursion;
+pub use karpal_schubert_types;
 pub use karpal_verify;
 
 // Macro re-exports
@@ -248,5 +272,12 @@ mod tests {
             .normalize_with_trace();
         assert_eq!(trace.normalized, Diagram::box_("double", 1, 1));
         assert!(trace.applied(NormalizationRule::ElideIdentitySequenceStage));
+    }
+
+    #[test]
+    fn prelude_schubert_accessible() {
+        let sigma_1 = SchubertType::new(vec![1], (2, 4)).expect("σ₁");
+        let result = check_intersection(&sigma_1, &sigma_1);
+        assert_eq!(result.kind(), IntersectionKind::Positive);
     }
 }

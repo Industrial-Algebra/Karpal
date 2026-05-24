@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monoidal Diagrams — Karpal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="../index.html" class="logo">Karpal</a>
+      <span class="version">v0.5.0</span>
+    </div>
+    <ul class="nav-list">
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="../getting-started.html">Getting Started</a></li>
+      <li><a href="../architecture.html">Architecture</a></li>
+      <li class="nav-section">
+        <span class="nav-section-title">Reference</span>
+        <ul>
+          <li><a href="algebraic.html">Semigroup &amp; Monoid</a></li>
+          <li><a href="functor-family.html">Functor Family</a></li>
+          <li><a href="alt-family.html">Alt Family</a></li>
+          <li><a href="foldable-traversable.html">Foldable &amp; Traversable</a></li>
+          <li><a href="functor-filter-selective.html">FunctorFilter &amp; Selective</a></li>
+          <li><a href="macros.html">Macros</a></li>
+          <li><a href="comonad-family.html">Comonad Family</a></li>
+          <li><a href="contravariant-family.html">Contravariant Family</a></li>
+          <li><a href="invariant.html">Invariant</a></li>
+          <li><a href="bifunctor-natural.html">Bifunctor &amp; Natural</a></li>
+          <li><a href="profunctor-family.html">Profunctor Family</a></li>
+          <li><a href="arrow-family.html">Arrow Family</a></li>
+          <li><a href="free-constructions.html">Free Constructions</a></li>
+          <li><a href="recursion-schemes.html">Recursion Schemes</a></li>
+          <li><a href="optics.html">Optics</a></li>
+          <li><a href="abstract-algebra.html">Abstract Algebra</a></li>
+          <li><a href="adjunctions.html">Adjunctions</a></li>
+          <li><a href="effect-system.html">Effect System</a></li>
+          <li><a href="proof-verification.html">Proof Proof <li><a href="proof-verification.html">Proof &amp; Verification</a></li>amp; Verificationamp; Verification</a></li>
+          <li><a href="monoidal-diagrams.html">Monoidal Diagrams</a></li>
+          <li><a href="schubert-types.html">Schubert Types</a></li>
+          <li><a href="monoidal-diagrams.html">Monoidal Diagrams</a></li>
+          <li><a href="schubert-types.html">Schubert Types</a></li>
+          <li><a href="monoidal-diagrams.html" class="active">Monoidal Diagrams</a></li>
+          <li><a href="schubert-types.html">Schubert Types</a></li>
+          <li><a href="verification-ci.html">Verification CI Workflow</a></li>
+          <li><a href="verification-schemas.html">Verification Schemas</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <main class="content">
+    <h1>Monoidal Diagrams</h1>
+    <p class="lead">String diagrams, monoidal categories, coherence witnesses, and verification — <code>karpal-diagram</code> (Phase 13).</p>
+
+    <section>
+      <h2>Monoidal Category Traits</h2>
+      <p><code>karpal-diagram</code> provides four monoidal category traits built on <code>karpal-arrow</code>:</p>
+      <table>
+        <tr><th>Trait</th><th>Super-trait</th><th>Key method</th></tr>
+        <tr><td><code>Tensor</code></td><td><code>Arrow</code></td><td><code>tensor(left, right)</code>, associator, left/right unitors</td></tr>
+        <tr><td><code>Braiding</code></td><td><code>Tensor</code></td><td><code>braid&lt;A,B&gt;()</code> — swap tensor factors</td></tr>
+        <tr><td><code>Symmetry</code></td><td><code>Braiding</code></td><td><code>braid ∘ braid = id</code></td></tr>
+        <tr><td><code>Trace</code></td><td><code>Tensor</code></td><td><code>trace(morphism)</code> — close a feedback wire</td></tr>
+      </table>
+      <pre><code class="language-rust">use karpal_arrow::FnA;
+use karpal_diagram::{Braiding, Tensor, Trace};
+
+// Tensor product
+let parallel = FnA::tensor(
+    FnA::arr(|x: i32| x * 2),
+    FnA::arr(|x: i32| x + 1),
+);
+assert_eq!(parallel((3, 4)), (6, 5));
+
+// Braiding
+let swap = FnA::braid::<i32, bool>();
+assert_eq!(swap((7, true)), (true, 7));
+
+// Trace (close feedback)
+let traced = FnA::trace::<i32, i32, i32>(FnA::arr(|(a, d)| (a + d, d)));
+assert_eq!(traced(7), 7);</code></pre>
+    </section>
+
+    <section>
+      <h2>String Diagram DSL</h2>
+      <p><code>Diagram</code> is a runtime string-diagram representation with these node kinds:</p>
+      <ul>
+        <li><code>Identity</code> — arity-n identity wire</li>
+        <li><code>Box { label }</code> — labelled morphism</li>
+        <li><code>Sequence(a, b)</code> — vertical composition (<code>a.then(b)</code>)</li>
+        <li><code>Parallel(a, b)</code> — horizontal composition (<code>a.parallel(b)</code>)</li>
+        <li><code>Swap { left, right }</code> — braiding node</li>
+        <li><code>Cup { arity }</code> — compact-closed unit (I → A* ⊗ A)</li>
+        <li><code>Cap { arity }</code> — compact-closed counit (A ⊗ A* → I)</li>
+      </ul>
+      <pre><code class="language-rust">use karpal_diagram::Diagram;
+
+let circuit = Diagram::box_("f", 1, 1)
+    .parallel(Diagram::box_("g", 1, 1))
+    .then(Diagram::swap(1, 1))
+    .then(Diagram::box_("h", 2, 2));
+
+// Text rendering
+println!("{}", circuit.render_text());
+
+// SVG rendering
+println!("{}", circuit.render_svg());</code></pre>
+    </section>
+
+    <section>
+      <h2>Diagram Normalization</h2>
+      <p>Diagrams normalize to a canonical form using these rewrite rules:</p>
+      <table>
+        <tr><th>Rule</th><th>Effect</th></tr>
+        <tr><td><code>FlattenSequence</code></td><td>Flatten nested <code>Sequence</code> nodes</td></tr>
+        <tr><td><code>FlattenParallel</code></td><td>Flatten nested <code>Parallel</code> nodes</td></tr>
+        <tr><td><code>ElideIdentitySequenceStage</code></td><td>Remove identity in sequence</td></tr>
+        <tr><td><code>CollapseIdentityParallel</code></td><td>Collapse all-identity parallel branches</td></tr>
+        <tr><td><code>CancelAdjacentSwaps</code></td><td>swap(A,B) ; swap(B,A) → id</td></tr>
+        <tr><td><code>YankCupCap</code></td><td>(cup ⊗ id) ; (id ⊗ cap) → id</td></tr>
+      </table>
+      <pre><code class="language-rust">let yanked = Diagram::cup(1)
+    .parallel(Diagram::identity(1))
+    .then(Diagram::identity(1).parallel(Diagram::cap(1)));
+
+let trace = yanked.normalize_with_trace();
+assert_eq!(trace.normalized, Diagram::identity(1));
+assert!(trace.applied(NormalizationRule::YankCupCap));
+
+// Equivalence checking via normalization
+let a = Diagram::swap(1, 2).then(Diagram::swap(2, 1));
+assert!(a.equivalent_to(&Diagram::identity(3)));</code></pre>
+    </section>
+
+    <section>
+      <h2>Type-Level Coherence Witnesses</h2>
+      <p>Monoidal coherence laws are encoded as <code>karpal-proof::Justifies</code> witnesses:</p>
+      <table>
+        <tr><th>Witness</th><th>Law</th></tr>
+        <tr><td><code>PentagonIdentity</code></td><td>(α⊗id) ; α ; (id⊗α) = α ; α</td></tr>
+        <tr><td><code>TriangleIdentity</code></td><td>ρ⊗id = α ; (id⊗λ)</td></tr>
+        <tr><td><code>HexagonIdentity</code></td><td>braid ; α⁻¹ ; braid ; α⁻¹ = α ; braid</td></tr>
+      </table>
+      <pre><code class="language-rust">use karpal_diagram::coherence::verify_hexagon;
+use karpal_proof::rewrite::Rewrite;
+
+let _proof: Rewrite<((i32, u8), bool), ((u8, bool), i32), _> =
+    verify_hexagon::<i32, u8, bool>();</code></pre>
+    </section>
+
+    <section>
+      <h2>Diagrammatic Rewriting Bridge</h2>
+      <p>Runtime diagram normalization connects to type-level proofs via <code>ByNormalization</code> and <code>ByYanking</code>:</p>
+      <pre><code class="language-rust">use karpal_diagram::coherence::{equivalent_proved, prove_yanking, ByYanking};
+use karpal_proof::rewrite::Rewrite;
+
+// Prove equivalence via normalization
+let a = Diagram::swap(1, 2).then(Diagram::swap(2, 1));
+let witness: Rewrite<_, _, _> =
+    equivalent_proved::<(), ()>(&a, &Diagram::identity(3)).unwrap();
+
+// Prove yanking
+let yank_proof: Rewrite<_, _, ByYanking> = prove_yanking::<(), ()>(2);</code></pre>
+    </section>
+
+    <section>
+      <h2>Verification Integration</h2>
+      <p>Coherence certificates connect to <code>karpal-verify</code>:</p>
+      <pre><code class="language-rust">use karpal_diagram::coherence::coherence_certificates;
+
+let certs = coherence_certificates();
+assert_eq!(certs.len(), 3); // pentagon, triangle, hexagon
+for cert in &certs {
+    assert_eq!(cert.backend, "karpal-diagram-coherence");
+}</code></pre>
+    </section>
+  </main>
+
+  <script src="../js/prism.js"></script>
+  <script src="../js/nav.js"></script>
+</body>
+</html>
