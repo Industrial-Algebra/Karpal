@@ -79,6 +79,54 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
+      - name: Publish karpal-proof
+        run: cargo publish -p karpal-proof
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-proof-derive
+        run: cargo publish -p karpal-proof-derive
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-verify
+        run: cargo publish -p karpal-verify
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-verify-derive
+        run: cargo publish -p karpal-verify-derive
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-diagram
+        run: cargo publish -p karpal-diagram
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-schubert-types
+        run: cargo publish -p karpal-schubert-types
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
       - name: Publish karpal-std
         run: cargo publish -p karpal-std
         env:
