@@ -379,7 +379,6 @@ dependencies = [
  "karpal-profunctor",
  "karpal-proof",
  "karpal-recursion",
- "karpal-schubert-types",
  "karpal-verify",
 ]
 

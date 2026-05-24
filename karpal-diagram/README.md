@@ -5,9 +5,7 @@ Monoidal categories and string diagrams for the Karpal ecosystem.
 `karpal-diagram` begins Phase 13 of the Karpal roadmap with:
 
 - monoidal category traits: `Tensor`, `Braiding`, `Symmetry`, `Trace`
-- coherence law witnesses: `PentagonIdentity`, `TriangleIdentity`, `HexagonIdentity`
-- diagrammatic rewriting: `ByNormalization`, `ByYanking`, `equivalent_proved()`, `prove_yanking()`
-- verification integration: `CoherenceCertificate`, `coherence_certificates()`
+- coherence law witnesses: `PentagonIdentity`, `TriangleIdentity`
 - a small string-diagram DSL
 - compact-closed cup/cap nodes with basic yanking normalization
 - text and SVG rendering helpers
@@ -50,17 +48,6 @@ let yanking = Diagram::cup(1)
 let yanking_trace = yanking.normalize_with_trace();
 assert_eq!(yanking_trace.normalized, Diagram::identity(1));
 assert!(yanking_trace.applied(karpal_diagram::NormalizationRule::YankCupCap));
-
-// Type-level coherence witness
-use karpal_diagram::coherence::verify_pentagon;
-use karpal_proof::rewrite::Rewrite;
-let _proof: Rewrite<(((i32, u8), bool), String), (i32, (u8, (bool, String))), _> =
-    verify_pentagon::<i32, u8, bool, String>();
-
-// Verification certificates for all coherence laws
-use karpal_diagram::coherence::coherence_certificates;
-let certs = coherence_certificates();
-assert_eq!(certs.len(), 3); // pentagon, triangle, hexagon
 ```
 
 ## License

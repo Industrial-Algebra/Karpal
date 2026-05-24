@@ -25,5 +25,4 @@ karpal-proof-derive = { version = "0.5.0", path = "karpal-proof-derive" }
 karpal-verify = { version = "0.5.0", path = "karpal-verify" }
 karpal-verify-derive = { version = "0.5.0", path = "karpal-verify-derive" }
 karpal-diagram = { version = "0.5.0", path = "karpal-diagram" }
-karpal-schubert-types = { version = "0.5.0", path = "karpal-schubert-types" }
 proptest = "1"
