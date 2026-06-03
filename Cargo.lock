@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "amari-core"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "169b6a42bab767903e32ee9302b7cf75993d63add5f1e24660c1dac1082aa958"
+checksum = "4604466370c01bb3453e1fa51a67477727770fbb77898c9dc04b7c974a7e0bbf"
 dependencies = [
  "approx",
  "bytemuck",
@@ -17,9 +17,9 @@ dependencies = [
 
 [[package]]
 name = "amari-enumerative"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd44e016f160dbac33ee98449b051dd566d04060cf88c0d4190d3e3f2b07f512"
+checksum = "d3dd9a85f4a68790632e4f09884004ce020b5a006033d1756cf3346024e856b6"
 dependencies = [
  "amari-core",
  "num-bigint",

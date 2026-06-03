@@ -14,4 +14,4 @@ description = "Schubert intersection type system for the Industrial Algebra ecos
 karpal-core = { version = "0.5.0", path = "../karpal-core" }
 karpal-algebra = { version = "0.5.0", path = "../karpal-algebra" }
 karpal-verify = { version = "0.5.0", path = "../karpal-verify" }
-amari-enumerative = "0.22"
+amari-enumerative = "0.23"
