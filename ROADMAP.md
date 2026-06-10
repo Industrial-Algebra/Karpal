@@ -49,7 +49,7 @@ formal verification.
 
 ### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (100% complete ✅)
 
-### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (sub-phase C in progress)
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (A–C complete ✅, D deferred)
 
 **Crate**: `karpal-schubert-types` (new, experimental)
 
@@ -324,7 +324,7 @@ Runtime diagram normalization includes trace visibility and compact-closed yanki
 | Compact yanking normalization | Cup/cap yanking pairs normalize back to identity with an explicit `YankCupCap` trace rule |
 | Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
 
-### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (deferred to 0.6.0)
+### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (target 0.6.0)
 
 **Crate**: `karpal-higher` (new)
 
@@ -382,7 +382,7 @@ Subtyping becomes `σ_A · σ_B ≠ 0`, with the LR coefficient giving the
 | **A — Core engine** | `SchubertType`, `Intersection`, `check_intersection()` backed by amari-enumerative | karpal-core, karpal-algebra, amari-enumerative |
 | **B — Proof integration** | `SchubertProven<λ, T>` witness type, composition of proofs via LR | Phase 11 (karpal-proof) |
 | **C — External verification** | SMT-LIB2 export of intersection queries, Lean 4 export of LR rule, domain-specific obligation bundles for Schubert calculus | Phase 12 (karpal-verify) |
-| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring | Phase 15 (karpal-higher) |
+| **D — Enriched formalization** | Schubert intersection as category enriched over LR coefficient ring (depends on Phase 15 sub-phase C) | Phase 15 (karpal-higher) |
 
 #### Sub-phase 14C — Schubert Calculus Verification (detailed)
 
