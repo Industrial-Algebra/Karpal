@@ -5,6 +5,6 @@ extern crate alloc;
 
 pub mod two_category;
 
-pub use two_category::TwoCategory;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use two_category::Cat;
+pub use two_category::TwoCategory;
