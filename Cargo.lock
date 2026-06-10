@@ -311,6 +311,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-higher"
+version = "0.5.0"
+dependencies = [
+ "karpal-core",
+]
+
+[[package]]
 name = "karpal-index"
 version = "0.5.0"
 dependencies = [

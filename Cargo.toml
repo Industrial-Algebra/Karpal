@@ -1,5 +1,5 @@
 [workspace]
-members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-proof", "karpal-proof-derive", "karpal-verify", "karpal-verify-derive", "karpal-diagram", "karpal-std", "karpal-schubert-types", "karpal-index"]
+members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-proof", "karpal-proof-derive", "karpal-verify", "karpal-verify-derive", "karpal-diagram", "karpal-std", "karpal-schubert-types", "karpal-index", "karpal-higher"]
 resolver = "3"
 
 [workspace.package]
