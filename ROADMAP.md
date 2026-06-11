@@ -324,11 +324,7 @@ Runtime diagram normalization includes trace visibility and compact-closed yanki
 | Compact yanking normalization | Cup/cap yanking pairs normalize back to identity with an explicit `YankCupCap` trace rule |
 | Text + SVG rendering | `TextRenderer` and `SvgRenderer` for visual debugging of diagram compositions |
 
-
-### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (sub-phase C in progress)
-
-### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (sub-phase C in progress)
-
+### Phase 15 — `karpal-higher`: 2-Categories & Enriched Categories (sub-phase D in progress)
 
 **Crate**: `karpal-higher` (new)
 
