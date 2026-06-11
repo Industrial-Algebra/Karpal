@@ -341,6 +341,7 @@ bicategories, and higher functors/monads.
 | Enriched categories | `EnrichedCategory<V>` where hom-objects carry structure from a monoidal base `V`. Concrete enrichments: Set, Monoid, Lattice, Metric, LRRing (Schubert) |
 | Bicategories | Weakened 2-categories with associator/unitors as isomorphisms. Pentagon/triangle coherence proofs. Profunctor composition as canonical bicategory |
 | FFunctor / FMonad | Functor/monad at the functor-category level. Connects to karpal-effect monad transformers as FMonad instances |
+| Coherence + verification | Type-level witnesses for interchange, pentagon, triangle. `ObligationBundle` export via `karpal-verify`. `Certificate` via `ProofBridge` |
 
 **Sub-phases**:
 

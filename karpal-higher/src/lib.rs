@@ -4,11 +4,20 @@
 extern crate alloc;
 
 pub mod bicategory;
+pub mod coherence;
 pub mod enriched;
 pub mod ffunctor;
 pub mod two_category;
 
 pub use bicategory::Bicategory;
+pub use coherence::{
+    BicategoryPentagonIdentity, BicategoryTriangleIdentity, InterchangeIdentity,
+};
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use coherence::{
+    HigherCoherenceCertificate, higher_coherence_certificates, verify_bicategory_pentagon,
+    verify_bicategory_triangle, verify_interchange,
+};
 pub use enriched::EnrichedCategory;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use enriched::SetCategory;
