@@ -3,8 +3,10 @@
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 
+pub mod bicategory;
 pub mod two_category;
 
+pub use bicategory::Bicategory;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use two_category::Cat;
 pub use two_category::TwoCategory;
