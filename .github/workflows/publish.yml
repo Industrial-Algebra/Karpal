@@ -128,6 +128,14 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
+      - name: Publish karpal-higher
+        run: cargo publish -p karpal-higher
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
       - name: Publish karpal-std
         run: cargo publish -p karpal-std
         env:
