@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::profunctor::Profunctor;
 
 /// A `Strong` profunctor can lift a `P<A, B>` into `P<(A, C), (B, C)>`.

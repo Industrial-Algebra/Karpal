@@ -55,4 +55,4 @@ assert_eq!(certs.obligations.len(), 3);
 
 ## License
 
-AGPL-3.0-or-later
+Apache-2.0

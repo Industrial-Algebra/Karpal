@@ -8,12 +8,13 @@ existing `0.4.x` users still have a maintained bugfix path.
 
 | Branch | Release line | License | Purpose |
 |--------|--------------|---------|---------|
-| `develop` | `0.5.x` and later | `AGPL-3.0-or-later` | Active development, new features, roadmap work, and ordinary bugfixes |
-| `main` | latest released line | current release license | Release branch; changes arrive through release PRs |
+| `develop` | `0.6.x` and later | `Apache-2.0` | Active development, new features, roadmap work, and ordinary bugfixes |
+| `main` | latest released line | `Apache-2.0` | Release branch; changes arrive through release PRs |
 | `support/0.4.x` | `0.4.x` | `MIT OR Apache-2.0` | Selective bugfix maintenance for the final permissively licensed line |
 
-Starting with `0.5.0`, Karpal is licensed under `AGPL-3.0-or-later`. Earlier
-`0.4.x` releases remain available under `MIT OR Apache-2.0`.
+Starting with `0.6.0`, Karpal is licensed under `Apache-2.0`. Releases `0.5.x`
+were temporarily licensed under `AGPL-3.0-or-later`; this has been corrected.
+Earlier `0.4.x` releases remain available under `MIT OR Apache-2.0`.
 
 ## Choosing the right base branch
 
@@ -27,11 +28,14 @@ Please target PRs as follows:
 
 If you are unsure which branch to target, open an issue or draft PR and ask.
 
+## CLA
+
+All contributors must sign the [CLA](https://github.com/Industrial-Algebra/.github/blob/main/CLA.md).
+
 ## `0.4.x` maintenance policy
 
 The `0.4.x` line is selectively maintained. It exists so downstream users who
-need the earlier permissive license can continue receiving important fixes
-without being forced onto the AGPL line.
+need the earlier permissive license can continue receiving important fixes.
 
 Accepted for `support/0.4.x`:
 
@@ -46,36 +50,13 @@ Not accepted for `support/0.4.x`:
 - new public APIs
 - new crates or roadmap phases
 - broad refactors not required for a bugfix
-- feature work that belongs to `0.5.x` or later
+- feature work that belongs to `0.6.x` or later
+
 
 ## Licensing of contributions
 
-By opening a PR, you agree that your contribution is submitted under the license
-of the branch into which it is merged:
-
-- contributions merged into `support/0.4.x` are accepted under
-  `MIT OR Apache-2.0`
-- contributions merged into `develop`, `main` for `0.5.x+`, or later release
-  branches are accepted under `AGPL-3.0-or-later`
-
-Please do not submit the same patch to both lines if you cannot accept both
-license outcomes. If a fix should land in both lines, maintainers may ask for
-separate PRs or may forward-port/backport the accepted patch as appropriate.
-
-## Backport and forward-port workflow
-
-For bugs that affect both release lines:
-
-1. Land the smallest safe fix on `support/0.4.x`.
-2. Release it as `v0.4.N` when appropriate.
-3. Forward-port the fix to `develop` using cherry-pick or an equivalent PR.
-4. Resolve any API drift on `develop` without expanding the `0.4.x` patch.
-
-For bugs that only affect `0.5.x+`, fix them directly on `develop`.
-
-For bugs discovered on `develop` that also exist in `0.4.x`, maintainers should
-open or request a `support/0.4.x` PR unless the issue is too minor to justify a
-maintenance release.
+By opening a PR, you agree that your contribution is submitted under the CLA
+and the Apache-2.0 license of the target branch.
 
 ## Local verification
 

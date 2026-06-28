@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! 2-category encoding for the Karpal ecosystem.
 //!
 //! A strict 2-category consists of objects, 1-morphisms between objects,

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::{
     InvocationPlan, KaniConfig, LeanConfig, LeanExport, LeanProject, ObligationBundle, SmtConfig,
     export_kani_bundle, export_lean_bundle_structured, export_smt_bundle,

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 // Standard prelude for the Karpal ecosystem.
 //
 // Re-exports the most commonly used types and traits from

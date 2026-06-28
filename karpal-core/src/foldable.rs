@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::VecF;
 use crate::hkt::{HKT, OptionF, ResultF};

@@ -29,4 +29,4 @@ See the workspace `README.md` and `docs/reference/proof-verification.html` for t
 
 ## License
 
-AGPL-3.0-or-later
+Apache-2.0

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::hkt::HKT2;
 
 /// A dinatural transformation between two profunctors P and Q.

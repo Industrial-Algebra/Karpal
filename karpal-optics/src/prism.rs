@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::fold::Fold;
 use crate::optic::Optic;
 use crate::review::Review;

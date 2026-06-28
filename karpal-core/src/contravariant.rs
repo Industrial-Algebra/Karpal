@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::hkt::HKT;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::boxed::Box;

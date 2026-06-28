@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 /// A simple sum type for use in apomorphism and other schemes.
 ///
 /// `Left` typically represents early termination (an already-computed `Fix`),

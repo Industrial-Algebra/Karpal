@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::{boxed::Box, vec::Vec};
 use core::marker::PhantomData;

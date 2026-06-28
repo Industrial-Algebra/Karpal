@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Coherence witnesses and verification integration for higher categories.
 //!
 //! Provides type-level proofs for the interchange law, pentagon identity,

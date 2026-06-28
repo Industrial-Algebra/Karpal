@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Derive macros for automatic algebraic law verification.
 //!
 //! These macros generate `#[cfg(test)]` modules containing proptest-based
