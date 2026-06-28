@@ -10,9 +10,7 @@ pub mod ffunctor;
 pub mod two_category;
 
 pub use bicategory::Bicategory;
-pub use coherence::{
-    BicategoryPentagonIdentity, BicategoryTriangleIdentity, InterchangeIdentity,
-};
+pub use coherence::{BicategoryPentagonIdentity, BicategoryTriangleIdentity, InterchangeIdentity};
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use coherence::{
     HigherCoherenceCertificate, higher_coherence_certificates, verify_bicategory_pentagon,
