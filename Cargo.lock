@@ -315,6 +315,8 @@ name = "karpal-higher"
 version = "0.5.0"
 dependencies = [
  "karpal-core",
+ "karpal-proof",
+ "karpal-verify",
 ]
 
 [[package]]
@@ -392,6 +394,7 @@ dependencies = [
  "karpal-diagram",
  "karpal-effect",
  "karpal-free",
+ "karpal-higher",
  "karpal-optics",
  "karpal-profunctor",
  "karpal-proof",

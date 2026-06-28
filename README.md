@@ -29,7 +29,7 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 | [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 / Lean 4 / Kani export, GPU compute obligations, `karpal-verify-derive` macros, optional amari-flynn statistical verification, proof bridge, runners/reporting, and explicit trust model |
 | [`karpal-diagram`](karpal-diagram/) | Monoidal/traced categories, string-diagram DSL, compact cup/cap yanking, normalization tracing, type-level coherence witnesses (pentagon/triangle/hexagon), `ByNormalization`/`ByYanking` proof bridges, verification integration, and text/SVG rendering |
 | [`karpal-schubert-types`](karpal-schubert-types/) | Schubert intersection type system: `SchubertType`, `Intersection`, `SchubertProven<M,T>`, `compose_checks()`, external verification (Phase 14 A–C) |
-| [`karpal-higher`](karpal-higher/) | 2-categories, enriched categories, bicategories (Phase 15, in progress) |
+| [`karpal-higher`](karpal-higher/) | 2-categories, enriched categories, bicategories, FFunctor/FMonad, coherence witnesses, verification integration |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,

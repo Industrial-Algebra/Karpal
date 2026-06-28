@@ -27,3 +27,4 @@ karpal-proof.workspace = true
 karpal-verify.workspace = true
 karpal-diagram.workspace = true
 karpal-schubert-types.workspace = true
+karpal-higher.workspace = true
