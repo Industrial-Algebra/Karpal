@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::contravariant::PredicateF;
 use crate::decide::Decide;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]

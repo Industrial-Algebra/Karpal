@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::{
     ArtifactLayout, DryRunner, LeanConfig, LeanManifestReportFiles, LocalProcessRunner,
     ObligationBundle, SmtConfig, VerificationReport, VerifierRunner, dry_run_bundle_artifacts,

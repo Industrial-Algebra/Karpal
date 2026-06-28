@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! External verification integration for Schubert calculus.
 //!
 //! Connects `karpal-schubert-types` to `karpal-verify` by producing

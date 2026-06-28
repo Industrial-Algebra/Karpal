@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use core::marker::PhantomData;
 
 use karpal_core::hkt::{HKT, HKT2};

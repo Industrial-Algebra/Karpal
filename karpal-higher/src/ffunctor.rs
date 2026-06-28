@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Higher functors and monads at the 2-categorical level.
 //!
 //! - `FFunctor`: a functor between 2-categories that preserves 2-morphisms

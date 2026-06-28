@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::hkt::HKT2;
 
 /// An End for profunctor P: represents `∫_A P(A, A)`, i.e., `forall A. P(A, A)`.

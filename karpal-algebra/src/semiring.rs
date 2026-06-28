@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 /// A type with two operations (add, mul), where add forms a commutative monoid,
 /// mul forms a monoid, mul distributes over add, and zero annihilates under mul.
 pub trait Semiring: Sized + Clone + PartialEq {

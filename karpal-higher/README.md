@@ -37,4 +37,4 @@ assert_eq!(certs.len(), 3); // interchange, pentagon, triangle
 
 ## License
 
-AGPL-3.0-or-later
+Apache-2.0

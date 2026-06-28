@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::optic::Optic;
 
 /// A write-only optic that can construct a target from a value.

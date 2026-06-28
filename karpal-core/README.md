@@ -251,4 +251,4 @@ assert_eq!(Last(Some(1i32)).combine(Last(None)), Last(Some(1)));
 
 ## License
 
-AGPL-3.0-or-later
+Apache-2.0

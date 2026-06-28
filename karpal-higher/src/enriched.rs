@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Enriched categories: categories whose hom-objects carry algebraic structure
 //! from a monoidal base category V.
 //!

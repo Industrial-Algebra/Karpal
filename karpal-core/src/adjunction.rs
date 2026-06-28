@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::compose::ComposeF;
 use crate::functor::Functor;
 #[cfg(any(feature = "std", feature = "alloc"))]

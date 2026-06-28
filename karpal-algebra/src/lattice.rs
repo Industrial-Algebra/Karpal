@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 /// A type with join (supremum) and meet (infimum) operations.
 ///
 /// Laws:

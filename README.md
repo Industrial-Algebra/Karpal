@@ -479,9 +479,9 @@ cargo fmt --check --all
 
 ## License
 
-Starting with `0.5.0`, Karpal is licensed under `AGPL-3.0-or-later`.
+Starting with `0.5.0`, Karpal is licensed under `Apache-2.0`.
 
 Earlier `0.4.x` releases remain available under `MIT OR Apache-2.0`. Downstream
 users who require the earlier permissive licensing terms may continue using
-those published versions, while new development proceeds under the AGPL license
+those published versions, while new development proceeds under the Apache-2.0 license
 line.

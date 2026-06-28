@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;

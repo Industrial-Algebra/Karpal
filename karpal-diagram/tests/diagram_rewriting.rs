@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use karpal_diagram::Diagram;
 use karpal_diagram::coherence::{ByNormalization, equivalent_proved};
 use karpal_proof::rewrite::Rewrite;

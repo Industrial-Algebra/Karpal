@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Bicategory trait: a weakened 2-category where composition is associative
 //! and unital only up to isomorphism.
 //!

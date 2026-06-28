@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::schubert_type::SchubertType;
 
 /// Associate a Schubert class with a Rust type.
