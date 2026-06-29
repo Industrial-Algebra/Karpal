@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use karpal_schubert_types::verification::{schubert_bundle, verify_schubert};
 
 #[test]

@@ -59,4 +59,4 @@ let rolled: Free<OptionF, i32> = Free::roll(Some(Free::pure(42)));
 
 ## License
 
-AGPL-3.0-or-later
+Apache-2.0

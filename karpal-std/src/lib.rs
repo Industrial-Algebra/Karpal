@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 // Standard prelude for the Karpal ecosystem.
 //
 // Re-exports the most commonly used types and traits from
@@ -166,6 +169,10 @@ pub mod prelude {
         equivalent_proved,
         prove_yanking,
     };
+    pub use karpal_higher::{
+        Bicategory, BicategoryPentagonIdentity, BicategoryTriangleIdentity, EnrichedCategory,
+        FFunctor, FMonad, IdentityFFunctor, InterchangeIdentity, TwoCategory,
+    }; // Phase 15
     pub use karpal_schubert_types::verification::{schubert_bundle, verify_schubert};
     pub use karpal_schubert_types::{
         Intersection, IntersectionKind, SchubertProven, SchubertType, SchubertTyped,
@@ -192,6 +199,7 @@ pub use karpal_core;
 pub use karpal_diagram;
 pub use karpal_effect;
 pub use karpal_free;
+pub use karpal_higher;
 pub use karpal_optics;
 pub use karpal_profunctor;
 pub use karpal_proof;

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Schubert intersection type system for the Industrial Algebra ecosystem.
 //!
 //! `karpal-schubert-types` (Phase 14) wraps `amari-enumerative`'s Schubert

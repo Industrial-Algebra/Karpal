@@ -1,0 +1,21 @@
+[package]
+name = "karpal-higher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "2-categories, enriched categories, and bicategories for the Industrial Algebra ecosystem"
+
+[dependencies]
+karpal-core = { version = "0.6.0", path = "../karpal-core", default-features = false }
+karpal-proof = { version = "0.6.0", path = "../karpal-proof", default-features = false }
+karpal-verify = { version = "0.6.0", path = "../karpal-verify", default-features = false }
+
+[features]
+default = ["std"]
+std = ["alloc", "karpal-core/std", "karpal-proof/std", "karpal-verify/std"]
+alloc = ["karpal-core/alloc", "karpal-proof/alloc", "karpal-verify/alloc"]

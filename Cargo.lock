@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "amari-core"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "169b6a42bab767903e32ee9302b7cf75993d63add5f1e24660c1dac1082aa958"
+checksum = "4604466370c01bb3453e1fa51a67477727770fbb77898c9dc04b7c974a7e0bbf"
 dependencies = [
  "approx",
  "bytemuck",
@@ -17,9 +17,9 @@ dependencies = [
 
 [[package]]
 name = "amari-enumerative"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd44e016f160dbac33ee98449b051dd566d04060cf88c0d4190d3e3f2b07f512"
+checksum = "d3dd9a85f4a68790632e4f09884004ce020b5a006033d1756cf3346024e856b6"
 dependencies = [
  "amari-core",
  "num-bigint",
@@ -31,9 +31,9 @@ dependencies = [
 
 [[package]]
 name = "amari-flynn"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d56f468ff533c38395588c1ef0e930a131384300812024b8f89854811433f745"
+checksum = "f88be0432a258a4198ebaf382c3295d3303c2f823176ea0d9e5b534e4e159d79"
 dependencies = [
  "amari-flynn-macros",
  "rand 0.10.1",
@@ -42,9 +42,9 @@ dependencies = [
 
 [[package]]
 name = "amari-flynn-macros"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f91411a3b77b1e3d760f6087fa8980260100fe56bd24854fe9ef9a882e5c7da1"
+checksum = "06e03bbe82507ade43f9d75442b922e1dc571b7c1588f8ec761f399f1c4ba4cf"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -263,7 +263,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "karpal-algebra"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -271,7 +271,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-arrow"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -279,14 +279,14 @@ dependencies = [
 
 [[package]]
 name = "karpal-core"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "proptest",
 ]
 
 [[package]]
 name = "karpal-diagram"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-arrow",
  "karpal-proof",
@@ -296,7 +296,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-effect"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -304,15 +304,34 @@ dependencies = [
 
 [[package]]
 name = "karpal-free"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "proptest",
 ]
 
 [[package]]
+name = "karpal-higher"
+version = "0.6.0"
+dependencies = [
+ "karpal-core",
+ "karpal-proof",
+ "karpal-verify",
+]
+
+[[package]]
+name = "karpal-index"
+version = "0.6.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+ "walkdir",
+]
+
+[[package]]
 name = "karpal-optics"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "karpal-profunctor",
@@ -321,7 +340,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-profunctor"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -329,7 +348,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-proof"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-algebra",
  "karpal-core",
@@ -339,7 +358,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-proof-derive"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -348,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-recursion"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-core",
  "karpal-free",
@@ -357,7 +376,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-schubert-types"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amari-enumerative",
  "karpal-algebra",
@@ -367,7 +386,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-std"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-algebra",
  "karpal-arrow",
@@ -375,6 +394,7 @@ dependencies = [
  "karpal-diagram",
  "karpal-effect",
  "karpal-free",
+ "karpal-higher",
  "karpal-optics",
  "karpal-profunctor",
  "karpal-proof",
@@ -385,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-verify"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amari-flynn",
  "karpal-proof",
@@ -394,7 +414,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-verify-derive"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "karpal-verify",
  "proc-macro2",
@@ -545,9 +565,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.45"
+version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
+checksum = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368"
 dependencies = [
  "proc-macro2",
 ]
@@ -667,6 +687,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "same-file"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
+dependencies = [
+ "winapi-util",
+]
+
+[[package]]
 name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -722,9 +751,9 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "syn"
-version = "2.0.117"
+version = "2.0.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
+checksum = "1b9ae57f904213ebb649ce6895b8a66c66f0203b9319718f69a5612a065b1422"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -792,6 +821,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "walkdir"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b"
+dependencies = [
+ "same-file",
+ "winapi-util",
+]
+
+[[package]]
 name = "wasip2"
 version = "1.0.3+wasi-0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -841,6 +880,15 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap",
  "semver",
+]
+
+[[package]]
+name = "winapi-util"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
+dependencies = [
+ "windows-sys",
 ]
 
 [[package]]

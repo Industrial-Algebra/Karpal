@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 /// Monadic do-notation sugar.
 ///
 /// Desugars sequential `x = expr` bindings into nested `Chain::chain` calls.

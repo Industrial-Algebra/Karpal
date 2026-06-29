@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use alloc::{boxed::Box, string::String, vec::Vec};
 
 /// Runtime string-diagram representation.

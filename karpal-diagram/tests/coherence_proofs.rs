@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use karpal_arrow::{Category, FnA, Semigroupoid};
 use karpal_diagram::Tensor;
 use karpal_diagram::coherence::{

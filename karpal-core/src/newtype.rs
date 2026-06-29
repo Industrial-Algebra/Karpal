@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 //! Newtype wrappers for selecting alternative `Semigroup`/`Monoid` instances.
 //!
 //! The default `Semigroup` for numeric types uses addition. These newtypes

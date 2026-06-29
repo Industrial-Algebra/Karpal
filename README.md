@@ -29,6 +29,7 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 | [`karpal-verify`](karpal-verify/) | External prover bridge: proof obligations, SMT-LIB2 / Lean 4 / Kani export, GPU compute obligations, `karpal-verify-derive` macros, optional amari-flynn statistical verification, proof bridge, runners/reporting, and explicit trust model |
 | [`karpal-diagram`](karpal-diagram/) | Monoidal/traced categories, string-diagram DSL, compact cup/cap yanking, normalization tracing, type-level coherence witnesses (pentagon/triangle/hexagon), `ByNormalization`/`ByYanking` proof bridges, verification integration, and text/SVG rendering |
 | [`karpal-schubert-types`](karpal-schubert-types/) | Schubert intersection type system: `SchubertType`, `Intersection`, `SchubertProven<M,T>`, `compose_checks()`, external verification (Phase 14 A–C) |
+| [`karpal-higher`](karpal-higher/) | 2-categories, enriched categories, bicategories, FFunctor/FMonad, coherence witnesses, verification integration |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
@@ -478,9 +479,9 @@ cargo fmt --check --all
 
 ## License
 
-Starting with `0.5.0`, Karpal is licensed under `AGPL-3.0-or-later`.
+Starting with `0.5.0`, Karpal is licensed under `Apache-2.0`.
 
 Earlier `0.4.x` releases remain available under `MIT OR Apache-2.0`. Downstream
 users who require the earlier permissive licensing terms may continue using
-those published versions, while new development proceeds under the AGPL license
+those published versions, while new development proceeds under the Apache-2.0 license
 line.

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 pub use karpal_core::hkt::HKT2;
 
 /// A profunctor is contravariant in its first argument and covariant in its second.

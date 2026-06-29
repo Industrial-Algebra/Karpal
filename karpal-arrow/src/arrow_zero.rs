@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Industrial Algebra
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::arrow::Arrow;
 
 /// ArrowZero: an Arrow with a zero (failing/empty) morphism.
