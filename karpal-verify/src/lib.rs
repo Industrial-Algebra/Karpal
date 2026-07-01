@@ -67,7 +67,7 @@ pub use export::{
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use gpu::{
     GpuObligationBundle, IsBufferAlignedTo16, IsDispatchWithinLimits, IsMSLKernelDeterministic,
-    IsWorkgroupSizeDivisible,
+    IsNumericallyCorrect, IsWorkgroupSizeDivisible,
 };
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use kani::{Kani, KaniHarness, export_kani_bundle, export_kani_harness};
