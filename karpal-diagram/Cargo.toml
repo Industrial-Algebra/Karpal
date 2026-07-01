@@ -16,9 +16,9 @@ std = ["alloc", "karpal-arrow/std", "karpal-proof/std", "karpal-verify/std"]
 alloc = ["karpal-arrow/alloc", "karpal-proof/alloc", "karpal-verify/alloc"]
 
 [dependencies]
-karpal-arrow = { version = "0.6.0", path = "../karpal-arrow", default-features = false }
-karpal-proof = { version = "0.6.0", path = "../karpal-proof", default-features = false }
-karpal-verify = { version = "0.6.0", path = "../karpal-verify", default-features = false }
+karpal-arrow = { version = "0.6.1", path = "../karpal-arrow", default-features = false }
+karpal-proof = { version = "0.6.1", path = "../karpal-proof", default-features = false }
+karpal-verify = { version = "0.6.1", path = "../karpal-verify", default-features = false }
 
 [dev-dependencies]
 proptest.workspace = true
