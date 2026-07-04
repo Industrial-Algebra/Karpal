@@ -49,7 +49,7 @@ formal verification.
 
 ### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (100% complete ✅)
 
-### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (A–C complete ✅, D deferred)
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (A–D complete ✅)
 
 **Crate**: `karpal-schubert-types` (new, experimental)
 
