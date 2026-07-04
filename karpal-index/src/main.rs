@@ -5,7 +5,9 @@
 //!
 //! Walks the Karpal workspace source tree, extracts public API items
 //! from each crate using `syn`, and exposes them via progressive-discovery
-//! CLI commands: search, detail, hierarchy, crates, example.
+//! CLI commands: search, detail, crates, hierarchy, example.
+//!
+//! All commands support `--json` for machine-readable output.
 
 mod indexer;
 
@@ -16,39 +18,48 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("Usage: karpal-index <command> [args]");
+        eprintln!("Usage: karpal-index <command> [args] [--json]");
         eprintln!("Commands: search <query> | detail <name> | crates | hierarchy <trait>");
         process::exit(1);
     }
 
+    // Extract --json flag
+    let json_mode = args.iter().any(|a| a == "--json");
+    let cmd_args: Vec<String> = args.iter().filter(|a| *a != "--json").cloned().collect();
+
     let workspace_root = env::current_dir().expect("current directory");
     let index = WorkspaceIndex::build(&workspace_root);
 
-    match args[1].as_str() {
+    match cmd_args[1].as_str() {
         "search" => {
-            let query = args.get(2).map(|s| s.as_str()).unwrap_or("");
-            cmd_search(&index, query);
+            let query = cmd_args.get(2).map(|s| s.as_str()).unwrap_or("");
+            cmd_search(&index, query, json_mode);
         }
         "detail" => {
-            let name = args.get(2).expect("usage: detail <name>");
-            cmd_detail(&index, name);
+            let name = cmd_args.get(2).expect("usage: detail <name>");
+            cmd_detail(&index, name, json_mode);
         }
         "crates" => {
-            cmd_crates(&index);
+            cmd_crates(&index, json_mode);
         }
         "hierarchy" => {
-            let name = args.get(2).expect("usage: hierarchy <trait>");
-            cmd_hierarchy(&index, name);
+            let name = cmd_args.get(2).expect("usage: hierarchy <trait>");
+            cmd_hierarchy(&index, name, json_mode);
         }
         _ => {
-            eprintln!("Unknown command: {}", args[1]);
+            eprintln!("Unknown command: {}", cmd_args[1]);
             process::exit(1);
         }
     }
 }
 
-fn cmd_search(index: &WorkspaceIndex, query: &str) {
+fn cmd_search(index: &WorkspaceIndex, query: &str, json: bool) {
     let results = index.search(query);
+    if json {
+        let json_results: Vec<&indexer::ApiItem> = results;
+        println!("{}", serde_json::to_string_pretty(&json_results).unwrap());
+        return;
+    }
     if results.is_empty() {
         println!("(no results for \"{}\")", query);
         return;
@@ -63,9 +74,13 @@ fn cmd_search(index: &WorkspaceIndex, query: &str) {
     }
 }
 
-fn cmd_detail(index: &WorkspaceIndex, name: &str) {
+fn cmd_detail(index: &WorkspaceIndex, name: &str, json: bool) {
     match index.find(name) {
         Some(item) => {
+            if json {
+                println!("{}", serde_json::to_string_pretty(item).unwrap());
+                return;
+            }
             println!("{} [{}]", item.name, item.kind);
             println!("  crate: {}", item.crate_name);
             println!("  path:  {}", item.path);
@@ -98,21 +113,65 @@ fn cmd_detail(index: &WorkspaceIndex, name: &str) {
             }
         }
         None => {
-            println!("{}: not found", name);
+            if json {
+                println!("null");
+            } else {
+                println!("{}: not found", name);
+            }
         }
     }
 }
 
-fn cmd_crates(index: &WorkspaceIndex) {
-    for (name, desc) in &index.crate_descriptions {
-        let count = index.items.iter().filter(|i| i.crate_name == *name).count();
-        println!("{:<25} {:>4} items  {}", name, count, desc);
+fn cmd_crates(index: &WorkspaceIndex, json: bool) {
+    #[derive(serde::Serialize)]
+    struct CrateInfo<'a> {
+        name: &'a str,
+        items: usize,
+        description: &'a str,
+    }
+
+    let crates: Vec<CrateInfo> = index
+        .crate_descriptions
+        .iter()
+        .map(|(name, desc)| CrateInfo {
+            name,
+            items: index.items.iter().filter(|i| i.crate_name == *name).count(),
+            description: desc,
+        })
+        .collect();
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&crates).unwrap());
+        return;
+    }
+    for c in &crates {
+        println!("{:<25} {:>4} items  {}", c.name, c.items, c.description);
     }
 }
 
-fn cmd_hierarchy(index: &WorkspaceIndex, name: &str) {
+fn cmd_hierarchy(index: &WorkspaceIndex, name: &str, json: bool) {
+    #[derive(serde::Serialize)]
+    struct Hierarchy<'a> {
+        name: &'a str,
+        kind: &'a str,
+        supertraits: &'a [String],
+        subtraits: &'a [String],
+        implementors: &'a [String],
+    }
+
     match index.find(name) {
         Some(item) => {
+            if json {
+                let h = Hierarchy {
+                    name: &item.name,
+                    kind: item.kind,
+                    supertraits: &item.supertraits,
+                    subtraits: &item.subtraits,
+                    implementors: &item.implementors,
+                };
+                println!("{}", serde_json::to_string_pretty(&h).unwrap());
+                return;
+            }
             println!("{} [{}]", item.name, item.kind);
             if !item.supertraits.is_empty() {
                 println!("  supertraits:");
@@ -133,6 +192,12 @@ fn cmd_hierarchy(index: &WorkspaceIndex, name: &str) {
                 }
             }
         }
-        None => println!("{}: not found", name),
+        None => {
+            if json {
+                println!("null");
+            } else {
+                println!("{}: not found", name);
+            }
+        }
     }
 }

@@ -7,7 +7,7 @@ use std::path::Path;
 use walkdir::WalkDir;
 
 /// An item in the Karpal API index.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ApiItem {
     pub name: String,
     pub kind: &'static str,
