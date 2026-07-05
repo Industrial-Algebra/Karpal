@@ -16,7 +16,8 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@nightly
 
-      - name: Publish karpal-core
+      - name: Publish karpal-core (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-core
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -24,7 +25,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-algebra
+      - name: Publish karpal-algebra (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-algebra
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -32,7 +34,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-profunctor
+      - name: Publish karpal-profunctor (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-profunctor
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -40,7 +43,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-arrow
+      - name: Publish karpal-arrow (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-arrow
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -48,7 +52,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-free
+      - name: Publish karpal-free (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-free
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -56,7 +61,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-effect
+      - name: Publish karpal-effect (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-effect
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -64,7 +70,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-optics
+      - name: Publish karpal-optics (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-optics
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -72,7 +79,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-recursion
+      - name: Publish karpal-recursion (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-recursion
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -80,7 +88,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-proof-derive
+      - name: Publish karpal-proof-derive (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-proof-derive
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -88,7 +97,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-proof
+      - name: Publish karpal-proof (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-proof
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -96,7 +106,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-verify-derive
+      - name: Publish karpal-verify-derive (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-verify-derive
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -104,7 +115,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-verify
+      - name: Publish karpal-verify (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-verify
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -112,7 +124,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-diagram
+      - name: Publish karpal-diagram (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-diagram
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -120,7 +133,8 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-schubert-types
+      - name: Publish karpal-schubert-types (already published, skip if exists)
+        continue-on-error: true
         run: cargo publish -p karpal-schubert-types
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -130,6 +144,14 @@ jobs:
 
       - name: Publish karpal-higher
         run: cargo publish -p karpal-higher
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-schubert-types
+        run: cargo publish -p karpal-schubert-types
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
