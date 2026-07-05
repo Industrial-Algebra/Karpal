@@ -149,6 +149,6 @@ This is the deliberate trust handoff in `karpal-verify`: external evidence is us
 - [Trust Model](../dev/phase-12-trust-model.md) for the imported-proof boundary design note.
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

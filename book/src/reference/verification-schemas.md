@@ -40,6 +40,6 @@ The schema version stays at `1` for additive changes such as new optional counte
 - [Verification Workflow](../examples/verification-workflow.md) for an end-to-end example
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

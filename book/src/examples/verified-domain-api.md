@@ -38,6 +38,12 @@ Here the value enters through Rust-native evidence. No external trust boundary i
 
 ## External certificate entry point
 
+> **⚠️ Trust Boundary Warning**
+>
+> The `unsafe` conversions shown below are **not** a cryptographic or formal guarantee. `Certificate` carries an arbitrary string with no signature, checksum, or replay protection. The `into_proven()` call erases external provenance entirely. Anyone with access to this code can forge a `Proven` value.
+>
+> This is an **audited trust boundary**, not a security mechanism. The `unsafe` keyword ensures that code review will flag every site where external evidence is accepted. See the [Phase 12 Trust Model](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md) for the full design rationale.
+
 Now consider the case where associativity was established by an external prover. `karpal-verify` deliberately prevents that evidence from silently becoming `Proven<...>`.
 
 ``` rust
@@ -90,6 +96,6 @@ This keeps the imported-proof decision explicit and localized.
 For the broader export/execution workflow, see [Verification Workflow](verification-workflow.md). For the API overview, see [Proof & Verification](../reference/proof-verification.md). For CI/report/archive details, see [Verification CI Workflow](../reference/verification-ci.md), and for serialized compatibility details see [Verification Schemas](../reference/verification-schemas.md).
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

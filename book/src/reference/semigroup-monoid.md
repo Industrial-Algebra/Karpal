@@ -188,6 +188,6 @@ assert_eq!(result, "123".to_string());
 This pattern -- map then combine -- is the essence of `fold_map` and is the reason `Monoid` is so important in functional programming. Any time you need to reduce a collection to a single summary value, `Monoid` provides the structure to do it generically.
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

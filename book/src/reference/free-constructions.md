@@ -1076,6 +1076,6 @@ Ran encodes a universally quantified function: `∀R. (A → G R) → H R`. In R
 - [**Bifunctor & Natural**](bifunctor-natural.md) -- NaturalTransformation, used by `Free::fold_map`, `Freer::fold_map`, `Lan::lower`, and `Day::run_day`
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

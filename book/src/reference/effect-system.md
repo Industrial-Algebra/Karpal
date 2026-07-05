@@ -409,6 +409,6 @@ assert_eq!(guarded(200), Some((200, 200)));
 - **`no_std` compatible** — the `MonadTrans` trait and its definition work in `no_std`. The transformers themselves require `alloc` (for `Box` and `Rc`).
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

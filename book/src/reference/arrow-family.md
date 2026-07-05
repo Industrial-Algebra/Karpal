@@ -578,6 +578,6 @@ Haskell uses symbolic operators for several arrow combinators. Since Rust does n
 | `|||`            | `fanin`     | Merge two arrows from sum branches into one output |
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

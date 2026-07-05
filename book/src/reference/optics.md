@@ -983,6 +983,6 @@ let transform_fn = ceo_lens.transform::<FnP>(age_lens.transform::<FnP>(increment
 ```
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

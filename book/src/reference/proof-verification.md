@@ -230,6 +230,6 @@ This policy keeps imported trust searchable, reviewable, and distinct from evide
 For a walkthrough-style example, see [Verification Workflow](../examples/verification-workflow.md).
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

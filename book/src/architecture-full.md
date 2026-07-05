@@ -223,6 +223,6 @@ This separation is deliberate. External evidence crosses a visible boundary thro
 For API details, see the [Proof & Verification reference](reference/proof-verification.md). For CI-specific execution/reporting guidance, see [Verification CI Workflow](reference/verification-ci.md). For serialized artifact compatibility, see [Verification Schemas](reference/verification-schemas.md). For a walkthrough example, see [Verification Workflow](examples/verification-workflow.md). For a domain-boundary example that combines `karpal-proof` and `karpal-verify`, see [Verified Domain API](examples/verified-domain-api.md). For the design note focused on imported trust, see [Trust Model](dev/phase-12-trust-model.md).
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

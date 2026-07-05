@@ -162,6 +162,6 @@ assert_eq!(result, None);
 `Selective` is useful when you need conditional logic inside a functorial pipeline but do not need the full power of `Monad`. Because the branching is encoded in the type (`Result<A, B>`) rather than in arbitrary closures, selective computations can be analyzed statically — making them suitable for scenarios like build systems or task schedulers where you want to inspect the structure of a computation before running it.
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

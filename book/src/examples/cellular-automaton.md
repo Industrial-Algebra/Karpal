@@ -166,6 +166,6 @@ You will see the Rule 90 Sierpinski triangle pattern growing from a single seed,
 | `HKT`     | `NonEmptyVecF` is the type constructor marker that implements `Extend` and `Comonad`.                                                        | [Functor Family](../reference/functor-family.md) |
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

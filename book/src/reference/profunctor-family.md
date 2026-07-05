@@ -544,6 +544,6 @@ You will notice that the type parameters on `dimap`, `first`, `left`, and so on 
 In practice, this means profunctor operations work with owned types and `'static` references, but not with short-lived borrows. This is the same trade-off that `Box<dyn Fn>` imposes anywhere in Rust -- the profunctor abstraction does not add any additional restrictions beyond what the underlying representation requires.
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

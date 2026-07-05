@@ -118,6 +118,6 @@ This means `Invariant` captures the most general notion of "mappability" for a t
 In Karpal, all provided instances happen to be covariant (they are all `Functor`s), so they ignore `g`. However, the `Invariant` trait is available for user-defined types that genuinely require both directions.
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

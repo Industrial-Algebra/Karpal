@@ -240,6 +240,6 @@ cargo run -p karpal-std --example config_pipeline
 | `Monoid`             | String concatenation as the combining operation for `fold_map` | [Semigroup & Monoid](../reference/algebraic.md)                |
 
 
-Karpal is licensed under AGPL-3.0-or-later. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
 
 

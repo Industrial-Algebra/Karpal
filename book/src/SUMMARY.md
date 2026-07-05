@@ -3,7 +3,6 @@
 - [Introduction](./introduction.md)
 - [Home](./home.md)
 - [Getting Started](./getting-started.md)
-- [Getting Started (Full)](./getting-started-full.md)
 
 # Concepts
 
