@@ -280,8 +280,21 @@ pub fn curry_right_adjunct<E: Clone + 'static, A: 'static, B: 'static>(
 }
 
 // ---------------------------------------------------------------------------
-// State monad (derived from CurryAdj: ReaderF<E> . EnvF<E>)
+// State monad (equivalent to ReaderF<E> . EnvF<E>, hand-written)
 // ---------------------------------------------------------------------------
+//
+// These functions implement the State monad `S<A> = E -> (E, A)` which arises
+// from the CurryAdj adjunction `EnvF<E> ⊣ ReaderF<E>`.
+//
+// They are HAND-WRITTEN rather than derived from the generic `adjunction_chain`
+// because `ReaderF<E>` cannot implement the standard `Functor` trait (its
+// `Box<dyn Fn>` encoding requires `'static`, see issue #93). The `state_chain`
+// function below is equivalent to what the generic machinery would produce if
+// `ReaderF` could implement `Functor`, and it correctly threads modified state.
+//
+// Key distinction: `state_chain` threads the MODIFIED state (`e2`) into the
+// continuation, while `ReaderF::chain` would pass the SAME environment to both
+// steps. This is the fundamental difference between State and Reader.
 
 /// State monad `pure` via CurryAdj: `A -> (E -> (E, A))`
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -996,6 +1009,41 @@ mod law_tests {
                     (pos, Box::new(|e| e.wrapping_mul(2)));
                 let result = store_extract(store);
                 prop_assert_eq!(result, pos.wrapping_mul(2));
+            }
+
+            // Multi-step state threading: proves state is modified and threaded,
+            // not just read (which would make it a Reader, not a State).
+            //
+            // Step 1: get the current state, increment it
+            // Step 2: get the (now-incremented) state, increment again
+            // Step 3: get the (now-double-incremented) state as the result
+            //
+            // If state were NOT threaded (Reader semantics), all three gets
+            // would return the SAME initial value, and the final state would
+            // be the initial value, not initial + 2.
+            #[test]
+            fn state_threads_across_multiple_steps(initial in -100i32..100) {
+                // get_and_inc: returns old state as value, increments state
+                let get_and_inc = |_: i32| -> Box<dyn Fn(i32) -> (i32, i32)> {
+                    state_chain(
+                        state_get::<i32>(),
+                        |old| -> Box<dyn Fn(i32) -> (i32, i32)> {
+                            Box::new(move |e| (e + 1, old))
+                        },
+                    )
+                };
+
+                // Chain three get_and_inc operations
+                let step1 = get_and_inc(0);
+                let step2 = state_chain(step1, get_and_inc);
+                let step3 = state_chain(step2, get_and_inc);
+
+                let (final_state, final_value) = step3(initial);
+
+                // State was incremented 3 times
+                prop_assert_eq!(final_state, initial + 3);
+                // The last get_and_inc returns the state BEFORE the third increment
+                prop_assert_eq!(final_value, initial + 2);
             }
         }
     }
