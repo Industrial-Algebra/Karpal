@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::extend::Extend;
-use crate::hkt::{EnvF, IdentityF, OptionF};
+use crate::hkt::{EnvF, IdentityF};
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::hkt::{NonEmptyVec, NonEmptyVecF};
 
@@ -25,13 +25,17 @@ impl Comonad for IdentityF {
     }
 }
 
-impl Comonad for OptionF {
-    fn extract<A: Clone>(wa: &Option<A>) -> A {
-        wa.as_ref()
-            .expect("Comonad::extract called on None")
-            .clone()
-    }
-}
+// Note: OptionF does NOT implement Comonad.
+//
+// `Comonad::extract` must be total: `extract: F<A> -> A` must work for
+// every value of type `F<A>`. `Option<A>` violates this because `None`
+// has no `A` to extract. A previous implementation panicked on `None`,
+// which silently violates the Comonad laws.
+//
+// `OptionF` still implements `Extend` (which is valid: `extend(None, f) = None`),
+// but the full `Comonad` (with `extract`) is correctly omitted.
+//
+// For a non-empty container that IS a valid Comonad, use `NonEmptyVecF`.
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 impl Comonad for NonEmptyVecF {
@@ -55,16 +59,8 @@ mod tests {
         assert_eq!(IdentityF::extract(&42), 42);
     }
 
-    #[test]
-    fn option_extract() {
-        assert_eq!(OptionF::extract(&Some(42)), 42);
-    }
-
-    #[test]
-    #[should_panic(expected = "Comonad::extract called on None")]
-    fn option_extract_none_panics() {
-        OptionF::extract(&None::<i32>);
-    }
+    // Note: OptionF::extract tests removed — OptionF is not a Comonad.
+    // The previous implementation panicked on None, violating totality.
 
     #[test]
     fn nonemptyvec_extract() {
