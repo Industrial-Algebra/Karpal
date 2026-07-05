@@ -438,7 +438,7 @@ Extensions E and F are the most immediately meaningful:
   `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
   deformation parameter, which maps to distinct coercion paths at the type level.
 
-### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (sub-phase A in progress)
+### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (sub-phase A complete in 0.7.0)
 
 **Crate**: `karpal-topos` (new)
 

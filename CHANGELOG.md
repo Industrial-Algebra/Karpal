@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] — Unreleased
+
+### Added
+
+- **Phase 16A: `HeytingAlgebra`** trait in `karpal-algebra` — bounded lattice with implication (`implies`, `neg`), the algebraic foundation for structured emptiness. Instances for `bool` and all integer types.
+- **Phase 14D: LR-enriched category** — `SchubertEnrichedCategory` with `IntersectionKind` hom-objects and `meet_intersection_kinds()` lattice-meet composition for worst-case zero propagation through structured truth values.
+- **RichCat** — `TwoCategory` with contentful 2-morphisms. `TwoCell` type carries provenance labels that compose vertically (`id;naturality;associator`), addressing the RABBIT HOLE question: "when do 2-morphisms stop being `()`?"
+- **`ContravariantLt`** — lifetime-aware contravariant functor hierarchy using `HKTLt { type Of<'a, T> }`, removing the `'static` requirement that blocked `Box<dyn Fn>`-based contravariants from working with borrowed data (#93).
+- **`loop_fixpoint()`** — iterative convergence combinator for `FnA` arrows, the strict-evaluation analog to Haskell's lazy `loop`. Returns `Some(b)` on convergence, `None` if fixpoint not reached within `max_iterations` (#94).
+- **karpal-index `--json`** — all four CLI commands (search, detail, crates, hierarchy) now support JSON output for AI-agent programmatic consumption.
+- **mdBook documentation** — full English documentation with IA Navy theme, 45 pages including all 24 reference pages ported from HTML, 7 examples, and design notes. Deployable via Netlify.
+- **Blanket impls** for `FunctorSt`/`ApplicativeSt`/`ChainSt` — any type implementing `Functor`/`Applicative`/`Chain` now automatically implements the `'static`-bounded transformer hierarchy, eliminating 12 duplicate manual impls (#97).
+
+### Changed
+
+- **Removed `Comonad` instance for `OptionF`** — `extract` panicked on `None`, violating totality. `OptionF` still implements `Extend`; `CofreeF<OptionF>` retains its Comonad instance (extracts from `Cofree.head`, not `Option`) (#92).
+- **Removed `CokleisliF<OptionF>`** — Cokleisli `id = extract`, which must be total.
+- **Documented `ArrowLoop::loop_arrow`** as single-pass (strict evaluation limitation). The feedback value is computed but discarded because there's no second iteration without laziness.
+- **Documented State monad correctness** — the adjunction-derived State monad (`state_chain`) was correct all along; clarified documentation explaining why it's hand-written rather than using generic `adjunction_chain` (ReaderF can't implement Functor due to `'static`) (#96).
+- **Documented `ReaderTF`/`StateTF` `ApplicativeSt` limitation** — these transformers cannot implement `ApplicativeSt` because `Box<dyn Fn>` closures must be `Fn` (callable multiple times), but `pure_st` consumes the value without `Clone` — the same `Fn`/`FnOnce` friction as FreeAp `fold_map` (#98).
+
+### Fixed
+
+- **Proserpina documentation critique** — 62 findings across 45 mdBook pages resolved: 9 blockers, 28 major, 14 minor. 7 code-level issues tracked as GitHub issues #92-#98, all resolved. Version/license staleness (28 AGPL refs → Apache-2.0), duplicate Getting Started pages merged, trust boundary warning added to verified-domain-api example.
+
+### Design Documents
+
+- [Rust Closure Traits as a Category-Theoretic Barrier](docs/dev/rust-closure-categorical-barrier.md) — cohesive analysis of why `FnOnce`/`Fn`/`FnMut` blocks natural category-theoretic encodings
+- [FreeAp fold_map: Why It's Impossible in Rust](docs/dev/freeap-fold-map-exploration.md) — four alternative encodings explored, all fail
+- [Contravariant Lifetime Bounds](docs/dev/contravariant-lifetime-bounds.md) — why `'static` is inherent to `Box<dyn Fn>` and how lifetime GATs help
+
 ## [0.6.1] — 2026-07-01
 
 ### Added
