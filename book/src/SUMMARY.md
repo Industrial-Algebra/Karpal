@@ -61,3 +61,7 @@
 # API
 
 - [Workspace Overview](./api/overview.md)
+
+# Design Notes
+
+- [FreeAp fold_map: Why It's Impossible in Rust](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/freeap-fold-map-exploration.md)

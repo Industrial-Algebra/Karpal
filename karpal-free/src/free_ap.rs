@@ -127,6 +127,10 @@ impl<F: HKT + 'static, Src: Clone + 'static, A: 'static> FreeApNode<F, A> for Ap
 /// transformation through trait objects (the intermediate type `B` is
 /// erased, preventing compile-time monomorphization of `NT::transform<B>`).
 ///
+/// For a full investigation of why `fold_map` is impossible and what
+/// alternative encodings were explored, see the design document:
+/// [FreeAp fold_map: Why It's Impossible in Rust](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/freeap-fold-map-exploration.md).
+///
 /// # When to use FreeAp vs Free
 ///
 /// - Use `FreeAp<F, A>` when effects are independent and you want
