@@ -99,9 +99,18 @@ pub fn reader_t_run<E, M: HKT, A>(reader: &dyn Fn(E) -> M::Of<A>, env: E) -> M::
 }
 
 // --- FunctorSt / ChainSt for ReaderTF ---
-// Note: ApplicativeSt is not implemented for ReaderTF because pure_st
-// cannot produce a Box<dyn Fn(E) -> M::Of<A>> from a single A without Clone.
-// Use the standalone reader_t_pure function instead (which requires A: Clone).
+//
+// Why no ApplicativeSt?
+//
+// `ReaderTF::Of<A> = Box<dyn Fn(E) -> M::Of<A>>`. To implement
+// `pure_st::<A>(a)`, we must create an `Fn` closure that produces
+// `M::Of<A>` on every invocation. But `M::pure_st(a)` consumes `a`,
+// so without `A: Clone` we can only produce `M::Of<A>` once — making
+// the closure `FnOnce`, not `Fn`. This is the same `Fn`/`FnOnce` friction
+// documented in the FreeAp `fold_map` investigation.
+//
+// Use the standalone `reader_t_pure` function instead (which requires
+// `A: Clone` and creates a closure that clones `a` on each invocation).
 
 impl<E: 'static, M: FunctorSt + 'static> FunctorSt for ReaderTF<E, M> {
     fn fmap_st<A: 'static, B: 'static>(
