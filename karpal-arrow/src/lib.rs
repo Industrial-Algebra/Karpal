@@ -36,4 +36,6 @@ pub use cokleisli::CokleisliF;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use fn_arrow::FnA;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub use fn_arrow::loop_fixpoint;
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub use kleisli::KleisliF;
