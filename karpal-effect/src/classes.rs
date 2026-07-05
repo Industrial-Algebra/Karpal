@@ -1,14 +1,29 @@
 // Copyright (C) 2026 Industrial Algebra
 // SPDX-License-Identifier: Apache-2.0
 
-use karpal_core::hkt::{HKT, IdentityF, OptionF, ResultF};
+use karpal_core::applicative::Applicative;
+use karpal_core::chain::Chain;
+use karpal_core::functor::Functor;
+use karpal_core::hkt::HKT;
+
+// ---------------------------------------------------------------------------
+// 'static-bounded typeclass hierarchy (St variants)
+// ---------------------------------------------------------------------------
 
 /// Functor with `'static` bounds on type parameters.
 ///
-/// This mirrors [`karpal_core::Functor`] but adds `'static` bounds required by
-/// types that use `Box<dyn Fn>` internally (monad transformers, `ReaderF`, etc.).
-/// Base types that implement `Functor` can typically implement this trivially
-/// because their type parameters often already satisfy `'static` (e.g., for owned types).
+/// This mirrors [`Functor`] but adds `'static` bounds required by types that
+/// use `Box<dyn Fn>` internally (monad transformers, `ReaderF`, etc.).
+///
+/// # Bridge to the base hierarchy
+///
+/// Any type that implements [`Functor`] automatically implements `FunctorSt`
+/// via a blanket impl. You do NOT need to implement both — just implement
+/// `Functor`, and `FunctorSt` is provided for free.
+///
+/// Types that CANNOT implement `Functor` (because they use `Box<dyn Fn>` and
+/// need `'static`) should implement `FunctorSt` directly. This includes the
+/// monad transformers in this crate.
 pub trait FunctorSt: HKT {
     fn fmap_st<A: 'static, B: 'static>(
         fa: Self::Of<A>,
@@ -18,15 +33,16 @@ pub trait FunctorSt: HKT {
 
 /// Applicative with `'static` bounds on type parameters.
 ///
-/// This mirrors [`karpal_core::Applicative`] but adds `'static` bounds required by
-/// types that use `Box<dyn Fn>` internally (monad transformers, `ReaderTF`, `StateTF`, etc.).
-/// Clone-requiring cases are handled by standalone helper functions (such as `*_t_pure`),
-/// so `pure_st` itself only requires `A: 'static`.
+/// Automatically implemented for any type that implements [`Applicative`].
+/// See [`FunctorSt`] for the rationale behind the `St` hierarchy.
 pub trait ApplicativeSt: FunctorSt {
     fn pure_st<A: 'static>(a: A) -> Self::Of<A>;
 }
 
 /// Chain (monadic bind) with `'static` bounds on type parameters.
+///
+/// Automatically implemented for any type that implements [`Chain`].
+/// See [`FunctorSt`] for the rationale behind the `St` hierarchy.
 pub trait ChainSt: FunctorSt {
     fn chain_st<A: 'static, B: 'static>(
         fa: Self::Of<A>,
@@ -34,95 +50,56 @@ pub trait ChainSt: FunctorSt {
     ) -> Self::Of<B>;
 }
 
-// --- Base type implementations ---
+// ---------------------------------------------------------------------------
+// Blanket impls: bridge base hierarchy → St hierarchy
+// ---------------------------------------------------------------------------
 
-impl FunctorSt for OptionF {
-    fn fmap_st<A: 'static, B: 'static>(fa: Option<A>, f: impl Fn(A) -> B + 'static) -> Option<B> {
-        fa.map(f)
-    }
-}
-
-impl ApplicativeSt for OptionF {
-    fn pure_st<A: 'static>(a: A) -> Option<A> {
-        Some(a)
-    }
-}
-
-impl ChainSt for OptionF {
-    fn chain_st<A: 'static, B: 'static>(
-        fa: Option<A>,
-        f: impl Fn(A) -> Option<B> + 'static,
-    ) -> Option<B> {
-        fa.and_then(f)
-    }
-}
-
-impl<E: 'static> FunctorSt for ResultF<E> {
+/// Any `Functor` is automatically a `FunctorSt`.
+///
+/// This eliminates the need for manual `FunctorSt` impls on base types
+/// (`OptionF`, `ResultF`, `IdentityF`, `VecF`, etc.). The `'static` bounds
+/// in `fmap_st` are strictly stronger than what `fmap` requires, so the
+/// delegation is always sound.
+impl<F: Functor> FunctorSt for F {
     fn fmap_st<A: 'static, B: 'static>(
-        fa: Result<A, E>,
+        fa: Self::Of<A>,
         f: impl Fn(A) -> B + 'static,
-    ) -> Result<B, E> {
-        fa.map(f)
+    ) -> Self::Of<B> {
+        F::fmap(fa, f)
     }
 }
 
-impl<E: 'static> ApplicativeSt for ResultF<E> {
-    fn pure_st<A: 'static>(a: A) -> Result<A, E> {
-        Ok(a)
+/// Any `Applicative` is automatically an `ApplicativeSt`.
+impl<F: Applicative> ApplicativeSt for F {
+    fn pure_st<A: 'static>(a: A) -> Self::Of<A> {
+        F::pure(a)
     }
 }
 
-impl<E: 'static> ChainSt for ResultF<E> {
+/// Any `Chain` is automatically a `ChainSt`.
+impl<F: Chain> ChainSt for F {
     fn chain_st<A: 'static, B: 'static>(
-        fa: Result<A, E>,
-        f: impl Fn(A) -> Result<B, E> + 'static,
-    ) -> Result<B, E> {
-        fa.and_then(f)
+        fa: Self::Of<A>,
+        f: impl Fn(A) -> Self::Of<B> + 'static,
+    ) -> Self::Of<B> {
+        F::chain(fa, f)
     }
 }
 
-impl FunctorSt for IdentityF {
-    fn fmap_st<A: 'static, B: 'static>(fa: A, f: impl Fn(A) -> B + 'static) -> B {
-        f(fa)
-    }
-}
-
-impl ApplicativeSt for IdentityF {
-    fn pure_st<A: 'static>(a: A) -> A {
-        a
-    }
-}
-
-impl ChainSt for IdentityF {
-    fn chain_st<A: 'static, B: 'static>(fa: A, f: impl Fn(A) -> B + 'static) -> B {
-        f(fa)
-    }
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-impl FunctorSt for karpal_core::hkt::VecF {
-    fn fmap_st<A: 'static, B: 'static>(fa: Vec<A>, f: impl Fn(A) -> B + 'static) -> Vec<B> {
-        fa.into_iter().map(f).collect()
-    }
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-impl ApplicativeSt for karpal_core::hkt::VecF {
-    fn pure_st<A: 'static>(a: A) -> Vec<A> {
-        vec![a]
-    }
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-impl ChainSt for karpal_core::hkt::VecF {
-    fn chain_st<A: 'static, B: 'static>(fa: Vec<A>, f: impl Fn(A) -> Vec<B> + 'static) -> Vec<B> {
-        fa.into_iter().flat_map(f).collect()
-    }
-}
+// ---------------------------------------------------------------------------
+// Note on transformer types
+// ---------------------------------------------------------------------------
+//
+// Monad transformers (ReaderTF, StateTF, WriterTF, ExceptTF) implement
+// FunctorSt/ChainSt DIRECTLY because they use Box<dyn Fn> internally and
+// cannot implement the base Functor trait (which lacks 'static bounds).
+// These impls live in each transformer's module and do NOT conflict with
+// the blanket impls above, because transformers do not implement Functor.
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use karpal_core::hkt::{IdentityF, OptionF, ResultF};
 
     #[test]
     fn option_functor_st() {
@@ -150,11 +127,36 @@ mod tests {
     fn identity_chain_st() {
         assert_eq!(IdentityF::chain_st(5, |x| x + 1), 6);
     }
+
+    // --- Bridge tests: verify base types work with St bounds via blanket ---
+
+    #[test]
+    fn blanket_bridge_option() {
+        // OptionF implements Functor (base), so FunctorSt is automatic.
+        fn requires_functor_st<F: FunctorSt>(fa: F::Of<i32>) -> F::Of<String> {
+            F::fmap_st(fa, |x| format!("val={}", x))
+        }
+        assert_eq!(
+            requires_functor_st::<OptionF>(Some(42)),
+            Some("val=42".to_string())
+        );
+    }
+
+    #[test]
+    fn blanket_bridge_result() {
+        fn requires_chain_st<E: 'static, F: ChainSt + ApplicativeSt>(fa: F::Of<i32>) -> F::Of<i32> {
+            F::chain_st(fa, |x| {
+                F::chain_st(F::pure_st::<i32>(x), |y| F::pure_st(y + 1))
+            })
+        }
+        assert_eq!(requires_chain_st::<&str, ResultF<&str>>(Ok(5)), Ok(6));
+    }
 }
 
 #[cfg(test)]
 mod law_tests {
     use super::*;
+    use karpal_core::hkt::OptionF;
     use proptest::prelude::*;
 
     proptest! {
