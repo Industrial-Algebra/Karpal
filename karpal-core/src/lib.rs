@@ -26,6 +26,8 @@ pub mod conclude;
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub mod contravariant;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub mod contravariant_lt;
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub mod decide;
 pub mod dinatural;
 #[cfg(any(feature = "std", feature = "alloc"))]
