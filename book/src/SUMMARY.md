@@ -64,4 +64,5 @@
 
 # Design Notes
 
-- [FreeAp fold_map: Why It's Impossible in Rust](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/freeap-fold-map-exploration.md)
+- [Rust Closure Traits as a Category-Theoretic Barrier](./design-notes/rust-closure-categorical-barrier.md)
+- [FreeAp fold_map: Why It's Impossible in Rust](./design-notes/freeap-fold-map-exploration.md)
