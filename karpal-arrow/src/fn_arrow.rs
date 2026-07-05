@@ -85,11 +85,64 @@ impl ArrowLoop for FnA {
     fn loop_arrow<A: Clone + 'static, B: Clone + 'static, D: Default + Clone + 'static>(
         f: Box<dyn Fn((A, D)) -> (B, D)>,
     ) -> Box<dyn Fn(A) -> B> {
+        // Single-pass: run f once with D::default() as the seed.
+        // The output feedback D is discarded — this is the strict-evaluation
+        // limitation documented on ArrowLoop.
         Box::new(move |a| {
-            let (b, _d) = f((a, D::default()));
+            let (b, _feedback) = f((a, D::default()));
             b
         })
     }
+}
+
+/// Iterative fixpoint loop for `FnA`.
+///
+/// Unlike [`FnA::loop_arrow`] (single-pass), this function iterates the
+/// feedback value `D` until it converges (stops changing). This is the
+/// closest strict-evaluation analog to Haskell's lazy `loop`.
+///
+/// # Parameters
+///
+/// - `f`: The arrow from `(A, D)` to `(B, D)`.
+/// - `max_iterations`: Safety limit to prevent infinite loops.
+///
+/// # Returns
+///
+/// `Some(b)` if the feedback converged within `max_iterations`.
+/// `None` if the fixpoint did not converge.
+///
+/// # Example
+///
+/// ```
+/// use karpal_arrow::{FnA, loop_fixpoint};
+///
+/// // Counter: output the accumulated feedback, clamped at 10
+/// let f: Box<dyn Fn((i32, i32)) -> (i32, i32)> =
+///     Box::new(|(a, acc)| (acc, (acc + a).min(10)));
+/// let looper = loop_fixpoint(f, 100);
+/// assert_eq!(looper(3), Some(10)); // converges when feedback stabilizes at 10
+/// ```
+#[allow(clippy::type_complexity)]
+pub fn loop_fixpoint<
+    A: Clone + 'static,
+    B: Clone + 'static,
+    D: Default + Clone + PartialEq + 'static,
+>(
+    f: Box<dyn Fn((A, D)) -> (B, D)>,
+    max_iterations: usize,
+) -> Box<dyn Fn(A) -> Option<B>> {
+    Box::new(move |a| {
+        let mut d = D::default();
+        for _ in 0..max_iterations {
+            let (b, new_d) = f((a.clone(), d.clone()));
+            if new_d == d {
+                return Some(b);
+            }
+            d = new_d;
+        }
+        // Did not converge within max_iterations
+        None
+    })
 }
 
 #[cfg(test)]
@@ -188,10 +241,38 @@ mod tests {
     }
 
     #[test]
-    fn fna_loop_arrow() {
-        // loop_arrow feeds D::default() as the feedback value
+    fn fna_loop_arrow_single_pass() {
+        // loop_arrow runs ONE pass with D::default() as the seed.
+        // The feedback output is discarded (strict evaluation limitation).
         let f = FnA::loop_arrow::<i32, i32, i32>(Box::new(|(a, d)| (a + d, d)));
         assert_eq!(f(5), 5); // 5 + 0 (i32::default() == 0)
+    }
+
+    #[test]
+    fn loop_fixpoint_converges() {
+        // Counter that outputs the accumulated feedback, clamped at 10.
+        // f(a, acc) = (acc, min(acc + a, 10))
+        // With a=3: d goes 0→3→6→9→10→10 (converged)
+        let f: Box<dyn Fn((i32, i32)) -> (i32, i32)> =
+            Box::new(|(a, acc)| (acc, (acc + a).min(10)));
+        let looper = loop_fixpoint(f, 100);
+        assert_eq!(looper(3), Some(10));
+    }
+
+    #[test]
+    fn loop_fixpoint_identity_feedback() {
+        // When feedback doesn't change, converges immediately
+        let f: Box<dyn Fn((i32, i32)) -> (i32, i32)> = Box::new(|(a, d)| (a * 2, d));
+        let looper = loop_fixpoint(f, 100);
+        assert_eq!(looper(21), Some(42));
+    }
+
+    #[test]
+    fn loop_fixpoint_non_convergent() {
+        // Oscillating feedback that never stabilizes
+        let f: Box<dyn Fn((i32, i32)) -> (i32, i32)> = Box::new(|(a, d)| (a, d + 1)); // feedback always increases
+        let looper = loop_fixpoint(f, 100);
+        assert_eq!(looper(5), None); // does not converge
     }
 }
 

@@ -49,7 +49,7 @@ formal verification.
 
 ### Phase 13 — `karpal-diagram`: Monoidal Categories & String Diagrams (100% complete ✅)
 
-### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (A–C complete ✅, D deferred)
+### Phase 14 — `karpal-schubert-types`: Schubert Intersection Type System (A–D complete ✅)
 
 **Crate**: `karpal-schubert-types` (new, experimental)
 
@@ -438,7 +438,7 @@ Extensions E and F are the most immediately meaningful:
   `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
   deformation parameter, which maps to distinct coercion paths at the type level.
 
-### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions
+### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (sub-phase A complete in 0.7.0)
 
 **Crate**: `karpal-topos` (new)
 

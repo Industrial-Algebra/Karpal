@@ -8,12 +8,14 @@
 //! infrastructure.
 
 pub mod intersection;
+pub mod lr_enriched;
 pub mod schubert_proven;
 pub mod schubert_type;
 pub mod schubert_typed;
 pub mod verification;
 
 pub use intersection::{Intersection, IntersectionKind, check_intersection};
+pub use lr_enriched::{LRRingEnrichment, SchubertEnrichedCategory, meet_intersection_kinds};
 pub use schubert_proven::{SchubertProven, compose_checks};
 pub use schubert_type::SchubertType;
 pub use schubert_typed::SchubertTyped;

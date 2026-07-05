@@ -54,9 +54,11 @@ macro_rules! impl_cokleisli {
     };
 }
 
-// Generate impls for standard comonads
+// Generate impls for standard comonads.
+// Note: OptionF is intentionally omitted — it is not a Comonad because
+// `extract` panics on `None`. Cokleisli requires `id = extract`, which
+// must be total. See karpal-core/src/comonad.rs for details.
 impl_cokleisli!(karpal_core::hkt::IdentityF);
-impl_cokleisli!(karpal_core::hkt::OptionF);
 #[cfg(any(feature = "std", feature = "alloc"))]
 impl_cokleisli!(karpal_core::hkt::NonEmptyVecF);
 
@@ -102,13 +104,12 @@ impl_cokleisli_env!(String);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use karpal_core::hkt::{IdentityF, NonEmptyVec, NonEmptyVecF, OptionF};
+    use karpal_core::hkt::{IdentityF, NonEmptyVec, NonEmptyVecF};
 
     use crate::category::Category;
     use crate::semigroupoid::Semigroupoid;
 
     type CoId = CokleisliF<IdentityF>;
-    type CoOpt = CokleisliF<OptionF>;
     type CoNev = CokleisliF<NonEmptyVecF>;
     type CoEnvI32 = CokleisliF<karpal_core::hkt::EnvF<i32>>;
 
@@ -124,20 +125,6 @@ mod tests {
         let g: Box<dyn Fn(i32) -> i32> = Box::new(|x| x * 2);
         let fg = CoId::compose(f, g);
         assert_eq!(fg(3), 7); // (3 * 2) + 1
-    }
-
-    #[test]
-    fn option_id() {
-        let id = CoOpt::id::<i32>();
-        assert_eq!(id(Some(42)), 42);
-    }
-
-    #[test]
-    fn option_compose() {
-        let f: Box<dyn Fn(Option<i32>) -> i32> = Box::new(|opt| opt.unwrap_or(0) + 1);
-        let g: Box<dyn Fn(Option<i32>) -> i32> = Box::new(|opt| opt.unwrap_or(0) * 2);
-        let fg = CoOpt::compose(f, g);
-        assert_eq!(fg(Some(3)), 7); // extend gives Some(6), then +1 = 7
     }
 
     #[test]

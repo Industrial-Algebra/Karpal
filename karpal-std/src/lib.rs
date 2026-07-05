@@ -52,7 +52,8 @@ pub mod prelude {
 
     // Abstract algebra
     pub use karpal_algebra::{
-        AbelianGroup, BoundedLattice, Field, Group, Lattice, Module, Ring, Semiring, VectorSpace,
+        AbelianGroup, BoundedLattice, Field, Group, HeytingAlgebra, Lattice, Module, Ring,
+        Semiring, VectorSpace,
     };
 
     // Profunctor

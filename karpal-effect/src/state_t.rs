@@ -104,7 +104,17 @@ pub fn state_t_run<S, M: HKT, A>(state: &dyn Fn(S) -> M::Of<(S, A)>, initial: S)
     state(initial)
 }
 
-// --- FunctorSt / ApplicativeSt / ChainSt for StateTF ---
+// --- FunctorSt / ChainSt for StateTF ---
+//
+// Why no ApplicativeSt?
+//
+// `StateTF::Of<A> = Box<dyn Fn(S) -> M::Of<(S, A)>>`. Same `Fn`/`FnOnce`
+// friction as ReaderTF: `pure_st<A>(a)` must produce an `Fn` closure
+// that returns `M::Of<(S, A)>` on every invocation, but `M::pure_st((s, a))`
+// consumes `a`. Without `A: Clone`, the closure is `FnOnce`, not `Fn`.
+//
+// Use the standalone `state_t_pure` function instead (which requires
+// `A: Clone + 'static`).
 
 impl<S: 'static, M: FunctorSt + 'static> FunctorSt for StateTF<S, M> {
     fn fmap_st<A: 'static, B: 'static>(
@@ -114,10 +124,6 @@ impl<S: 'static, M: FunctorSt + 'static> FunctorSt for StateTF<S, M> {
         state_t_fmap::<S, M, A, B>(fa, f)
     }
 }
-
-// Note: ApplicativeSt is not implemented for StateTF because pure_st
-// cannot produce a Box<dyn Fn(S) -> M::Of<(S, A)>> from a single A without Clone.
-// Use the standalone state_t_pure function instead (which requires A: Clone).
 
 impl<S: Clone + 'static, M: ChainSt + 'static> ChainSt for StateTF<S, M> {
     fn chain_st<A: 'static, B: 'static>(
