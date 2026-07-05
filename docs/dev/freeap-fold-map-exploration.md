@@ -254,3 +254,4 @@ Rust category-theory ecosystem.
 - [Proserpina critique report](../reviews/batch4-algebra-review.md) — Batch 4, finding B6
 - `karpal-free/src/free_ap.rs` — the implementation
 - Haskell `Control.Applicative.Free` — the reference implementation that CAN express `foldMap`
+- [Rust Closure Traits as a Category-Theoretic Barrier](./rust-closure-categorical-barrier.md) — cross-cutting analysis of `Fn`/`FnOnce` friction
