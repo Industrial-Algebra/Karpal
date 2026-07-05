@@ -10,6 +10,19 @@ use alloc::boxed::Box;
 /// Laws:
 /// - Identity: `contramap(id, fa) == fa`
 /// - Composition: `contramap(f . g, fa) == contramap(g, contramap(f, fa))`
+///
+/// # `'static` bound
+///
+/// The `A: 'static` bound is required because the canonical instance
+/// (`PredicateF`) uses `Box<dyn Fn(A) -> bool>`, and `dyn` trait objects
+/// default to `'static`. This prevents use with borrowed data types like
+/// `&str`.
+///
+/// For a lifetime-aware variant that supports borrowed data, see
+/// [`contravariant_lt`](crate::contravariant_lt::ContravariantLt).
+///
+/// For a full investigation of this limitation, see the design document:
+/// [Contravariant Lifetime Bounds](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/contravariant-lifetime-bounds.md).
 pub trait Contravariant: HKT {
     fn contramap<A: 'static, B>(fa: Self::Of<A>, f: impl Fn(B) -> A + 'static) -> Self::Of<B>;
 }
