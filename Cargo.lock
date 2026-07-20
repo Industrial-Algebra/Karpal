@@ -407,6 +407,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-topos"
+version = "0.7.0"
+dependencies = [
+ "karpal-core",
+ "proptest",
+]
+
+[[package]]
 name = "karpal-verify"
 version = "0.7.0"
 dependencies = [

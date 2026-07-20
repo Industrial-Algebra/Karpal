@@ -1,5 +1,5 @@
 [workspace]
-members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-proof", "karpal-proof-derive", "karpal-verify", "karpal-verify-derive", "karpal-diagram", "karpal-std", "karpal-schubert-types", "karpal-index", "karpal-higher"]
+members = ["karpal-core", "karpal-profunctor", "karpal-optics", "karpal-arrow", "karpal-free", "karpal-recursion", "karpal-algebra", "karpal-effect", "karpal-proof", "karpal-proof-derive", "karpal-verify", "karpal-verify-derive", "karpal-diagram", "karpal-std", "karpal-schubert-types", "karpal-index", "karpal-higher", "karpal-topos"]
 resolver = "3"
 
 [workspace.package]
@@ -27,4 +27,5 @@ karpal-verify-derive = { version = "0.7.0", path = "karpal-verify-derive" }
 karpal-diagram = { version = "0.7.0", path = "karpal-diagram" }
 karpal-schubert-types = { version = "0.7.0", path = "karpal-schubert-types" }
 karpal-higher = { version = "0.7.0", path = "karpal-higher" }
+karpal-topos = { version = "0.7.0", path = "karpal-topos" }
 proptest = "1"
