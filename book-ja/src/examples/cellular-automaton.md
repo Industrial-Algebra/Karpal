@@ -1,25 +1,25 @@
-# Cellular Automaton
+# セルラーオートマトン
 
-1D cellular automaton using Extend (Comonad) over NonEmptyVec.
+NonEmptyVec 上の Extend (Comonad) を使った一次元セルラーオートマトン。
 
-## Overview
+## 概要
 
-A **cellular automaton** is a grid of cells that evolves in discrete steps. At each step, every cell updates its value based on a *rule* that inspects the cell and its neighbors. The classic approach in functional programming is to model this with a **comonad**.
+**セルラーオートマトン** は離散ステップで進化するセルのグリッドです。各ステップで、すべてのセルがセルとその近傍を検査する *ルール* に基づいて値を更新します。関数型プログラミングにおける古典的アプローチは、これを **コモナド** でモデル化することです。
 
-The key insight is that a comonad provides two operations that map directly onto the cellular automaton pattern:
+重要な洞察は、コモナドがセルラーオートマトンパターンに直接対応する二つの演算を提供することです:
 
-- **`extract`** reads the "focused" cell — the current position in the grid.
-- **`extend`** takes a function that computes a new value from a focused context, and applies it at *every* position in the grid. This is exactly how a cellular automaton rule works: the rule sees the neighborhood around a position, and `extend` runs it everywhere.
+- **`extract`** は「焦点の」セル — グリッド内の現在位置 — を読み取ります。
+- **`extend`** は焦点の文脈から新しい値を計算する関数を取り、グリッドの *すべての* 位置に適用します。これはまさにセルラーオートマトンルールの動作です: ルールは位置の周りの近傍を見て、`extend` がそれを至る所で実行します。
 
-In Karpal, `NonEmptyVec` implements `Extend` and `Comonad`. The `extend` method generates all possible focused views of the grid (via `tails`) and applies the rule function to each one, producing the next generation in a single call.
+Karpal では、`NonEmptyVec` が `Extend` と `Comonad` を実装します。`extend` メソッドは (`tails` 経由で) グリッドのすべての可能な焦点付きビューを生成し、ルール関数をそれぞれに適用して、一回の呼び出しで次世代を生成します。
 
-## Rule Functions
+## ルール関数
 
-Each rule receives the entire grid as a `&NonEmptyVec<u8>`, with the *head* of the vector acting as the current cell. The rule inspects neighbors by looking at adjacent positions and returns the new value for that cell.
+各ルールはグリッド全体を `&NonEmptyVec<u8>` として受け取り、ベクタの *先頭* が現在のセルとして機能します。ルールは隣接位置を見ることで近傍を検査し、そのセルの新しい値を返します。
 
-### Rule 90 (XOR of neighbors)
+### ルール 90 (近傍の XOR)
 
-A cell becomes alive (`1`) if exactly one of its two neighbors is alive, otherwise it dies (`0`). This produces the classic Sierpinski triangle pattern when started from a single seed cell.
+二つの近傍のちょうど一方が生存していればセルは生存 (`1`) になり、さもなくば死亡 (`0`) します。単一のシードセルから始めると、古典的なシェルピンスキーの三角形パターンを生成します。
 
 ``` rust
 fn rule_90(grid: &NonEmptyVec<u8>) -> u8 {
@@ -27,28 +27,28 @@ fn rule_90(grid: &NonEmptyVec<u8>) -> u8 {
     let current = <NonEmptyVecF as Comonad>::extract(grid);
     let len = grid.len();
 
-    // Get left neighbor (wrapping)
+    // 左の近傍を取得 (ラップ around)
     let left = if len > 1 {
         *tails.tail.last().map(|t| &t.head).unwrap_or(&grid.head)
     } else {
         current
     };
 
-    // Get right neighbor
+    // 右の近傍を取得
     let right = if grid.tail.is_empty() {
-        grid.head // wrap around
+        grid.head // ラップ around
     } else {
         grid.tail[0]
     };
 
-    // XOR of neighbors
+    // 近傍の XOR
     left ^ right
 }
 ```
 
-### Majority rule
+### 多数決ルール
 
-A simpler rule: the cell is alive if two or more of (left, current, right) are alive. This tends to smooth out noise and converge toward uniform regions.
+より単純なルール: (左、現在、右) のうち二つ以上が生存していればセルは生存します。これはノイズを平滑化し、一様な領域に収束する傾向があります。
 
 ``` rust
 fn rule_majority(grid: &NonEmptyVec<u8>) -> u8 {
@@ -73,9 +73,9 @@ fn rule_majority(grid: &NonEmptyVec<u8>) -> u8 {
 }
 ```
 
-## Evolution via Extend
+## Extend による進化
 
-The `step` function is the core of the automaton. It calls `NonEmptyVecF::extend` with the grid and a rule, producing the next generation. Extend applies the rule at every position by generating all focused views of the grid and mapping the rule over each one.
+`step` 関数がオートマトンの中核です。グリッドとルールで `NonEmptyVecF::extend` を呼び出し、次世代を生成します。Extend はグリッドのすべての焦点付きビューを生成し、それぞれにルールをマップすることで、すべての位置でルールを適用します。
 
 ``` rust
 fn step(grid: NonEmptyVec<u8>, rule: fn(&NonEmptyVec<u8>) -> u8) -> NonEmptyVec<u8> {
@@ -83,7 +83,7 @@ fn step(grid: NonEmptyVec<u8>, rule: fn(&NonEmptyVec<u8>) -> u8) -> NonEmptyVec<
 }
 ```
 
-The `evolve` function iterates `step` for a given number of generations, collecting the full history so it can be displayed as a space-time diagram.
+`evolve` 関数は指定された世代数だけ `step` を反復し、空間-時間図として表示できるよう完全な履歴を収集します。
 
 ``` rust
 fn evolve(
@@ -101,9 +101,9 @@ fn evolve(
 }
 ```
 
-## Display
+## 表示
 
-The display helper renders each generation as a string of `#` (alive) and `.` (dead) characters, making the pattern visible in the terminal.
+表示ヘルパは各世代を `#` (生存) と `.` (死亡) 文字の文字列として描画し、ターミナルでパターンを見えるようにします。
 
 ``` rust
 fn display_grid(grid: &NonEmptyVec<u8>) -> String {
@@ -115,57 +115,55 @@ fn display_grid(grid: &NonEmptyVec<u8>) -> String {
 }
 ```
 
-## Putting It Together
+## すべてを組み合わせる
 
-The `main` function sets up an initial grid with a single seed cell in the center, runs Rule 90 for 10 generations, then demonstrates the majority rule on a more complex pattern. It also shows `Comonad::extract` and `Extend::duplicate` directly.
+`main` 関数は中央に単一のシードセルを持つ初期グリッドを設定し、ルール 90 を 10 世代実行し、次により複雑なパターンで多数決ルールを実演します。また `Comonad::extract` と `Extend::duplicate` を直接示します。
 
 ``` rust
 fn main() {
-    // Initial state: single cell in the middle of a 21-cell grid
+    // 初期状態: 21 セルのグリッドの中央に単一セル
     let width = 21;
     let mid = width / 2;
     let mut cells: Vec<u8> = vec![0; width];
     cells[mid] = 1;
     let initial = NonEmptyVec::new(cells[0], cells[1..].to_vec());
 
-    // Rule 90 (XOR of neighbors)
+    // ルール 90 (近傍の XOR)
     let history = evolve(initial.clone(), rule_90, 10);
     for (i, grid) in history.iter().enumerate() {
         println!("  {:>2}: {}", i, display_grid(grid));
     }
 
-    // Comonad::extract reads the focused cell
+    // Comonad::extract は焦点のセルを読み取る
     let head = <NonEmptyVecF as Comonad>::extract(&initial);
 
-    // Majority rule on a different pattern
+    // 異なるパターンでの多数決ルール
     let pattern = NonEmptyVec::new(1, vec![0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0]);
     let history = evolve(pattern, rule_majority, 8);
 
-    // Extend::duplicate shows all focused views
+    // Extend::duplicate はすべての焦点付きビューを示す
     let small = NonEmptyVec::new(1, vec![2, 3]);
     let duplicated: NonEmptyVec<NonEmptyVec<u8>> = NonEmptyVecF::duplicate(small);
 }
 ```
 
-## Run It
+## 実行
 
-From the workspace root, run:
+ワークスペースルートから実行:
 
 ``` rust
 cargo run -p karpal-std --example cellular_automaton
 ```
 
-You will see the Rule 90 Sierpinski triangle pattern growing from a single seed, followed by the majority rule smoothing a random-looking pattern into stable regions.
+単一のシードから成長するルール 90 のシェルピンスキーの三角形パターンに続き、多数決ルールがランダムに見えるパターンを安定した領域に平滑化するのが見えます。
 
-## Traits Used
+## 使用するトレイト
 
-| Trait     | Role in this example                                                                                                                         | Reference                                          |
+| トレイト     | この例での役割                                                                                                                         | リファレンス                                          |
 |-----------|----------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| `Comonad` | Provides `extract` to read the focused cell value from a `NonEmptyVec`.                                                                      | [Comonad Family](../reference/comonad-family.md) |
-| `Extend`  | Provides `extend` to apply a rule at every position, producing the next generation. Also provides `duplicate` to view all focused positions. | [Comonad Family](../reference/comonad-family.md) |
-| `HKT`     | `NonEmptyVecF` is the type constructor marker that implements `Extend` and `Comonad`.                                                        | [Functor Family](../reference/functor-family.md) |
+| `Comonad` | `NonEmptyVec` から焦点のセル値を読み取る `extract` を提供。                                                                      | [コモナドファミリー](../reference/comonad-family.md) |
+| `Extend`  | すべての位置でルールを適用し次世代を生成する `extend` を提供。すべての焦点付き位置を見る `duplicate` も提供。 | [コモナドファミリー](../reference/comonad-family.md) |
+| `HKT`     | `NonEmptyVecF` は `Extend` と `Comonad` を実装する型コンストラクタマーカー。                                                        | [関手ファミリー](../reference/functor-family.md) |
 
 
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
