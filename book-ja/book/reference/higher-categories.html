@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,15 +178,15 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="higher-categories"><a class="header" href="#higher-categories">Higher Categories</a></h1>
-<p>2-categories, enriched categories, bicategories, FFunctor/FMonad — <code>karpal-higher</code> (Phase 15).</p>
+                        <h1 id="高次圏"><a class="header" href="#高次圏">高次圏</a></h1>
+<p>2-圏、豊饒圏、バイ圏、FFunctor/FMonad — <code>karpal-higher</code> (フェーズ 15)。</p>
 <h2 id="twocategory"><a class="header" href="#twocategory">TwoCategory</a></h2>
-<p>A strict 2-category has objects, 1-morphisms between objects, and 2-morphisms between parallel 1-morphisms:</p>
+<p>厳密 2-圏は対象、対象間の 1-射、平行な 1-射間の 2-射を持ちます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_higher::{TwoCategory, Cat};
 
-// Cat: objects = types, 1-morphisms = Box, 2-morphisms = ()
+// Cat: 対象 = 型、1-射 = Box、2-射 = ()
 let id = Cat::id1::();
 assert_eq!(id(42), 42);
 
@@ -196,27 +196,27 @@ let gf = Cat::compose1(f, g);
 assert_eq!(gf(5), 12);
 <span class="boring">}</span></code></pre>
 <h2 id="bicategory"><a class="header" href="#bicategory">Bicategory</a></h2>
-<p>A bicategory weakens associativity and unitality to isomorphism, with an associator and left/right unitors:</p>
+<p>バイ圏は結合律と単位律を同型にまで弱め、結合子と左右の単位子を持ちます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_higher::{Bicategory, Cat};
 
-// Associator: (f ∘ g) ∘ h ≅ f ∘ (g ∘ h)
+// 結合子: (f ∘ g) ∘ h ≅ f ∘ (g ∘ h)
 let _alpha = Cat::associator::();
 
-// Left unitor: id ∘ f ≅ f
+// 左単位子: id ∘ f ≅ f
 let _lambda = Cat::left_unitor::();
 
-// Right unitor: f ∘ id ≅ f
+// 右単位子: f ∘ id ≅ f
 let _rho = Cat::right_unitor::();
 <span class="boring">}</span></code></pre>
 <h2 id="enrichedcategory"><a class="header" href="#enrichedcategory">EnrichedCategory</a></h2>
-<p>Categories enriched over a monoidal base V, where hom-objects carry algebraic structure:</p>
+<p>ホム対象が代数的構造を持つモノイダル基底 V 上の豊饒圏:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_higher::{EnrichedCategory, SetCategory, SetEnrichment};
 
-// Enriched over Set: ordinary category
+// Set 上の豊饒化: 通常の圏
 let id = SetCategory::id::();
 assert_eq!(id(42), 42);
 
@@ -226,25 +226,25 @@ let gf = SetCategory::compose(f, g);
 assert_eq!(gf(5), 12);
 <span class="boring">}</span></code></pre>
 <h2 id="ffunctor--fmonad"><a class="header" href="#ffunctor--fmonad">FFunctor / FMonad</a></h2>
-<p>Functors between 2-categories and monads in the endofunctor 2-category:</p>
+<p>2-圏間の関手と、自己関手 2-圏におけるモナド:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_higher::{FFunctor, IdentityFFunctor, TwoCategory};
 
-// Identity FFunctor preserves 1-morphisms and 2-morphisms
+// 恒等 FFunctor は 1-射と 2-射を保存する
 let m = IdentityFFunctor::&lt;Cat&gt;::map_morphism::&lt;i32, i32&gt;(Cat::id1());
 <span class="boring">}</span></code></pre>
-<h2 id="coherence-witnesses"><a class="header" href="#coherence-witnesses">Coherence Witnesses</a></h2>
-<p>Type-level witnesses for bicategory coherence laws via <code>karpal-proof::Justifies</code>:</p>
+<h2 id="コヒーレンス証拠"><a class="header" href="#コヒーレンス証拠">コヒーレンス証拠</a></h2>
+<p><code>karpal-proof::Justifies</code> によるバイ圏コヒーレンス法則の型レベル証拠:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Witness</th><th>Law</th></tr>
+<tr><th>証拠</th><th>法則</th></tr>
 </thead>
 <tbody>
 <tr><td><code>InterchangeIdentity</code></td><td><code>(α ∘ᵥ β) ∘ₕ (γ ∘ᵥ δ) = (α ∘ₕ γ) ∘ᵥ (β ∘ₕ δ)</code></td></tr>
-<tr><td><code>BicategoryPentagonIdentity</code></td><td>Associator pentagon coherence</td></tr>
-<tr><td><code>BicategoryTriangleIdentity</code></td><td>Unitor-triangle coherence</td></tr>
+<tr><td><code>BicategoryPentagonIdentity</code></td><td>結合子五角形コヒーレンス</td></tr>
+<tr><td><code>BicategoryTriangleIdentity</code></td><td>単位子三角形コヒーレンス</td></tr>
 </tbody>
 </table>
 </div>
@@ -253,14 +253,14 @@ let m = IdentityFFunctor::&lt;Cat&gt;::map_morphism::&lt;i32, i32&gt;(Cat::id1()
 </span>use karpal_higher::verify_interchange;
 let _proof = verify_interchange();
 <span class="boring">}</span></code></pre>
-<h2 id="verification-integration"><a class="header" href="#verification-integration">Verification Integration</a></h2>
-<p>Coherence certificates connect to <code>karpal-verify</code>:</p>
+<h2 id="検証統合"><a class="header" href="#検証統合">検証統合</a></h2>
+<p>コヒーレンス証明書は <code>karpal-verify</code> に接続します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_higher::higher_coherence_certificates;
 
 let certs = higher_coherence_certificates();
-assert_eq!(certs.len(), 3); // interchange, pentagon, triangle
+assert_eq!(certs.len(), 3); // interchange、pentagon、triangle
 for cert in &amp;certs {
     assert_eq!(cert.backend, "karpal-higher-coherence");
 }

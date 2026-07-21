@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,18 +178,18 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="verification-ci-workflow"><a class="header" href="#verification-ci-workflow">Verification CI Workflow</a></h1>
-<p>This guide shows how to use the <code>karpal-verify</code> stack in continuous integration. The goal is to make external verification runs inspectable and archivable: generate artifacts, execute plans with explicit backend policies, and persist JSON / Markdown summaries beside those artifacts.</p>
-<h2 id="workflow-overview"><a class="header" href="#workflow-overview">Workflow overview</a></h2>
+                        <h1 id="検証-ci-ワークフロー"><a class="header" href="#検証-ci-ワークフロー">検証 CI ワークフロー</a></h1>
+<p>このガイドは継続的インテグレーションで <code>karpal-verify</code> スタックを使う方法を示します。目的は外部検証の実行を検査・アーカイブ可能にすることです: アーティファクトを生成し、明示的なバックエンドポリシーで計画を実行し、JSON / Markdown サマリーをそれらのアーティファクトの隣に永続化します。</p>
+<h2 id="ワークフローの概要"><a class="header" href="#ワークフローの概要">ワークフローの概要</a></h2>
 <ol>
-<li>Construct an <code>ObligationBundle</code> from an <code>AlgebraicSignature</code>.</li>
-<li>Choose an <code>ArtifactLayout</code> under your CI workspace.</li>
-<li>Run a <code>VerificationSession</code> or <code>verify_bundle_with_ci_outputs(...)</code>.</li>
-<li>Publish the generated SMT / Lean artifacts and the report files as CI artifacts.</li>
-<li>Review <code>VerificationReport</code> and imported certificates at explicit trust boundaries.</li>
+<li><code>AlgebraicSignature</code> から <code>ObligationBundle</code> を構築する。</li>
+<li>CI ワークスペースの下に <code>ArtifactLayout</code> を選ぶ。</li>
+<li><code>VerificationSession</code> または <code>verify_bundle_with_ci_outputs(...)</code> を実行する。</li>
+<li>生成された SMT / Lean アーティファクトとレポートファイルを CI アーティファクトとして公開する。</li>
+<li><code>VerificationReport</code> とインポートされた証明書を明示的な信頼境界でレビューする。</li>
 </ol>
-<h2 id="directory-layout"><a class="header" href="#directory-layout">Directory layout</a></h2>
-<p><code>karpal-verify</code> uses a predictable on-disk layout. Given a root like <code>target/karpal-verify</code>:</p>
+<h2 id="ディレクトリレイアウト"><a class="header" href="#ディレクトリレイアウト">ディレクトリレイアウト</a></h2>
+<p><code>karpal-verify</code> は予測可能なディスク上レイアウトを使います。<code>target/karpal-verify</code> のようなルートを与えると:</p>
 <pre><code class="language-text">target/karpal-verify/
 ├── smt/
 │   ├── associativity.smt2
@@ -204,9 +204,9 @@
 ├── verification-report.md
 └── verification-report.lean-diagnostics.json
 </code></pre>
-<p>This layout is useful in CI because a single directory can be attached as an artifact bundle for later inspection.</p>
-<h2 id="one-shot-helper"><a class="header" href="#one-shot-helper">One-shot helper</a></h2>
-<p>For simple CI jobs, the easiest entry point is <code>verify_bundle_with_ci_outputs(...)</code>:</p>
+<p>このレイアウトは CI で有用です — 単一のディレクトリを後の検査のためのアーティファクトバンドルとして添付できるからです。</p>
+<h2 id="ワンショットヘルパー"><a class="header" href="#ワンショットヘルパー">ワンショットヘルパー</a></h2>
+<p>単純な CI ジョブでは、最も簡単なエントリポイントは <code>verify_bundle_with_ci_outputs(...)</code> です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_verify::{
@@ -233,9 +233,9 @@ let output = verify_bundle_with_ci_outputs(
 assert!(output.report_files.json_path.ends_with("verification-report.json"));
 assert!(output.report_files.markdown_path.ends_with("verification-report.md"));
 <span class="boring">}</span></code></pre>
-<p>This function builds artifacts, runs plans with the supplied runner, and writes CI-oriented summaries directly beside the generated files. When Lean artifacts are present, the output set also includes a typed Lean manifest and a Lean diagnostics sidecar so CI systems can archive both the source-level proof context and the parsed failure surface.</p>
-<h2 id="session-api"><a class="header" href="#session-api">Session API</a></h2>
-<p>For more control, use <code>VerificationSession</code>. It lets you customize solver binaries, Lean arguments, Lean execution drivers such as direct <code>lean</code>, <code>lake env lean</code>, or <code>lake build</code>, and the report file stem.</p>
+<p>この関数はアーティファクトを構築し、指定されたランナーで計画を実行し、CI 指向のサマリーを生成ファイルの隣に直接書き出します。Lean アーティファクトが存在する場合、出力セットには型付き Lean マニフェストと Lean 診断サイドカーも含まれ、CI システムはソースレベルの証明コンテキストと解析された失敗面の両方をアーカイブできます。</p>
+<h2 id="セッション-api"><a class="header" href="#セッション-api">セッション API</a></h2>
+<p>より制御が必要な場合は <code>VerificationSession</code> を使います。ソルバーバイナリ、Lean 引数、Lean 実行ドライバ (直接 <code>lean</code>、<code>lake env lean</code>、<code>lake build</code> など)、レポートファイルのステムをカスタマイズできます。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_verify::{
@@ -259,17 +259,17 @@ let session = VerificationSession::new(
 .with_lean_config(LeanConfig::new("lean"))
 .with_report_stem("ci-summary");
 <span class="boring">}</span></code></pre>
-<h3 id="dry-run-validation-in-ci"><a class="header" href="#dry-run-validation-in-ci">Dry-run validation in CI</a></h3>
-<p>A dry run is useful when you want to validate export and path generation without requiring external tools to be installed on every CI job:</p>
+<h3 id="ci-でのドライラン検証"><a class="header" href="#ci-でのドライラン検証">CI でのドライラン検証</a></h3>
+<p>ドライランは、すべての CI ジョブに外部ツールをインストールすることなくエクスポートとパス生成を検証したい場合に有用です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let report = session.dry_run_report();
 assert_eq!(report.obligation_count(), 6);
 assert!(report.obligations.iter().all(|o| o.status().is_some()));
 <span class="boring">}</span></code></pre>
-<p>Because <code>DryRunner</code> returns shell-rendered commands, it is a good fit for preview jobs and artifact smoke tests.</p>
-<h3 id="real-execution-in-ci"><a class="header" href="#real-execution-in-ci">Real execution in CI</a></h3>
-<p>When the CI image includes your solver and Lean, use:</p>
+<p><code>DryRunner</code> はシェル描画されたコマンドを返すため、プレビュージョブやアーティファクトのスモークテストに適しています。</p>
+<h3 id="ci-での実際の実行"><a class="header" href="#ci-での実際の実行">CI での実際の実行</a></h3>
+<p>CI イメージにソルバーと Lean が含まれる場合:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let output = session
@@ -280,65 +280,65 @@ if !output.report.is_success() {
     panic!("verification failed; inspect generated report artifacts");
 }
 <span class="boring">}</span></code></pre>
-<p>This path uses <code>LocalProcessRunner</code>, backend-specific <code>VerificationPolicy</code> interpretation, and report serialization.</p>
-<h2 id="backend-policy-behavior"><a class="header" href="#backend-policy-behavior">Backend policy behavior</a></h2>
-<p>CI should not guess what “success” means. In <code>karpal-verify</code>, success is interpreted explicitly:</p>
+<p>このパスは <code>LocalProcessRunner</code>、バックエンド固有の <code>VerificationPolicy</code> 解釈、レポートシリアライズを使います。</p>
+<h2 id="バックエンドポリシーの振る舞い"><a class="header" href="#バックエンドポリシーの振る舞い">バックエンドポリシーの振る舞い</a></h2>
+<p>CI は「成功」の意味を推測すべきではありません。<code>karpal-verify</code> では、成功は明示的に解釈されます:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Backend</th><th>Success condition</th><th>Why</th></tr>
+<tr><th>バックエンド</th><th>成功条件</th><th>理由</th></tr>
 </thead>
 <tbody>
-<tr><td>SMT</td><td><code>ExecutionStatus::Unsat</code></td><td>Karpal exports the negation of the obligation, so <code>unsat</code> means the law holds.</td></tr>
-<tr><td>Lean</td><td><code>ExecutionStatus::Success</code></td><td>The module is accepted by Lean without process failure.</td></tr>
+<tr><td>SMT</td><td><code>ExecutionStatus::Unsat</code></td><td>Karpal はオブリゲーションの否定をエクスポートするため、<code>unsat</code> は法則が成り立つことを意味する。</td></tr>
+<tr><td>Lean</td><td><code>ExecutionStatus::Success</code></td><td>モジュールがプロセス失敗なしに Lean に受理された。</td></tr>
 </tbody>
 </table>
 </div>
-<p>This distinction matters in CI dashboards and failure triage: a solver returning <code>sat</code> or <code>unknown</code> should not be treated the same way as a successful Lean process.</p>
-<h2 id="report-files"><a class="header" href="#report-files">Report files</a></h2>
-<p>The JSON and Markdown outputs are intentionally lightweight:</p>
+<p>この区別は CI ダッシュボードや失敗トリアージで重要です: ソルバーが <code>sat</code> や <code>unknown</code> を返す場合を、成功した Lean プロセスと同じように扱うべきではありません。</p>
+<h2 id="レポートファイル"><a class="header" href="#レポートファイル">レポートファイル</a></h2>
+<p>JSON と Markdown 出力は意図的に軽量です:</p>
 <ul>
-<li><strong>JSON</strong> is useful for CI bots, artifact scraping, or post-processing.</li>
-<li><strong>Markdown</strong> is useful for human inspection in uploaded artifacts or job summaries.</li>
+<li><strong>JSON</strong> は CI ボット、アーティファクト収集、後処理に有用です。</li>
+<li><strong>Markdown</strong> はアップロードされたアーティファクトやジョブサマリーでの人間による検査に有用です。</li>
 </ul>
-<p>The report includes bundle name, root directory, success/failure counts, per-obligation status, artifact paths, and certificate summaries where available.</p>
-<h3 id="schema-versioning"><a class="header" href="#schema-versioning">Schema versioning</a></h3>
-<p>The verification report JSON, generated Lean manifest JSON, and Lean diagnostics sidecar each include a top-level <code>schema_version</code> marker. Nested <code>report_files</code> metadata blocks are versioned too.</p>
-<p>Current schema version is <code>1</code>. Within the <code>1.x</code> line, existing fields are expected to remain stable and new data should be added only through optional fields. Consumers should therefore:</p>
+<p>レポートにはバンドル名、ルートディレクトリ、成功/失敗カウント、オブリゲーションごとの状態、アーティファクトパス、利用可能な場合は証明書サマリーが含まれます。</p>
+<h3 id="スキーマのバージョニング"><a class="header" href="#スキーマのバージョニング">スキーマのバージョニング</a></h3>
+<p>検証レポート JSON、生成された Lean マニフェスト JSON、Lean 診断サイドカーはそれぞれトップレベルの <code>schema_version</code> マーカーを含みます。入れ子の <code>report_files</code> メタデータブロックもバージョン管理されます。</p>
+<p>現在のスキーマバージョンは <code>1</code> です。<code>1.x</code> 系列内では既存フィールドは安定していることが期待され、新しいデータはオプションフィールド経由でのみ追加されるべきです。したがってコンシューマは以下のようにすべきです:</p>
 <ul>
-<li>accept <code>schema_version == "1"</code></li>
-<li>ignore unknown optional fields for forward compatibility</li>
-<li>treat a future schema bump as a breaking parser boundary</li>
+<li><code>schema_version == "1"</code> を受け入れる</li>
+<li>前方互換性のために未知のオプションフィールドを無視する</li>
+<li>将来のスキーマバンプを破壊的なパーサ境界として扱う</li>
 </ul>
-<p>For the fuller compatibility policy and migration expectations, see <a href="verification-schemas.html">Verification Schemas</a>.</p>
-<h2 id="sample-ci-shape"><a class="header" href="#sample-ci-shape">Sample CI shape</a></h2>
-<p>A typical CI pipeline might split external verification into two jobs:</p>
+<p>より完全な互換性ポリシーと移行の期待については <a href="verification-schemas.html">検証スキーマ</a> を参照してください。</p>
+<h2 id="ci-のサンプル構成"><a class="header" href="#ci-のサンプル構成">CI のサンプル構成</a></h2>
+<p>典型的な CI パイプラインは外部検証を二つのジョブに分割するかもしれません:</p>
 <ol>
-<li><strong>Export / dry-run job</strong>
+<li><strong>エクスポート / ドライランジョブ</strong>
 <ul>
-<li>Runs on every PR</li>
-<li>Generates artifacts and dry-run reports</li>
-<li>Publishes export files for review</li>
+<li>すべての PR で実行</li>
+<li>アーティファクトとドライランレポートを生成</li>
+<li>レビューのためエクスポートファイルを公開</li>
 </ul>
 </li>
-<li><strong>Solver-backed verification job</strong>
+<li><strong>ソルバー支援検証ジョブ</strong>
 <ul>
-<li>Runs where Z3 / Lean are available</li>
-<li>Executes local verification</li>
-<li>Uploads the same artifact directory plus final report files</li>
+<li>Z3 / Lean が利用可能な場所で実行</li>
+<li>ローカル検証を実行</li>
+<li>同じアーティファクトディレクトリと最終レポートファイルをアップロード</li>
 </ul>
 </li>
 </ol>
-<h2 id="recommended-practices"><a class="header" href="#recommended-practices">Recommended practices</a></h2>
+<h2 id="推奨プラクティス"><a class="header" href="#推奨プラクティス">推奨プラクティス</a></h2>
 <ul>
-<li>Use deterministic artifact roots so CI artifacts are easy to find.</li>
-<li>Archive the whole layout root, not just the JSON report.</li>
-<li>Keep report file names stable via <code>DEFAULT_REPORT_STEM</code> unless you need multiple outputs.</li>
-<li>Review imported certificates separately from exporter correctness.</li>
-<li>Treat <code>Certified&lt;...&gt;</code> as an explicit trust handoff, not as an automatic theorem import.</li>
+<li>CI アーティファクトを見つけやすくするため決定論的なアーティファクトルートを使う。</li>
+<li>JSON レポートだけでなくレイアウトルート全体をアーカイブする。</li>
+<li>複数出力が必要ない限り <code>DEFAULT_REPORT_STEM</code> でレポートファイル名を安定させる。</li>
+<li>エクスポータの正確性とは別にインポートされた証明書をレビューする。</li>
+<li><code>Certified&lt;...&gt;</code> を自動的な定理インポートではなく明示的な信頼の引き渡えとして扱う。</li>
 </ul>
-<p>For an end-to-end example with SMT and Lean-oriented snippets, see the <a href="../examples/verification-workflow.html">Verification Workflow example</a>. For the higher-level API overview, return to <a href="proof-verification.html">Proof &amp; Verification</a>. For the serialized schema contract, see <a href="verification-schemas.html">Verification Schemas</a>.</p>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>SMT と Lean 指向のスニペットを含むエンドツーエンドの例は <a href="../examples/verification-workflow.html">検証ワークフローの例</a> を参照してください。より高レベルの API 概要については <a href="proof-verification.html">証明と検証</a> に戻ってください。シリアライズされたスキーマ契約については <a href="verification-schemas.html">検証スキーマ</a> を参照してください。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

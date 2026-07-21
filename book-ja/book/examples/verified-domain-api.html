@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,10 +178,10 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="verified-domain-api"><a class="header" href="#verified-domain-api">Verified Domain API</a></h1>
-<p>This example shows how <code>karpal-proof</code> and <code>karpal-verify</code> fit together at an API boundary: a domain type accepts <code>Proven&lt;P, T&gt;</code> internally, but externally produced evidence must first cross through <code>Certified&lt;B, P, T&gt;</code> and an explicit trust handoff.</p>
-<h2 id="domain-goal"><a class="header" href="#domain-goal">Domain goal</a></h2>
-<p>Suppose your domain wants to work only with values whose combine operation is known to be associative. Instead of accepting a raw <code>T</code>, you can require <code>Proven&lt;IsAssociative, T&gt;</code>.</p>
+                        <h1 id="検証済みドメイン-api"><a class="header" href="#検証済みドメイン-api">検証済みドメイン API</a></h1>
+<p>この例は <code>karpal-proof</code> と <code>karpal-verify</code> が API 境界でどう組み合わさるかを示します: ドメイン型は内部的に <code>Proven&lt;P, T&gt;</code> を受け取りますが、外部で生成された証拠はまず <code>Certified&lt;B, P, T&gt;</code> と明示的な信頼の引き渡えを通過しなければなりません。</p>
+<h2 id="ドメインの目標"><a class="header" href="#ドメインの目標">ドメインの目標</a></h2>
+<p>ドメインが結合演算が結合的であることが知られている値だけを扱いたいとします。生の <code>T</code> を受け取る代わりに、<code>Proven&lt;IsAssociative, T&gt;</code> を要求できます。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_proof::{IsAssociative, Proven};
@@ -197,9 +197,9 @@ impl&lt;T&gt; VerifiedAccumulator&lt;T&gt; {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>This is the <code>karpal-proof</code> style: the domain API states the required law as a type-level precondition.</p>
-<h2 id="rust-native-entry-point"><a class="header" href="#rust-native-entry-point">Rust-native entry point</a></h2>
-<p>If the value already comes from a trusted Rust-side witness constructor, the API is straightforward:</p>
+<p>これが <code>karpal-proof</code> スタイルです: ドメイン API は要求される法則を型レベルの事前条件として記述します。</p>
+<h2 id="rust-ネイティブのエントリポイント"><a class="header" href="#rust-ネイティブのエントリポイント">Rust ネイティブのエントリポイント</a></h2>
+<p>値がすでに信頼できる Rust 側の証拠コンストラクタから来ている場合、API は単純です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_proof::Proven;
@@ -207,14 +207,14 @@ impl&lt;T&gt; VerifiedAccumulator&lt;T&gt; {
 let proven = Proven::from_semigroup(5i32);
 let acc = VerifiedAccumulator::new(proven);
 <span class="boring">}</span></code></pre>
-<p>Here the value enters through Rust-native evidence. No external trust boundary is involved.</p>
-<h2 id="external-certificate-entry-point"><a class="header" href="#external-certificate-entry-point">External certificate entry point</a></h2>
+<p>ここでは値は Rust ネイティブの証拠を経由して入ります。外部の信頼境界は関与しません。</p>
+<h2 id="外部証明書のエントリポイント"><a class="header" href="#外部証明書のエントリポイント">外部証明書のエントリポイント</a></h2>
 <blockquote>
-<p><strong>⚠️ Trust Boundary Warning</strong></p>
-<p>The <code>unsafe</code> conversions shown below are <strong>not</strong> a cryptographic or formal guarantee. <code>Certificate</code> carries an arbitrary string with no signature, checksum, or replay protection. The <code>into_proven()</code> call erases external provenance entirely. Anyone with access to this code can forge a <code>Proven</code> value.</p>
-<p>This is an <strong>audited trust boundary</strong>, not a security mechanism. The <code>unsafe</code> keyword ensures that code review will flag every site where external evidence is accepted. See the <a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md">Phase 12 Trust Model</a> for the full design rationale.</p>
+<p><strong>⚠️ 信頼境界の警告</strong></p>
+<p>以下に示す <code>unsafe</code> 変換は暗号論的または形式的な保証では <strong>ありません</strong>。<code>Certificate</code> は署名・チェックサム・リプレイ保護のない任意の文字列を運びます。<code>into_proven()</code> の呼び出しは外部の来歴を完全に消去します。このコードにアクセスできる人は誰でも <code>Proven</code> 値を偽造できます。</p>
+<p>これは <strong>監査された信頼境界</strong> であり、セキュリティ機構ではありません。<code>unsafe</code> キーワードにより、コードレビューが外部の証拠が受理されるすべての箇所を確実に検出します。完全な設計理論は <a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md">フェーズ 12 信頼モデル</a> を参照してください。</p>
 </blockquote>
-<p>Now consider the case where associativity was established by an external prover. <code>karpal-verify</code> deliberately prevents that evidence from silently becoming <code>Proven&lt;...&gt;</code>.</p>
+<p>次に、結合性が外部の証明器によって確立された場合を考えます。<code>karpal-verify</code> はその証拠が暗黙に <code>Proven&lt;...&gt;</code> になることを意図的に防ぎます。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_proof::{IsAssociative, Proven};
@@ -225,13 +225,13 @@ let certified = unsafe {
     Certified::&lt;SmtCertificate, IsAssociative, i32&gt;::assume(5, cert)
 };
 
-// Still not a Proven&lt;...&gt; value.
+// まだ Proven&lt;...&gt; 値ではない。
 let proven: Proven&lt;IsAssociative, i32&gt; = unsafe { certified.into_proven() };
 let acc = VerifiedAccumulator::new(proven);
 <span class="boring">}</span></code></pre>
-<p>The two explicit <code>unsafe</code> steps are the point: code review can find and audit imported trust boundaries.</p>
-<h2 id="boundary-design-pattern"><a class="header" href="#boundary-design-pattern">Boundary design pattern</a></h2>
-<p>A useful pattern is to keep the unsafe conversion at one narrow boundary function and expose only safe APIs elsewhere:</p>
+<p>二つの明示的な <code>unsafe</code> ステップが要点です: コードレビューがインポートされた信頼境界を見つけて監査できます。</p>
+<h2 id="境界の設計パターン"><a class="header" href="#境界の設計パターン">境界の設計パターン</a></h2>
+<p>有用なパターンは、unsafe 変換を一つの狭い境界関数に閉じ込め、他では安全な API のみを公開することです:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_proof::{IsAssociative, Proven};
@@ -244,22 +244,22 @@ fn import_associative_i32(
     VerifiedAccumulator::new(proven)
 }
 <span class="boring">}</span></code></pre>
-<p>This keeps the imported-proof decision explicit and localized.</p>
-<h2 id="why-this-matters"><a class="header" href="#why-this-matters">Why this matters</a></h2>
+<p>これによりインポートされた証明の決定を明示的かつ局所化できます。</p>
+<h2 id="なぜこれが重要か"><a class="header" href="#なぜこれが重要か">なぜこれが重要か</a></h2>
 <ul>
-<li><strong><code>karpal-proof</code></strong> gives your domain rich law-aware APIs.</li>
-<li><strong><code>karpal-verify</code></strong> lets external provers feed those APIs without erasing trust provenance.</li>
-<li><strong>The combination</strong> means you can keep public APIs principled while still integrating with SMT and full Lean workflows, including project-aware execution, structured diagnostics, and archived verification artifacts.</li>
+<li><strong><code>karpal-proof</code></strong> はドメインに豊かな法則認識 API を与えます。</li>
+<li><strong><code>karpal-verify</code></strong> は外部の証明器が信頼の来歴を消去することなくそれらの API に供給できるようにします。</li>
+<li><strong>組み合わせ</strong> により、公開 API を原則的に保ちながら、プロジェクト認識実行・構造化診断・アーカイブされた検証アーティファクトを含む SMT や完全な Lean ワークフローと統合できます。</li>
 </ul>
-<h2 id="recommended-usage"><a class="header" href="#recommended-usage">Recommended usage</a></h2>
+<h2 id="推奨される使い方"><a class="header" href="#推奨される使い方">推奨される使い方</a></h2>
 <ol>
-<li>Design internal domain APIs around <code>Proven&lt;P, T&gt;</code> and refinement wrappers.</li>
-<li>Model and discharge external obligations with <code>karpal-verify</code>.</li>
-<li>Import certificates as <code>Certified&lt;B, P, T&gt;</code>.</li>
-<li>Convert to <code>Proven&lt;P, T&gt;</code> only in a small, audited boundary layer.</li>
+<li>内部ドメイン API を <code>Proven&lt;P, T&gt;</code> と精密化ラッパーを中心に設計する。</li>
+<li><code>karpal-verify</code> で外部のオブリゲーションをモデル化し discharge する。</li>
+<li>証明書を <code>Certified&lt;B, P, T&gt;</code> としてインポートする。</li>
+<li>小さく監査された境界レイヤーでのみ <code>Proven&lt;P, T&gt;</code> に変換する。</li>
 </ol>
-<p>For the broader export/execution workflow, see <a href="verification-workflow.html">Verification Workflow</a>. For the API overview, see <a href="../reference/proof-verification.html">Proof &amp; Verification</a>. For CI/report/archive details, see <a href="../reference/verification-ci.html">Verification CI Workflow</a>, and for serialized compatibility details see <a href="../reference/verification-schemas.html">Verification Schemas</a>.</p>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>より広範なエクスポート/実行ワークフローについては <a href="verification-workflow.html">検証ワークフロー</a> を参照してください。API の概要については <a href="../reference/proof-verification.html">証明と検証</a> を参照してください。CI/レポート/アーカイブの詳細については <a href="../reference/verification-ci.html">検証 CI ワークフロー</a>、シリアライズされた互換性の詳細については <a href="../reference/verification-schemas.html">検証スキーマ</a> を参照してください。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

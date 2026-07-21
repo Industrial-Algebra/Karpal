@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,12 +178,12 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="functorfilter--selective"><a class="header" href="#functorfilter--selective">FunctorFilter &amp; Selective</a></h1>
-<p>Filtering and conditional execution within functorial contexts.</p>
+                        <h1 id="functorfilter-と-selective"><a class="header" href="#functorfilter-と-selective">FunctorFilter と Selective</a></h1>
+<p>関手の文脈内でのフィルタリングと条件付き実行。</p>
 <h2 id="functorfilter"><a class="header" href="#functorfilter">FunctorFilter</a></h2>
 <h3 id="functorfilter-1"><a class="header" href="#functorfilter-1">FunctorFilter</a></h3>
-<p>A <code>Functor</code> that can filter elements during mapping. <code>filter_map</code> applies a function that may return <code>None</code> to discard elements, combining mapping and filtering in a single pass.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>マッピング中に要素をフィルタできる <code>Functor</code>。<code>filter_map</code> は <code>None</code> を返して要素を破棄する可能性のある関数を適用し、マッピングとフィルタリングを一回の走査で組み合わせます。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait FunctorFilter: Functor {
@@ -194,54 +194,54 @@
     }
 }
 <span class="boring">}</span></code></pre>
-<h4 id="methods"><a class="header" href="#methods">Methods</a></h4>
+<h4 id="メソッド"><a class="header" href="#メソッド">メソッド</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Method</th><th>Description</th></tr>
+<tr><th>メソッド</th><th>説明</th></tr>
 </thead>
 <tbody>
-<tr><td><code>filter_map(fa, f)</code></td><td>Apply <code>f</code> to each element; keep only those where <code>f</code> returns <code>Some</code>. This is the required method that implementations must provide.</td></tr>
-<tr><td><code>filter(fa, pred)</code></td><td>Keep only elements for which <code>pred</code> returns <code>true</code>. Default implementation delegates to <code>filter_map</code>. Requires <code>A: Clone</code>.</td></tr>
+<tr><td><code>filter_map(fa, f)</code></td><td>各要素に <code>f</code> を適用; <code>f</code> が <code>Some</code> を返すものだけ保持。実装が提供すべき必須メソッドです。</td></tr>
+<tr><td><code>filter(fa, pred)</code></td><td><code>pred</code> が <code>true</code> を返す要素だけ保持。デフォルト実装は <code>filter_map</code> に委譲。<code>A: Clone</code> が必要。</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
 <ul>
-<li><strong>Identity:</strong> <code>filter_map(fa, Some) == fa</code> — mapping with <code>Some</code> (which never discards) is a no-op.</li>
-<li><strong>Composition:</strong> <code>filter_map(filter_map(fa, f), g) == filter_map(fa, |a| f(a).and_then(g))</code> — two successive filter-maps can be fused into one.</li>
+<li><strong>単位律:</strong> <code>filter_map(fa, Some) == fa</code> — (破棄しない) <code>Some</code> でのマッピングは何もしません。</li>
+<li><strong>合成律:</strong> <code>filter_map(filter_map(fa, f), g) == filter_map(fa, |a| f(a).and_then(g))</code> — 二回連続の filter-map は一回に融合できます。</li>
 </ul>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td>Delegates to <code>Option::and_then</code>. Available in <code>no_std</code>.</td></tr>
-<tr><td><code>VecF</code></td><td><code>Vec&lt;A&gt;</code></td><td>Uses <code>Iterator::filter_map</code> internally. Requires <code>alloc</code> or <code>std</code> feature.</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td><code>Option::and_then</code> に委譲。<code>no_std</code> で利用可能。</td></tr>
+<tr><td><code>VecF</code></td><td><code>Vec&lt;A&gt;</code></td><td>内部的に <code>Iterator::filter_map</code> を使用。<code>alloc</code> または <code>std</code> フィーチャーが必要。</td></tr>
 </tbody>
 </table>
 </div>
-<p><code>ResultF&lt;E&gt;</code> does not implement <code>FunctorFilter</code> because filtering a <code>Result</code> would require a default error value (<code>E: Default</code>), which is too restrictive.</p>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<p><code>ResultF&lt;E&gt;</code> は <code>FunctorFilter</code> を実装しません。<code>Result</code> のフィルタリングはデフォルトのエラー値 (<code>E: Default</code>) を必要とするため、制約が強すぎます。</p>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// filter_map: keep only positive values, doubled
+// filter_map: 正の値だけ保持し、二倍にする
 let nums = vec![1, -2, 3, -4, 5];
 let result = VecF::filter_map(nums, |x| {
     if x &gt; 0 { Some(x * 2) } else { None }
 });
 assert_eq!(result, vec![2, 6, 10]);
 
-// filter: keep only even numbers
+// filter: 偶数だけ保持
 let nums = vec![1, 2, 3, 4, 5, 6];
 let evens = VecF::filter(nums, |x| x % 2 == 0);
 assert_eq!(evens, vec![2, 4, 6]);
 
-// With OptionF: filter_map acts like and_then
+// OptionF の場合: filter_map は and_then のように振る舞う
 let value = OptionF::filter_map(Some(10), |x| {
     if x &gt; 5 { Some(x * 3) } else { None }
 });
@@ -254,8 +254,8 @@ assert_eq!(rejected, None);
 <span class="boring">}</span></code></pre>
 <h2 id="selective"><a class="header" href="#selective">Selective</a></h2>
 <h3 id="selective-1"><a class="header" href="#selective-1">Selective</a></h3>
-<p>An <code>Applicative</code> that can conditionally apply effects. <code>Selective</code> sits between <code>Applicative</code> and <code>Monad</code> in expressive power: it can branch on a value inside the functor without requiring full monadic bind. The branching is encoded using <code>Result&lt;A, B&gt;</code> where <code>Ok(a)</code> means “needs the function applied” and <code>Err(b)</code> means “already resolved.”</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>エフェクトを条件付きで適用できる <code>Applicative</code>。<code>Selective</code> は表現力において <code>Applicative</code> と <code>Monad</code> の中間に位置します: 完全なモナド束縛なしに関手内の値で分岐できます。分岐は <code>Result&lt;A, B&gt;</code> でエンコードされ、<code>Ok(a)</code> は「関数の適用が必要」、<code>Err(b)</code> は「既に解決済み」を意味します。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Selective: Applicative {
@@ -265,83 +265,83 @@ assert_eq!(rejected, None);
         F: Fn(A) -&gt; B;
 }
 <span class="boring">}</span></code></pre>
-<h4 id="methods-1"><a class="header" href="#methods-1">Methods</a></h4>
+<h4 id="メソッド-1"><a class="header" href="#メソッド-1">メソッド</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Method</th><th>Description</th></tr>
+<tr><th>メソッド</th><th>説明</th></tr>
 </thead>
 <tbody>
-<tr><td><code>select(fab, ff)</code></td><td>If <code>fab</code> contains <code>Ok(a)</code>, apply the function inside <code>ff</code> to produce <code>B</code>. If <code>fab</code> contains <code>Err(b)</code>, return <code>b</code> directly, ignoring <code>ff</code>.</td></tr>
+<tr><td><code>select(fab, ff)</code></td><td><code>fab</code> が <code>Ok(a)</code> を含む場合、<code>ff</code> 内の関数を適用して <code>B</code> を生成。<code>fab</code> が <code>Err(b)</code> を含む場合、<code>ff</code> を無視して <code>b</code> を直接返す。</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
 <ul>
-<li><strong>Identity:</strong> <code>select(fmap(Err, x), _) == x</code> — when every value is already resolved (wrapped in <code>Err</code>), the function argument is never used and the original values pass through unchanged.</li>
+<li><strong>単位律:</strong> <code>select(fmap(Err, x), _) == x</code> — すべての値が既に解決済み (<code>Err</code> に包まれている) 場合、関数引数は使われず、元の値がそのまま通過します。</li>
 </ul>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<h4 id="実装-1"><a class="header" href="#実装-1">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td><code>None</code> propagates. <code>Some(Ok(a))</code> applies the function if present. <code>Some(Err(b))</code> returns <code>Some(b)</code> directly.</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td><code>None</code> は伝播。<code>Some(Ok(a))</code> は存在すれば関数を適用。<code>Some(Err(b))</code> は直接 <code>Some(b)</code> を返す。</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="branching-semantics"><a class="header" href="#branching-semantics">Branching semantics</a></h4>
-<p>The <code>Result</code> inside the first argument encodes a choice:</p>
+<h4 id="分岐の意味論"><a class="header" href="#分岐の意味論">分岐の意味論</a></h4>
+<p>最初の引数内の <code>Result</code> は選択をエンコードします:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th><code>fab</code></th><th><code>ff</code></th><th>Result</th></tr>
+<tr><th><code>fab</code></th><th><code>ff</code></th><th>結果</th></tr>
 </thead>
 <tbody>
-<tr><td><code>Some(Ok(a))</code></td><td><code>Some(f)</code></td><td><code>Some(f(a))</code> — function is applied</td></tr>
-<tr><td><code>Some(Ok(a))</code></td><td><code>None</code></td><td><code>None</code> — function needed but absent</td></tr>
-<tr><td><code>Some(Err(b))</code></td><td><em>(any)</em></td><td><code>Some(b)</code> — already resolved, function ignored</td></tr>
-<tr><td><code>None</code></td><td><em>(any)</em></td><td><code>None</code> — no value to branch on</td></tr>
+<tr><td><code>Some(Ok(a))</code></td><td><code>Some(f)</code></td><td><code>Some(f(a))</code> — 関数が適用される</td></tr>
+<tr><td><code>Some(Ok(a))</code></td><td><code>None</code></td><td><code>None</code> — 関数が必要だが不在</td></tr>
+<tr><td><code>Some(Err(b))</code></td><td><em>(任意)</em></td><td><code>Some(b)</code> — 既に解決済み、関数は無視</td></tr>
+<tr><td><code>None</code></td><td><em>(任意)</em></td><td><code>None</code> — 分岐すべき値がない</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
+<h4 id="例-1"><a class="header" href="#例-1">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Ok branch: the function is applied
+// Ok 分岐: 関数が適用される
 let result = OptionF::select(
     Some(Ok(3i32)),
     Some(|x: i32| x * 2),
 );
 assert_eq!(result, Some(6));
 
-// Err branch: already resolved, function is ignored
+// Err 分岐: 既に解決済み、関数は無視
 let result = OptionF::select(
     Some(Err(42i32)),
     Some(|_x: i32| 0),
 );
 assert_eq!(result, Some(42));
 
-// None propagation: no value means no result
+// None 伝播: 値がないので結果もない
 let result = OptionF::select(
     None::&lt;Result&lt;i32, i32&gt;&gt;,
     Some(|x: i32| x * 2),
 );
 assert_eq!(result, None);
 
-// Ok branch but no function available
+// Ok 分岐だが関数が利用不可
 let result = OptionF::select(
     Some(Ok(3i32)),
     None::&lt;fn(i32) -&gt; i32&gt;,
 );
 assert_eq!(result, None);
 <span class="boring">}</span></code></pre>
-<h4 id="when-to-use-selective"><a class="header" href="#when-to-use-selective">When to use Selective</a></h4>
-<p><code>Selective</code> is useful when you need conditional logic inside a functorial pipeline but do not need the full power of <code>Monad</code>. Because the branching is encoded in the type (<code>Result&lt;A, B&gt;</code>) rather than in arbitrary closures, selective computations can be analyzed statically — making them suitable for scenarios like build systems or task schedulers where you want to inspect the structure of a computation before running it.</p>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<h4 id="selective-を使う場面"><a class="header" href="#selective-を使う場面">Selective を使う場面</a></h4>
+<p><code>Selective</code> は、関手的パイプライン内で条件付きロジックが必要だが、<code>Monad</code> の完全な力は必要ない場合に有用です。分岐は (任意のクロージャではなく) 型 (<code>Result&lt;A, B&gt;</code>) でエンコードされるため、選択的計算は静的に解析できます — 計算を実行する前にその構造を調べたいビルドシステムやタスクスケジューラなどのシナリオに適しています。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,40 +178,40 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="schubert-types"><a class="header" href="#schubert-types">Schubert Types</a></h1>
-<p>Schubert intersection type system — <code>karpal-schubert-types</code> (Phase 14 A–C).</p>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Types are Schubert classes σ<sub>λ</sub> in a Grassmannian Gr(k, n), and type compatibility is computed via Littlewood-Richardson intersection coefficients. Two types are compatible when their Schubert classes intersect nontrivially (σ<sub>A</sub> · σ<sub>B</sub> ≠ 0). The LR coefficient gives the <em>multiplicity</em> — the number of distinct coercion paths.</p>
+                        <h1 id="シューベルト型"><a class="header" href="#シューベルト型">シューベルト型</a></h1>
+<p>シューベルト交点型システム — <code>karpal-schubert-types</code> (フェーズ 14 A–C)。</p>
+<h2 id="概要"><a class="header" href="#概要">概要</a></h2>
+<p>型はグラスマン多様体 Gr(k, n) 内のシューベルト類 σ<sub>λ</sub> であり、型の互換性はリトルウッド・リチャードソン交点係数によって計算されます。二つの型は、それらのシューベルト類が非自明に交わる (σ<sub>A</sub> · σ<sub>B</sub> ≠ 0) ときに互換です。LR 係数は <em>多重度</em> — 個別の強制経路の数 — を与えます。</p>
 <h2 id="schuberttype"><a class="header" href="#schuberttype">SchubertType</a></h2>
-<p>A Schubert class indexed by a partition (Young diagram) in a Grassmannian:</p>
+<p>グラスマン多様体内の分割 (ヤング図形) で添字付けられたシューベルト類:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_schubert_types::SchubertType;
 
-// σ₁ in Gr(2,4) — lines meeting a fixed 2-plane
+// Gr(2,4) 内の σ₁ — 固定された 2-平面と交わる直線
 let sigma_1 = SchubertType::new(vec![1], (2, 4)).expect("valid");
 
-// σ₂₂ in Gr(2,4) — point class
+// Gr(2,4) 内の σ₂₂ — 点類
 let sigma_22 = SchubertType::new(vec![2, 2], (2, 4)).expect("valid");
 
-// Partition entry exceeds box bound → error
+// 分割の要素がボックス上限を超える → エラー
 assert!(SchubertType::new(vec![3], (2, 4)).is_err());
 
-assert_eq!(sigma_1.codimension(), 1); // sum of partition entries
+assert_eq!(sigma_1.codimension(), 1); // 分割要素の和
 assert_eq!(sigma_22.codimension(), 4);
 <span class="boring">}</span></code></pre>
 <h2 id="intersection"><a class="header" href="#intersection">Intersection</a></h2>
-<p><code>check_intersection(a, b)</code> computes the intersection product via <code>amari-enumerative</code> and classifies the result:</p>
+<p><code>check_intersection(a, b)</code> は <code>amari-enumerative</code> を介して交点積を計算し、結果を分類します:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Kind</th><th>Meaning</th></tr>
+<tr><th>種類</th><th>意味</th></tr>
 </thead>
 <tbody>
-<tr><td><code>StructuralZero</code></td><td>Total codimension exceeds Grassmannian dimension</td></tr>
-<tr><td><code>GeometricZero</code></td><td>Correctly dimensioned but no intersection points</td></tr>
-<tr><td><code>Positive</code></td><td>Nonempty intersection with known multiplicity</td></tr>
-<tr><td><code>Underdetermined</code></td><td>Computation could not resolve the result</td></tr>
+<tr><td><code>StructuralZero</code></td><td>全余次元がグラスマン多様体の次元を超える</td></tr>
+<tr><td><code>GeometricZero</code></td><td>次元は正しいが交点がない</td></tr>
+<tr><td><code>Positive</code></td><td>既知の多重度を持つ空でない交点</td></tr>
+<tr><td><code>Underdetermined</code></td><td>計算が結果を解決できなかった</td></tr>
 </tbody>
 </table>
 </div>
@@ -222,22 +222,22 @@ assert_eq!(sigma_22.codimension(), 4);
 let s1 = SchubertType::new(vec![1], (2, 4)).unwrap();
 let s22 = SchubertType::new(vec![2, 2], (2, 4)).unwrap();
 
-// σ₁ · σ₁ is positive-dimensional
+// σ₁ · σ₁ は正の次元を持つ
 let result = check_intersection(&amp;s1, &amp;s1);
 assert_eq!(result.kind(), IntersectionKind::Positive);
 
-// σ₂₂ · σ₂₂ is a structural zero (codim 8 &gt; dim 4)
+// σ₂₂ · σ₂₂ は構造的ゼロ (余次元 8 &gt; 次元 4)
 let zero = check_intersection(&amp;s22, &amp;s22);
 assert_eq!(zero.kind(), IntersectionKind::StructuralZero);
 assert_eq!(zero.multiplicity(), 0);
 <span class="boring">}</span></code></pre>
 <h2 id="schuberttyped--schubertproven"><a class="header" href="#schuberttyped--schubertproven">SchubertTyped &amp; SchubertProven</a></h2>
-<p><code>SchubertTyped</code> associates a Schubert class with a Rust type. <code>SchubertProven&lt;M, T&gt;</code> is the Schubert analogue of <code>karpal_proof::Proven&lt;P, T&gt;</code>:</p>
+<p><code>SchubertTyped</code> はシューベルト類を Rust の型に関連付けます。<code>SchubertProven&lt;M, T&gt;</code> は <code>karpal_proof::Proven&lt;P, T&gt;</code> のシューベルト版です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_schubert_types::{SchubertProven, SchubertType, SchubertTyped};
 
-// Declare a marker type
+// マーカー型を宣言
 struct Sigma1;
 
 impl SchubertTyped for Sigma1 {
@@ -246,28 +246,28 @@ impl SchubertTyped for Sigma1 {
     }
 }
 
-// Wrap a value with type-level proof
+// 値を型レベルの証明で包む
 let proven = SchubertProven::::new("my_data");
 assert_eq!(*proven.value(), "my_data");
 
-// Check compatibility with another type
+// 別の型との互換性を確認
 assert!(proven.check_against::().is_some());
 
-// Unwrap
+// 取り出す
 assert_eq!(proven.into_inner(), "my_data");
 <span class="boring">}</span></code></pre>
-<h2 id="chained-composition"><a class="header" href="#chained-composition">Chained Composition</a></h2>
-<p><code>compose_checks::&lt;A, B, C&gt;()</code> verifies a chain of type compatibilities via the LR rule:</p>
+<h2 id="連鎖合成"><a class="header" href="#連鎖合成">連鎖合成</a></h2>
+<p><code>compose_checks::&lt;A, B, C&gt;()</code> は LR 規則を介して型互換性の連鎖を検証します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_schubert_types::compose_checks;
 
-// Verify A → B → C composition chain
+// A → B → C 合成連鎖を検証
 let chain = compose_checks::();
 assert!(chain.is_some());
 <span class="boring">}</span></code></pre>
-<h2 id="external-verification"><a class="header" href="#external-verification">External Verification</a></h2>
-<p>Schubert calculus properties export as <code>karpal-verify</code> obligation bundles:</p>
+<h2 id="外部検証"><a class="header" href="#外部検証">外部検証</a></h2>
+<p>シューベルト計算の性質は <code>karpal-verify</code> のオブリゲーションバンドルとしてエクスポートされます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_schubert_types::verification::verify_schubert;

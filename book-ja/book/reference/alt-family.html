@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,172 +178,171 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="alt-family"><a class="header" href="#alt-family">Alt Family</a></h1>
-<p>Fallback and choice combinators: Alt, Plus, Alternative.</p>
-<h2 id="hierarchy"><a class="header" href="#hierarchy">Hierarchy</a></h2>
-<p>Functor  →  Alt  →  Plus  →  (+ Applicative) →  Alternative  (blanket)</p>
-<p>The Alt branch of the functor hierarchy provides combinators for expressing fallback and choice. <code>Alt</code> gives an associative choice operation, <code>Plus</code> adds an identity element (zero/empty), and <code>Alternative</code> combines <code>Plus</code> with <code>Applicative</code> via a blanket impl.</p>
+                        <h1 id="alt-ファミリー"><a class="header" href="#alt-ファミリー">Alt ファミリー</a></h1>
+<p>フォールバックと選択コンビネータ: Alt、Plus、Alternative。</p>
+<h2 id="階層"><a class="header" href="#階層">階層</a></h2>
+<p>Functor  →  Alt  →  Plus  →  (+ Applicative) →  Alternative  (ブランケット)</p>
+<p>関手階層の Alt 枝はフォールバックと選択を表現するためのコンビネータを提供します。<code>Alt</code> は結合的な選択演算を与え、<code>Plus</code> は単位元 (zero/empty) を追加し、<code>Alternative</code> はブランケット実装を介して <code>Plus</code> と <code>Applicative</code> を組み合わせます。</p>
 <h2 id="alt"><a class="header" href="#alt">Alt</a></h2>
 <h3 id="alt-1"><a class="header" href="#alt-1">Alt</a></h3>
-<p>A Functor with an associative choice operation.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>結合的な選択演算を持つ Functor。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Alt: Functor {
     fn alt&lt;A&gt;(fa1: Self::Of&lt;A&gt;, fa2: Self::Of&lt;A&gt;) -&gt; Self::Of&lt;A&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p><code>alt</code> takes two values of the same functor type and returns one, preferring the first when both are “successful.” The exact semantics depend on the instance: for <code>OptionF</code> it is <code>.or()</code>, for <code>VecF</code> it is concatenation.</p>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Associativity</p>
+<p><code>alt</code> は同じ関手型の二つの値を取り、一つを返します。両方が「成功」のときは最初のものを優先します。正確な意味論は実装に依存します: <code>OptionF</code> では <code>.or()</code>、<code>VecF</code> では結合です。</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>結合律</p>
 <p>alt(alt(a, b), c) == alt(a, alt(b, c))</p>
-<p>Distributivity</p>
+<p>分配律</p>
 <p>fmap(f, alt(a, b)) == alt(fmap(f, a), fmap(f, b))</p>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Behaviour of <code>alt</code></th></tr>
+<tr><th>型コンストラクタ</th><th><code>alt</code> の振る舞い</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td><code>fa1.or(fa2)</code> — returns the first <code>Some</code>, or <code>None</code> if both are <code>None</code></td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>fa1.or(fa2)</code> — returns the first <code>Ok</code>, or the second value if the first is <code>Err</code></td></tr>
-<tr><td><code>VecF</code></td><td>Concatenation — extends <code>fa1</code> with all elements of <code>fa2</code></td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Concatenation — appends the head and tail of <code>fa2</code> onto <code>fa1</code></td></tr>
+<tr><td><code>OptionF</code></td><td><code>fa1.or(fa2)</code> — 最初の <code>Some</code> を返す、両方が <code>None</code> なら <code>None</code></td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>fa1.or(fa2)</code> — 最初の <code>Ok</code> を返す、最初が <code>Err</code> なら二番目の値を返す</td></tr>
+<tr><td><code>VecF</code></td><td>結合 — <code>fa1</code> に <code>fa2</code> の全要素を追加</td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td>結合 — <code>fa1</code> に <code>fa2</code> の先頭と末尾を追加</td></tr>
 </tbody>
 </table>
 </div>
-<p><code>VecF</code> and <code>NonEmptyVecF</code> require the <code>alloc</code> or <code>std</code> feature.</p>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<p><code>VecF</code> と <code>NonEmptyVecF</code> は <code>alloc</code> または <code>std</code> フィーチャーが必要です。</p>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Fallback: try the first source, fall back to the second
+// フォールバック: 最初のソースを試し、二番目にフォールバック
 let primary: Option&lt;i32&gt; = None;
 let fallback: Option&lt;i32&gt; = Some(42);
 
 let result = OptionF::alt(primary, fallback);
 assert_eq!(result, Some(42));
 
-// When both are present, the first wins
+// 両方が存在する場合、最初が勝つ
 let result = OptionF::alt(Some(1), Some(2));
 assert_eq!(result, Some(1));
 
-// Vec: concatenation
+// Vec: 結合
 let combined = VecF::alt(vec![1, 2], vec![3, 4]);
 assert_eq!(combined, vec![1, 2, 3, 4]);
 <span class="boring">}</span></code></pre>
 <h2 id="plus"><a class="header" href="#plus">Plus</a></h2>
 <h3 id="plus-1"><a class="header" href="#plus-1">Plus</a></h3>
-<p>An Alt with a zero/empty element.</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>zero/empty 要素を持つ Alt。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Plus: Alt {
     fn zero&lt;A&gt;() -&gt; Self::Of&lt;A&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p><code>zero</code> produces the identity element for <code>alt</code>. Combined with the Alt laws, this gives a monoid structure over the functor type.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>Left identity</p>
+<p><code>zero</code> は <code>alt</code> の単位元を生成します。Alt の法則と合わせて、これが関手型上のモノイド構造を与えます。</p>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
+<p>左単位律</p>
 <p>alt(zero(), a) == a</p>
-<p>Right identity</p>
+<p>右単位律</p>
 <p>alt(a, zero()) == a</p>
-<p>Annihilation</p>
+<p>消滅律</p>
 <p>fmap(f, zero()) == zero()</p>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<h4 id="実装-1"><a class="header" href="#実装-1">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>zero()</code> returns</th></tr>
+<tr><th>型コンストラクタ</th><th><code>zero()</code> が返す</th></tr>
 </thead>
 <tbody>
 <tr><td><code>OptionF</code></td><td><code>None</code></td></tr>
-<tr><td><code>VecF</code></td><td><code>Vec::new()</code> (empty vector)</td></tr>
+<tr><td><code>VecF</code></td><td><code>Vec::new()</code> (空のベクタ)</td></tr>
 </tbody>
 </table>
 </div>
-<p><code>ResultF&lt;E&gt;</code> does <strong>not</strong> implement <code>Plus</code> because there is no way to produce a <code>Result&lt;A, E&gt;</code> without an <code>E</code> value. <code>NonEmptyVecF</code> also lacks an instance because a non-empty vector cannot be empty by definition.</p>
-<p><code>VecF</code> requires the <code>alloc</code> or <code>std</code> feature.</p>
-<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
+<p><code>ResultF&lt;E&gt;</code> は <code>E</code> 値なしに <code>Result&lt;A, E&gt;</code> を生成できないため <strong><code>Plus</code> を実装しません</strong>。<code>NonEmptyVecF</code> も、空でないベクタは定義上空になり得ないため実装を持ちません。</p>
+<p><code>VecF</code> は <code>alloc</code> または <code>std</code> フィーチャーが必要です。</p>
+<h4 id="例-1"><a class="header" href="#例-1">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// zero() for Option is None
+// Option の zero() は None
 let empty: Option&lt;i32&gt; = OptionF::zero();
 assert_eq!(empty, None);
 
-// zero() for Vec is an empty vector
+// Vec の zero() は空のベクタ
 let empty_vec: Vec&lt;i32&gt; = VecF::zero();
 assert_eq!(empty_vec, Vec::&lt;i32&gt;::new());
 
-// Left identity: alt(zero(), a) == a
+// 左単位律: alt(zero(), a) == a
 let a = Some(10);
 assert_eq!(OptionF::alt(OptionF::zero(), a), a);
 
-// Right identity: alt(a, zero()) == a
+// 右単位律: alt(a, zero()) == a
 assert_eq!(OptionF::alt(a, OptionF::zero()), a);
 <span class="boring">}</span></code></pre>
 <h2 id="alternative"><a class="header" href="#alternative">Alternative</a></h2>
 <h3 id="alternative-1"><a class="header" href="#alternative-1">Alternative</a></h3>
-<p>Applicative + Plus with no extra methods (blanket impl).</p>
-<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
+<p>追加メソッドなしの Applicative + Plus (ブランケット実装)。</p>
+<h4 id="シグネチャ-2"><a class="header" href="#シグネチャ-2">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Alternative: Applicative + Plus {}
 
 impl&lt;F: Applicative + Plus&gt; Alternative for F {}
 <span class="boring">}</span></code></pre>
-<p><code>Alternative</code> is a marker trait that combines <code>Applicative</code> and <code>Plus</code>. It introduces no new methods — any type that implements both <code>Applicative</code> and <code>Plus</code> automatically implements <code>Alternative</code> via the blanket impl.</p>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p>Alternative inherits all laws from Alt, Plus, and Applicative, and adds two of its own:</p>
-<p>Distributivity</p>
+<p><code>Alternative</code> は <code>Applicative</code> と <code>Plus</code> を組み合わせるマーカートレイトです。新しいメソッドを導入しません — <code>Applicative</code> と <code>Plus</code> の両方を実装する任意の型はブランケット実装経由で自動的に <code>Alternative</code> を実装します。</p>
+<h4 id="法則-2"><a class="header" href="#法則-2">法則</a></h4>
+<p>Alternative は Alt、Plus、Applicative のすべての法則を継承し、二つを追加します:</p>
+<p>分配律</p>
 <p>ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))</p>
-<p>Annihilation</p>
+<p>消滅律</p>
 <p>ap(zero(), x) == zero()</p>
-<h4 id="instances-2"><a class="header" href="#instances-2">Instances</a></h4>
+<h4 id="実装-2"><a class="header" href="#実装-2">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Implements both <code>Applicative</code> and <code>Plus</code>, so <code>Alternative</code> is provided automatically</td></tr>
-<tr><td><code>VecF</code></td><td>Implements both <code>Applicative</code> and <code>Plus</code>, so <code>Alternative</code> is provided automatically (requires <code>alloc</code> or <code>std</code>)</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Applicative</code> と <code>Plus</code> の両方を実装するため、<code>Alternative</code> は自動的に提供</td></tr>
+<tr><td><code>VecF</code></td><td><code>Applicative</code> と <code>Plus</code> の両方を実装するため、<code>Alternative</code> は自動的に提供 (<code>alloc</code> または <code>std</code> が必要)</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
+<h4 id="例-2"><a class="header" href="#例-2">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Alternative lets you combine choice (Alt/Plus) with
-// applicative computation (Applicative).
+// Alternative は選択 (Alt/Plus) とアプリカティブ計算 (Applicative) を組み合わせる。
 
-// Distributivity: ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
+// 分配律: ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
 let f: Option&lt;fn(i32) -&gt; i32&gt; = Some(|a| a + 1);
 let g: Option&lt;fn(i32) -&gt; i32&gt; = Some(|a| a * 2);
 let x = Some(10);
 
 let left  = OptionF::ap(OptionF::alt(f, g), x);
 let right = OptionF::alt(OptionF::ap(f, x), OptionF::ap(g, x));
-assert_eq!(left, right);  // Both are Some(11)
+assert_eq!(left, right);  // どちらも Some(11)
 
-// Annihilation: ap(zero(), x) == zero()
+// 消滅律: ap(zero(), x) == zero()
 let no_fn: Option&lt;fn(i32) -&gt; i32&gt; = OptionF::zero();
 let result = OptionF::ap(no_fn, Some(5));
 assert_eq!(result, None);
 <span class="boring">}</span></code></pre>
-<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<h2 id="関連項目"><a class="header" href="#関連項目">関連項目</a></h2>
 <ul>
-<li><a href="functor-family.html"><strong>Functor Family</strong></a> — the Functor → Apply → Applicative → Chain → Monad branch that Alt builds upon.</li>
-<li><a href="algebraic.html"><strong>Semigroup &amp; Monoid</strong></a> — the value-level analogue: Semigroup provides an associative <code>combine</code>, Monoid adds an <code>empty</code> identity, mirroring the Alt/Plus relationship at the functor level.</li>
-<li><a href="foldable-traversable.html"><strong>Foldable &amp; Traversable</strong></a> — traits for collapsing and sequencing containers, which compose naturally with Alt and Plus.</li>
+<li><a href="functor-family.html"><strong>Functor ファミリー</strong></a> — Alt が構築される Functor → Apply → Applicative → Chain → Monad 枝。</li>
+<li><a href="semigroup-monoid.html"><strong>半群とモノイド</strong></a> — 値レベルの類似物: Semigroup は結合的な <code>combine</code> を提供し、Monoid は <code>empty</code> 単位元を追加。関手レベルでの Alt/Plus の関係を反映。</li>
+<li><a href="foldable-traversable.html"><strong>Foldable と Traversable</strong></a> — コンテナを潰し、逐次化するトレイト。Alt や Plus と自然に合成します。</li>
 </ul>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

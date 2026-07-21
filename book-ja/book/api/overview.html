@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,35 +178,36 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="workspace-overview"><a class="header" href="#workspace-overview">Workspace Overview</a></h1>
-<p>Karpal consists of 18 crates organized by domain:</p>
+                        <h1 id="ワークスペース概要"><a class="header" href="#ワークスペース概要">ワークスペース概要</a></h1>
+<p>Karpal はドメイン別に編成された 18 のクレートで構成されます:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Crate</th><th>Purpose</th></tr>
+<tr><th>クレート</th><th>目的</th></tr>
 </thead>
 <tbody>
-<tr><td><code>karpal-core</code></td><td>HKT encoding, Functor→Monad, Comonads, Adjunctions, ends/coends</td></tr>
-<tr><td><code>karpal-profunctor</code></td><td>Profunctor, Strong, Choice, FnP</td></tr>
-<tr><td><code>karpal-optics</code></td><td>Iso, Lens, Prism, Traversal, Fold, Getter, Setter, Review</td></tr>
-<tr><td><code>karpal-arrow</code></td><td>Category/Arrow hierarchy, FnA, KleisliF, CokleisliF</td></tr>
-<tr><td><code>karpal-free</code></td><td>Coyoneda, Free, Cofree, Freer, Day, Kan extensions</td></tr>
-<tr><td><code>karpal-recursion</code></td><td>Fix, cata, ana, hylo, para, apo, histo, futu, zygo, chrono</td></tr>
-<tr><td><code>karpal-algebra</code></td><td>Group, Semiring, Ring, Field, Lattice, HeytingAlgebra, Module, VectorSpace</td></tr>
-<tr><td><code>karpal-effect</code></td><td>ExceptT, WriterT, ReaderT, StateT, MonadTrans</td></tr>
-<tr><td><code>karpal-proof</code></td><td>Proven&lt;P,T&gt;, Rewrite, refinement types</td></tr>
-<tr><td><code>karpal-proof-derive</code></td><td>#[derive(VerifySemigroup)] etc.</td></tr>
-<tr><td><code>karpal-verify</code></td><td>Obligation IR, SMT/Lean 4/Kani, GPU obligations, trust boundary</td></tr>
-<tr><td><code>karpal-verify-derive</code></td><td>#[export_obligations] macro</td></tr>
-<tr><td><code>karpal-diagram</code></td><td>Monoidal categories, string diagrams, coherence witnesses</td></tr>
-<tr><td><code>karpal-schubert-types</code></td><td>Schubert intersection types, SchubertProven, LR enrichment</td></tr>
-<tr><td><code>karpal-higher</code></td><td>2-categories, enriched categories, bicategories, FFunctor, FMonad</td></tr>
-<tr><td><code>karpal-index</code></td><td>AI-agent library discovery CLI</td></tr>
-<tr><td><code>karpal-std</code></td><td>Prelude re-exports</td></tr>
+<tr><td><code>karpal-core</code></td><td>HKT エンコーディング、Functor→Monad、コモナド、随伴、end/coend</td></tr>
+<tr><td><code>karpal-profunctor</code></td><td>Profunctor、Strong、Choice、FnP</td></tr>
+<tr><td><code>karpal-optics</code></td><td>Iso、Lens、Prism、Traversal、Fold、Getter、Setter、Review</td></tr>
+<tr><td><code>karpal-arrow</code></td><td>Category/Arrow 階層、FnA、KleisliF、CokleisliF</td></tr>
+<tr><td><code>karpal-free</code></td><td>Coyoneda、Free、Cofree、Freer、Day、Kan 拡張</td></tr>
+<tr><td><code>karpal-recursion</code></td><td>Fix、cata、ana、hylo、para、apo、histo、futu、zygo、chrono</td></tr>
+<tr><td><code>karpal-algebra</code></td><td>Group、Semiring、Ring、Field、Lattice、HeytingAlgebra、Module、VectorSpace</td></tr>
+<tr><td><code>karpal-effect</code></td><td>ExceptT、WriterT、ReaderT、StateT、MonadTrans</td></tr>
+<tr><td><code>karpal-proof</code></td><td>Proven&lt;P,T&gt;、Rewrite、精密化型</td></tr>
+<tr><td><code>karpal-proof-derive</code></td><td>#[derive(VerifySemigroup)] など</td></tr>
+<tr><td><code>karpal-verify</code></td><td>Obligation IR、SMT/Lean 4/Kani、GPU オブリゲーション、信頼境界</td></tr>
+<tr><td><code>karpal-verify-derive</code></td><td>#[export_obligations] マクロ</td></tr>
+<tr><td><code>karpal-diagram</code></td><td>モノイダル圏、ストリング図式、コヒーレンス証拠</td></tr>
+<tr><td><code>karpal-schubert-types</code></td><td>シューベルト交点型、SchubertProven、LR 豊饒化</td></tr>
+<tr><td><code>karpal-higher</code></td><td>2-圏、豊饒圏、バイ圏、FFunctor、FMonad</td></tr>
+<tr><td><code>karpal-topos</code></td><td>前層、篩、部分対象分類子、グロタンディーク位相、層</td></tr>
+<tr><td><code>karpal-index</code></td><td>AI エージェントライブラリ発見 CLI</td></tr>
+<tr><td><code>karpal-std</code></td><td>プレリュード再エクスポート</td></tr>
 </tbody>
 </table>
 </div>
-<p>See the <a href="https://karpal.industrial-algebra.com">HTML reference docs</a> for detailed API documentation.</p>
+<p>詳細な API ドキュメントは <a href="https://karpal.industrial-algebra.com">HTML リファレンスドキュメント</a> を参照してください。</p>
 
                     </main>
 

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,21 +178,21 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h1>
-<h2 id="functor-and-monad"><a class="header" href="#functor-and-monad">Functor and Monad</a></h2>
+                        <h1 id="基本的な使い方"><a class="header" href="#基本的な使い方">基本的な使い方</a></h1>
+<h2 id="functor-と-monad"><a class="header" href="#functor-と-monad">Functor と Monad</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::{Functor, Monad, hkt::OptionF};
 
-// fmap: lift a function into the container
+// fmap: 関数をコンテナに持ち上げる
 let doubled: Option&lt;i32&gt; = OptionF::fmap(Some(21), |x| x * 2);
 assert_eq!(doubled, Some(42));
 
-// chain (bind/flatMap): sequence operations
+// chain (bind/flatMap): 演算を逐次化
 let result: Option&lt;i32&gt; = OptionF::chain(Some(5), |x| Some(x + 1));
 assert_eq!(result, Some(6));
 <span class="boring">}</span></code></pre>
-<h2 id="applicative-and-ado_"><a class="header" href="#applicative-and-ado_">Applicative and ado_!</a></h2>
+<h2 id="applicative-と-ado_"><a class="header" href="#applicative-と-ado_">Applicative と ado_!</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::{ado_, Applicative, hkt::OptionF};
@@ -206,25 +206,25 @@ fn load_config(env: &amp;[(&amp;str, &amp;str)]) -&gt; Option&lt;String&gt; {
     }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="optics"><a class="header" href="#optics">Optics</a></h2>
+<h2 id="オプティクス"><a class="header" href="#オプティクス">オプティクス</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_optics::{Lens, Prism};
 
-// Lens: focus on a field
+// Lens: フィールドに焦点を当てる
 struct User { name: String, age: u32 }
 let name_lens = Lens::new(|u: &amp;User| u.name.clone(), |u, n| User { name: n, ..u });
 let user = User { name: "Alice".into(), age: 30 };
 let renamed = name_lens.set(user, "Bob".into());
 assert_eq!(renamed.name, "Bob");
 
-// Prism: focus on a variant
+// Prism: バリアントに焦点を当てる
 let some_prism = Prism::new(
     |x: Option&lt;i32&gt;| x.map(Ok).unwrap_or(Err(())),
     |v: i32| Some(v),
 );
 <span class="boring">}</span></code></pre>
-<h2 id="diagram-dsl"><a class="header" href="#diagram-dsl">Diagram DSL</a></h2>
+<h2 id="図式-dsl"><a class="header" href="#図式-dsl">図式 DSL</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_diagram::Diagram;
@@ -235,13 +235,13 @@ let circuit = Diagram::box_("f", 1, 1)
 
 println!("{}", circuit.render_text());
 <span class="boring">}</span></code></pre>
-<h2 id="verification"><a class="header" href="#verification">Verification</a></h2>
+<h2 id="検証"><a class="header" href="#検証">検証</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_diagram::coherence::coherence_certificates;
 
 let certs = coherence_certificates();
-assert_eq!(certs.len(), 3); // pentagon, triangle, hexagon
+assert_eq!(certs.len(), 3); // pentagon、triangle、hexagon
 <span class="boring">}</span></code></pre>
 
                     </main>

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,37 +178,37 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
-<h2 id="design-principles"><a class="header" href="#design-principles">Design Principles</a></h2>
+                        <h1 id="アーキテクチャ"><a class="header" href="#アーキテクチャ">アーキテクチャ</a></h1>
+<h2 id="設計原則"><a class="header" href="#設計原則">設計原則</a></h2>
 <ul>
-<li><strong>GAT-based HKT encoding</strong>: <code>trait HKT { type Of&lt;T&gt;; }</code> — clean, zero-dependency</li>
-<li><strong>Static Land over Fantasy Land</strong>: traits with associated functions (not methods on values)</li>
-<li><strong>Law verification built in</strong>: every trait ships with proptest-based law tests</li>
-<li><strong><code>no_std</code> first</strong>: core and profunctor crates work without an allocator</li>
-<li><strong>Composition over completeness</strong>: each phase delivers a usable layer before the next begins</li>
-<li><strong>Structured emptiness</strong>: zeros carry provenance — <em>why</em> something is empty matters</li>
+<li><strong>GAT ベースの HKT エンコーディング</strong>: <code>trait HKT { type Of&lt;T&gt;; }</code> — クリーン、依存関係ゼロ</li>
+<li><strong>Fantasy Land より Static Land</strong>: 値のメソッドではなく、関連関数を持つトレイト</li>
+<li><strong>法則検証を内蔵</strong>: すべてのトレイトに proptest ベースの法則テストが付属</li>
+<li><strong><code>no_std</code> ファースト</strong>: core と profunctor クレートはアロケータなしで動作</li>
+<li><strong>完全性より合成</strong>: 各フェーズは次が始まる前に利用可能な層を提供</li>
+<li><strong>構造化された空</strong>: ゼロは来歴を持つ — 「なぜ空なのか」が重要</li>
 </ul>
-<h2 id="phase-completion"><a class="header" href="#phase-completion">Phase Completion</a></h2>
+<h2 id="フェーズ完了状況"><a class="header" href="#フェーズ完了状況">フェーズ完了状況</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Phase</th><th>Crate(s)</th><th>Status</th></tr>
+<tr><th>フェーズ</th><th>クレート</th><th>状態</th></tr>
 </thead>
 <tbody>
-<tr><td>1–11</td><td>core through proof</td><td>✅ Complete</td></tr>
-<tr><td>12</td><td>karpal-verify</td><td>✅ Complete</td></tr>
-<tr><td>13</td><td>karpal-diagram</td><td>✅ Complete</td></tr>
-<tr><td>14</td><td>karpal-schubert-types (A–D)</td><td>✅ Complete</td></tr>
-<tr><td>15</td><td>karpal-higher</td><td>✅ Complete</td></tr>
-<tr><td>16A</td><td>HeytingAlgebra</td><td>✅ Complete</td></tr>
-<tr><td>16B–D</td><td>Topos theory</td><td>🔲 Planned</td></tr>
-<tr><td>17</td><td>E2E validation</td><td>🔲 Planned</td></tr>
-<tr><td>18</td><td>Ecosystem verification</td><td>🔲 Planned</td></tr>
+<tr><td>1–11</td><td>core から proof まで</td><td>✅ 完了</td></tr>
+<tr><td>12</td><td>karpal-verify</td><td>✅ 完了</td></tr>
+<tr><td>13</td><td>karpal-diagram</td><td>✅ 完了</td></tr>
+<tr><td>14</td><td>karpal-schubert-types (A–D)</td><td>✅ 完了</td></tr>
+<tr><td>15</td><td>karpal-higher</td><td>✅ 完了</td></tr>
+<tr><td>16A</td><td>HeytingAlgebra</td><td>✅ 完了</td></tr>
+<tr><td>16B–D</td><td>トポス理論</td><td>✅ 完了</td></tr>
+<tr><td>17</td><td>E2E 検証</td><td>🔲 計画中</td></tr>
+<tr><td>18</td><td>エコシステム検証</td><td>🔲 計画中</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="license"><a class="header" href="#license">License</a></h2>
-<p>Apache-2.0 + CLA. See <a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<h2 id="ライセンス"><a class="header" href="#ライセンス">ライセンス</a></h2>
+<p>Apache-2.0 + CLA。<a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/CONTRIBUTING.md">CONTRIBUTING.md</a> を参照してください。</p>
 
                     </main>
 

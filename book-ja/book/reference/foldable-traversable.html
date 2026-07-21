@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,12 +178,12 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="foldable--traversable"><a class="header" href="#foldable--traversable">Foldable &amp; Traversable</a></h1>
-<p>Summarize and sequence container contents.</p>
+                        <h1 id="foldable-と-traversable"><a class="header" href="#foldable-と-traversable">Foldable と Traversable</a></h1>
+<p>コンテナの内容を要約し、逐次化します。</p>
 <h2 id="foldable"><a class="header" href="#foldable">Foldable</a></h2>
 <h3 id="foldable-1"><a class="header" href="#foldable-1">Foldable</a></h3>
-<p>A structure that can be folded to a summary value.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>要約値に畳み込める構造。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Foldable: HKT {
@@ -194,33 +194,33 @@
     }
 }
 <span class="boring">}</span></code></pre>
-<p><code>fold_right</code> is the required method. It processes elements right-to-left, threading an accumulator through each step. <code>fold_map</code> is provided as a default: it maps each element into a <code>Monoid</code> and combines them.</p>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>fold_map consistency</p>
+<p><code>fold_right</code> が必須メソッドです。要素を右から左へ処理し、各ステップでアキュムレータを受け渡します。<code>fold_map</code> はデフォルトとして提供されます: 各要素を <code>Monoid</code> にマップして組み合わせます。</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>fold_map の一貫性</p>
 <p><code>fold_map(fa, f) == fold_right(fa, M::empty(), |a, acc| f(a).combine(acc))</code></p>
-<p>Any override of the default <code>fold_map</code> must agree with the right fold formulation above.</p>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<p>デフォルトの <code>fold_map</code> をオーバーライドする場合、上記の右畳みみ定式と一致しなければなりません。</p>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Folds over the contained value, if any; returns <code>init</code> for <code>None</code>.</td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Folds over the <code>Ok</code> value; returns <code>init</code> for <code>Err</code>.</td></tr>
-<tr><td><code>VecF</code></td><td>Right-folds by reversing and iterating. Requires <code>alloc</code>.</td></tr>
-<tr><td><code>IdentityF</code></td><td>Trivially applies <code>f</code> to the single contained value.</td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Right-folds the tail, then applies <code>f</code> to the head. Requires <code>alloc</code>.</td></tr>
+<tr><td><code>OptionF</code></td><td>含まれる値があれば畳み込み; <code>None</code> なら <code>init</code> を返す。</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Ok</code> 値を畳み込み; <code>Err</code> なら <code>init</code> を返す。</td></tr>
+<tr><td><code>VecF</code></td><td>反転して反復することで右畳み込み。<code>alloc</code> が必要。</td></tr>
+<tr><td><code>IdentityF</code></td><td>単一の含まれる値に自明に <code>f</code> を適用。</td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td>末尾を右畳み込みし、先頭に <code>f</code> を適用。<code>alloc</code> が必要。</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-summing-with-fold_map"><a class="header" href="#example-summing-with-fold_map">Example: summing with fold_map</a></h4>
+<h4 id="例-fold_map-で合計"><a class="header" href="#例-fold_map-で合計">例: fold_map で合計</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// fold_map maps each element into a Monoid and combines them.
-// For i32, the Monoid instance uses addition with identity 0.
+// fold_map は各要素を Monoid にマップして組み合わせる。
+// i32 の場合、Monoid 実装は加算を単位元 0 と共に使う。
 
 let sum = VecF::fold_map(vec![1, 2, 3], |a: i32| a);
 assert_eq!(sum, 6); // 1 + 2 + 3
@@ -229,15 +229,15 @@ let sum = OptionF::fold_map(Some(42), |a: i32| a);
 assert_eq!(sum, 42);
 
 let sum = OptionF::fold_map(None::&lt;i32&gt;, |a: i32| a);
-assert_eq!(sum, 0); // Monoid::empty() for i32
+assert_eq!(sum, 0); // i32 の Monoid::empty()
 <span class="boring">}</span></code></pre>
-<h4 id="example-fold_right"><a class="header" href="#example-fold_right">Example: fold_right</a></h4>
+<h4 id="例-fold_right"><a class="header" href="#例-fold_right">例: fold_right</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// fold_right processes elements right-to-left.
-// With subtraction, the associativity matters:
+// fold_right は要素を右から左へ処理する。
+// 減算では結合性が重要:
 // fold_right([1, 2, 3], 0, |a, b| a - b)
 //   = 1 - (2 - (3 - 0))
 //   = 1 - (2 - 3)
@@ -248,8 +248,8 @@ assert_eq!(result, 2);
 <span class="boring">}</span></code></pre>
 <h2 id="traversable"><a class="header" href="#traversable">Traversable</a></h2>
 <h3 id="traversable-1"><a class="header" href="#traversable-1">Traversable</a></h3>
-<p>A Functor + Foldable that can be traversed with an effectful function.</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>エフェクト付き関数で走査できる Functor + Foldable。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Traversable: Functor + Foldable {
@@ -260,79 +260,79 @@ assert_eq!(result, 2);
         B: Clone;
 }
 <span class="boring">}</span></code></pre>
-<p><code>traverse</code> applies an effectful function <code>f</code> to every element in the structure, collecting the results inside the effect <code>G</code>. If any application of <code>f</code> produces a “failure” (e.g. <code>None</code> for <code>OptionF</code>), the entire traversal short-circuits.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>Identity</p>
+<p><code>traverse</code> は構造内のすべての要素にエフェクト付き関数 <code>f</code> を適用し、結果をエフェクト <code>G</code> の内側に集めます。<code>f</code> の適用が一つでも「失敗」(<code>OptionF</code> の <code>None</code> など) を生成すると、走査全体が短絡します。</p>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
+<p>単位律</p>
 <p><code>traverse::&lt;IdentityF, _, _, _&gt;(fa, pure) == pure(fa)</code></p>
-<p>Composition</p>
+<p>合成律</p>
 <p><code>traverse::&lt;Compose&lt;F, G&gt;, _, _, _&gt;(fa, |a| Compose(F::fmap(f(a), g)))</code><br><code>== Compose(F::fmap(traverse::&lt;F, _, _, _&gt;(fa, f), |fb| traverse::&lt;G, _, _, _&gt;(fb, g)))</code></p>
-<p>Naturality</p>
-<p><code>t(traverse::&lt;F, _, _, _&gt;(fa, f)) == traverse::&lt;G, _, _, _&gt;(fa, |a| t(f(a)))</code><br>for any applicative natural transformation <code>t: F ~&gt; G</code></p>
-<p>Karpal verifies the Identity law with property-based tests using <code>OptionF</code> as the effect.</p>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<p>自然律</p>
+<p><code>t(traverse::&lt;F, _, _, _&gt;(fa, f)) == traverse::&lt;G, _, _, _&gt;(fa, |a| t(f(a)))</code><br>任意のアプリカティブ自然変換 <code>t: F ~&gt; G</code> について</p>
+<p>Karpal はエフェクトとして <code>OptionF</code> を使ったプロパティベーステストで単位律を検証します。</p>
+<h4 id="実装-1"><a class="header" href="#実装-1">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Traverses the inner value if <code>Some</code>; returns <code>G::pure(None)</code> for <code>None</code>.</td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Traverses the <code>Ok</code> value; returns <code>G::pure(Err(e))</code> for <code>Err</code>. Requires <code>E: Clone</code>.</td></tr>
-<tr><td><code>VecF</code></td><td>Traverses each element left-to-right, accumulating via <code>Applicative::ap</code>. Requires <code>alloc</code> and <code>B: Clone</code>.</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Some</code> なら内側の値を走査; <code>None</code> なら <code>G::pure(None)</code> を返す。</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Ok</code> 値を走査; <code>Err</code> なら <code>G::pure(Err(e))</code> を返す。<code>E: Clone</code> が必要。</td></tr>
+<tr><td><code>VecF</code></td><td>各要素を左から右へ走査し、<code>Applicative::ap</code> で蓄積。<code>alloc</code> と <code>B: Clone</code> が必要。</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-traverse-with-option"><a class="header" href="#example-traverse-with-option">Example: traverse with Option</a></h4>
+<h4 id="例-option-での-traverse"><a class="header" href="#例-option-での-traverse">例: Option での traverse</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Parse a list of strings into integers, failing if any parse fails.
+// 文字列のリストを整数にパースし、いずれかが失敗すれば全体が失敗。
 fn parse(s: &amp;str) -&gt; Option&lt;i32&gt; {
     s.parse().ok()
 }
 
-// All elements parse successfully:
+// すべての要素がパース成功:
 let result = VecF::traverse::&lt;OptionF, _, _, _&gt;(
     vec!["1", "2", "3"],
     parse,
 );
 assert_eq!(result, Some(vec![1, 2, 3]));
 
-// One element fails, so the whole traversal returns None:
+// 一つの要素が失敗するので、走査全体が None を返す:
 let result = VecF::traverse::&lt;OptionF, _, _, _&gt;(
     vec!["1", "oops", "3"],
     parse,
 );
 assert_eq!(result, None);
 <span class="boring">}</span></code></pre>
-<h4 id="example-traverse-over-option"><a class="header" href="#example-traverse-over-option">Example: traverse over Option</a></h4>
+<h4 id="例-option-上の-traverse"><a class="header" href="#例-option-上の-traverse">例: Option 上の traverse</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Traverse an Option with an effectful function:
+// エフェクト付き関数で Option を走査:
 let result = OptionF::traverse::&lt;OptionF, _, _, _&gt;(
     Some(3),
     |x| Some(x * 2),
 );
 assert_eq!(result, Some(Some(6)));
 
-// If the inner effect fails:
+// 内側のエフェクトが失敗する場合:
 let result = OptionF::traverse::&lt;OptionF, _, _, _&gt;(
     Some(3),
     |_x| None::&lt;i32&gt;,
 );
 assert_eq!(result, None);
 
-// Traversing None always succeeds:
+// None の走査は常に成功:
 let result = OptionF::traverse::&lt;OptionF, i32, i32, _&gt;(
     None,
     |x| Some(x * 2),
 );
 assert_eq!(result, Some(None));
 <span class="boring">}</span></code></pre>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -179,21 +179,21 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="invariant"><a class="header" href="#invariant">Invariant</a></h1>
-<p>Invariant functors: mapping that requires both directions.</p>
-<p>An <code>Invariant</code> functor generalizes both covariant (<code>Functor</code>) and contravariant (<code>Contravariant</code>) functors. Where a <code>Functor</code> only needs a forward function <code>A -&gt; B</code> to transform its contents, and a <code>Contravariant</code> only needs a backward function <code>B -&gt; A</code>, an <code>Invariant</code> functor requires <em>both</em> directions. This makes it the most general of the three – any type that is either covariant or contravariant is automatically invariant as well.</p>
+<p>Invariant 関手: 両方向を必要とするマッピング。</p>
+<p><code>Invariant</code> 関手は、共変 (<code>Functor</code>) と反変 (<code>Contravariant</code>) の両方の関手を一般化します。<code>Functor</code> は内容を変換するために前方関数 <code>A -&gt; B</code> だけを必要とし、<code>Contravariant</code> は後方関数 <code>B -&gt; A</code> だけを必要としますが、<code>Invariant</code> 関手は <em>両方</em> の方向を必要とします。これにより三つの中で最も一般的なものとなります — 共変または反変のいずれかである型は自動的に invariant でもあります。</p>
 <h3 id="invariant-1"><a class="header" href="#invariant-1">Invariant</a></h3>
-<p>A functor that maps with both a covariant and contravariant function.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>共変関数と反変関数の両方でマップする関手。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Invariant functor: maps with both a covariant and contravariant function.
+</span>/// Invariant 関手: 共変関数と反変関数の両方でマップする。
 ///
-/// Every covariant Functor is trivially Invariant (ignoring `g`).
-/// Every Contravariant is also Invariant (ignoring `f`).
+/// すべての共変 Functor は自明に Invariant です (`g` を無視)。
+/// すべての Contravariant も Invariant です (`f` を無視)。
 ///
-/// Laws:
-/// - Identity: `invmap(fa, id, id) == fa`
-/// - Composition: `invmap(fa, g1 . f1, f2 . g2) == invmap(invmap(fa, f1, f2), g1, g2)`
+/// 法則:
+/// - 単位律: `invmap(fa, id, id) == fa`
+/// - 合成律: `invmap(fa, g1 . f1, f2 . g2) == invmap(invmap(fa, f1, f2), g1, g2)`
 pub trait Invariant: HKT {
     fn invmap&lt;A, B&gt;(
         fa: Self::Of&lt;A&gt;,
@@ -202,82 +202,82 @@ pub trait Invariant: HKT {
     ) -&gt; Self::Of&lt;B&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>The <code>invmap</code> method takes a value in the functor (<code>fa</code>), a forward function <code>f: A -&gt; B</code>, and a backward function <code>g: B -&gt; A</code>, and produces a new value of type <code>Self::Of&lt;B&gt;</code>. The forward function <code>f</code> is used to transform values going out, and the backward function <code>g</code> is available for types that need to transform values going in.</p>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Identity</p>
-<p>Mapping with two identity functions changes nothing:</p>
+<p><code>invmap</code> メソッドは関手内の値 (<code>fa</code>)、前方関数 <code>f: A -&gt; B</code>、後方関数 <code>g: B -&gt; A</code> を取り、<code>Self::Of&lt;B&gt;</code> 型の新しい値を生成します。前方関数 <code>f</code> は出ていく値の変換に使われ、後方関数 <code>g</code> は入ってくる値を変換する必要がある型のために用意されます。</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>単位律</p>
+<p>二つの恒等関数でマップしても何も変わりません:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>F::invmap(fa, |a| a, |a| a) == fa
 <span class="boring">}</span></code></pre>
-<p>If neither direction transforms the value, the structure is unchanged.</p>
-<p>Composition</p>
-<p>Composing two <code>invmap</code> calls is the same as composing the functions and calling <code>invmap</code> once:</p>
+<p>どちらの方向も値を変換しなければ、構造は変化しません。</p>
+<p>合成律</p>
+<p>二回の <code>invmap</code> 呼び出しの合成は、関数を合成して一度 <code>invmap</code> を呼ぶのと同じです:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>F::invmap(fa, |a| g1(f1(a)), |a| f2(g2(a)))
     == F::invmap(F::invmap(fa, f1, f2), g1, g2)
 <span class="boring">}</span></code></pre>
-<p>The forward functions compose left-to-right (<code>g1 . f1</code>), while the backward functions compose right-to-left (<code>f2 . g2</code>). This mirrors how covariant and contravariant mappings compose in opposite directions.</p>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<p>前方関数は左から右へ (<code>g1 . f1</code>)、後方関数は右から左へ (<code>f2 . g2</code>) 合成されます。これは共変と反変のマッピングが逆方向に合成される仕方を反映しています。</p>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Behavior of <code>invmap</code></th><th>Feature gate</th></tr>
+<tr><th>型コンストラクタ</th><th><code>invmap</code> の振る舞い</th><th>フィーチャーゲート</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Maps the inner value with <code>f</code> (ignores <code>g</code>); <code>None</code> stays <code>None</code></td><td>none (<code>no_std</code>)</td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Maps the <code>Ok</code> value with <code>f</code> (ignores <code>g</code>); <code>Err</code> is unchanged</td><td>none (<code>no_std</code>)</td></tr>
-<tr><td><code>VecF</code></td><td>Maps each element with <code>f</code> (ignores <code>g</code>)</td><td><code>std</code> or <code>alloc</code></td></tr>
-<tr><td><code>IdentityF</code></td><td>Applies <code>f</code> directly to the value (ignores <code>g</code>)</td><td>none (<code>no_std</code>)</td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Maps the head and tail elements with <code>f</code> (ignores <code>g</code>)</td><td><code>std</code> or <code>alloc</code></td></tr>
-<tr><td><code>EnvF&lt;E&gt;</code></td><td>Maps the second element of the tuple with <code>f</code> (ignores <code>g</code>); the environment <code>E</code> is unchanged</td><td>none (<code>no_std</code>)</td></tr>
+<tr><td><code>OptionF</code></td><td>内側の値を <code>f</code> でマップ (<code>g</code> は無視); <code>None</code> はそのまま</td><td>なし (<code>no_std</code>)</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Ok</code> 値を <code>f</code> でマップ (<code>g</code> は無視); <code>Err</code> は変更なし</td><td>なし (<code>no_std</code>)</td></tr>
+<tr><td><code>VecF</code></td><td>各要素を <code>f</code> でマップ (<code>g</code> は無視)</td><td><code>std</code> または <code>alloc</code></td></tr>
+<tr><td><code>IdentityF</code></td><td>値に直接 <code>f</code> を適用 (<code>g</code> は無視)</td><td>なし (<code>no_std</code>)</td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td>先頭と残りの要素を <code>f</code> でマップ (<code>g</code> は無視)</td><td><code>std</code> または <code>alloc</code></td></tr>
+<tr><td><code>EnvF&lt;E&gt;</code></td><td>タプルの第二要素を <code>f</code> でマップ (<code>g</code> は無視); 環境 <code>E</code> は変更なし</td><td>なし (<code>no_std</code>)</td></tr>
 </tbody>
 </table>
 </div>
-<p>All of the instances listed above are covariant functors, so they only use the forward function <code>f</code> and ignore the backward function <code>g</code>. A truly invariant type – one that is neither covariant nor contravariant – would need both functions. Such types arise in practice with bidirectional codecs, serializers/deserializers, and isomorphisms.</p>
-<h4 id="examples"><a class="header" href="#examples">Examples</a></h4>
+<p>上記の実装はすべて共変関手であるため、前方関数 <code>f</code> だけを使い後方関数 <code>g</code> を無視します。共変でも反変でもない真に invariant な型は、両方の関数を必要とします。そのような型は双方向コーデック、シリアライザ/デシリアライザ、同型において実用上現れます。</p>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::hkt::{OptionF, VecF, IdentityF, EnvF, ResultF};
 use karpal_core::invariant::Invariant;
 
-// Option: maps Some values, passes through None
+// Option: Some 値をマップ、None はそのまま
 let doubled = OptionF::invmap(Some(3), |x| x * 2, |x| x / 2);
 assert_eq!(doubled, Some(6));
 
 let nothing = OptionF::invmap(None::&lt;i32&gt;, |x| x * 2, |x| x / 2);
 assert_eq!(nothing, None);
 
-// Result: maps Ok values, leaves Err unchanged
+// Result: Ok 値をマップ、Err はそのまま
 let ok = ResultF::&lt;&amp;str&gt;::invmap(Ok(5), |x| x + 1, |x| x - 1);
 assert_eq!(ok, Ok(6));
 
-// Vec: maps each element
+// Vec: 各要素をマップ
 let scaled = VecF::invmap(vec![1, 2, 3], |x| x * 2, |x| x / 2);
 assert_eq!(scaled, vec![2, 4, 6]);
 
-// Identity: applies the function directly
+// Identity: 関数を直接適用
 let result = IdentityF::invmap(42, |x| x + 1, |x| x - 1);
 assert_eq!(result, 43);
 
-// Env: maps the value, keeps the environment
+// Env: 値をマップ、環境は保持
 let env = EnvF::&lt;&amp;str&gt;::invmap(("hello", 42), |x| x + 1, |x| x - 1);
 assert_eq!(env, ("hello", 43));
 <span class="boring">}</span></code></pre>
-<h4 id="relationship-to-functor-and-contravariant"><a class="header" href="#relationship-to-functor-and-contravariant">Relationship to Functor and Contravariant</a></h4>
-<p><code>Invariant</code> sits at the top of the variance hierarchy. Every <code>Functor</code> (covariant functor) is trivially <code>Invariant</code>: just ignore the backward function <code>g</code> and use <code>f</code> alone. Likewise, every <code>Contravariant</code> functor is trivially <code>Invariant</code>: just ignore the forward function <code>f</code> and use <code>g</code> alone.</p>
+<h4 id="functor-および-contravariant-との関係"><a class="header" href="#functor-および-contravariant-との関係">Functor および Contravariant との関係</a></h4>
+<p><code>Invariant</code> は変性階層の頂点に位置します。すべての <code>Functor</code> (共変関手) は自明に <code>Invariant</code> です: 後方関数 <code>g</code> を無視して <code>f</code> だけを使います。同様に、すべての <code>Contravariant</code> 関手も自明に <code>Invariant</code> です: 前方関数 <code>f</code> を無視して <code>g</code> だけを使います。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// A Functor can implement Invariant by ignoring g:
+</span>// Functor は g を無視して Invariant を実装できる:
 //   fn invmap(fa, f, _g) { F::fmap(fa, f) }
 //
-// A Contravariant can implement Invariant by ignoring f:
+// Contravariant は f を無視して Invariant を実装できる:
 //   fn invmap(fa, _f, g) { C::contramap(fa, g) }
 <span class="boring">}</span></code></pre>
-<p>This means <code>Invariant</code> captures the most general notion of “mappability” for a type constructor. It is useful when you need to abstract over types that may be covariant, contravariant, or neither – for example, when building generic codec or serialization frameworks where values flow in both directions.</p>
-<p>In Karpal, all provided instances happen to be covariant (they are all <code>Functor</code>s), so they ignore <code>g</code>. However, the <code>Invariant</code> trait is available for user-defined types that genuinely require both directions.</p>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>つまり <code>Invariant</code> は型コンストラクタの「マップ可能性」の最も一般的な概念を捉えます。共変・反変・そのいずれでもない型について抽象化する必要がある場合 — 例えば値が両方向に流れる汎用コーデックやシリアライズフレームワークを構築する場合 — に有用です。</p>
+<p>Karpal では、提供される実装はすべて共変 (すべて <code>Functor</code>) であるため <code>g</code> を無視します。しかし <code>Invariant</code> トレイトは、本当に両方向を必要とするユーザー定義型のために利用可能です。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

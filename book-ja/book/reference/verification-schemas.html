@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,41 +178,41 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="verification-schemas"><a class="header" href="#verification-schemas">Verification Schemas</a></h1>
-<p>This page documents the serialized artifact formats emitted by <code>karpal-verify</code> and the compatibility contract around their <code>schema_version</code> markers.</p>
-<h2 id="versioned-artifacts"><a class="header" href="#versioned-artifacts">Versioned artifacts</a></h2>
+                        <h1 id="検証スキーマ"><a class="header" href="#検証スキーマ">検証スキーマ</a></h1>
+<p>このページは <code>karpal-verify</code> が生成するシリアライズされたアーティファクト形式と、その <code>schema_version</code> マーカーに関する互換性契約を文書化します。</p>
+<h2 id="バージョン付きアーティファクト"><a class="header" href="#バージョン付きアーティファクト">バージョン付きアーティファクト</a></h2>
 <ul>
-<li>verification report JSON</li>
-<li>Lean manifest JSON</li>
-<li>Lean diagnostics sidecar JSON</li>
-<li>nested <code>report_files</code> metadata blocks embedded in report and manifest JSON</li>
+<li>検証レポート JSON</li>
+<li>Lean マニフェスト JSON</li>
+<li>Lean 診断サイドカー JSON</li>
+<li>レポートおよびマニフェスト JSON に埋め込まれた入れ子の <code>report_files</code> メタデータブロック</li>
 </ul>
-<h2 id="current-version"><a class="header" href="#current-version">Current version</a></h2>
-<p>The current published schema version is <code>1</code>. In Rust code this is exposed through constants such as <code>VERIFICATION_REPORT_SCHEMA_VERSION</code>, <code>LEAN_MANIFEST_SCHEMA_VERSION</code>, and <code>VERIFICATION_SIDECAR_SCHEMA_VERSION</code>.</p>
-<h2 id="version-1-guarantees"><a class="header" href="#version-1-guarantees">Version 1 guarantees</a></h2>
+<h2 id="現在のバージョン"><a class="header" href="#現在のバージョン">現在のバージョン</a></h2>
+<p>現在の公開スキーマバージョンは <code>1</code> です。Rust コードでは <code>VERIFICATION_REPORT_SCHEMA_VERSION</code>、<code>LEAN_MANIFEST_SCHEMA_VERSION</code>、<code>VERIFICATION_SIDECAR_SCHEMA_VERSION</code> などの定数として公開されています。</p>
+<h2 id="バージョン-1-の保証"><a class="header" href="#バージョン-1-の保証">バージョン 1 の保証</a></h2>
 <ul>
-<li>each top-level JSON object includes a string <code>schema_version</code></li>
-<li>existing field names remain stable within the <code>1.x</code> line</li>
-<li>new fields are added only as optional, forward-compatible extensions</li>
-<li>nested <code>report_files</code> objects also include their own <code>schema_version</code></li>
-<li>string path fields preserve the artifact/session paths written by the current run</li>
+<li>各トップレベル JSON オブジェクトは文字列 <code>schema_version</code> を含む</li>
+<li>既存のフィールド名は <code>1.x</code> 系列内で安定</li>
+<li>新規フィールドはオプションの前方互換拡張としてのみ追加</li>
+<li>入れ子の <code>report_files</code> オブジェクトも独自の <code>schema_version</code> を含む</li>
+<li>文字列パスフィールドは現在の実行が書き込んだアーティファクト/セッションパスを保持</li>
 </ul>
-<h2 id="consumer-guidance"><a class="header" href="#consumer-guidance">Consumer guidance</a></h2>
-<p>External CI tooling, bots, or archive readers should:</p>
+<h2 id="コンシューマの指針"><a class="header" href="#コンシューマの指針">コンシューマの指針</a></h2>
+<p>外部 CI ツール、ボット、アーカイブリーダは以下のようにすべきです:</p>
 <ol>
-<li>accept <code>schema_version == "1"</code></li>
-<li>ignore unknown optional fields for forward compatibility</li>
-<li>treat a future schema bump as a breaking parser boundary</li>
+<li><code>schema_version == "1"</code> を受け入れる</li>
+<li>前方互換性のために未知のオプションフィールドを無視する</li>
+<li>将来のスキーマバンプを破壊的なパーサ境界として扱う</li>
 </ol>
-<h2 id="additive-vs-breaking-changes"><a class="header" href="#additive-vs-breaking-changes">Additive vs. breaking changes</a></h2>
-<p>The schema version stays at <code>1</code> for additive changes such as new optional counters, new optional metadata blocks, or richer cross-linking fields. A future version bump is required if a required field is removed, renamed incompatibly, changes type, or changes meaning.</p>
-<h2 id="related-guides"><a class="header" href="#related-guides">Related guides</a></h2>
+<h2 id="追加的変更と破壊的変更"><a class="header" href="#追加的変更と破壊的変更">追加的変更と破壊的変更</a></h2>
+<p>新しいオプションカウンタ、新しいオプションメタデータブロック、より豊かな相互リンクフィールドなどの追加的変更では、スキーマバージョンは <code>1</code> のままです。必須フィールドが削除・非互換にリネーム・型変更・意味変更される場合に、将来のバージョンバンプが必要です。</p>
+<h2 id="関連ガイド"><a class="header" href="#関連ガイド">関連ガイド</a></h2>
 <ul>
-<li><a href="proof-verification.html">Proof &amp; Verification</a> for the overall model/export/run/trust story</li>
-<li><a href="verification-ci.html">Verification CI Workflow</a> for report/layout usage in automation</li>
-<li><a href="../examples/verification-workflow.html">Verification Workflow</a> for an end-to-end example</li>
+<li><a href="proof-verification.html">証明と検証</a> — 全体的なモデル/エクスポート/実行/信頼のストーリー</li>
+<li><a href="verification-ci.html">検証 CI ワークフロー</a> — 自動化でのレポート/レイアウト利用</li>
+<li><a href="../examples/verification-workflow.html">検証ワークフロー</a> — エンドツーエンドの例</li>
 </ul>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

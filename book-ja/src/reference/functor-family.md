@@ -1,35 +1,35 @@
-# Functor Family
+# 関手ファミリー
 
-The covariant functor hierarchy: Functor through Monad.
+共変関手階層: Functor から Monad まで。
 
-## Hierarchy
+## 階層
 
-The Functor family forms a linear chain of increasingly powerful abstractions. Each trait extends the one above it:
+Functor ファミリーは次第に強力な抽象化の線形連鎖を形成します。各トレイトは上位のものを拡張します:
 
 ``` rust
-Functor           // fmap: lift A -> B into F<A> -> F<B>
+Functor           // fmap: A -> B を F<A> -> F<B> に持ち上げる
   |
   v
-Apply             // ap: apply F<A -> B> to F<A>, producing F<B>
+Apply             // ap: F<A -> B> を F<A> に適用し、F<B> を生成
   |
   v
-Applicative       // pure: lift a value A into F<A>
+Applicative       // pure: 値 A を F<A> に持ち上げる
   |
-  +--- Chain      // chain: monadic bind (flatMap)
+  +--- Chain      // chain: モナド束縛 (flatMap)
   |      |
   v      v
-  Monad           // Applicative + Chain (blanket impl, no extra methods)
+  Monad           // Applicative + Chain (ブランケット実装、追加メソッドなし)
 ```
 
-`Monad` is provided as a blanket implementation: any type that implements both `Applicative` and `Chain` automatically implements `Monad`. There is no need to write an explicit `impl Monad for ...` block.
+`Monad` はブランケット実装として提供されます: `Applicative` と `Chain` の両方を実装する任意の型は自動的に `Monad` を実装します。明示的な `impl Monad for ...` ブロックを書く必要はありません。
 
 
 ### Functor
 
-Covariant functor: lifts a function `A -> B` into `F<A> -> F<B>`.
+共変関手: 関数 `A -> B` を `F<A> -> F<B>` に持ち上げます。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Functor: HKT {
@@ -37,41 +37,41 @@ pub trait Functor: HKT {
 }
 ```
 
-#### Laws
+#### 法則
 
 
-**Identity:** Mapping the identity function is a no-op.  
+**単位律:** 恒等関数でマップしても何も変わりません。  
 `F::fmap(fa, |x| x) == fa`
 
 
-**Composition:** Mapping two functions sequentially is the same as mapping their composition.  
+**合成律:** 二つの関数を順にマップするのは、それらの合成をマップするのと同じです。  
 `F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))`
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Notes                                              |
+| 型コンストラクタ | 備考                                              |
 |------------------|----------------------------------------------------|
-| `OptionF`        | Delegates to `Option::map`                         |
-| `ResultF<E>`     | Delegates to `Result::map`                         |
-| `VecF`           | Requires `alloc` or `std` feature                  |
-| `IdentityF`      | Applies `f` directly: `f(fa)`                      |
-| `NonEmptyVecF`   | Requires `alloc` or `std` feature                  |
-| `EnvF<E>`        | Maps over the second element of the tuple `(E, A)` |
+| `OptionF`        | `Option::map` に委譲                         |
+| `ResultF<E>`     | `Result::map` に委譲                         |
+| `VecF`           | `alloc` または `std` フィーチャーが必要                  |
+| `IdentityF`      | `f` を直接適用: `f(fa)`                      |
+| `NonEmptyVecF`   | `alloc` または `std` フィーチャーが必要                  |
+| `EnvF<E>`        | タプル `(E, A)` の第二要素でマップ |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Concrete usage
+// 具体的な使用
 let doubled = OptionF::fmap(Some(5), |x| x * 2);
 assert_eq!(doubled, Some(10));
 
 let lengths = VecF::fmap(vec!["hello", "world"], |s| s.len());
 assert_eq!(lengths, vec![5, 5]);
 
-// Generic over any Functor
+// 任意の Functor について汎用的
 fn increment<F: Functor>(fa: F::Of<i32>) -> F::Of<i32> {
     F::fmap(fa, |x| x + 1)
 }
@@ -83,10 +83,10 @@ assert_eq!(increment::<VecF>(vec![1, 2]), vec![2, 3]);
 
 ### Apply
 
-A Functor that can apply a wrapped function to a wrapped value.
+包まれた関数を包まれた値に適用できる Functor。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Apply: Functor {
@@ -97,36 +97,36 @@ pub trait Apply: Functor {
 }
 ```
 
-The `A: Clone` bound is required because some instances (such as `VecF`) apply multiple functions to each value, consuming the value more than once.
+一部の実装 (`VecF` など) は各値に複数の関数を適用し、値を複数回消費するため、`A: Clone` 境界が必要です。
 
-#### Laws
+#### 法則
 
 
-**Associative composition:** Applying composed functions is the same as composing applications.  
+**結合的合成:** 合成された関数を適用するのは、適用を合成するのと同じです。  
 `ap(ap(fmap(compose, f), g), x) == ap(f, ap(g, x))`
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Notes                                                  |
+| 型コンストラクタ | 備考                                                  |
 |------------------|--------------------------------------------------------|
-| `OptionF`        | Applies function if both are `Some`; otherwise `None`  |
-| `ResultF<E>`     | Applies function if both are `Ok`; first `Err` wins    |
-| `VecF`           | Cartesian product: each function applied to each value |
-| `IdentityF`      | Direct application: `ff(fa)`                           |
-| `NonEmptyVecF`   | Cartesian product (requires `alloc` or `std`)          |
+| `OptionF`        | 両方が `Some` なら関数を適用; さもなくば `None`  |
+| `ResultF<E>`     | 両方が `Ok` なら関数を適用; 最初の `Err` が勝つ    |
+| `VecF`           | 直積: 各関数を各値に適用 |
+| `IdentityF`      | 直接適用: `ff(fa)`                           |
+| `NonEmptyVecF`   | 直積 (`alloc` または `std` が必要)          |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Apply a wrapped function to a wrapped value
+// 包まれた関数を包まれた値に適用
 let f: Option<fn(i32) -> i32> = Some(|x| x * 2);
 let result = OptionF::ap(f, Some(21));
 assert_eq!(result, Some(42));
 
-// Vec: cartesian product of functions and values
+// Vec: 関数と値の直積
 let fs: Vec<fn(i32) -> i32> = vec![|x| x + 1, |x| x * 10];
 let result = VecF::ap(fs, vec![1, 2, 3]);
 assert_eq!(result, vec![2, 3, 4, 10, 20, 30]);
@@ -135,10 +135,10 @@ assert_eq!(result, vec![2, 3, 4, 10, 20, 30]);
 
 ### Applicative
 
-An Apply that can lift a pure value into the functor.
+純粋な値を関手に持ち上げられる Apply。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Applicative: Apply {
@@ -146,24 +146,24 @@ pub trait Applicative: Apply {
 }
 ```
 
-#### Laws
+#### 法則
 
 
-**Identity:** Applying a pure identity function is a no-op.  
+**単位律:** 純粋な恒等関数を適用しても何も変わりません。  
 `ap(pure(id), v) == v`
 
 
-**Homomorphism:** Lifting a function and a value, then applying, is the same as lifting the result directly.  
+**準同型律:** 関数と値を持ち上げて適用するのは、結果を直接持ち上げるのと同じです。  
 `ap(pure(f), pure(x)) == pure(f(x))`
 
 
-**Interchange:** The order of lifting does not matter when the value is pure.  
+**交換律:** 値が純粋な場合、持ち上げの順序は問いません。  
 `ap(u, pure(y)) == ap(pure(|f| f(y)), u)`
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `pure(a)` returns           |
+| 型コンストラクタ | `pure(a)` が返す           |
 |------------------|-----------------------------|
 | `OptionF`        | `Some(a)`                   |
 | `ResultF<E>`     | `Ok(a)`                     |
@@ -171,19 +171,19 @@ pub trait Applicative: Apply {
 | `IdentityF`      | `a`                         |
 | `NonEmptyVecF`   | `NonEmptyVec::singleton(a)` |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Lift a value into any Applicative context
+// 値を任意の Applicative 文脈に持ち上げる
 let opt: Option<i32> = OptionF::pure(42);
 assert_eq!(opt, Some(42));
 
 let v: Vec<i32> = VecF::pure(42);
 assert_eq!(v, vec![42]);
 
-// Generic lifting
+// 汎用的な持ち上げ
 fn wrap<F: Applicative>(x: i32) -> F::Of<i32> {
     F::pure(x)
 }
@@ -195,10 +195,10 @@ assert_eq!(wrap::<VecF>(7), vec![7]);
 
 ### Chain
 
-An Apply with monadic bind (flatMap). Enables sequential computations where each step depends on the previous result.
+モナド束縛 (flatMap) を持つ Apply。各ステップが前の結果に依存する逐次計算を可能にします。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Chain: Apply {
@@ -206,31 +206,31 @@ pub trait Chain: Apply {
 }
 ```
 
-Note that the function `f` returns `Self::Of<B>`, not just `B`. This is what distinguishes `chain` from `fmap`: the callback itself produces a wrapped value, and `chain` flattens the result.
+関数 `f` は単なる `B` ではなく `Self::Of<B>` を返すことに注意してください。これが `chain` を `fmap` と区別します: コールバック自体が包まれた値を生成し、`chain` が結果を平坦化します。
 
-#### Laws
+#### 法則
 
 
-**Associativity:** Chaining is associative -- nesting does not matter.  
+**結合律:** 束縛は結合的です — 入れ子にしても同じです。  
 `chain(chain(m, f), g) == chain(m, |x| chain(f(x), g))`
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Notes                                                             |
+| 型コンストラクタ | 備考                                                             |
 |------------------|-------------------------------------------------------------------|
-| `OptionF`        | Delegates to `Option::and_then`                                   |
-| `ResultF<E>`     | Delegates to `Result::and_then`                                   |
-| `VecF`           | `flat_map`: each element produces a Vec, results are concatenated |
-| `IdentityF`      | Direct application: `f(fa)`                                       |
-| `NonEmptyVecF`   | Concatenates non-empty results (requires `alloc` or `std`)        |
+| `OptionF`        | `Option::and_then` に委譲                                   |
+| `ResultF<E>`     | `Result::and_then` に委譲                                   |
+| `VecF`           | `flat_map`: 各要素が Vec を生成し、結果は結合 |
+| `IdentityF`      | 直接適用: `f(fa)`                                       |
+| `NonEmptyVecF`   | 空でない結果を結合 (`alloc` または `std` が必要)        |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Option: short-circuits on None
+// Option: None で短絡
 fn safe_sqrt(x: f64) -> Option<f64> {
     if x >= 0.0 { Some(x.sqrt()) } else { None }
 }
@@ -241,7 +241,7 @@ assert_eq!(result, Some(4.0));
 let result = OptionF::chain(Some(-1.0), safe_sqrt);
 assert_eq!(result, None);
 
-// Vec: flatMap (each element expands into a list)
+// Vec: flatMap (各要素がリストに展開)
 let result = VecF::chain(vec![1, 2, 3], |x| vec![x, x * 10]);
 assert_eq!(result, vec![1, 10, 2, 20, 3, 30]);
 ```
@@ -249,10 +249,10 @@ assert_eq!(result, vec![1, 10, 2, 20, 3, 30]);
 
 ### Monad
 
-Applicative + Chain. A blanket implementation with no extra methods.
+Applicative + Chain。追加メソッドのないブランケット実装。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Monad: Applicative + Chain {}
@@ -260,39 +260,39 @@ pub trait Monad: Applicative + Chain {}
 impl<F: Applicative + Chain> Monad for F {}
 ```
 
-`Monad` is a **marker trait**. It adds no new methods; it simply certifies that a type implements both `Applicative` (for `pure`) and `Chain` (for `chain`). The blanket `impl` means you never write `impl Monad for MyType` -- just implement `Applicative` and `Chain`, and `Monad` comes for free.
+`Monad` は **マーカートレイト** です。新しいメソッドを追加しません; 単に型が `Applicative` (`pure` 用) と `Chain` (`chain` 用) の両方を実装することを証明します。ブランケット `impl` により、`impl Monad for MyType` を書くことはありません — `Applicative` と `Chain` を実装すれば `Monad` は自動的に付いてきます。
 
-#### Laws
+#### 法則
 
-In addition to the Applicative and Chain laws, a Monad must satisfy:
+Applicative と Chain の法則に加え、Monad は以下を満たさなければなりません:
 
 
-**Left identity:** Lifting a value with `pure` then chaining is the same as calling the function directly.  
+**左単位律:** `pure` で値を持ち上げて束縛するのは、関数を直接呼ぶのと同じです。  
 `chain(pure(a), f) == f(a)`
 
 
-**Right identity:** Chaining with `pure` is a no-op.  
+**右単位律:** `pure` で束縛しても何も変わりません。  
 `chain(m, pure) == m`
 
 
-#### Instances
+#### 実装
 
-Every type that implements both `Applicative` and `Chain` is automatically a `Monad`:
+`Applicative` と `Chain` の両方を実装するすべての型が自動的に `Monad` になります:
 
-| Type constructor | Notes                                    |
+| 型コンストラクタ | 備考                                    |
 |------------------|------------------------------------------|
-| `OptionF`        | Blanket impl                             |
-| `ResultF<E>`     | Blanket impl                             |
-| `VecF`           | Blanket impl (requires `alloc` or `std`) |
-| `IdentityF`      | Blanket impl                             |
-| `NonEmptyVecF`   | Blanket impl (requires `alloc` or `std`) |
+| `OptionF`        | ブランケット実装                             |
+| `ResultF<E>`     | ブランケット実装                             |
+| `VecF`           | ブランケット実装 (`alloc` または `std` が必要) |
+| `IdentityF`      | ブランケット実装                             |
+| `NonEmptyVecF`   | ブランケット実装 (`alloc` または `std` が必要) |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Use Monad as a trait bound to require both pure and chain
+// トレイト境界として Monad を使い、pure と chain の両方を要求
 fn bind_and_wrap<M: Monad>(x: i32) -> M::Of<String>
 where
     M::Of<i32>: Clone,
@@ -302,7 +302,7 @@ where
 
 assert_eq!(bind_and_wrap::<OptionF>(42), Some("value: 42".to_string()));
 
-// The do_! macro desugars into chain calls, so it requires Monad
+// do_! マクロは chain 呼び出しに脱糖されるため、Monad が必要
 let result = do_! { OptionF;
     x = Some(10);
     y = Some(x + 20);
@@ -312,14 +312,12 @@ assert_eq!(result, Some(40));
 ```
 
 
-## See Also
+## 関連項目
 
-- [**Alt Family**](alt-family.md) -- the Alt / Plus / Alternative branch, which extends Functor in a different direction (choice and failure).
-- [**Macros**](macros.md) -- the `do_!` and `ado_!` macros that provide ergonomic syntax for Chain and Applicative computations.
-- [**Foldable & Traversable**](foldable-traversable.md) -- folding and traversing structures, which combine naturally with Applicative.
-- [**Getting Started**](../getting-started.md) -- a tutorial introduction to HKTs, Functor, and monadic notation.
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+- [**Alt ファミリー**](alt-family.md) -- 選択と失敗という異なる方向に Functor を拡張する Alt / Plus / Alternative 枝。
+- [**マクロ**](macros.md) -- Chain と Applicative の計算に快適な構文を提供する `do_!` と `ado_!` マクロ。
+- [**Foldable と Traversable**](foldable-traversable.md) -- 構造の畳み込みと走査。Applicative と自然に組み合わさります。
+- [**はじめての利用**](../getting-started.md) -- HKT、Functor、モナド記法のチュートリアル入門。
 
 
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
