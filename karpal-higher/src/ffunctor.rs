@@ -57,8 +57,6 @@ pub trait FMonad<C: TwoCategory>: FFunctor<C, C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    use crate::two_category::Cat;
 
     #[test]
     fn identity_ffunctor_preserves_morphism() {
