@@ -91,8 +91,8 @@ mod tests {
 
     #[test]
     fn cat_compose2_vertical_is_total() {
-        let alpha = Cat::id2();
-        let beta = Cat::id2();
-        let _gamma = Cat::compose2_vertical(alpha, beta);
+        Cat::id2();
+        Cat::id2();
+        Cat::compose2_vertical((), ());
     }
 }
