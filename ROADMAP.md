@@ -438,7 +438,7 @@ Extensions E and F are the most immediately meaningful:
   `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
   deformation parameter, which maps to distinct coercion paths at the type level.
 
-### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (sub-phases A–B complete)
+### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (sub-phases A–C complete)
 
 **Crate**: `karpal-topos` (new)
 
@@ -466,7 +466,7 @@ infrastructure that Phase 14 and structured emptiness ultimately rest on.
 |-----------|-------------|--------------|
 | **A — Heyting algebras & internal logic** | `HeytingAlgebra` extending `BoundedLattice`, internal implication `→`, negation `¬`, propositional connectives | karpal-algebra (BoundedLattice) |
 | **B — Presheaves & sieves** ✅ | `Presheaf<C>`, `Sieve<C>`, Yoneda embedding (connecting to karpal-free's Yoneda), representable presheaves. Implemented in `karpal-topos` (Phase 16B) | karpal-core (Functor, NaturalTransformation), karpal-free (Yoneda) |
-| **C — Subobject classifier & finite limits** | `SubobjectClassifier`, `Pullback`, `Equalizer`, characteristic morphism construction | Sub-phase A, Sub-phase B |
+| **C — Subobject classifier & finite limits** ✅ | `SubobjectClassifier`, `Pullback`, `Equalizer`, characteristic morphism construction. Implemented in `karpal-topos` (Phase 16C) | Sub-phase A, Sub-phase B |
 | **D — Grothendieck topologies & sheaves** | `GrothendieckTopology`, `Sheaf`, sheafification adjunction (connecting to karpal-core adjunctions), Lawvere-Tierney topologies | Sub-phase C, karpal-core (Adjunction) |
 
 **Connections to existing phases**:
