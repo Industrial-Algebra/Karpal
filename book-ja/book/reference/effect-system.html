@@ -1,0 +1,625 @@
+<!DOCTYPE HTML>
+<html lang="ja" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>エフェクトシステム - Karpal</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Rust のための代数構造と圏論">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../book/theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-94c6eba9.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Karpal</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/Industrial-Algebra/Karpal" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="effect-system--monad-transformers"><a class="header" href="#effect-system--monad-transformers">Effect System &amp; Monad Transformers</a></h1>
+<p>The <code>karpal-effect</code> crate provides monad transformers — composable building blocks for stacking effects (errors, state, environment, logging) on top of any inner monad. It also introduces <code>FunctorSt</code>, <code>ApplicativeSt</code>, and <code>ChainSt</code> — variants of the functor hierarchy with <code>'static</code> bounds required by Rust’s <code>Box&lt;dyn Fn&gt;</code>.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Transformer</th><th>Representation</th><th>Effect</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ExceptTF&lt;E, M&gt;</code></td><td><code>M::Of&lt;Result&lt;A, E&gt;&gt;</code></td><td>Error handling — short-circuits on <code>Err</code></td></tr>
+<tr><td><code>WriterTF&lt;W, M&gt;</code></td><td><code>M::Of&lt;(A, W)&gt;</code></td><td>Log accumulation — <code>W</code> must be a <code>Monoid</code></td></tr>
+<tr><td><code>ReaderTF&lt;E, M&gt;</code></td><td><code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code></td><td>Shared environment — every computation reads the same <code>E</code></td></tr>
+<tr><td><code>StateTF&lt;S, M&gt;</code></td><td><code>Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;</code></td><td>Mutable state — state is threaded through computations</td></tr>
+</tbody>
+</table>
+</div>
+<p>All four transformers implement <code>HKT</code>, <code>FunctorSt</code>, <code>ChainSt</code>, and <code>MonadTrans</code>. <code>ExceptTF</code> and <code>WriterTF</code> additionally implement <code>ApplicativeSt</code>.</p>
+<h2 id="static-type-classes"><a class="header" href="#static-type-classes">Static Type Classes</a></h2>
+<p>The standard <code>Functor</code> / <code>Applicative</code> / <code>Chain</code> traits in <code>karpal-core</code> do not have <code>'static</code> bounds on their type parameters. Monad transformers that use <code>Box&lt;dyn Fn&gt;</code> internally need these bounds, so <code>karpal-effect</code> introduces parallel traits with the suffix <code>St</code>.</p>
+<h3 id="functorst--applicativest--chainst"><a class="header" href="#functorst--applicativest--chainst">FunctorSt / ApplicativeSt / ChainSt</a></h3>
+<p>Mirror traits with <code>'static</code> bounds for transformer compatibility.</p>
+<h4 id="signatures"><a class="header" href="#signatures">Signatures</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait FunctorSt: HKT {
+    fn fmap_st&lt;A: 'static, B: 'static&gt;(
+        fa: Self::Of&lt;A&gt;,
+        f: impl Fn(A) -&gt; B + 'static,
+    ) -&gt; Self::Of&lt;B&gt;;
+}
+
+pub trait ApplicativeSt: FunctorSt {
+    fn pure_st&lt;A: 'static&gt;(a: A) -&gt; Self::Of&lt;A&gt;;
+}
+
+pub trait ChainSt: FunctorSt {
+    fn chain_st&lt;A: 'static, B: 'static&gt;(
+        fa: Self::Of&lt;A&gt;,
+        f: impl Fn(A) -&gt; Self::Of&lt;B&gt; + 'static,
+    ) -&gt; Self::Of&lt;B&gt;;
+}
+<span class="boring">}</span></code></pre>
+<h4 id="base-instances"><a class="header" href="#base-instances">Base Instances</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Type</th><th><code>FunctorSt</code></th><th><code>ApplicativeSt</code></th><th><code>ChainSt</code></th></tr>
+</thead>
+<tbody>
+<tr><td><code>OptionF</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td><code>IdentityF</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td><code>VecF</code></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+</tbody>
+</table>
+</div>
+<p>These implementations are trivial — for <code>OptionF</code>, <code>fmap_st</code> is just <code>fa.map(f)</code>. The <code>'static</code> bound matches what <code>Box&lt;dyn Fn&gt;</code> requires, so base types that work with boxed closures satisfy it automatically.</p>
+<h3 id="monadtrans"><a class="header" href="#monadtrans">MonadTrans</a></h3>
+<p>Lift an inner monad computation into a transformer stack.</p>
+<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait MonadTrans&lt;M: HKT&gt;: HKT {
+    fn lift&lt;A: 'static&gt;(ma: M::Of&lt;A&gt;) -&gt; Self::Of&lt;A&gt;
+    where
+        M::Of&lt;A&gt;: Clone;
+}
+<span class="boring">}</span></code></pre>
+<p><code>lift</code> embeds an <code>M</code> computation into the transformer without adding any effect. The <code>Clone</code> bound on <code>M::Of&lt;A&gt;</code> is needed by closure-based transformers (ReaderT, StateT) whose inner function may be called multiple times.</p>
+<h4 id="law"><a class="header" href="#law">Law</a></h4>
+<p>lift preserves pure</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>lift(M::pure_st(a)) == pure(a)
+<span class="boring">}</span></code></pre>
+<h4 id="examples"><a class="header" href="#examples">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_effect::{MonadTrans, ExceptTF, WriterTF, ReaderTF, StateTF};
+use karpal_core::hkt::OptionF;
+
+// Lift Some(42) into ExceptT — produces Some(Ok(42))
+let lifted = ExceptTF::&lt;&amp;str, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted, Some(Ok(42)));
+
+// Lift Some(42) into WriterT — produces Some((42, ""))
+let lifted = WriterTF::&lt;String, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted, Some((42, String::new())));
+
+// Lift Some(42) into ReaderT — ignores the environment
+let lifted = ReaderTF::&lt;i32, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted(999), Some(42));
+
+// Lift Some(42) into StateT — passes state through unchanged
+let lifted = StateTF::&lt;i32, OptionF&gt;::lift(Some(42));
+assert_eq!(lifted(99), Some((99, 42)));
+<span class="boring">}</span></code></pre>
+<h2 id="monad-transformers"><a class="header" href="#monad-transformers">Monad Transformers</a></h2>
+<h3 id="excepttfe-m"><a class="header" href="#excepttfe-m">ExceptTF&lt;E, M&gt;</a></h3>
+<p>Adds error handling to an inner monad. Equivalent to <code>EitherT</code> / <code>ExceptT</code> in Haskell.</p>
+<h4 id="representation"><a class="header" href="#representation">Representation</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ExceptTF&lt;E, M&gt;(PhantomData&lt;(E, M)&gt;);
+
+// ExceptTF&lt;E, M&gt;::Of&lt;A&gt; = M::Of&lt;Result&lt;A, E&gt;&gt;
+impl&lt;E: 'static, M: HKT&gt; HKT for ExceptTF&lt;E, M&gt; {
+    type Of&lt;A&gt; = M::Of&lt;Result&lt;A, E&gt;&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>This is the simplest transformer — the inner monad wraps <code>Result&lt;A, E&gt;</code> directly. No closures, no <code>Box&lt;dyn Fn&gt;</code>.</p>
+<h4 id="trait-implementations"><a class="header" href="#trait-implementations">Trait Implementations</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Trait</th><th>Bounds on <code>M</code></th></tr>
+</thead>
+<tbody>
+<tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt</code></td></tr>
+<tr><td><code>ApplicativeSt</code></td><td><code>M: ApplicativeSt</code></td></tr>
+<tr><td><code>ChainSt</code></td><td><code>M: ChainSt + ApplicativeSt</code></td></tr>
+<tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>M: FunctorSt</code></td></tr>
+</tbody>
+</table>
+</div>
+<h4 id="operations"><a class="header" href="#operations">Operations</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// pure: wrap a value in Ok inside the inner monad
+fn except_t_pure&lt;E, M: ApplicativeSt, A&gt;(a: A) -&gt; M::Of&lt;Result&lt;A, E&gt;&gt;;
+
+// fmap: apply a function to the Ok value
+fn except_t_fmap&lt;E, M: FunctorSt, A, B&gt;(fa, f) -&gt; M::Of&lt;Result&lt;B, E&gt;&gt;;
+
+// chain: short-circuits on Err
+fn except_t_chain&lt;E, M: ChainSt + ApplicativeSt, A, B&gt;(fa, f) -&gt; M::Of&lt;Result&lt;B, E&gt;&gt;;
+
+// throw: produce an error
+fn except_t_throw&lt;E, M: ApplicativeSt, A&gt;(e: E) -&gt; M::Of&lt;Result&lt;A, E&gt;&gt;;
+
+// catch: handle an error with a recovery function
+fn except_t_catch&lt;E, M: ChainSt + ApplicativeSt, A&gt;(fa, handler) -&gt; M::Of&lt;Result&lt;A, E&gt;&gt;;
+<span class="boring">}</span></code></pre>
+<h4 id="examples-1"><a class="header" href="#examples-1">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_effect::except_t::*;
+use karpal_core::hkt::OptionF;
+
+// Success path
+let val = except_t_pure::&lt;&amp;str, OptionF, _&gt;(10);
+let result = except_t_chain::&lt;&amp;str, OptionF, _, _&gt;(
+    val, |x| Some(Ok(x + 5))
+);
+assert_eq!(result, Some(Ok(15)));
+
+// Error short-circuit
+let err: Option&lt;Result&lt;i32, &amp;str&gt;&gt; = Some(Err("fail"));
+let result = except_t_chain::&lt;&amp;str, OptionF, _, _&gt;(
+    err, |x| Some(Ok(x + 10))
+);
+assert_eq!(result, Some(Err("fail")));
+
+// Error recovery
+let recovered = except_t_catch::&lt;&amp;str, OptionF, i32&gt;(
+    Some(Err("bad")), |_| Some(Ok(42))
+);
+assert_eq!(recovered, Some(Ok(42)));
+<span class="boring">}</span></code></pre>
+<h3 id="writertfw-m"><a class="header" href="#writertfw-m">WriterTF&lt;W, M&gt;</a></h3>
+<p>Adds log accumulation to an inner monad. The log type must be a Monoid.</p>
+<h4 id="representation-1"><a class="header" href="#representation-1">Representation</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct WriterTF&lt;W, M&gt;(PhantomData&lt;(W, M)&gt;);
+
+// WriterTF&lt;W, M&gt;::Of&lt;A&gt; = M::Of&lt;(A, W)&gt;
+impl&lt;W: 'static, M: HKT&gt; HKT for WriterTF&lt;W, M&gt; {
+    type Of&lt;A&gt; = M::Of&lt;(A, W)&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>Like ExceptT, the representation is a direct wrapper — no closures. The log <code>W</code> is paired with the value inside the inner monad. Logs are combined using <code>Semigroup::combine</code> when chaining.</p>
+<h4 id="trait-implementations-1"><a class="header" href="#trait-implementations-1">Trait Implementations</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Trait</th><th>Bounds on <code>W</code> / <code>M</code></th></tr>
+</thead>
+<tbody>
+<tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt</code></td></tr>
+<tr><td><code>ApplicativeSt</code></td><td><code>W: Monoid</code>, <code>M: ApplicativeSt</code></td></tr>
+<tr><td><code>ChainSt</code></td><td><code>W: Semigroup + Clone</code>, <code>M: ChainSt + FunctorSt</code></td></tr>
+<tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>W: Monoid</code>, <code>M: FunctorSt</code></td></tr>
+</tbody>
+</table>
+</div>
+<h4 id="operations-1"><a class="header" href="#operations-1">Operations</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn writer_t_pure&lt;W: Monoid, M: ApplicativeSt, A&gt;(a: A) -&gt; M::Of&lt;(A, W)&gt;;
+fn writer_t_tell&lt;W, M: ApplicativeSt&gt;(w: W) -&gt; M::Of&lt;((), W)&gt;;
+fn writer_t_listen&lt;W: Clone, M: FunctorSt, A&gt;(fa) -&gt; M::Of&lt;((A, W), W)&gt;;
+fn writer_t_pass&lt;W, M: FunctorSt, A&gt;(fa) -&gt; M::Of&lt;(A, W)&gt;;
+<span class="boring">}</span></code></pre>
+<h4 id="examples-2"><a class="header" href="#examples-2">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_effect::writer_t::*;
+use karpal_core::hkt::OptionF;
+
+// tell appends to the log
+let told = writer_t_tell::&lt;String, OptionF&gt;("hello".to_string());
+assert_eq!(told, Some(((), "hello".to_string())));
+
+// chain accumulates logs via Semigroup::combine
+let m1 = writer_t_tell::&lt;String, OptionF&gt;("a".to_string());
+let result = writer_t_chain::&lt;String, OptionF, _, _&gt;(m1, |()| {
+    writer_t_tell::&lt;String, OptionF&gt;("b".to_string())
+});
+assert_eq!(result, Some(((), "ab".to_string())));
+
+// listen exposes the log alongside the value
+let val: Option&lt;(i32, String)&gt; = Some((42, "log".to_string()));
+let listened = writer_t_listen::&lt;String, OptionF, i32&gt;(val);
+assert_eq!(listened, Some(((42, "log".to_string()), "log".to_string())));
+<span class="boring">}</span></code></pre>
+<h3 id="readertfe-m"><a class="header" href="#readertfe-m">ReaderTF&lt;E, M&gt;</a></h3>
+<p>Adds a shared, read-only environment to an inner monad.</p>
+<h4 id="representation-2"><a class="header" href="#representation-2">Representation</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ReaderTF&lt;E, M&gt;(PhantomData&lt;(E, M)&gt;);
+
+// ReaderTF&lt;E, M&gt;::Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;
+impl&lt;E: 'static, M: HKT + 'static&gt; HKT for ReaderTF&lt;E, M&gt; {
+    type Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>ReaderT wraps a function from environment to inner monad. The environment is <strong>shared</strong> (not threaded) — each chained computation receives the same environment value.</p>
+<h4 id="trait-implementations-2"><a class="header" href="#trait-implementations-2">Trait Implementations</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Trait</th><th>Bounds</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt + 'static</code></td></tr>
+<tr><td><code>ChainSt</code></td><td><code>E: Clone</code>, <code>M: ChainSt + 'static</code></td></tr>
+<tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>M: FunctorSt + 'static</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Note:</strong> <code>ApplicativeSt</code> is <strong>not</strong> implemented for <code>ReaderTF</code>. The trait’s <code>pure_st</code> method cannot produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> without being able to clone <code>A</code>. Adding a blanket <code>A: Clone</code> bound to <code>ApplicativeSt::pure_st</code> would impose that requirement on <em>every</em> <code>ApplicativeSt</code> implementation (including <code>ExceptTF</code>), preventing its use with non-<code>Clone</code> values. Instead, use the standalone <code>reader_t_pure</code> function when you specifically need a <code>Clone</code> <code>A</code>; it requires <code>A: Clone</code> explicitly.</p>
+<h4 id="operations-2"><a class="header" href="#operations-2">Operations</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn reader_t_pure&lt;E, M: ApplicativeSt, A: Clone&gt;(a: A) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+fn reader_t_ask&lt;E: Clone, M: ApplicativeSt&gt;() -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;E&gt;&gt;;
+fn reader_t_local&lt;E, M: HKT, A&gt;(f: impl Fn(E) -&gt; E, reader) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+fn reader_t_reader&lt;E, M: ApplicativeSt, A&gt;(f: impl Fn(E) -&gt; A) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;;
+fn reader_t_run&lt;E, M: HKT, A&gt;(reader, env: E) -&gt; M::Of&lt;A&gt;;
+<span class="boring">}</span></code></pre>
+<h4 id="examples-3"><a class="header" href="#examples-3">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_effect::reader_t::*;
+use karpal_core::hkt::OptionF;
+
+// ask: read the environment
+let r = reader_t_ask::&lt;i32, OptionF&gt;();
+assert_eq!(r(42), Some(42));
+
+// chain shares the environment between computations
+let r = reader_t_chain::&lt;i32, OptionF, _, _&gt;(
+    reader_t_ask::&lt;i32, OptionF&gt;(),
+    |x| {
+        let x_captured = x;
+        reader_t_fmap::&lt;i32, OptionF, _, _&gt;(
+            reader_t_ask::&lt;i32, OptionF&gt;(),
+            move |e| e + x_captured,
+        )
+    },
+);
+assert_eq!(r(10), Some(20));  // 10 + 10
+
+// local: modify the environment for a sub-computation
+let r = reader_t_ask::&lt;i32, OptionF&gt;();
+let localized = reader_t_local::&lt;i32, OptionF, i32&gt;(|e| e + 100, r);
+assert_eq!(localized(5), Some(105));
+<span class="boring">}</span></code></pre>
+<h3 id="statetfs-m"><a class="header" href="#statetfs-m">StateTF&lt;S, M&gt;</a></h3>
+<p>Adds mutable state to an inner monad. State is threaded through computations.</p>
+<h4 id="representation-3"><a class="header" href="#representation-3">Representation</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct StateTF&lt;S, M&gt;(PhantomData&lt;(S, M)&gt;);
+
+// StateTF&lt;S, M&gt;::Of&lt;A&gt; = Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;
+impl&lt;S: 'static, M: HKT + 'static&gt; HKT for StateTF&lt;S, M&gt; {
+    type Of&lt;A&gt; = Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>Unlike ReaderT, the state is <strong>threaded</strong> (modified) — each chained computation receives the updated state from the previous one. The output includes both the new state and the result.</p>
+<h4 id="trait-implementations-3"><a class="header" href="#trait-implementations-3">Trait Implementations</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Trait</th><th>Bounds</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FunctorSt</code></td><td><code>M: FunctorSt + 'static</code></td></tr>
+<tr><td><code>ChainSt</code></td><td><code>S: Clone</code>, <code>M: ChainSt + 'static</code></td></tr>
+<tr><td><code>MonadTrans&lt;M&gt;</code></td><td><code>S: Clone</code>, <code>M: FunctorSt + 'static</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Like ReaderT, <code>ApplicativeSt</code> is <strong>not</strong> implemented — use the standalone <code>state_t_pure</code> function (which requires <code>A: Clone</code>).</p>
+<h4 id="operations-3"><a class="header" href="#operations-3">Operations</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn state_t_pure&lt;S: Clone, M: ApplicativeSt, A: Clone&gt;(a: A) -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, A)&gt;&gt;;
+fn state_t_get&lt;S: Clone, M: ApplicativeSt&gt;() -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, S)&gt;&gt;;
+fn state_t_put&lt;S: Clone, M: ApplicativeSt&gt;(new_state: S) -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, ())&gt;&gt;;
+fn state_t_modify&lt;S: Clone, M: ApplicativeSt&gt;(f: impl Fn(S) -&gt; S) -&gt; Box&lt;dyn Fn(S) -&gt; M::Of&lt;(S, ())&gt;&gt;;
+fn state_t_run&lt;S, M: HKT, A&gt;(state, initial: S) -&gt; M::Of&lt;(S, A)&gt;;
+<span class="boring">}</span></code></pre>
+<h4 id="examples-4"><a class="header" href="#examples-4">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_effect::state_t::*;
+use karpal_core::hkt::OptionF;
+
+// get reads the current state
+let g = state_t_get::&lt;i32, OptionF&gt;();
+assert_eq!(g(42), Some((42, 42)));
+
+// put replaces the state
+let p = state_t_put::&lt;i32, OptionF&gt;(99);
+assert_eq!(p(0), Some((99, ())));
+
+// chain threads state: get 10, modify +10, get 20
+let program = state_t_chain::&lt;i32, OptionF, _, _&gt;(
+    state_t_get::&lt;i32, OptionF&gt;(),
+    |x| state_t_chain::&lt;i32, OptionF, _, _&gt;(
+        state_t_modify::&lt;i32, OptionF&gt;(move |s| s + x),
+        |_| state_t_get::&lt;i32, OptionF&gt;(),
+    ),
+);
+assert_eq!(program(10), Some((20, 20)));
+
+// Inner monad can short-circuit (OptionF with None)
+let guarded = state_t_chain::&lt;i32, OptionF, _, _&gt;(
+    state_t_get::&lt;i32, OptionF&gt;(),
+    |x| -&gt; Box&lt;dyn Fn(i32) -&gt; Option&lt;(i32, i32)&gt;&gt; {
+        if x &gt; 100 {
+            state_t_pure::&lt;i32, OptionF, _&gt;(x)
+        } else {
+            Box::new(|_| None)
+        }
+    },
+);
+assert_eq!(guarded(10), None);
+assert_eq!(guarded(200), Some((200, 200)));
+<span class="boring">}</span></code></pre>
+<h2 id="reader-vs-state"><a class="header" href="#reader-vs-state">Reader vs State</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th></th><th>ReaderT</th><th>StateT</th></tr>
+</thead>
+<tbody>
+<tr><td>Environment</td><td>Shared (read-only)</td><td>Threaded (mutable)</td></tr>
+<tr><td>Chain semantics</td><td>Both computations see the same <code>E</code></td><td>Second sees updated <code>S</code> from first</td></tr>
+<tr><td><code>ask</code> / <code>get</code></td><td>Always returns the original environment</td><td>Returns current (potentially modified) state</td></tr>
+<tr><td><code>local</code> / <code>modify</code></td><td>Scoped change (only affects sub-computation)</td><td>Permanent change (visible to all subsequent)</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="design-notes"><a class="header" href="#design-notes">Design Notes</a></h2>
+<ul>
+<li><strong>Why separate <code>FunctorSt</code> / <code>ChainSt</code> traits?</strong> — Rust’s <code>Box&lt;dyn Fn&gt;</code> requires <code>'static</code> bounds on captured types. Adding <code>'static</code> to the main <code>Functor</code> trait would unnecessarily constrain non-transformer code. The <code>St</code> family provides a parallel hierarchy that coexists cleanly.</li>
+<li><strong>Why no <code>ApplicativeSt</code> for ReaderT and StateT?</strong> — <code>pure_st</code> must produce a <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> from a single <code>A</code>. The closure may be called multiple times, so <code>A</code> must be cloneable. But adding <code>A: Clone</code> to the trait would impose that requirement globally on every <code>ApplicativeSt</code> implementation, preventing use with non-<code>Clone</code> values. The solution: standalone <code>reader_t_pure</code> / <code>state_t_pure</code> functions with explicit <code>A: Clone</code> bounds.</li>
+<li><strong>Why <code>M: 'static</code> on closure-based transformers?</strong> — <code>Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;</code> has an implicit <code>'static</code> lifetime bound, which propagates to <code>M::Of&lt;A&gt;</code>. Adding <code>M: 'static</code> to the HKT impl ensures the associated type satisfies this bound.</li>
+<li><strong>Rc for closure sharing</strong> — <code>reader_t_fmap</code> and <code>reader_t_chain</code> wrap the user-provided function in <code>Rc</code> because the outer closure (which is <code>Fn</code>, not <code>FnOnce</code>) may be called multiple times, and each call creates an inner closure that needs its own reference.</li>
+<li><strong><code>no_std</code> compatible</strong> — the <code>MonadTrans</code> trait and its definition work in <code>no_std</code>. The transformers themselves require <code>alloc</code> (for <code>Box</code> and <code>Rc</code>).</li>
+</ul>
+<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../reference/adjunctions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../reference/proof-verification.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../reference/adjunctions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../reference/proof-verification.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

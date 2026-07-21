@@ -1,0 +1,452 @@
+<!DOCTYPE HTML>
+<html lang="ja" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>設定パイプライン - Karpal</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Rust のための代数構造と圏論">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../book/theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-94c6eba9.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Karpal</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/Industrial-Algebra/Karpal" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="config-pipeline"><a class="header" href="#config-pipeline">Config Pipeline</a></h1>
+<p>Load application config from multiple sources using Alt, Traversable, Foldable, and Monoid.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Real applications rarely load configuration from a single source. Environment variables, config files, and hardcoded defaults each provide a partial picture. This example builds a configuration pipeline that:</p>
+<ul>
+<li>Uses <strong>Alt</strong> to create fallback chains across multiple config sources (env, file, defaults).</li>
+<li>Uses <strong><code>do_!</code></strong> to sequence dependent lookups into a connection string.</li>
+<li>Uses <strong>Traversable</strong> for all-or-nothing batch validation of port numbers.</li>
+<li>Uses <strong>Foldable</strong> with <strong>Monoid</strong> to aggregate a human-readable config summary.</li>
+</ul>
+<p>The full source is at <code>karpal-std/examples/config_pipeline.rs</code>.</p>
+<h2 id="1-domain-types"><a class="header" href="#1-domain-types">1. Domain Types</a></h2>
+<p>The example defines a simple <code>AppConfig</code> struct representing a database connection configuration:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug, Clone, PartialEq)]
+struct AppConfig {
+    db_host: String,
+    db_port: u16,
+    db_name: String,
+    max_connections: u16,
+    timeout_ms: u64,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="2-simulated-config-sources"><a class="header" href="#2-simulated-config-sources">2. Simulated Config Sources</a></h2>
+<p>Three functions simulate different configuration sources. Each takes a key and returns <code>Option&lt;String&gt;</code> — <code>Some</code> if the source knows about that key, <code>None</code> otherwise.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn from_env(key: &amp;str) -&gt; Option&lt;String&gt; {
+    // Simulate environment variables (only DB_HOST and DB_PORT are set)
+    match key {
+        "DB_HOST" =&gt; Some("prod-db.example.com".into()),
+        "DB_PORT" =&gt; Some("5432".into()),
+        _ =&gt; None,
+    }
+}
+
+fn from_file(key: &amp;str) -&gt; Option&lt;String&gt; {
+    // Simulate a config file (has DB_NAME and MAX_CONNECTIONS)
+    match key {
+        "DB_NAME" =&gt; Some("myapp".into()),
+        "MAX_CONNECTIONS" =&gt; Some("20".into()),
+        _ =&gt; None,
+    }
+}
+
+fn from_default(key: &amp;str) -&gt; Option&lt;String&gt; {
+    // Hardcoded defaults for everything
+    match key {
+        "DB_HOST" =&gt; Some("localhost".into()),
+        "DB_PORT" =&gt; Some("5432".into()),
+        "DB_NAME" =&gt; Some("app".into()),
+        "MAX_CONNECTIONS" =&gt; Some("10".into()),
+        "TIMEOUT_MS" =&gt; Some("5000".into()),
+        _ =&gt; None,
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>No single source has every key. Environment variables provide the host and port; the config file provides the database name and connection pool size; defaults fill in anything still missing, including the timeout.</p>
+<h2 id="3-alt-fallback-chains"><a class="header" href="#3-alt-fallback-chains">3. Alt Fallback Chains</a></h2>
+<p>The <a href="../reference/alt-family.html">Alt</a> trait provides an associative “or” operation on type constructors. For <code>Option</code>, <code>Alt::alt</code> returns the first <code>Some</code> value, falling through to the next source if the current one returns <code>None</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Try env first, then file, then defaults.
+fn resolve(key: &amp;str) -&gt; Option&lt;String&gt; {
+    OptionF::alt(OptionF::alt(from_env(key), from_file(key)), from_default(key))
+}
+<span class="boring">}</span></code></pre>
+<p>This reads inside-out: try <code>from_env</code>, fall back to <code>from_file</code>, then fall back to <code>from_default</code>. Because <code>Alt</code> is associative, the grouping does not matter — only the left-to-right priority order.</p>
+<p>For example, <code>resolve("DB_HOST")</code> returns <code>Some("prod-db.example.com")</code> from the environment, while <code>resolve("TIMEOUT_MS")</code> skips both env and file (neither has it) and returns <code>Some("5000")</code> from defaults.</p>
+<h2 id="4-loading-the-full-config"><a class="header" href="#4-loading-the-full-config">4. Loading the Full Config</a></h2>
+<p>With <code>resolve</code> in hand, loading the full <code>AppConfig</code> is straightforward. String fields are resolved directly; numeric fields are resolved and then parsed:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn load_config() -&gt; Option&lt;AppConfig&gt; {
+    // Resolve each key independently via Alt fallback chains
+    let db_host = resolve("DB_HOST")?;
+    let db_name = resolve("DB_NAME")?;
+
+    // For numeric fields, resolve then parse
+    let db_port = resolve("DB_PORT").and_then(parse_u16)?;
+    let max_connections = resolve("MAX_CONNECTIONS").and_then(parse_u16)?;
+    let timeout_ms = resolve("TIMEOUT_MS").and_then(parse_u64)?;
+
+    Some(AppConfig {
+        db_host,
+        db_port,
+        db_name,
+        max_connections,
+        timeout_ms,
+    })
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>?</code> operator short-circuits the entire function if any key cannot be resolved or any parse fails, returning <code>None</code>.</p>
+<h2 id="5-connection-string-with-do_"><a class="header" href="#5-connection-string-with-do_">5. Connection String with <code>do_!</code></a></h2>
+<p>The <a href="../reference/macros.html"><code>do_!</code> macro</a> provides monadic sequencing. Here it combines three resolved values into a formatted connection string:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn load_connection_string() -&gt; Option&lt;String&gt; {
+    do_! { OptionF;
+        host = resolve("DB_HOST");
+        port = resolve("DB_PORT");
+        name = resolve("DB_NAME");
+        Some(format!("postgres://{}:{}/{}", host, port, name))
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Each <code>name = expr</code> line unwraps the <code>Option</code>. If any call to <code>resolve</code> returns <code>None</code>, the entire block short-circuits. The final expression produces the connection string wrapped in <code>Some</code>.</p>
+<h2 id="6-batch-validation-with-traversable"><a class="header" href="#6-batch-validation-with-traversable">6. Batch Validation with Traversable</a></h2>
+<p><a href="../reference/foldable-traversable.html">Traversable</a> provides all-or-nothing semantics: apply a fallible function to every element in a collection, and if any element fails, the entire result is <code>None</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn parse_u16(s: String) -&gt; Option&lt;u16&gt; {
+    s.parse().ok()
+}
+
+fn validate_ports(ports: Vec&lt;&amp;str&gt;) -&gt; Option&lt;Vec&lt;u16&gt;&gt; {
+    VecF::traverse::&lt;OptionF, _, _, _&gt;(
+        ports.into_iter().map(String::from).collect(),
+        parse_u16,
+    )
+}
+<span class="boring">}</span></code></pre>
+<p><code>VecF::traverse</code> maps <code>parse_u16</code> over each element and collects the results. If every element parses successfully, the result is <code>Some(vec![...])</code>. If any element fails, the result is <code>None</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let good = validate_ports(vec!["80", "443", "8080"]);
+// =&gt; Some([80, 443, 8080])
+
+let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
+// =&gt; None
+<span class="boring">}</span></code></pre>
+<p>This is strictly stronger than filtering out failures — it guarantees that either <em>all</em> values are valid or the caller knows something went wrong.</p>
+<h2 id="7-config-summary-with-foldable-and-monoid"><a class="header" href="#7-config-summary-with-foldable-and-monoid">7. Config Summary with Foldable and Monoid</a></h2>
+<p><a href="../reference/foldable-traversable.html">Foldable</a> provides structural traversal, and <a href="../reference/algebraic.html">Monoid</a> provides an identity element and associative combination. Together, <code>fold_map</code> transforms each element and concatenates the results:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn summarize_keys(keys: Vec&lt;&amp;str&gt;) -&gt; String {
+    VecF::fold_map(
+        keys.into_iter().map(String::from).collect::&lt;Vec&lt;_&gt;&gt;(),
+        |key| {
+            match resolve(&amp;key) {
+                Some(val) =&gt; format!("  {} = {}\n", key, val),
+                None =&gt; format!("  {} = &lt;missing&gt;\n", key),
+            }
+        },
+    )
+}
+<span class="boring">}</span></code></pre>
+<p>For <code>String</code>, the Monoid instance uses the empty string as the identity and string concatenation as the combining operation. The result is a single string summarizing all resolved (or missing) configuration keys.</p>
+<h2 id="8-the-main-function"><a class="header" href="#8-the-main-function">8. The <code>main</code> Function</a></h2>
+<p>The <code>main</code> function exercises each section and prints the results:</p>
+<pre class="playground"><code class="language-rust">fn main() {
+    println!("=== Config Pipeline Example ===\n");
+
+    // 1. Alt fallback chains
+    println!("--- Resolving individual keys (Alt fallback) ---");
+    println!("DB_HOST:         {:?}", resolve("DB_HOST"));
+    println!("DB_PORT:         {:?}", resolve("DB_PORT"));
+    println!("DB_NAME:         {:?}", resolve("DB_NAME"));
+    println!("MAX_CONNECTIONS: {:?}", resolve("MAX_CONNECTIONS"));
+    println!("TIMEOUT_MS:      {:?}", resolve("TIMEOUT_MS"));
+    println!("UNKNOWN_KEY:     {:?}", resolve("UNKNOWN_KEY"));
+
+    // 2. Full config loading
+    println!("\n--- Loading full config ---");
+    match load_config() {
+        Some(config) =&gt; println!("{:#?}", config),
+        None =&gt; println!("Failed to load config!"),
+    }
+
+    // 3. do_! for independent lookups
+    println!("\n--- Connection string (do_!) ---");
+    println!("{:?}", load_connection_string());
+
+    // 4. Traversable: all-or-nothing validation
+    println!("\n--- Batch port validation (Traversable) ---");
+    let good_ports = vec!["80", "443", "8080"];
+    let good_result = validate_ports(good_ports.clone());
+    println!("Valid ports {:?}: {:?}", good_ports, good_result);
+
+    let bad_ports = vec!["80", "not_a_port", "8080"];
+    let bad_result = validate_ports(bad_ports.clone());
+    println!("Mixed ports {:?}: {:?}", bad_ports, bad_result);
+
+    // 5. Foldable + Monoid: summarize
+    println!("\n--- Config summary (Foldable + Monoid) ---");
+    let summary = summarize_keys(vec![
+        "DB_HOST", "DB_PORT", "DB_NAME", "MAX_CONNECTIONS", "TIMEOUT_MS", "MISSING",
+    ]);
+    print!("{}", summary);
+}</code></pre>
+<h2 id="run-it"><a class="header" href="#run-it">Run It</a></h2>
+<p>From the workspace root:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>cargo run -p karpal-std --example config_pipeline
+<span class="boring">}</span></code></pre>
+<h2 id="traits-used"><a class="header" href="#traits-used">Traits Used</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Trait</th><th>Purpose in this example</th><th>Reference</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Alt</code></td><td>Fallback chains across config sources</td><td><a href="../reference/alt-family.html">Alt Family</a></td></tr>
+<tr><td><code>Monad</code> (via <code>do_!</code>)</td><td>Sequential composition of dependent lookups</td><td><a href="../reference/functor-family.html">Functor Family</a></td></tr>
+<tr><td><code>Traversable</code></td><td>All-or-nothing batch validation</td><td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td></tr>
+<tr><td><code>Foldable</code></td><td>Structural traversal with <code>fold_map</code></td><td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td></tr>
+<tr><td><code>Monoid</code></td><td>String concatenation as the combining operation for <code>fold_map</code></td><td><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></td></tr>
+</tbody>
+</table>
+</div>
+<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../examples/basic.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../examples/data-transformation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../examples/basic.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../examples/data-transformation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,620 @@
+<!DOCTYPE HTML>
+<html lang="ja" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>随伴 - Karpal</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Rust のための代数構造と圏論">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../book/theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-7d64063d.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-94c6eba9.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Karpal</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/Industrial-Algebra/Karpal" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="adjunctions--category-theory"><a class="header" href="#adjunctions--category-theory">Adjunctions &amp; Category Theory</a></h1>
+<p>Advanced category-theoretic constructions in <code>karpal-core</code>. An adjunction F ⊣ U is the fundamental relationship that gives rise to monads and comonads. This module also includes functor composition, ends, coends, dinatural transformations, the continuation monad, and profunctor-level adjunctions.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Concept</th><th>Module</th><th>Key idea</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Adjunction&lt;F, U&gt;</code></td><td><code>adjunction</code></td><td>F ⊣ U: <code>unit: A → U(F(A))</code>, <code>counit: F(U(B)) → B</code></td></tr>
+<tr><td><code>ComposeF&lt;F, G&gt;</code></td><td><code>compose</code></td><td>Functor composition: <code>(F . G)(A) = F(G(A))</code></td></tr>
+<tr><td><code>DinaturalTransformation</code></td><td><code>dinatural</code></td><td>Transform between profunctor diagonals: <code>P(A,A) → Q(A,A)</code></td></tr>
+<tr><td><code>End&lt;P&gt;</code></td><td><code>end</code></td><td>Universal quantification: <code>∀A. P(A,A)</code></td></tr>
+<tr><td><code>Coend&lt;P, A&gt;</code></td><td><code>coend</code></td><td>Existential quantification: <code>∃A. P(A,A)</code></td></tr>
+<tr><td><code>ContravariantAdjunction</code></td><td><code>adjunction</code></td><td>Adjunction between contravariant functors; <code>ContF&lt;R&gt; ⊣ ContF&lt;R&gt;</code> gives the continuation monad</td></tr>
+<tr><td><code>ProfunctorAdjunction</code></td><td><code>adjunction</code></td><td>Adjunction in the category of profunctors</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="adjunction"><a class="header" href="#adjunction">Adjunction</a></h2>
+<h3 id="adjunctionf-u"><a class="header" href="#adjunctionf-u">Adjunction&lt;F, U&gt;</a></h3>
+<p>The fundamental relationship between a left adjoint F and right adjoint U.</p>
+<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Adjunction&lt;F: HKT, U: HKT&gt; {
+    fn unit&lt;A: Clone + 'static&gt;(a: A) -&gt; U::Of&lt;F::Of&lt;A&gt;&gt;;
+    fn counit&lt;B: 'static&gt;(fub: F::Of&lt;U::Of&lt;B&gt;&gt;) -&gt; B;
+}
+<span class="boring">}</span></code></pre>
+<p>The trait is bounded by <code>HKT</code> rather than <code>Functor</code> because some right adjoints (like <code>ReaderF&lt;E&gt;</code>) cannot implement the generic <code>Functor</code> trait due to <code>'static</code> limitations on <code>Box&lt;dyn Fn&gt;</code>.</p>
+<h4 id="laws-triangle-identities"><a class="header" href="#laws-triangle-identities">Laws (Triangle Identities)</a></h4>
+<p>Left Triangle</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// counit(F::fmap(fa, unit)) == fa
+// "Going up then back down is identity on F"
+<span class="boring">}</span></code></pre>
+<p>Right Triangle</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// U::fmap(unit(a), counit) == a
+// "Going up then back down is identity on U"
+<span class="boring">}</span></code></pre>
+<h4 id="derived-operations"><a class="header" href="#derived-operations">Derived Operations</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// left_adjunct: (F(A) -&gt; B) -&gt; (A -&gt; U(B))
+fn left_adjunct(f, a) = U::fmap(unit(a), f)
+
+// right_adjunct: (A -&gt; U(B)) -&gt; (F(A) -&gt; B)
+fn right_adjunct(f, fa) = counit(F::fmap(fa, f))
+<span class="boring">}</span></code></pre>
+<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Witness</th><th>F (left)</th><th>U (right)</th><th>Feature</th></tr>
+</thead>
+<tbody>
+<tr><td><code>IdentityAdj</code></td><td><code>IdentityF</code></td><td><code>IdentityF</code></td><td><code>no_std</code></td></tr>
+<tr><td><code>CurryAdj&lt;E&gt;</code></td><td><code>EnvF&lt;E&gt;</code></td><td><code>ReaderF&lt;E&gt;</code></td><td><code>alloc</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="monad--comonad-from-adjunctions"><a class="header" href="#monad--comonad-from-adjunctions">Monad &amp; Comonad from Adjunctions</a></h2>
+<p>Every adjunction F ⊣ U gives rise to both a monad and a comonad:</p>
+<ul>
+<li><strong>Monad on U . F</strong> — <code>pure = unit</code>, <code>join = U(counit)</code></li>
+<li><strong>Comonad on F . U</strong> — <code>extract = counit</code>, <code>duplicate = F(unit)</code></li>
+</ul>
+<h3 id="curryadje--productexponential-adjunction"><a class="header" href="#curryadje--productexponential-adjunction">CurryAdj&lt;E&gt; — Product/Exponential Adjunction</a></h3>
+<p><code>EnvF&lt;E&gt; ⊣ ReaderF&lt;E&gt;</code>: the canonical adjunction giving State and Store.</p>
+<h4 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h4>
+<pre><code class="language-text">EnvF&lt;E&gt;::Of&lt;A&gt;   = (E, A)            -- product ("pairing with environment")
+ReaderF&lt;E&gt;::Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; A&gt;  -- exponential ("function from environment")
+
+unit(a) = |e| (e, a)                   -- embed value into reader of pairs
+counit((e, f)) = f(e)                  -- apply the function to the environment
+</code></pre>
+<h4 id="state-monad-u--f--readerf--envf"><a class="header" href="#state-monad-u--f--readerf--envf">State Monad (U . F = ReaderF . EnvF)</a></h4>
+<p>The composed functor <code>ReaderF&lt;E&gt; . EnvF&lt;E&gt;</code> gives <code>Of&lt;A&gt; = Box&lt;dyn Fn(E) → (E, A)&gt;</code> — exactly the State monad, where the environment <code>E</code> is threaded and potentially modified.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::adjunction::*;
+
+// State monad: E -&gt; (E, A) where E is mutable state
+let get = state_get::&lt;i32&gt;();               // |e| (e, e)
+let put = |s| state_put(s);                  // |_| (s, ())
+let modify = state_modify(|e: i32| e + 1);  // |e| (e+1, ())
+
+// Pure wraps a value without touching state
+let pure_42 = state_pure::&lt;i32, _&gt;(42);
+assert_eq!(pure_42(0), (0, 42));
+
+// Chain sequences state-passing computations
+let program = state_chain(
+    state_get::&lt;i32&gt;(),
+    |x| state_chain(
+        state_modify(move |e: i32| e + x),
+        |_| state_get::&lt;i32&gt;(),
+    ),
+);
+assert_eq!(program(10), (20, 20));  // get 10, add 10, get 20
+<span class="boring">}</span></code></pre>
+<h4 id="store-comonad-f--u--envf--readerf"><a class="header" href="#store-comonad-f--u--envf--readerf">Store Comonad (F . U = EnvF . ReaderF)</a></h4>
+<p>The composed functor <code>EnvF&lt;E&gt; . ReaderF&lt;E&gt;</code> gives <code>Of&lt;A&gt; = (E, Box&lt;dyn Fn(E) → A&gt;)</code> — the Store comonad, holding a position and a function to look up values.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::adjunction::*;
+
+// Store: (position, lookup_function)
+let store: (i32, Box&lt;dyn Fn(i32) -&gt; i32&gt;) =
+    (5, Box::new(|e| e * e));
+
+assert_eq!(store_pos(&amp;store), 5);       // current position
+assert_eq!(store_peek(3, &amp;store), 9);    // lookup(3) = 9
+assert_eq!(store_extract(store), 25);   // lookup(5) = 25 (moves store)
+<span class="boring">}</span></code></pre>
+<h2 id="readerfe"><a class="header" href="#readerfe">ReaderF&lt;E&gt;</a></h2>
+<h3 id="readerfe-1"><a class="header" href="#readerfe-1">ReaderF&lt;E&gt;</a></h3>
+<p>The Reader functor: <code>Of&lt;T&gt; = Box&lt;dyn Fn(E) → T&gt;</code>. Right adjoint of <code>EnvF&lt;E&gt;</code>.</p>
+<p><code>ReaderF&lt;E&gt;</code> cannot implement the generic <code>Functor</code> trait because <code>Box&lt;dyn Fn&gt;</code> requires <code>'static</code> bounds that the trait signature doesn’t allow. Instead, it provides equivalent functionality via <strong>inherent methods</strong> with <code>'static</code> bounds on the impl block (the “Lan workaround”).</p>
+<h4 id="inherent-methods"><a class="header" href="#inherent-methods">Inherent Methods</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;E: Clone + 'static&gt; ReaderF&lt;E&gt; {
+    fn fmap&lt;A: 'static, B: 'static&gt;(
+        fa: Box&lt;dyn Fn(E) -&gt; A&gt;,
+        f: impl Fn(A) -&gt; B + 'static,
+    ) -&gt; Box&lt;dyn Fn(E) -&gt; B&gt;;
+
+    fn pure&lt;A: Clone + 'static&gt;(a: A) -&gt; Box&lt;dyn Fn(E) -&gt; A&gt;;
+
+    fn chain&lt;A: 'static, B: 'static&gt;(
+        fa: Box&lt;dyn Fn(E) -&gt; A&gt;,
+        f: impl Fn(A) -&gt; Box&lt;dyn Fn(E) -&gt; B&gt; + 'static,
+    ) -&gt; Box&lt;dyn Fn(E) -&gt; B&gt;;
+
+    fn ask() -&gt; Box&lt;dyn Fn(E) -&gt; E&gt;;
+
+    fn local&lt;A: 'static&gt;(
+        f: impl Fn(E) -&gt; E + 'static,
+        reader: Box&lt;dyn Fn(E) -&gt; A&gt;,
+    ) -&gt; Box&lt;dyn Fn(E) -&gt; A&gt;;
+}
+<span class="boring">}</span></code></pre>
+<h4 id="examples"><a class="header" href="#examples">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::hkt::ReaderF;
+
+// Reader monad: shared read-only environment
+let reader = ReaderF::&lt;String&gt;::chain(
+    ReaderF::ask(),
+    |env: String| ReaderF::pure(env.len()),
+);
+assert_eq!(reader("hello".to_string()), 5);
+<span class="boring">}</span></code></pre>
+<p><strong>State vs Reader:</strong> Reader’s <code>chain</code> passes the <em>same</em> environment to both computations (<code>|e| f(reader(e))(e)</code>), while State threads <em>modified</em> state (<code>|e| let (e', a) = m(e); f(a)(e')</code>). They are different monads arising from the same adjunction.</p>
+<h2 id="functor-composition"><a class="header" href="#functor-composition">Functor Composition</a></h2>
+<h3 id="composeff-g"><a class="header" href="#composeff-g">ComposeF&lt;F, G&gt;</a></h3>
+<p>Compose two type constructors: <code>(F . G)(A) = F(G(A))</code>.</p>
+<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ComposeF&lt;F, G&gt;(PhantomData&lt;(F, G)&gt;);
+
+impl&lt;F: HKT, G: HKT&gt; HKT for ComposeF&lt;F, G&gt; {
+    type Of&lt;T&gt; = F::Of&lt;G::Of&lt;T&gt;&gt;;
+}
+
+impl&lt;F: Functor, G: Functor&gt; Functor for ComposeF&lt;F, G&gt; {
+    fn fmap&lt;A, B&gt;(fga: F::Of&lt;G::Of&lt;A&gt;&gt;, f: impl Fn(A) -&gt; B) -&gt; F::Of&lt;G::Of&lt;B&gt;&gt; {
+        F::fmap(fga, |ga| G::fmap(ga, &amp;f))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h4 id="examples-1"><a class="header" href="#examples-1">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::compose::ComposeF;
+use karpal_core::functor::Functor;
+use karpal_core::hkt::{OptionF, VecF};
+
+// Option&lt;Option&lt;i32&gt;&gt; as a composed functor
+let val: Option&lt;Option&lt;i32&gt;&gt; = Some(Some(42));
+let result = ComposeF::&lt;OptionF, OptionF&gt;::fmap(val, |x| x + 1);
+assert_eq!(result, Some(Some(43)));
+
+// Vec&lt;Option&lt;i32&gt;&gt; -- fmap reaches through both layers
+let val: Vec&lt;Option&lt;i32&gt;&gt; = vec![Some(1), None, Some(3)];
+let result = ComposeF::&lt;VecF, OptionF&gt;::fmap(val, |x| x * 10);
+assert_eq!(result, vec![Some(10), None, Some(30)]);
+<span class="boring">}</span></code></pre>
+<p>Functor composition is the key building block for adjunction-derived monads and comonads: the State monad is <code>ComposeF&lt;ReaderF&lt;E&gt;, EnvF&lt;E&gt;&gt;</code> and the Store comonad is <code>ComposeF&lt;EnvF&lt;E&gt;, ReaderF&lt;E&gt;&gt;</code>.</p>
+<h2 id="dinatural-transformation"><a class="header" href="#dinatural-transformation">Dinatural Transformation</a></h2>
+<h3 id="dinaturaltransformationp-q"><a class="header" href="#dinaturaltransformationp-q">DinaturalTransformation&lt;P, Q&gt;</a></h3>
+<p>A transformation between two profunctors on the diagonal: <code>P(A,A) → Q(A,A)</code>.</p>
+<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait DinaturalTransformation&lt;P: HKT2, Q: HKT2&gt; {
+    fn transform&lt;A: 'static&gt;(paa: P::P&lt;A, A&gt;) -&gt; Q::P&lt;A, A&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>A dinatural transformation is to profunctors what a natural transformation is to functors. Where a natural transformation has components <code>α_A: F(A) → G(A)</code>, a dinatural transformation has components <code>α_A: P(A,A) → Q(A,A)</code> that work on the diagonal of a profunctor (both type parameters equal).</p>
+<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Witness</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>DinaturalId</code></td><td>Identity: <code>P(A,A) → P(A,A)</code> for any profunctor P</td></tr>
+</tbody>
+</table>
+</div>
+<h4 id="examples-2"><a class="header" href="#examples-2">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::dinatural::*;
+use karpal_core::hkt::TupleF;
+
+let val: (i32, i32) = (1, 2);
+let result = &lt;DinaturalId as DinaturalTransformation&lt;TupleF, TupleF&gt;&gt;
+    ::transform::&lt;i32&gt;(val);
+assert_eq!(result, (1, 2));
+<span class="boring">}</span></code></pre>
+<h2 id="ends--coends"><a class="header" href="#ends--coends">Ends &amp; Coends</a></h2>
+<h3 id="endp"><a class="header" href="#endp">End&lt;P&gt;</a></h3>
+<p>Universal quantification over a profunctor’s diagonal: <code>∀A. P(A,A)</code>.</p>
+<h4 id="signature-3"><a class="header" href="#signature-3">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait End&lt;P: HKT2&gt; {
+    fn run&lt;A: 'static&gt;(&amp;self) -&gt; P::P&lt;A, A&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>An end is a value that, when asked for any type <code>A</code>, can produce a <code>P(A,A)</code>. This is the categorical analogue of <code>forall A. P(A,A)</code> from System F. The <code>End</code> trait is not dyn-compatible (it has a generic method), so implementations must be concrete types.</p>
+<p>Ends appear in categorical constructions like the Yoneda lemma (<code>∫_A [A, F(A)] ≅ F</code>) and are the natural setting for parametric polymorphism.</p>
+<h3 id="coendp-a"><a class="header" href="#coendp-a">Coend&lt;P, A&gt;</a></h3>
+<p>Existential quantification over a profunctor’s diagonal: <code>∃A. P(A,A)</code>.</p>
+<h4 id="signature-4"><a class="header" href="#signature-4">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Coend&lt;P: HKT2, A&gt; {
+    pub value: P::P&lt;A, A&gt;,
+}
+
+impl&lt;P: HKT2, A&gt; Coend&lt;P, A&gt; {
+    pub fn new(value: P::P&lt;A, A&gt;) -&gt; Self;
+    pub fn elim&lt;R&gt;(self, f: impl FnOnce(P::P&lt;A, A&gt;) -&gt; R) -&gt; R;
+}
+<span class="boring">}</span></code></pre>
+<p>A coend packages a <code>P(A,A)</code> value where the type <code>A</code> is “existentially hidden”. Since Rust lacks existential types, <code>A</code> is exposed as a type parameter. The <code>elim</code> method provides CPS-style elimination.</p>
+<h4 id="examples-3"><a class="header" href="#examples-3">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::coend::Coend;
+use karpal_core::hkt::TupleF;
+
+let c = Coend::&lt;TupleF, i32&gt;::new((42, 42));
+let sum = c.elim(|(a, b)| a + b);
+assert_eq!(sum, 84);
+<span class="boring">}</span></code></pre>
+<h2 id="contravariant-adjunction"><a class="header" href="#contravariant-adjunction">Contravariant Adjunction</a></h2>
+<h3 id="contravariantadjunctionf-g"><a class="header" href="#contravariantadjunctionf-g">ContravariantAdjunction&lt;F, G&gt;</a></h3>
+<p>An adjunction between contravariant functors, giving rise to the continuation monad.</p>
+<h4 id="signature-5"><a class="header" href="#signature-5">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait ContravariantAdjunction&lt;F: HKT, G: HKT&gt; {
+    fn unit&lt;A: Clone + 'static&gt;(a: A) -&gt; G::Of&lt;F::Of&lt;A&gt;&gt;;
+    fn counit&lt;B: Clone + 'static&gt;(b: B) -&gt; F::Of&lt;G::Of&lt;B&gt;&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>For contravariant functors, the composition <code>G . F</code> is <em>covariant</em> (two contravariants compose to give a covariant functor). The primary instance is the self-adjunction of <code>ContF&lt;R&gt;</code>, which gives the continuation monad.</p>
+<h4 id="contfr--the-continuation-functor"><a class="header" href="#contfr--the-continuation-functor">ContF&lt;R&gt; — The Continuation Functor</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ContF&lt;R&gt;(PhantomData&lt;R&gt;);
+
+// Of&lt;A&gt; = Box&lt;dyn Fn(A) -&gt; R&gt;
+// Generalizes PredicateF (which is ContF&lt;bool&gt;)
+<span class="boring">}</span></code></pre>
+<h4 id="instances-2"><a class="header" href="#instances-2">Instances</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Witness</th><th>F</th><th>G</th><th>Resulting Monad</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ContAdj&lt;R&gt;</code></td><td><code>ContF&lt;R&gt;</code></td><td><code>ContF&lt;R&gt;</code></td><td><code>(A → R) → R</code> (Continuation)</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>ContAdj&lt;R&gt;</code> is self-adjoint: <code>unit</code> and <code>counit</code> are the same operation (<code>|k| k(a)</code>), embedding a value into CPS form.</p>
+<h4 id="continuation-monad-helpers"><a class="header" href="#continuation-monad-helpers">Continuation Monad Helpers</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::adjunction::*;
+
+// Pure: embed a value into CPS
+let m = cont_pure::&lt;i32, _&gt;(42);
+assert_eq!(cont_run(&amp;*m, |x| x + 1), 43);
+
+// Fmap: transform inside CPS
+let mapped = cont_fmap(|x: i32| x * 3, cont_pure(10));
+assert_eq!(cont_run(&amp;*mapped, |x| x + 1), 31);  // (10 * 3) + 1
+
+// Chain (bind): sequence CPS computations
+let chained = cont_chain(cont_pure(5), |x| cont_pure(x + 10));
+assert_eq!(cont_run(&amp;*chained, |x| x * 2), 30);  // (5 + 10) * 2
+
+// call/cc: call-with-current-continuation
+let m = cont_call_cc::&lt;i32, i32, i32&gt;(|escape| {
+    // escape(10) short-circuits, ignoring the rest
+    let escaped = escape(10);
+    cont_chain(escaped, |_| cont_pure(999))  // never reached
+});
+assert_eq!(cont_run(&amp;*m, |x| x), 10);  // not 999!
+<span class="boring">}</span></code></pre>
+<h2 id="profunctor-adjunction"><a class="header" href="#profunctor-adjunction">Profunctor Adjunction</a></h2>
+<h3 id="profunctoradjunctionf-u"><a class="header" href="#profunctoradjunctionf-u">ProfunctorAdjunction&lt;F, U&gt;</a></h3>
+<p>An adjunction in the category of profunctors.</p>
+<h4 id="signature-6"><a class="header" href="#signature-6">Signature</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Type-level functor on profunctors
+pub trait ProfunctorFunctor {
+    type Applied&lt;P: HKT2&gt;: HKT2;
+}
+
+/// Adjunction between profunctor functors
+pub trait ProfunctorAdjunction&lt;F: ProfunctorFunctor, U: ProfunctorFunctor&gt; {
+    fn unit&lt;P: HKT2, A: 'static, B: 'static&gt;(
+        pab: P::P&lt;A, B&gt;,
+    ) -&gt; &lt;U::Applied&lt;F::Applied&lt;P&gt;&gt; as HKT2&gt;::P&lt;A, B&gt;;
+
+    fn counit&lt;Q: HKT2, A: 'static, B: 'static&gt;(
+        fuqab: &lt;F::Applied&lt;U::Applied&lt;Q&gt;&gt; as HKT2&gt;::P&lt;A, B&gt;,
+    ) -&gt; Q::P&lt;A, B&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p><code>ProfunctorFunctor</code> maps profunctors to profunctors using GATs as an HKT3-like encoding. A <code>ProfunctorAdjunction</code> witnesses a left/right adjoint pair at the profunctor level, with unit and counit that are natural transformations between profunctors.</p>
+<h4 id="instances-3"><a class="header" href="#instances-3">Instances</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Witness</th><th>F</th><th>U</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ProfunctorIdentityAdj</code></td><td><code>ProfunctorIdentityF</code></td><td><code>ProfunctorIdentityF</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>The identity instance maps every profunctor to itself. Non-trivial instances like <code>Pastro ⊣ Tambara</code> require profunctor transformer types and are planned for future phases.</p>
+<h4 id="examples-4"><a class="header" href="#examples-4">Examples</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_core::adjunction::*;
+use karpal_core::hkt::TupleF;
+
+// Identity profunctor adjunction: roundtrip is identity
+let val: (i32, String) = (42, "hello".into());
+let roundtrip = ProfunctorIdentityAdj::counit::&lt;TupleF, i32, String&gt;(
+    ProfunctorIdentityAdj::unit::&lt;TupleF, i32, String&gt;(val.clone()),
+);
+assert_eq!(roundtrip, val);
+<span class="boring">}</span></code></pre>
+<h2 id="design-notes"><a class="header" href="#design-notes">Design Notes</a></h2>
+<ul>
+<li><strong>HKT not Functor in Adjunction trait</strong> — <code>ReaderF&lt;E&gt;</code> can’t implement generic <code>Functor</code> (GAT can’t add <code>'static</code> bounds that the trait lacks). The trait uses <code>HKT</code> bounds; standalone helper functions add <code>Functor</code> bounds where needed.</li>
+<li><strong>Lan workaround for ReaderF</strong> — <code>'static</code> bounds go on the <code>impl</code> block rather than the trait, allowing <code>Box&lt;dyn Fn&gt;</code> usage without changing trait signatures. This pattern was pioneered in the Lan/Ran implementations.</li>
+<li><strong>State ≠ Reader</strong> — Though both derive from <code>CurryAdj&lt;E&gt;</code>, the State monad threads modified state while Reader shares the same environment. State’s <code>chain</code> is <code>|e| let (e', a) = m(e); f(a)(e')</code>; Reader’s is <code>|e| f(reader(e))(e)</code>.</li>
+<li><strong>Rc for continuation closures</strong> — <code>cont_chain</code> and <code>cont_call_cc</code> use <code>Rc</code> to share closures across multiple <code>Fn</code> invocations. This is required because <code>Fn</code> closures must be callable multiple times but captured values are moved.</li>
+<li><strong>End is not dyn-compatible</strong> — The <code>run&lt;A&gt;</code> method is generic, so <code>End</code> cannot be used as a trait object. Concrete types must implement it.</li>
+<li><strong>Coend exposes A</strong> — Rust lacks existential types, so the “hidden” type parameter is exposed. The <code>elim</code> method provides CPS-style consumption.</li>
+<li><strong><code>no_std</code> support</strong> — <code>IdentityAdj</code>, <code>ComposeF</code>, <code>DinaturalTransformation</code>, <code>End</code>, <code>Coend</code>, <code>ProfunctorFunctor</code>, and <code>ProfunctorAdjunction</code> all work without <code>std</code> or <code>alloc</code>. <code>CurryAdj</code>, <code>ContAdj</code>, <code>ReaderF</code>, and continuation helpers require <code>alloc</code>.</li>
+</ul>
+<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../reference/abstract-algebra.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../reference/effect-system.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../reference/abstract-algebra.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../reference/effect-system.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
