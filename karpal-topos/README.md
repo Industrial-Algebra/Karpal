@@ -8,11 +8,9 @@ representable presheaves, sieves, and the Yoneda lemma.
 
 ## Status
 
-**Phase 16B (complete):** presheaves, sieves, the Yoneda lemma.
-
-Future sub-phases:
-- **16C** — subobject classifier, pullbacks, equalizers
-- **16D** — Grothendieck topologies, sheaves, sheafification
+**Phase 16 (complete):** the full topos stack — Heyting algebras (16A),
+presheaves/sieves/Yoneda (16B), subobject classifier & finite limits (16C),
+Grothendieck topologies & sheaves (16D).
 
 ## What's here
 
@@ -22,6 +20,10 @@ Future sub-phases:
 | `presheaf` | `Presheaf<C>` trait, `ConstantPresheaf`, `InitialSegmentPresheaf` |
 | `representable` | `Representable<c>` — the hom-presheaf `Hom(-, c)` |
 | `sieve` | `Sieve` trait, `FiniteSieve` (precomposition-closed families) |
+| `classifier` | `Omega` subobject classifier, `Terminal`, `TruthValue` Heyting lattice |
+| `limits` | `pullback_fiber`, `equalizer_fiber`, `characteristic_at` |
+| `topology` | `GrothendieckTopology` (trivial, dense), `LawvereTierneyTopology` |
+| `sheaf` | `is_separated_at`, `is_sheaf_at`, sheafification adjunction interface |
 | `yoneda` | `yoneda_apply`, `yoneda_extract` — the Yoneda bijection in action form |
 
 ## Encoding

@@ -38,8 +38,11 @@ pub mod limits;
 pub mod presheaf;
 pub mod representable;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub mod sheaf;
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub mod sieve;
 pub mod small_category;
+pub mod topology;
 pub mod yoneda;
 
 pub use classifier::{Omega, Terminal, TruthValue, truth_at};
@@ -48,6 +51,9 @@ pub use limits::{characteristic_at, equalizer_fiber, pullback_fiber};
 pub use presheaf::{ConstantPresheaf, Presheaf};
 pub use representable::Representable;
 #[cfg(any(feature = "std", feature = "alloc"))]
+pub use sheaf::{is_separated_at, is_sheaf_at};
+#[cfg(any(feature = "std", feature = "alloc"))]
 pub use sieve::{FiniteSieve, Sieve};
 pub use small_category::{ChainCat, ChainMor, ChainObj, DiscreteCat, SmallCategory};
+pub use topology::{DenseTopology, GrothendieckTopology, LawvereTierneyTopology, TrivialTopology};
 pub use yoneda::{yoneda_apply, yoneda_extract};
