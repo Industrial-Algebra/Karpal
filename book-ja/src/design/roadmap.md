@@ -1,26 +1,25 @@
-# Roadmap
+# ロードマップ
 
-## Completed (0.7.0)
+## 完了済み (0.7.0)
 
-- **Phases 1–11**: Core functor hierarchy, comonads, arrows, free constructions, recursion schemes, optics, abstract algebra, adjunctions, effect system, proof system
-- **Phase 12**: External verification (SMT-LIB2, Lean 4, Kani, GPU obligations)
-- **Phase 13**: Monoidal categories and string diagrams with coherence witnesses
-- **Phase 14 A–D**: Schubert intersection type system with LR-enriched category
-- **Phase 15**: 2-categories, enriched categories, bicategories, FFunctor/FMonad
-- **Phase 16A**: Heyting algebra (foundation for structured emptiness)
-- **RichCat**: Contentful 2-morphisms with provenance tracking
-- **karpal-index**: AI-agent library discovery CLI with JSON output
+- **フェーズ 1–11**: コア関手階層、コモナド、アロー、自由構成、帰納スキーム、オプティクス、抽象代数、随伴、エフェクトシステム、証明システム
+- **フェーズ 12**: 外部検証 (SMT-LIB2、Lean 4、Kani、GPU オブリゲーション)
+- **フェーズ 13**: モノイダル圏とコヒーレンス証拠付きストリング図式
+- **フェーズ 14 A–D**: LR-豊饒圏付きシューベルト交点型システム
+- **フェーズ 15**: 2-圏、豊饒圏、バイ圏、FFunctor/FMonad
+- **フェーズ 16**: トポス理論 (Heyting 代数、前層、篩、部分対象分類子、グロタンディーク位相、層)
+- **RichCat**: 来歴追跡付きの内容ある 2-射
+- **karpal-index**: JSON 出力付き AI エージェントライブラリ発見 CLI
 
-## Near-term
+## 近期
 
-- **Phase 16B–D**: Presheaves, sieves, subobject classifier, Grothendieck topologies, sheaves
-- **Phase 17**: End-to-end validation harness across all crates
-- **Phase 18**: Ecosystem verification integrations (Schubert, Borsalino, ShaperOS)
+- **フェーズ 17**: 全クレートにわたるエンドツーエンド検証ハーネス
+- **フェーズ 18**: エコシステム検証統合 (Schubert、Borsalino、ShaperOS)
 
-## Research Direction
+## 研究方向
 
-- Structured emptiness as a position paper
-- ∞-category encoding feasibility
-- Topos-theoretic grounding for Schubert intersection
+- 位置論文としての構造化された空
+- ∞-圏エンコーディングの実現可能性
+- シューベルト交点のトポス理論的基礎付け
 
-Full roadmap: [ROADMAP.md](https://github.com/Industrial-Algebra/Karpal/blob/develop/ROADMAP.md)
+完全なロードマップ: [ROADMAP.md](https://github.com/Industrial-Algebra/Karpal/blob/develop/ROADMAP.md)

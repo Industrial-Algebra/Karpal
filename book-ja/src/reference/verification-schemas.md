@@ -1,45 +1,43 @@
-# Verification Schemas
+# 検証スキーマ
 
-This page documents the serialized artifact formats emitted by `karpal-verify` and the compatibility contract around their `schema_version` markers.
+このページは `karpal-verify` が生成するシリアライズされたアーティファクト形式と、その `schema_version` マーカーに関する互換性契約を文書化します。
 
-## Versioned artifacts
+## バージョン付きアーティファクト
 
-- verification report JSON
-- Lean manifest JSON
-- Lean diagnostics sidecar JSON
-- nested `report_files` metadata blocks embedded in report and manifest JSON
+- 検証レポート JSON
+- Lean マニフェスト JSON
+- Lean 診断サイドカー JSON
+- レポートおよびマニフェスト JSON に埋め込まれた入れ子の `report_files` メタデータブロック
 
-## Current version
+## 現在のバージョン
 
-The current published schema version is `1`. In Rust code this is exposed through constants such as `VERIFICATION_REPORT_SCHEMA_VERSION`, `LEAN_MANIFEST_SCHEMA_VERSION`, and `VERIFICATION_SIDECAR_SCHEMA_VERSION`.
+現在の公開スキーマバージョンは `1` です。Rust コードでは `VERIFICATION_REPORT_SCHEMA_VERSION`、`LEAN_MANIFEST_SCHEMA_VERSION`、`VERIFICATION_SIDECAR_SCHEMA_VERSION` などの定数として公開されています。
 
-## Version 1 guarantees
+## バージョン 1 の保証
 
-- each top-level JSON object includes a string `schema_version`
-- existing field names remain stable within the `1.x` line
-- new fields are added only as optional, forward-compatible extensions
-- nested `report_files` objects also include their own `schema_version`
-- string path fields preserve the artifact/session paths written by the current run
+- 各トップレベル JSON オブジェクトは文字列 `schema_version` を含む
+- 既存のフィールド名は `1.x` 系列内で安定
+- 新規フィールドはオプションの前方互換拡張としてのみ追加
+- 入れ子の `report_files` オブジェクトも独自の `schema_version` を含む
+- 文字列パスフィールドは現在の実行が書き込んだアーティファクト/セッションパスを保持
 
-## Consumer guidance
+## コンシューマの指針
 
-External CI tooling, bots, or archive readers should:
+外部 CI ツール、ボット、アーカイブリーダは以下のようにすべきです:
 
-1.  accept `schema_version == "1"`
-2.  ignore unknown optional fields for forward compatibility
-3.  treat a future schema bump as a breaking parser boundary
+1.  `schema_version == "1"` を受け入れる
+2.  前方互換性のために未知のオプションフィールドを無視する
+3.  将来のスキーマバンプを破壊的なパーサ境界として扱う
 
-## Additive vs. breaking changes
+## 追加的変更と破壊的変更
 
-The schema version stays at `1` for additive changes such as new optional counters, new optional metadata blocks, or richer cross-linking fields. A future version bump is required if a required field is removed, renamed incompatibly, changes type, or changes meaning.
+新しいオプションカウンタ、新しいオプションメタデータブロック、より豊かな相互リンクフィールドなどの追加的変更では、スキーマバージョンは `1` のままです。必須フィールドが削除・非互換にリネーム・型変更・意味変更される場合に、将来のバージョンバンプが必要です。
 
-## Related guides
+## 関連ガイド
 
-- [Proof & Verification](proof-verification.md) for the overall model/export/run/trust story
-- [Verification CI Workflow](verification-ci.md) for report/layout usage in automation
-- [Verification Workflow](../examples/verification-workflow.md) for an end-to-end example
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+- [証明と検証](proof-verification.md) — 全体的なモデル/エクスポート/実行/信頼のストーリー
+- [検証 CI ワークフロー](verification-ci.md) — 自動化でのレポート/レイアウト利用
+- [検証ワークフロー](../examples/verification-workflow.md) — エンドツーエンドの例
 
 
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。

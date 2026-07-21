@@ -1,28 +1,28 @@
-# Architecture
+# アーキテクチャ
 
-## Design Principles
+## 設計原則
 
-- **GAT-based HKT encoding**: `trait HKT { type Of<T>; }` — clean, zero-dependency
-- **Static Land over Fantasy Land**: traits with associated functions (not methods on values)
-- **Law verification built in**: every trait ships with proptest-based law tests
-- **`no_std` first**: core and profunctor crates work without an allocator
-- **Composition over completeness**: each phase delivers a usable layer before the next begins
-- **Structured emptiness**: zeros carry provenance — *why* something is empty matters
+- **GAT ベースの HKT エンコーディング**: `trait HKT { type Of<T>; }` — クリーン、依存関係ゼロ
+- **Fantasy Land より Static Land**: 値のメソッドではなく、関連関数を持つトレイト
+- **法則検証を内蔵**: すべてのトレイトに proptest ベースの法則テストが付属
+- **`no_std` ファースト**: core と profunctor クレートはアロケータなしで動作
+- **完全性より合成**: 各フェーズは次が始まる前に利用可能な層を提供
+- **構造化された空**: ゼロは来歴を持つ — 「なぜ空なのか」が重要
 
-## Phase Completion
+## フェーズ完了状況
 
-| Phase | Crate(s) | Status |
-|-------|----------|--------|
-| 1–11 | core through proof | ✅ Complete |
-| 12 | karpal-verify | ✅ Complete |
-| 13 | karpal-diagram | ✅ Complete |
-| 14 | karpal-schubert-types (A–D) | ✅ Complete |
-| 15 | karpal-higher | ✅ Complete |
-| 16A | HeytingAlgebra | ✅ Complete |
-| 16B–D | Topos theory | 🔲 Planned |
-| 17 | E2E validation | 🔲 Planned |
-| 18 | Ecosystem verification | 🔲 Planned |
+| フェーズ | クレート | 状態 |
+|---------|---------|------|
+| 1–11 | core から proof まで | ✅ 完了 |
+| 12 | karpal-verify | ✅ 完了 |
+| 13 | karpal-diagram | ✅ 完了 |
+| 14 | karpal-schubert-types (A–D) | ✅ 完了 |
+| 15 | karpal-higher | ✅ 完了 |
+| 16A | HeytingAlgebra | ✅ 完了 |
+| 16B–D | トポス理論 | ✅ 完了 |
+| 17 | E2E 検証 | 🔲 計画中 |
+| 18 | エコシステム検証 | 🔲 計画中 |
 
-## License
+## ライセンス
 
-Apache-2.0 + CLA. See [CONTRIBUTING.md](https://github.com/Industrial-Algebra/Karpal/blob/develop/CONTRIBUTING.md).
+Apache-2.0 + CLA。[CONTRIBUTING.md](https://github.com/Industrial-Algebra/Karpal/blob/develop/CONTRIBUTING.md) を参照してください。

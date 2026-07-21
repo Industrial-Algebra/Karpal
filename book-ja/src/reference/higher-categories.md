@@ -1,16 +1,16 @@
-# Higher Categories
+# 高次圏
 
-2-categories, enriched categories, bicategories, FFunctor/FMonad — `karpal-higher` (Phase 15).
+2-圏、豊饒圏、バイ圏、FFunctor/FMonad — `karpal-higher` (フェーズ 15)。
 
 
 ## TwoCategory
 
-A strict 2-category has objects, 1-morphisms between objects, and 2-morphisms between parallel 1-morphisms:
+厳密 2-圏は対象、対象間の 1-射、平行な 1-射間の 2-射を持ちます:
 
 ``` rust
 use karpal_higher::{TwoCategory, Cat};
 
-// Cat: objects = types, 1-morphisms = Box, 2-morphisms = ()
+// Cat: 対象 = 型、1-射 = Box、2-射 = ()
 let id = Cat::id1::();
 assert_eq!(id(42), 42);
 
@@ -23,30 +23,30 @@ assert_eq!(gf(5), 12);
 
 ## Bicategory
 
-A bicategory weakens associativity and unitality to isomorphism, with an associator and left/right unitors:
+バイ圏は結合律と単位律を同型にまで弱め、結合子と左右の単位子を持ちます:
 
 ``` rust
 use karpal_higher::{Bicategory, Cat};
 
-// Associator: (f ∘ g) ∘ h ≅ f ∘ (g ∘ h)
+// 結合子: (f ∘ g) ∘ h ≅ f ∘ (g ∘ h)
 let _alpha = Cat::associator::();
 
-// Left unitor: id ∘ f ≅ f
+// 左単位子: id ∘ f ≅ f
 let _lambda = Cat::left_unitor::();
 
-// Right unitor: f ∘ id ≅ f
+// 右単位子: f ∘ id ≅ f
 let _rho = Cat::right_unitor::();
 ```
 
 
 ## EnrichedCategory
 
-Categories enriched over a monoidal base V, where hom-objects carry algebraic structure:
+ホム対象が代数的構造を持つモノイダル基底 V 上の豊饒圏:
 
 ``` rust
 use karpal_higher::{EnrichedCategory, SetCategory, SetEnrichment};
 
-// Enriched over Set: ordinary category
+// Set 上の豊饒化: 通常の圏
 let id = SetCategory::id::();
 assert_eq!(id(42), 42);
 
@@ -59,25 +59,25 @@ assert_eq!(gf(5), 12);
 
 ## FFunctor / FMonad
 
-Functors between 2-categories and monads in the endofunctor 2-category:
+2-圏間の関手と、自己関手 2-圏におけるモナド:
 
 ``` rust
 use karpal_higher::{FFunctor, IdentityFFunctor, TwoCategory};
 
-// Identity FFunctor preserves 1-morphisms and 2-morphisms
+// 恒等 FFunctor は 1-射と 2-射を保存する
 let m = IdentityFFunctor::<Cat>::map_morphism::<i32, i32>(Cat::id1());
 ```
 
 
-## Coherence Witnesses
+## コヒーレンス証拠
 
-Type-level witnesses for bicategory coherence laws via `karpal-proof::Justifies`:
+`karpal-proof::Justifies` によるバイ圏コヒーレンス法則の型レベル証拠:
 
-| Witness                      | Law                                           |
-|------------------------------|-----------------------------------------------|
-| `InterchangeIdentity`        | `(α ∘ᵥ β) ∘ₕ (γ ∘ᵥ δ) = (α ∘ₕ γ) ∘ᵥ (β ∘ₕ δ)` |
-| `BicategoryPentagonIdentity` | Associator pentagon coherence                 |
-| `BicategoryTriangleIdentity` | Unitor-triangle coherence                     |
+| 証拠                            | 法則                                           |
+|--------------------------------|-----------------------------------------------|
+| `InterchangeIdentity`          | `(α ∘ᵥ β) ∘ₕ (γ ∘ᵥ δ) = (α ∘ₕ γ) ∘ᵥ (β ∘ₕ δ)` |
+| `BicategoryPentagonIdentity`   | 結合子五角形コヒーレンス                 |
+| `BicategoryTriangleIdentity`   | 単位子三角形コヒーレンス                     |
 
 ``` rust
 use karpal_higher::verify_interchange;
@@ -85,18 +85,16 @@ let _proof = verify_interchange();
 ```
 
 
-## Verification Integration
+## 検証統合
 
-Coherence certificates connect to `karpal-verify`:
+コヒーレンス証明書は `karpal-verify` に接続します:
 
 ``` rust
 use karpal_higher::higher_coherence_certificates;
 
 let certs = higher_coherence_certificates();
-assert_eq!(certs.len(), 3); // interchange, pentagon, triangle
+assert_eq!(certs.len(), 3); // interchange、pentagon、triangle
 for cert in &certs {
     assert_eq!(cert.backend, "karpal-higher-coherence");
 }
 ```
-
-
