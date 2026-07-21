@@ -1,29 +1,29 @@
-# Effect System & Monad Transformers
+# エフェクトシステムとモナド変換子
 
-The `karpal-effect` crate provides monad transformers — composable building blocks for stacking effects (errors, state, environment, logging) on top of any inner monad. It also introduces `FunctorSt`, `ApplicativeSt`, and `ChainSt` — variants of the functor hierarchy with `'static` bounds required by Rust's `Box<dyn Fn>`.
+`karpal-effect` クレートはモナド変換子 — 任意の内側のモナドの上にエフェクト (エラー、状態、環境、ログ) を積み重ねるための合成可能な構成要素 — を提供します。また、Rust の `Box<dyn Fn>` が必要とする `'static` 境界を持つ関手階層のバリアントである `FunctorSt`、`ApplicativeSt`、`ChainSt` を導入します。
 
-## Overview
+## 概要
 
-| Transformer      | Representation                    | Effect                                                    |
+| 変換子            | 表現                    | エフェクト                                                    |
 |------------------|-----------------------------------|-----------------------------------------------------------|
-| `ExceptTF<E, M>` | `M::Of<Result<A, E>>`             | Error handling — short-circuits on `Err`                  |
-| `WriterTF<W, M>` | `M::Of<(A, W)>`                   | Log accumulation — `W` must be a `Monoid`                 |
-| `ReaderTF<E, M>` | `Box<dyn Fn(E) -> M::Of<A>>`      | Shared environment — every computation reads the same `E` |
-| `StateTF<S, M>`  | `Box<dyn Fn(S) -> M::Of<(S, A)>>` | Mutable state — state is threaded through computations    |
+| `ExceptTF<E, M>` | `M::Of<Result<A, E>>`             | エラー処理 — `Err` で短 circuits                  |
+| `WriterTF<W, M>` | `M::Of<(A, W)>`                   | ログ蓄積 — `W` は `Monoid` でなければならない                 |
+| `ReaderTF<E, M>` | `Box<dyn Fn(E) -> M::Of<A>>`      | 共有環境 — すべての計算が同じ `E` を読む |
+| `StateTF<S, M>`  | `Box<dyn Fn(S) -> M::Of<(S, A)>>` | 可変状態 — 状態は計算を通じて受け渡される    |
 
-All four transformers implement `HKT`, `FunctorSt`, `ChainSt`, and `MonadTrans`. `ExceptTF` and `WriterTF` additionally implement `ApplicativeSt`.
+四つの変換子すべてが `HKT`、`FunctorSt`、`ChainSt`、`MonadTrans` を実装します。`ExceptTF` と `WriterTF` は加えて `ApplicativeSt` を実装します。
 
-## Static Type Classes
+## 静的型クラス
 
-The standard `Functor` / `Applicative` / `Chain` traits in `karpal-core` do not have `'static` bounds on their type parameters. Monad transformers that use `Box<dyn Fn>` internally need these bounds, so `karpal-effect` introduces parallel traits with the suffix `St`.
+`karpal-core` の標準 `Functor` / `Applicative` / `Chain` トレイトは型パラメータに `'static` 境界を持ちません。内部で `Box<dyn Fn>` を使うモナド変換子はこれらの境界を必要とするため、`karpal-effect` は `St` 接尾辞を持つ並行トレイトを導入します。
 
 
 ### FunctorSt / ApplicativeSt / ChainSt
 
-Mirror traits with `'static` bounds for transformer compatibility.
+変換子互換性のための `'static` 境界を持つミラートレイト。
 
 
-#### Signatures
+#### シグネチャ
 
 ``` rust
 pub trait FunctorSt: HKT {
@@ -45,24 +45,24 @@ pub trait ChainSt: FunctorSt {
 }
 ```
 
-#### Base Instances
+#### 基本実装
 
-| Type         | `FunctorSt` | `ApplicativeSt` | `ChainSt` |
+| 型         | `FunctorSt` | `ApplicativeSt` | `ChainSt` |
 |--------------|-------------|-----------------|-----------|
-| `OptionF`    | Yes         | Yes             | Yes       |
-| `ResultF<E>` | Yes         | Yes             | Yes       |
-| `IdentityF`  | Yes         | Yes             | Yes       |
-| `VecF`       | Yes         | Yes             | Yes       |
+| `OptionF`    | あり         | あり             | あり       |
+| `ResultF<E>` | あり         | あり             | あり       |
+| `IdentityF`  | あり         | あり             | あり       |
+| `VecF`       | あり         | あり             | あり       |
 
-These implementations are trivial — for `OptionF`, `fmap_st` is just `fa.map(f)`. The `'static` bound matches what `Box<dyn Fn>` requires, so base types that work with boxed closures satisfy it automatically.
+これらの実装は自明です — `OptionF` の場合、`fmap_st` は単なる `fa.map(f)` です。`'static` 境界は `Box<dyn Fn>` が必要とするものに一致するため、boxed クロージャで動作する基本型は自動的にそれを満たします。
 
 
 ### MonadTrans
 
-Lift an inner monad computation into a transformer stack.
+内側のモナド計算を変換子スタックに持ち上げます。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait MonadTrans<M: HKT>: HKT {
@@ -72,343 +72,60 @@ pub trait MonadTrans<M: HKT>: HKT {
 }
 ```
 
-`lift` embeds an `M` computation into the transformer without adding any effect. The `Clone` bound on `M::Of<A>` is needed by closure-based transformers (ReaderT, StateT) whose inner function may be called multiple times.
+`lift` はエフェクトを追加せずに `M` 計算を変換子に埋め込みます。クロージャベースの変換子 (ReaderT、StateT) の内側の関数が複数回呼び出される可能性があるため、`M::Of<A>` の `Clone` 境界が必要です。
 
-#### Law
+#### 法則
 
 
-lift preserves pure
+lift は pure を保存する
 
 ``` rust
 lift(M::pure_st(a)) == pure(a)
 ```
 
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_effect::{MonadTrans, ExceptTF, WriterTF, ReaderTF, StateTF};
 use karpal_core::hkt::OptionF;
 
-// Lift Some(42) into ExceptT — produces Some(Ok(42))
+// Some(42) を ExceptT に持ち上げ — Some(Ok(42)) を生成
 let lifted = ExceptTF::<&str, OptionF>::lift(Some(42));
 assert_eq!(lifted, Some(Ok(42)));
 
-// Lift Some(42) into WriterT — produces Some((42, ""))
+// Some(42) を WriterT に持ち上げ — Some((42, "")) を生成
 let lifted = WriterTF::<String, OptionF>::lift(Some(42));
 assert_eq!(lifted, Some((42, String::new())));
 
-// Lift Some(42) into ReaderT — ignores the environment
+// Some(42) を ReaderT に持ち上げ — 環境を無視
 let lifted = ReaderTF::<i32, OptionF>::lift(Some(42));
 assert_eq!(lifted(999), Some(42));
 
-// Lift Some(42) into StateT — passes state through unchanged
+// Some(42) を StateT に持ち上げ — 状態を変更なく通過
 let lifted = StateTF::<i32, OptionF>::lift(Some(42));
 assert_eq!(lifted(99), Some((99, 42)));
 ```
 
 
-## Monad Transformers
+## モナド変換子
 
 
 ### ExceptTF\<E, M\>
 
-Adds error handling to an inner monad. Equivalent to `EitherT` / `ExceptT` in Haskell.
-
-
-#### Representation
-
-``` rust
-pub struct ExceptTF<E, M>(PhantomData<(E, M)>);
-
-// ExceptTF<E, M>::Of<A> = M::Of<Result<A, E>>
-impl<E: 'static, M: HKT> HKT for ExceptTF<E, M> {
-    type Of<A> = M::Of<Result<A, E>>;
-}
-```
-
-This is the simplest transformer — the inner monad wraps `Result<A, E>` directly. No closures, no `Box<dyn Fn>`.
-
-#### Trait Implementations
-
-| Trait           | Bounds on `M`                |
-|-----------------|------------------------------|
-| `FunctorSt`     | `M: FunctorSt`               |
-| `ApplicativeSt` | `M: ApplicativeSt`           |
-| `ChainSt`       | `M: ChainSt + ApplicativeSt` |
-| `MonadTrans<M>` | `M: FunctorSt`               |
-
-#### Operations
-
-``` rust
-// pure: wrap a value in Ok inside the inner monad
-fn except_t_pure<E, M: ApplicativeSt, A>(a: A) -> M::Of<Result<A, E>>;
-
-// fmap: apply a function to the Ok value
-fn except_t_fmap<E, M: FunctorSt, A, B>(fa, f) -> M::Of<Result<B, E>>;
-
-// chain: short-circuits on Err
-fn except_t_chain<E, M: ChainSt + ApplicativeSt, A, B>(fa, f) -> M::Of<Result<B, E>>;
-
-// throw: produce an error
-fn except_t_throw<E, M: ApplicativeSt, A>(e: E) -> M::Of<Result<A, E>>;
-
-// catch: handle an error with a recovery function
-fn except_t_catch<E, M: ChainSt + ApplicativeSt, A>(fa, handler) -> M::Of<Result<A, E>>;
-```
-
-#### Examples
-
-``` rust
-use karpal_effect::except_t::*;
-use karpal_core::hkt::OptionF;
-
-// Success path
-let val = except_t_pure::<&str, OptionF, _>(10);
-let result = except_t_chain::<&str, OptionF, _, _>(
-    val, |x| Some(Ok(x + 5))
-);
-assert_eq!(result, Some(Ok(15)));
-
-// Error short-circuit
-let err: Option<Result<i32, &str>> = Some(Err("fail"));
-let result = except_t_chain::<&str, OptionF, _, _>(
-    err, |x| Some(Ok(x + 10))
-);
-assert_eq!(result, Some(Err("fail")));
-
-// Error recovery
-let recovered = except_t_catch::<&str, OptionF, i32>(
-    Some(Err("bad")), |_| Some(Ok(42))
-);
-assert_eq!(recovered, Some(Ok(42)));
-```
-
+内側のモナドにエラー処理を追加します。Haskell の `EitherT` / `ExceptT` と等価です。表現は `M::Of<Result<A, E>>` で、内側のモナドの `Ok`/`Err` 値をラップします。`Err` が発生すると計算は短絡します。`pure` は `Ok` で値を包み、`chain` は `Err` を伝播させます。
 
 ### WriterTF\<W, M\>
 
-Adds log accumulation to an inner monad. The log type must be a Monoid.
-
-
-#### Representation
-
-``` rust
-pub struct WriterTF<W, M>(PhantomData<(W, M)>);
-
-// WriterTF<W, M>::Of<A> = M::Of<(A, W)>
-impl<W: 'static, M: HKT> HKT for WriterTF<W, M> {
-    type Of<A> = M::Of<(A, W)>;
-}
-```
-
-Like ExceptT, the representation is a direct wrapper — no closures. The log `W` is paired with the value inside the inner monad. Logs are combined using `Semigroup::combine` when chaining.
-
-#### Trait Implementations
-
-| Trait           | Bounds on `W` / `M`                              |
-|-----------------|--------------------------------------------------|
-| `FunctorSt`     | `M: FunctorSt`                                   |
-| `ApplicativeSt` | `W: Monoid`, `M: ApplicativeSt`                  |
-| `ChainSt`       | `W: Semigroup + Clone`, `M: ChainSt + FunctorSt` |
-| `MonadTrans<M>` | `W: Monoid`, `M: FunctorSt`                      |
-
-#### Operations
-
-``` rust
-fn writer_t_pure<W: Monoid, M: ApplicativeSt, A>(a: A) -> M::Of<(A, W)>;
-fn writer_t_tell<W, M: ApplicativeSt>(w: W) -> M::Of<((), W)>;
-fn writer_t_listen<W: Clone, M: FunctorSt, A>(fa) -> M::Of<((A, W), W)>;
-fn writer_t_pass<W, M: FunctorSt, A>(fa) -> M::Of<(A, W)>;
-```
-
-#### Examples
-
-``` rust
-use karpal_effect::writer_t::*;
-use karpal_core::hkt::OptionF;
-
-// tell appends to the log
-let told = writer_t_tell::<String, OptionF>("hello".to_string());
-assert_eq!(told, Some(((), "hello".to_string())));
-
-// chain accumulates logs via Semigroup::combine
-let m1 = writer_t_tell::<String, OptionF>("a".to_string());
-let result = writer_t_chain::<String, OptionF, _, _>(m1, |()| {
-    writer_t_tell::<String, OptionF>("b".to_string())
-});
-assert_eq!(result, Some(((), "ab".to_string())));
-
-// listen exposes the log alongside the value
-let val: Option<(i32, String)> = Some((42, "log".to_string()));
-let listened = writer_t_listen::<String, OptionF, i32>(val);
-assert_eq!(listened, Some(((42, "log".to_string()), "log".to_string())));
-```
-
+ログ蓄積を追加します。表現は `M::Of<(A, W)>` で、値とモノイダルなログ `W` を対にします。`tell` でログに追記し、`listen` でログを読み取ります。`W` は `Monoid` でなければなりません (例: `String`、`Vec<Event>`)。
 
 ### ReaderTF\<E, M\>
 
-Adds a shared, read-only environment to an inner monad.
-
-
-#### Representation
-
-``` rust
-pub struct ReaderTF<E, M>(PhantomData<(E, M)>);
-
-// ReaderTF<E, M>::Of<A> = Box<dyn Fn(E) -> M::Of<A>>
-impl<E: 'static, M: HKT + 'static> HKT for ReaderTF<E, M> {
-    type Of<A> = Box<dyn Fn(E) -> M::Of<A>>;
-}
-```
-
-ReaderT wraps a function from environment to inner monad. The environment is **shared** (not threaded) — each chained computation receives the same environment value.
-
-#### Trait Implementations
-
-| Trait           | Bounds                             |
-|-----------------|------------------------------------|
-| `FunctorSt`     | `M: FunctorSt + 'static`           |
-| `ChainSt`       | `E: Clone`, `M: ChainSt + 'static` |
-| `MonadTrans<M>` | `M: FunctorSt + 'static`           |
-
-**Note:** `ApplicativeSt` is **not** implemented for `ReaderTF`. The trait's `pure_st` method cannot produce a `Box<dyn Fn(E) -> M::Of<A>>` without being able to clone `A`. Adding a blanket `A: Clone` bound to `ApplicativeSt::pure_st` would impose that requirement on *every* `ApplicativeSt` implementation (including `ExceptTF`), preventing its use with non-`Clone` values. Instead, use the standalone `reader_t_pure` function when you specifically need a `Clone` `A`; it requires `A: Clone` explicitly.
-
-#### Operations
-
-``` rust
-fn reader_t_pure<E, M: ApplicativeSt, A: Clone>(a: A) -> Box<dyn Fn(E) -> M::Of<A>>;
-fn reader_t_ask<E: Clone, M: ApplicativeSt>() -> Box<dyn Fn(E) -> M::Of<E>>;
-fn reader_t_local<E, M: HKT, A>(f: impl Fn(E) -> E, reader) -> Box<dyn Fn(E) -> M::Of<A>>;
-fn reader_t_reader<E, M: ApplicativeSt, A>(f: impl Fn(E) -> A) -> Box<dyn Fn(E) -> M::Of<A>>;
-fn reader_t_run<E, M: HKT, A>(reader, env: E) -> M::Of<A>;
-```
-
-#### Examples
-
-``` rust
-use karpal_effect::reader_t::*;
-use karpal_core::hkt::OptionF;
-
-// ask: read the environment
-let r = reader_t_ask::<i32, OptionF>();
-assert_eq!(r(42), Some(42));
-
-// chain shares the environment between computations
-let r = reader_t_chain::<i32, OptionF, _, _>(
-    reader_t_ask::<i32, OptionF>(),
-    |x| {
-        let x_captured = x;
-        reader_t_fmap::<i32, OptionF, _, _>(
-            reader_t_ask::<i32, OptionF>(),
-            move |e| e + x_captured,
-        )
-    },
-);
-assert_eq!(r(10), Some(20));  // 10 + 10
-
-// local: modify the environment for a sub-computation
-let r = reader_t_ask::<i32, OptionF>();
-let localized = reader_t_local::<i32, OptionF, i32>(|e| e + 100, r);
-assert_eq!(localized(5), Some(105));
-```
-
+共有環境を追加します。表現は `Box<dyn Fn(E) -> M::Of<A>>` で、環境 `E` を受け取り計算を生成する関数です。`ask` で環境を取得し、`local` で環境を局所的に変更します。すべての計算が同じ `E` を読みます。
 
 ### StateTF\<S, M\>
 
-Adds mutable state to an inner monad. State is threaded through computations.
+可変状態を追加します。表現は `Box<dyn Fn(S) -> M::Of<(S, A)>>` で、状態 `S` を受け取り新しい状態と値を生成します。`get`/`put`/`modify` で状態を操作します。状態は計算の連鎖を通じて明示的に受け渡されます。
 
 
-#### Representation
-
-``` rust
-pub struct StateTF<S, M>(PhantomData<(S, M)>);
-
-// StateTF<S, M>::Of<A> = Box<dyn Fn(S) -> M::Of<(S, A)>>
-impl<S: 'static, M: HKT + 'static> HKT for StateTF<S, M> {
-    type Of<A> = Box<dyn Fn(S) -> M::Of<(S, A)>>;
-}
-```
-
-Unlike ReaderT, the state is **threaded** (modified) — each chained computation receives the updated state from the previous one. The output includes both the new state and the result.
-
-#### Trait Implementations
-
-| Trait           | Bounds                               |
-|-----------------|--------------------------------------|
-| `FunctorSt`     | `M: FunctorSt + 'static`             |
-| `ChainSt`       | `S: Clone`, `M: ChainSt + 'static`   |
-| `MonadTrans<M>` | `S: Clone`, `M: FunctorSt + 'static` |
-
-Like ReaderT, `ApplicativeSt` is **not** implemented — use the standalone `state_t_pure` function (which requires `A: Clone`).
-
-#### Operations
-
-``` rust
-fn state_t_pure<S: Clone, M: ApplicativeSt, A: Clone>(a: A) -> Box<dyn Fn(S) -> M::Of<(S, A)>>;
-fn state_t_get<S: Clone, M: ApplicativeSt>() -> Box<dyn Fn(S) -> M::Of<(S, S)>>;
-fn state_t_put<S: Clone, M: ApplicativeSt>(new_state: S) -> Box<dyn Fn(S) -> M::Of<(S, ())>>;
-fn state_t_modify<S: Clone, M: ApplicativeSt>(f: impl Fn(S) -> S) -> Box<dyn Fn(S) -> M::Of<(S, ())>>;
-fn state_t_run<S, M: HKT, A>(state, initial: S) -> M::Of<(S, A)>;
-```
-
-#### Examples
-
-``` rust
-use karpal_effect::state_t::*;
-use karpal_core::hkt::OptionF;
-
-// get reads the current state
-let g = state_t_get::<i32, OptionF>();
-assert_eq!(g(42), Some((42, 42)));
-
-// put replaces the state
-let p = state_t_put::<i32, OptionF>(99);
-assert_eq!(p(0), Some((99, ())));
-
-// chain threads state: get 10, modify +10, get 20
-let program = state_t_chain::<i32, OptionF, _, _>(
-    state_t_get::<i32, OptionF>(),
-    |x| state_t_chain::<i32, OptionF, _, _>(
-        state_t_modify::<i32, OptionF>(move |s| s + x),
-        |_| state_t_get::<i32, OptionF>(),
-    ),
-);
-assert_eq!(program(10), Some((20, 20)));
-
-// Inner monad can short-circuit (OptionF with None)
-let guarded = state_t_chain::<i32, OptionF, _, _>(
-    state_t_get::<i32, OptionF>(),
-    |x| -> Box<dyn Fn(i32) -> Option<(i32, i32)>> {
-        if x > 100 {
-            state_t_pure::<i32, OptionF, _>(x)
-        } else {
-            Box::new(|_| None)
-        }
-    },
-);
-assert_eq!(guarded(10), None);
-assert_eq!(guarded(200), Some((200, 200)));
-```
-
-
-## Reader vs State
-
-|                    | ReaderT                                      | StateT                                       |
-|--------------------|----------------------------------------------|----------------------------------------------|
-| Environment        | Shared (read-only)                           | Threaded (mutable)                           |
-| Chain semantics    | Both computations see the same `E`           | Second sees updated `S` from first           |
-| `ask` / `get`      | Always returns the original environment      | Returns current (potentially modified) state |
-| `local` / `modify` | Scoped change (only affects sub-computation) | Permanent change (visible to all subsequent) |
-
-## Design Notes
-
-- **Why separate `FunctorSt` / `ChainSt` traits?** — Rust's `Box<dyn Fn>` requires `'static` bounds on captured types. Adding `'static` to the main `Functor` trait would unnecessarily constrain non-transformer code. The `St` family provides a parallel hierarchy that coexists cleanly.
-- **Why no `ApplicativeSt` for ReaderT and StateT?** — `pure_st` must produce a `Box<dyn Fn(E) -> M::Of<A>>` from a single `A`. The closure may be called multiple times, so `A` must be cloneable. But adding `A: Clone` to the trait would impose that requirement globally on every `ApplicativeSt` implementation, preventing use with non-`Clone` values. The solution: standalone `reader_t_pure` / `state_t_pure` functions with explicit `A: Clone` bounds.
-- **Why `M: 'static` on closure-based transformers?** — `Box<dyn Fn(E) -> M::Of<A>>` has an implicit `'static` lifetime bound, which propagates to `M::Of<A>`. Adding `M: 'static` to the HKT impl ensures the associated type satisfies this bound.
-- **Rc for closure sharing** — `reader_t_fmap` and `reader_t_chain` wrap the user-provided function in `Rc` because the outer closure (which is `Fn`, not `FnOnce`) may be called multiple times, and each call creates an inner closure that needs its own reference.
-- **`no_std` compatible** — the `MonadTrans` trait and its definition work in `no_std`. The transformers themselves require `alloc` (for `Box` and `Rc`).
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
