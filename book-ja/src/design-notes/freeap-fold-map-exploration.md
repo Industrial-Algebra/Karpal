@@ -1,14 +1,13 @@
-# FreeAp `fold_map`: Why It's Impossible in Rust (And What We Can Do Instead)
+# FreeAp `fold_map`: なぜ Rust では不可能か (そして代わりに何ができるか)
 
-**Status:** Design rationale — closed investigation
-**Date:** 2026-07-01
-**Issue:** [#95](https://github.com/Industrial-Algebra/Karpal/issues/95)
-**Surfaced by:** Proserpina documentation critique (Batch 4)
+**状態:** 設計理論 — 完結した調査
+**日付:** 2026-07-01
+**イシュー:** [#95](https://github.com/Industrial-Algebra/Karpal/issues/95)
+**発見:** Proserpina ドキュメント批評 (バッチ 4)
 
-## Background
+## 背景
 
-The Free Applicative (`FreeAp`) is a standard construction in category theory
-and functional programming. In Haskell, its signature is:
+自由アプリカティブ (`FreeAp`) は圏論と関数型プログラミングにおける標準的な構成です。Haskell ではそのシグネチャは:
 
 ```haskell
 data FreeAp f a
@@ -18,17 +17,13 @@ data FreeAp f a
 foldMap :: Applicative g => (forall x. f x -> g x) -> FreeAp f a -> g a
 ```
 
-The `forall b` in the `Ap` constructor is an **existential type** — each node
-hides its own intermediate type `b`. The `forall x` in `foldMap` is a
-**rank-2 universal** — the natural transformation must work for *all* types.
+`Ap` コンストラクタの `forall b` は **存在型** です — 各ノードは独自の中間型 `b` を隠します。`foldMap` の `forall x` は **ランク 2 全称** です — 自然変換は *すべての* 型で機能しなければなりません。
 
-Together, these two quantifiers create a tension that is easy to express in
-Haskell (which has full System F polymorphism) but — as this investigation
-demonstrates — **fundamentally impossible to express in current Rust**.
+この二つの量指定子は一緒になって、Haskell (完全な System F 多相を持つ) では表現しやすいが、この調査が示すように **現在の Rust では根本的に表現不可能** な緊張を作り出します。
 
-## The Problem
+## 問題
 
-Karpal's `FreeAp` uses GAT-based HKT encoding with an existential `dyn` trait:
+Karpal の `FreeAp` は存在 `dyn` トレイトを持つ GAT ベース HKT エンコーディングを使います:
 
 ```rust
 trait FreeApNode<F: HKT + 'static, A: 'static> {
@@ -44,20 +39,15 @@ pub enum FreeAp<F: HKT + 'static, A: 'static> {
 }
 ```
 
-Each `Ap` node erases its intermediate type `B` behind `dyn FreeApNode<F, A>`.
-This works for `retract` (interpret into `F` itself) because `F::ap` and
-`F::pure` are available at the trait level.
+各 `Ap` ノードは中間型 `B` を `dyn FreeApNode<F, A>` の背後で消去します。これは `retract` (F 自身に解釈) には機能します。`F::ap` と `F::pure` がトレイトレベルで利用可能だからです。
 
-But `fold_map` needs to call `nt.transform::<B>()` where `B` is erased.
-Rust cannot monomorphize a generic function through a `dyn` trait object.
-**Generic methods and `dyn` dispatch are mutually exclusive in Rust's type
-system.**
+しかし `fold_map` は `B` が消去された状態で `nt.transform::<B>()` を呼ぶ必要があります。Rust は `dyn` トレイトオブジェクトを通じて汎用関数を単相化できません。**汎用メソッドと `dyn` ディスパッチは Rust の型システムで相互排他です。**
 
-## Approaches Explored
+## 探ったアプローチ
 
-### Approach 1: Generic method on the node trait
+### アプローチ 1: ノードトレイトの汎用メソッド
 
-**Idea:** Add `fold_map` as a generic method to `FreeApNode`.
+**アイデア:** `fold_map` を `FreeApNode` の汎用メソッドとして追加。
 
 ```rust
 trait FreeApNode<F: HKT + 'static, A: 'static> {
@@ -69,22 +59,18 @@ trait NatTrans<F: HKT, G: HKT> {
 }
 ```
 
-**Result: ❌ Does not compile.**
+**結果: ❌ コンパイル不可。**
 
-`fold_map<G, NT>` is a generic method. Generic methods make a trait
-**non-dyn-compatible** (`dyn FreeApNode` won't compile). Without `dyn`, we
-cannot erase intermediate types, which means we cannot build heterogeneous
-trees.
+`fold_map<G, NT>` は汎用メソッドです。汎用メソッドはトレイトを **非 dyn 互換** にします (`dyn FreeApNode` がコンパイル不可)。`dyn` がなければ中間型を消去できず、異種混合ツリーを構築できません。
 
-This is the circular trap:
-- To erase `B`, we need `dyn`.
-- To dispatch `nt<B>`, we need monomorphization.
-- `dyn` and generic methods are mutually exclusive.
+これが循環の罠です:
+- `B` を消去するには `dyn` が必要。
+- `nt<B>` をディスパッチするには単相化が必要。
+- `dyn` と汎用メソッドは相互排他。
 
-### Approach 2: Church encoding with erased interpreter
+### アプローチ 2: 消去されたインタプリタによるチャーチエンコーディング
 
-**Idea:** Represent `FreeAp` as its own fold — a closure that takes an
-interpreter and produces the result.
+**アイデア:** `FreeAp` をそれ自身の fold として表現 — インタプリタを取り結果を生成するクロージャ。
 
 ```rust
 trait ErasedInterp<F> {
@@ -98,23 +84,17 @@ pub struct FreeApC<F: 'static, A: 'static> {
 }
 ```
 
-**Result: ❌ Does not compile.**
+**結果: ❌ コンパイル不可。**
 
-The interpreter's `pure_erased` receives `Box<dyn Any>` and must construct
-`G::Of<A>`. But `A` is erased at runtime — the interpreter has no way to
-recover the concrete type from `Box<dyn Any>` to call `G::pure`.
+インタプリタの `pure_erased` は `Box<dyn Any>` を受け取り `G::Of<A>` を構築しなければなりません。しかし `A` は実行時に消去されており — インタプリタには `G::pure` を呼ぶために `Box<dyn Any>` から具体的な型を復元する方法がありません。
 
-Similarly, `ap_erased` receives two erased boxes but cannot determine the
-function/argument types to perform the applicative application.
+同様に、`ap_erased` は二つの消去されたボックスを受け取るが、アプリカティブ適用を行うための関数/引数の型を決定できません。
 
-**Root cause:** `Box<dyn Any>` erases types that the interpreter needs to
-construct correctly-typed results. Type erasure is incompatible with type
-construction.
+**根本原因:** `Box<dyn Any>` はインタプリタが正しく型付けされた結果を構築するのに必要な型を消去します。型消去は型構築と互換性がありません。
 
-### Approach 3: Recursive monomorphic encoding
+### アプローチ 3: 再帰的単相エンコーディング
 
-**Idea:** Constrain all effects to the same type `X`, avoiding the need for
-existentials.
+**アイデア:** すべてのエフェクトを同じ型 `X` に制約し、存在型の必要性を回避。
 
 ```rust
 pub enum FreeApMono<F: HKT + 'static, X: 'static, A: 'static> {
@@ -126,34 +106,29 @@ pub enum FreeApMono<F: HKT + 'static, X: 'static, A: 'static> {
 }
 ```
 
-**Result: ❌ Does not compile — infinite type recursion.**
+**結果: ❌ コンパイル不可 — 無限型再帰。**
 
-The `Ap` variant stores `FreeApMono<F, X, Box<dyn Fn(X) -> A>>`, which creates
-an infinite type chain at the type checker level:
+`Ap` バリアントは `FreeApMono<F, X, Box<dyn Fn(X) -> A>>` を格納し、型チェッカレベルで無限型連鎖を作ります:
 
 ```
 FreeApMono<F, X, A>
   contains FreeApMono<F, X, Box<dyn Fn(X) -> A>>
     contains FreeApMono<F, X, Box<dyn Fn(X) -> Box<dyn Fn(X) -> A>>>
       contains FreeApMono<F, X, Box<dyn Fn(X) -> Box<dyn Fn(X) -> Box<dyn Fn(X) -> A>>>>
-        contains ... (infinite)
+        contains ... (無限)
 ```
 
-Compiler error:
+コンパイラエラー:
 ```
 error[E0320]: overflow while adding drop-check rules for `FreeApMono<F, X, A>`
   = note: overflowed on `FreeApMono<F, X, Box<dyn Fn(X) -> Box<dyn Fn(X) -> Box<...>>>>`
 ```
 
-The recursive applicative structure (`Ap(F<B>, FreeAp<F, B->A>)`) **must** be
-broken with existentials. There is no way to represent a recursive applicative
-tree without either existentials (which block `fold_map`) or infinite types.
+再帰的アプリカティブ構造 (`Ap(F<B>, FreeAp<F, B->A>)`) は存在型で **必ず** 砕かなければなりません。存在型 (`fold_map` をブロックする) なし、あるいは無限型なしで、再帰的アプリカティブツリーを表現する方法はありません。
 
-### Approach 4: Non-recursive list-based encoding
+### アプローチ 4: 非再帰的リストベースエンコーディング
 
-**Idea:** Flatten effects to a `Vec<F::Of<X>>` and combine with a pure
-function. Since applicatives have independent effects (unlike monads), this
-is semantically valid for the monomorphic case.
+**アイデア:** エフェクトを `Vec<F::Of<X>>` に平坦化し、純粋関数で結合。アプリカティブは (モナドと異なり) 独立したエフェクトを持つため、単相の場合これは意味的に妥当です。
 
 ```rust
 pub struct FreeApSeq<F: HKT + 'static, X: 'static, A: 'static> {
@@ -162,96 +137,75 @@ pub struct FreeApSeq<F: HKT + 'static, X: 'static, A: 'static> {
 }
 ```
 
-`fold_map` would: (1) apply NT to each effect, (2) sequence the `G` effects
-via `Applicative`, (3) map `combine` over the result.
+`fold_map` は: (1) 各エフェクトに NT を適用、(2) `Applicative` 経由で `G` エフェクトを逐次化、(3) 結果に `combine` をマップ。
 
-**Result: ⚠️ Theoretically viable, but hits ownership friction.**
+**結果: ⚠️ 理論的には妥当だが、所有権摩擦にヒット。**
 
-The `sequence` operation (turn `Vec<G::Of<X>>` into `G::Of<Vec<X>>`) requires
-threading an accumulator through `G::ap`. The accumulator closure captures a
-`Vec<X>` by move, making it `FnOnce` — but `G::ap` requires `Box<dyn Fn>`,
-which must be callable multiple times.
+`sequence` 演算 (`Vec<G::Of<X>>` を `G::Of<Vec<X>>` に変える) は `G::ap` を通じてアキュムレータを受け渡す必要があります。アキュムレータクロージャは `Vec<X>` を move で捕獲し `FnOnce` になります — しかし `G::ap` は `Box<dyn Fn>` を必要とし、複数回呼び出し可能でなければなりません。
 
-This can be worked around with `Rc<RefCell<Vec<X>>>`, but that introduces
-runtime overhead and complexity, violating Karpal's zero-cost principle.
+これは `Rc<RefCell<Vec<X>>>` で回避できますが、ランタイムオーバーヘッドと複雑さを導入し、Karpal のゼロコスト原則に違反します。
 
-**Additional trade-offs:**
-- Only supports monomorphic effects (all `F::Of<X>`)
-- Loses the applicative composition structure (flat list, not a tree)
-- The `combine: Fn(&[X]) -> A` interface is awkward (positional, not curried)
+**追加のトレードオフ:**
+- 単相エフェクトのみサポート (すべて `F::Of<X>`)
+- アプリカティブ合成構造を失う (ツリーではなくフラットなリスト)
+- `combine: Fn(&[X]) -> A` インターフェースが不格好 (カリー化ではなく位置指定)
 
-## The Fundamental Barrier
+## 根本的障壁
 
-All four approaches fail for the same underlying reason:
+四つのアプローチすべてが同じ根本理由で失敗します:
 
-> **Rust's type system cannot express rank-N polymorphism (`forall x. f x -> g x`)
-> dispatched through existential types (`forall b. ...`).**
+> **Rust の型システムは、存在型 (`forall b. ...`) を通じてディスパッチされるランク N 多相 (`forall x. f x -> g x`) を表現できない。**
 
-In type-theoretic terms:
-- `fold_map` requires a **negative** occurrence of `forall x` (the natural
-  transformation must be polymorphic in `x`)
-- The `Ap` constructor requires a **positive** occurrence of `exists b` (the
-  intermediate type is hidden)
-- Rust's trait system supports neither rank-N types nor first-class
-  existentials — both are approximated via `dyn`, which requires monomorphic
-  (non-generic) methods
+型理論の用語で:
+- `fold_map` は `forall x` の **否定出現** を必要とする (自然変換が `x` について多相でなければならない)
+- `Ap` コンストラクタは `exists b` の **肯定出現** を必要とする (中間型が隠されている)
+- Rust のトレイトシステムはランク N 型も第一級存在型もサポートしない — 両方とも `dyn` で近似されるが、`dyn` は単相的 (非汎用) メソッドを必要とする
 
-This is not a bug or an oversight. It is a fundamental property of Rust's
-type system as of 2026. The limitation is shared by all GAT-based HKT
-encodings in Rust.
+これはバグでも見落しでもありません。2026 年現在の Rust の型システムの根本的な性質です。この制限は Rust のすべての GAT ベース HKT エンコーディングで共有されます。
 
-## What the Current Encoding Provides
+## 現在のエンコーディングが提供するもの
 
-| Capability | Status |
+| 能力 | 状態 |
 |-----------|--------|
-| `retract()` — interpret into `F` itself | ✅ Works |
-| `count_effects()` — static analysis of effect tree | ✅ Works |
-| `fmap()` — functor map over result | ✅ Works |
-| `ap()` — applicative composition | ✅ Works |
-| `fold_map()` — interpret into arbitrary `G` via NT | ❌ Impossible (fundamental) |
-| Heterogeneous effect types | ✅ Supported |
-| Applicative law verification | ✅ 4 proptest laws |
+| `retract()` — F 自身に解釈 | ✅ 動作 |
+| `count_effects()` — エフェクトツリーの静的解析 | ✅ 動作 |
+| `fmap()` — 結果上の関手マップ | ✅ 動作 |
+| `ap()` — アプリカティブ合成 | ✅ 動作 |
+| `fold_map()` — NT 経由で任意の G に解釈 | ❌ 不可能 (根本的) |
+| 異種エフェクト型 | ✅ サポート |
+| アプリカティブ法則検証 | ✅ 4 つの proptest 法則 |
 
-## Recommendation
+## 推奨事項
 
-1. **The current encoding is correct.** It provides the maximum set of
-   capabilities possible in Rust's type system.
+1. **現在のエンコーディングは正しい。** Rust の型システムで可能な最大の能力セットを提供します。
 
-2. **The documentation already explains the limitation** and provides the
-   workaround: `fold_map nt ≡ retract . hoist nt`.
+2. **ドキュメントは既に制限を説明し** 回避策を提供しています: `fold_map nt ≡ retract . hoist nt`。
 
-3. **For monomorphic use cases** where `fold_map` is genuinely needed,
-   users can build a `Vec<F::Of<X>>` and sequence it directly via their
-   target `Applicative`. This is straightforward in application code:
+3. **`fold_map` が本当に必要な単相ユースケース** では、ユーザーは `Vec<F::Of<X>>` を構築し対象の `Applicative` で直接逐次化できます。これはアプリケーションコードで単純です:
 
    ```rust
    let effects: Vec<F::Of<X>> = vec![...];
    let g_effects: Vec<G::Of<X>> = effects.into_iter().map(nt).collect();
-   let sequenced = G::sequence(g_effects);  // if G: Traversable
+   let sequenced = G::sequence(g_effects);  // G: Traversable の場合
    let result = G::fmap(sequenced, combine);
    ```
 
-4. **A `FreeApSeq` type** (Approach 4) could be added as a separate crate
-   or module if demand materializes. It would provide `fold_map` for the
-   monomorphic case at the cost of generality and zero-cost guarantees.
+4. **`FreeApSeq` 型** (アプローチ 4) は、需要が生じれば別クレートやモジュールとして追加できます。それは一般性とゼロコスト保証を犠牲にして単相ケースの `fold_map` を提供するでしょう。
 
-## Broader Significance
+## より広い意義
 
-This investigation is relevant beyond Karpal. Any Rust library attempting
-to encode category-theoretic abstractions with free constructions will hit
-this same wall. The findings here apply to:
+この調査は Karpal を超えて関連します。自由構成で圏論的抽象化をエンコードしようとする任意の Rust ライブラリは同じ壁にヒットするでしょう。ここの知見は以下に適用されます:
 
-- Free monads with generic interpreters
-- Church-encoded data types with polymorphic folds
-- Any construction requiring rank-N polymorphism through existentials
+- 汎用インタプリタを持つ自由モナド
+- 多相 fold を持つチャーチエンコーディングされたデータ型
+- 存在型を通じたランク N 多相を必要とする任意の構成
 
-The documentation of this limitation serves as a reference for the broader
-Rust category-theory ecosystem.
+この制限の文書化は、より広い Rust 圏論エコシステムの参考として機能します。
 
-## References
+## 参考文献
 
-- [Issue #95](https://github.com/Industrial-Algebra/Karpal/issues/95) — original report
-- [Proserpina critique report](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/reviews/batch4-algebra-review.md) — Batch 4, finding B6
-- `karpal-free/src/free_ap.rs` — the implementation
-- Haskell `Control.Applicative.Free` — the reference implementation that CAN express `foldMap`
-- [Rust Closure Traits as a Category-Theoretic Barrier](./rust-closure-categorical-barrier.md) — cross-cutting analysis of `Fn`/`FnOnce` friction
+- [イシュー #95](https://github.com/Industrial-Algebra/Karpal/issues/95) — 元の報告
+- [Proserpina 批評レポート](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/reviews/batch4-algebra-review.md) — バッチ 4、所見 B6
+- `karpal-free/src/free_ap.rs` — 実装
+- Haskell `Control.Applicative.Free` — `foldMap` を表現できる参照実装
+- [圏論的障壁としての Rust クロージャトレイト](./rust-closure-categorical-barrier.md) — `Fn`/`FnOnce` 摩擦の横断的分析
