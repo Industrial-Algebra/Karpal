@@ -1,21 +1,21 @@
-# Config Pipeline
+# 設定パイプライン
 
-Load application config from multiple sources using Alt, Traversable, Foldable, and Monoid.
+Alt、Traversable、Foldable、Monoid を使って複数ソースからアプリケーション設定を読み込む。
 
-## Overview
+## 概要
 
-Real applications rarely load configuration from a single source. Environment variables, config files, and hardcoded defaults each provide a partial picture. This example builds a configuration pipeline that:
+実際のアプリケーションが単一ソースから設定を読み込むことは稀です。環境変数、設定ファイル、ハードコードされたデフォルトがそれぞれ部分的な情報を提供します。この例は以下を行う設定パイプラインを構築します:
 
-- Uses **Alt** to create fallback chains across multiple config sources (env, file, defaults).
-- Uses **`do_!`** to sequence dependent lookups into a connection string.
-- Uses **Traversable** for all-or-nothing batch validation of port numbers.
-- Uses **Foldable** with **Monoid** to aggregate a human-readable config summary.
+- **Alt** を使い、複数の設定ソース (env、ファイル、デフォルト) にまたがるフォールバック連鎖を作る。
+- **`do_!`** を使い、依存する参照を接続文字列に逐次化する。
+- **Traversable** を使い、ポート番号のオールオアナッシングなバッチ検証を行う。
+- **Foldable** と **Monoid** を使い、人間可読な設定サマリーを集約する。
 
-The full source is at `karpal-std/examples/config_pipeline.rs`.
+完全なソースは `karpal-std/examples/config_pipeline.rs` にあります。
 
-## 1. Domain Types
+## 1. ドメイン型
 
-The example defines a simple `AppConfig` struct representing a database connection configuration:
+この例はデータベース接続設定を表す単純な `AppConfig` 構造体を定義します:
 
 ``` rust
 #[derive(Debug, Clone, PartialEq)]
@@ -28,13 +28,13 @@ struct AppConfig {
 }
 ```
 
-## 2. Simulated Config Sources
+## 2. シミュレートされた設定ソース
 
-Three functions simulate different configuration sources. Each takes a key and returns `Option<String>` — `Some` if the source knows about that key, `None` otherwise.
+三つの関数が異なる設定ソースをシミュレートします。各関数はキーを取り `Option<String>` を返します — ソースがそのキーを知っていれば `Some`、さもなくば `None`。
 
 ``` rust
 fn from_env(key: &str) -> Option<String> {
-    // Simulate environment variables (only DB_HOST and DB_PORT are set)
+    // 環境変数をシミュレート (DB_HOST と DB_PORT のみ設定)
     match key {
         "DB_HOST" => Some("prod-db.example.com".into()),
         "DB_PORT" => Some("5432".into()),
@@ -43,7 +43,7 @@ fn from_env(key: &str) -> Option<String> {
 }
 
 fn from_file(key: &str) -> Option<String> {
-    // Simulate a config file (has DB_NAME and MAX_CONNECTIONS)
+    // 設定ファイルをシミュレート (DB_NAME と MAX_CONNECTIONS を持つ)
     match key {
         "DB_NAME" => Some("myapp".into()),
         "MAX_CONNECTIONS" => Some("20".into()),
@@ -52,7 +52,7 @@ fn from_file(key: &str) -> Option<String> {
 }
 
 fn from_default(key: &str) -> Option<String> {
-    // Hardcoded defaults for everything
+    // すべてのハードコードされたデフォルト
     match key {
         "DB_HOST" => Some("localhost".into()),
         "DB_PORT" => Some("5432".into()),
@@ -64,34 +64,34 @@ fn from_default(key: &str) -> Option<String> {
 }
 ```
 
-No single source has every key. Environment variables provide the host and port; the config file provides the database name and connection pool size; defaults fill in anything still missing, including the timeout.
+単一ソースがすべてのキーを持つわけではありません。環境変数はホストとポートを提供し; 設定ファイルはデータベース名と接続プールサイズを提供し; デフォルトがまだ残っているすべて (タイムアウトを含む) を埋めます。
 
-## 3. Alt Fallback Chains
+## 3. Alt フォールバック連鎖
 
-The [Alt](../reference/alt-family.md) trait provides an associative "or" operation on type constructors. For `Option`, `Alt::alt` returns the first `Some` value, falling through to the next source if the current one returns `None`.
+[Alt](../reference/alt-family.md) トレイトは型コンストラクタ上の結合的な「or」演算を提供します。`Option` の場合、`Alt::alt` は最初の `Some` 値を返し、現在のソースが `None` を返せば次のソースにフォールスルーします。
 
 ``` rust
-/// Try env first, then file, then defaults.
+/// env を最初に、次にファイル、次にデフォルトを試す。
 fn resolve(key: &str) -> Option<String> {
     OptionF::alt(OptionF::alt(from_env(key), from_file(key)), from_default(key))
 }
 ```
 
-This reads inside-out: try `from_env`, fall back to `from_file`, then fall back to `from_default`. Because `Alt` is associative, the grouping does not matter — only the left-to-right priority order.
+これは内側から外側へ読みます: `from_env` を試し、`from_file` にフォールバックし、`from_default` にフォールバックします。`Alt` は結合的であるためグループ化は問いません — 左から右の優先順位だけが重要です。
 
-For example, `resolve("DB_HOST")` returns `Some("prod-db.example.com")` from the environment, while `resolve("TIMEOUT_MS")` skips both env and file (neither has it) and returns `Some("5000")` from defaults.
+例えば `resolve("DB_HOST")` は環境から `Some("prod-db.example.com")` を返し、`resolve("TIMEOUT_MS")` は env とファイル (どちらも持たない) をスキップしデフォルトから `Some("5000")` を返します。
 
-## 4. Loading the Full Config
+## 4. 完全な設定の読み込み
 
-With `resolve` in hand, loading the full `AppConfig` is straightforward. String fields are resolved directly; numeric fields are resolved and then parsed:
+`resolve` があれば、完全な `AppConfig` の読み込みは単純です。文字列フィールドは直接解決され; 数値フィールドは解決されてからパースされます:
 
 ``` rust
 fn load_config() -> Option<AppConfig> {
-    // Resolve each key independently via Alt fallback chains
+    // 各キーを Alt フォールバック連鎖で独立に解決
     let db_host = resolve("DB_HOST")?;
     let db_name = resolve("DB_NAME")?;
 
-    // For numeric fields, resolve then parse
+    // 数値フィールドは解決してからパース
     let db_port = resolve("DB_PORT").and_then(parse_u16)?;
     let max_connections = resolve("MAX_CONNECTIONS").and_then(parse_u16)?;
     let timeout_ms = resolve("TIMEOUT_MS").and_then(parse_u64)?;
@@ -106,11 +106,11 @@ fn load_config() -> Option<AppConfig> {
 }
 ```
 
-The `?` operator short-circuits the entire function if any key cannot be resolved or any parse fails, returning `None`.
+`?` 演算子はキーが解決できないかパースが失敗すれば関数全体を短絡し、`None` を返します。
 
-## 5. Connection String with `do_!`
+## 5. `do_!` による接続文字列
 
-The [`do_!` macro](../reference/macros.md) provides monadic sequencing. Here it combines three resolved values into a formatted connection string:
+[`do_!` マクロ](../reference/macros.md) はモナド的逐次化を提供します。ここでは三つの解決された値を整形された接続文字列に組み合わせます:
 
 ``` rust
 fn load_connection_string() -> Option<String> {
@@ -123,11 +123,11 @@ fn load_connection_string() -> Option<String> {
 }
 ```
 
-Each `name = expr` line unwraps the `Option`. If any call to `resolve` returns `None`, the entire block short-circuits. The final expression produces the connection string wrapped in `Some`.
+各 `name = expr` 行は `Option` をアンラップします。`resolve` のいずれかが `None` を返せばブロック全体が短絡します。最終式が `Some` で包まれた接続文字列を生成します。
 
-## 6. Batch Validation with Traversable
+## 6. Traversable によるバッチ検証
 
-[Traversable](../reference/foldable-traversable.md) provides all-or-nothing semantics: apply a fallible function to every element in a collection, and if any element fails, the entire result is `None`.
+[Traversable](../reference/foldable-traversable.md) はオールオアナッシング意味論を提供します: 失敗しうる関数をコレクションのすべての要素に適用し、いずれかの要素が失敗すれば結果全体が `None` になります。
 
 ``` rust
 fn parse_u16(s: String) -> Option<u16> {
@@ -142,7 +142,7 @@ fn validate_ports(ports: Vec<&str>) -> Option<Vec<u16>> {
 }
 ```
 
-`VecF::traverse` maps `parse_u16` over each element and collects the results. If every element parses successfully, the result is `Some(vec![...])`. If any element fails, the result is `None`:
+`VecF::traverse` は各要素に `parse_u16` をマップし結果を集めます。すべての要素がパース成功すれば結果は `Some(vec![...])` です。いずれかの要素が失敗すれば結果は `None` です:
 
 ``` rust
 let good = validate_ports(vec!["80", "443", "8080"]);
@@ -152,11 +152,11 @@ let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
 // => None
 ```
 
-This is strictly stronger than filtering out failures — it guarantees that either *all* values are valid or the caller knows something went wrong.
+これは失敗をフィルタするより厳密に強力です — すべての値が有効であるか、呼び出しが何か問題を起こしたことを知ることを保証します。
 
-## 7. Config Summary with Foldable and Monoid
+## 7. Foldable と Monoid による設定サマリー
 
-[Foldable](../reference/foldable-traversable.md) provides structural traversal, and [Monoid](../reference/algebraic.md) provides an identity element and associative combination. Together, `fold_map` transforms each element and concatenates the results:
+[Foldable](../reference/foldable-traversable.md) は構造的トラバーサルを提供し、[Monoid](../reference/algebraic.md) は単位元と結合的合成を提供します。一緒に、`fold_map` は各要素を変換し結果を結合します:
 
 ``` rust
 fn summarize_keys(keys: Vec<&str>) -> String {
@@ -172,17 +172,17 @@ fn summarize_keys(keys: Vec<&str>) -> String {
 }
 ```
 
-For `String`, the Monoid instance uses the empty string as the identity and string concatenation as the combining operation. The result is a single string summarizing all resolved (or missing) configuration keys.
+`String` の場合、Monoid 実装は単位元として空文字列を、結合演算として文字列結合を使います。結果はすべての解決された (または欠落した) 設定キーを要約する単一の文字列です。
 
-## 8. The `main` Function
+## 8. `main` 関数
 
-The `main` function exercises each section and prints the results:
+`main` 関数は各セクションを実行し結果を出力します:
 
 ``` rust
 fn main() {
     println!("=== Config Pipeline Example ===\n");
 
-    // 1. Alt fallback chains
+    // 1. Alt フォールバック連鎖
     println!("--- Resolving individual keys (Alt fallback) ---");
     println!("DB_HOST:         {:?}", resolve("DB_HOST"));
     println!("DB_PORT:         {:?}", resolve("DB_PORT"));
@@ -191,18 +191,18 @@ fn main() {
     println!("TIMEOUT_MS:      {:?}", resolve("TIMEOUT_MS"));
     println!("UNKNOWN_KEY:     {:?}", resolve("UNKNOWN_KEY"));
 
-    // 2. Full config loading
+    // 2. 完全な設定の読み込み
     println!("\n--- Loading full config ---");
     match load_config() {
         Some(config) => println!("{:#?}", config),
         None => println!("Failed to load config!"),
     }
 
-    // 3. do_! for independent lookups
+    // 3. 独立した参照のための do_!
     println!("\n--- Connection string (do_!) ---");
     println!("{:?}", load_connection_string());
 
-    // 4. Traversable: all-or-nothing validation
+    // 4. Traversable: オールオアナッシング検証
     println!("\n--- Batch port validation (Traversable) ---");
     let good_ports = vec!["80", "443", "8080"];
     let good_result = validate_ports(good_ports.clone());
@@ -212,7 +212,7 @@ fn main() {
     let bad_result = validate_ports(bad_ports.clone());
     println!("Mixed ports {:?}: {:?}", bad_ports, bad_result);
 
-    // 5. Foldable + Monoid: summarize
+    // 5. Foldable + Monoid: サマリー
     println!("\n--- Config summary (Foldable + Monoid) ---");
     let summary = summarize_keys(vec![
         "DB_HOST", "DB_PORT", "DB_NAME", "MAX_CONNECTIONS", "TIMEOUT_MS", "MISSING",
@@ -221,25 +221,23 @@ fn main() {
 }
 ```
 
-## Run It
+## 実行
 
-From the workspace root:
+ワークスペースルートから:
 
 ``` rust
 cargo run -p karpal-std --example config_pipeline
 ```
 
-## Traits Used
+## 使用するトレイト
 
-| Trait                | Purpose in this example                                        | Reference                                                        |
+| トレイト                | この例での目的                                        | リファレンス                                                        |
 |----------------------|----------------------------------------------------------------|------------------------------------------------------------------|
-| `Alt`                | Fallback chains across config sources                          | [Alt Family](../reference/alt-family.md)                       |
-| `Monad` (via `do_!`) | Sequential composition of dependent lookups                    | [Functor Family](../reference/functor-family.md)               |
-| `Traversable`        | All-or-nothing batch validation                                | [Foldable & Traversable](../reference/foldable-traversable.md) |
-| `Foldable`           | Structural traversal with `fold_map`                           | [Foldable & Traversable](../reference/foldable-traversable.md) |
-| `Monoid`             | String concatenation as the combining operation for `fold_map` | [Semigroup & Monoid](../reference/algebraic.md)                |
+| `Alt`                | 設定ソースにまたがるフォールバック連鎖                          | [Alt ファミリー](../reference/alt-family.md)                       |
+| `Monad` (`do_!` 経由) | 依存する参照の逐次合成                    | [関手ファミリー](../reference/functor-family.md)               |
+| `Traversable`        | オールオアナッシングなバッチ検証                                | [Foldable と Traversable](../reference/foldable-traversable.md) |
+| `Foldable`           | `fold_map` による構造的トラバーサル                           | [Foldable と Traversable](../reference/foldable-traversable.md) |
+| `Monoid`             | `fold_map` の結合演算としての文字列結合 | [半群とモノイド](../reference/semigroup-monoid.md)                |
 
 
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。

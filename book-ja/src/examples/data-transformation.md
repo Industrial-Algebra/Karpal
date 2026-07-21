@@ -1,21 +1,21 @@
-# Data Transformation
+# データ変換
 
-ETL pipeline: parse records, transform fields, aggregate stats using Functor, Chain, Lens, Foldable, and Monoid.
+ETL パイプライン: Functor、Chain、Lens、Foldable、Monoid を使ってレコードをパースし、フィールドを変換し、統計を集約する。
 
-## Overview
+## 概要
 
-This example builds a small ETL (Extract, Transform, Load) pipeline that processes raw string records into typed transactions, applies transformations via lenses, and aggregates results using monoidal folding. It demonstrates how several Karpal abstractions compose naturally into a real-world data processing workflow:
+この例は生の文字列レコードを型付きトランザクションに処理し、レンズ経由で変換を適用し、モノイダルな畳み込みで結果を集約する小さな ETL (Extract, Transform, Load) パイプラインを構築します。複数の Karpal 抽象化が現実世界のデータ処理ワークフローに自然に合成される仕方を実演します:
 
-- **Domain types** — raw input records and typed output structs, with a `Summary` type that implements `Semigroup` and `Monoid` for aggregation.
-- **`do_!` and Chain** — monadic parsing that short-circuits on the first invalid field.
-- **Lens** — composable getters and setters for individual struct fields.
-- **Functor** — mapping transformations over collections of transactions.
-- **Traversable** — all-or-nothing batch parsing that fails if any single record is invalid.
-- **Foldable + Monoid** — aggregating transactions into summaries, including grouped-by-category breakdowns.
+- **ドメイン型** — 生の入力レコードと型付き出力構造体、集約用の `Semigroup` と `Monoid` を実装する `Summary` 型。
+- **`do_!` と Chain** — 最初の無効フィールドで短絡するモナド的パース。
+- **Lens** — 個別の構造体フィールドのための合成可能な getter と setter。
+- **Functor** — トランザクションのコレクション上で変換をマップする。
+- **Traversable** — 単一レコードが無効でも全体が失敗するオールオアナッシングなバッチパース。
+- **Foldable + Monoid** — トランザクションをサマリーに集約する (カテゴリ別内訳を含む)。
 
-## 1. Domain Types
+## 1. ドメイン型
 
-The pipeline starts with `RawRecord`, where every field is a `String` (as you might receive from a CSV parser or HTTP request). The goal is to parse these into strongly-typed `Transaction` values.
+パイプラインは `RawRecord` から始まります。ここですべてのフィールドは `String` です (CSV パーサや HTTP リクエストから受け取るような)。目標はこれらを強く型付けされた `Transaction` 値にパースすることです。
 
 ``` rust
 #[derive(Debug, Clone)]
@@ -35,7 +35,7 @@ struct Transaction {
 }
 ```
 
-For aggregation, we define a `Summary` type that tracks the number of transactions and their total value in cents. By implementing `Semigroup` and `Monoid`, we can combine summaries using `fold_map` without writing any manual accumulation logic.
+集約のため、トランザクション数とセント単位の総額を追跡する `Summary` 型を定義します。`Semigroup` と `Monoid` を実装することで、手動の蓄積ロジックなしに `fold_map` でサマリーを結合できます。
 
 ``` rust
 #[derive(Debug, Clone)]
@@ -63,11 +63,11 @@ impl Monoid for Summary {
 }
 ```
 
-The `Semigroup::combine` implementation adds counts and totals together. The `Monoid::empty` value is the identity element — zero transactions with zero total — which serves as the starting point for any fold.
+`Semigroup::combine` 実装はカウントと総額を足し合わせます。`Monoid::empty` 値は単位元です — ゼロトランザクションとゼロ総額 — これは任意の畳み込みの出発点として機能します。
 
-## 2. Parsing with `do_!` (Chain)
+## 2. `do_!` (Chain) によるパース
 
-Each raw record needs two fields parsed: `id` (a `u32`) and `amount` (a floating-point dollar value converted to cents). If either parse fails, the whole record is invalid. The `do_!` macro makes this sequential validation read top-to-bottom, with automatic short-circuiting on `None`:
+各生レコードは二つのフィールドのパースを必要とします: `id` (`u32`) と `amount` (浮動小数点のドル値をセントに変換)。いずれかのパースが失敗すればレコード全体が無効です。`do_!` マクロによりこの逐次検証は上から下へ読め、`None` で自動的に短絡します:
 
 ``` rust
 fn parse_record(raw: RawRecord) -> Option<Transaction> {
@@ -86,9 +86,9 @@ fn parse_record(raw: RawRecord) -> Option<Transaction> {
 }
 ```
 
-Each `name = expr` line unwraps the `Option` returned by the right-hand side. If `raw.id.parse::<u32>().ok()` returns `None`, the entire block immediately evaluates to `None` without attempting to parse the amount. This is the `Chain` (monadic bind) behavior provided by `OptionF`.
+各 `name = expr` 行は右辺が返す `Option` をアンラップします。`raw.id.parse::<u32>().ok()` が `None` を返せば、amount のパースを試みずにブロック全体が直ちに `None` に評価されます。これが `OptionF` が提供する `Chain` (モナド束縛) の振る舞いです。
 
-To parse an entire batch of records with all-or-nothing semantics, we use `Traversable`:
+レコードのバッチ全体をオールオアナッシング意味論でパースするには、`Traversable` を使います:
 
 ``` rust
 fn parse_all(records: Vec<RawRecord>) -> Option<Vec<Transaction>> {
@@ -96,11 +96,11 @@ fn parse_all(records: Vec<RawRecord>) -> Option<Vec<Transaction>> {
 }
 ```
 
-`VecF::traverse` applies `parse_record` to every element in the vector and collects the results. If all records parse successfully, you get `Some(vec_of_transactions)`. If any single record fails, the entire result is `None`. This is the "all-or-nothing" guarantee of `Traversable`.
+`VecF::traverse` はベクタのすべての要素に `parse_record` を適用し結果を集めます。すべてのレコードがパース成功すれば `Some(vec_of_transactions)` が得られます。単一レコードでも失敗すれば結果全体が `None` になります。これが `Traversable` の「オールオアナッシング」保証です。
 
-## 3. Lens Field Access
+## 3. Lens フィールドアクセス
 
-To modify individual fields of a `Transaction` without manually destructuring the struct, we define lenses. A `SimpleLens<S, A>` provides a getter (`S -> A`) and a setter (`(S, A) -> S`) for a single field:
+構造体を手動でデストラクトせずに `Transaction` の個別フィールドを変更するため、レンズを定義します。`SimpleLens<S, A>` は単一フィールドの getter (`S -> A`) と setter (`(S, A) -> S`) を提供します:
 
 ``` rust
 fn amount_lens() -> SimpleLens<Transaction, i64> {
@@ -121,14 +121,14 @@ fn name_lens() -> SimpleLens<Transaction, String> {
 }
 ```
 
-The getter closure reads the field; the setter closure returns a new `Transaction` with that one field replaced, using Rust's struct update syntax (`..t`) to copy the remaining fields. Lenses are first-class values — you can store them, pass them to functions, and compose them with `.then()`.
+getter クロージャはフィールドを読み; setter クロージャはその一つのフィールドを置き換えた新しい `Transaction` を返し、残りのフィールドをコピーするために Rust の構造体更新構文 (`..t`) を使います。Lens は第一級の値です — 保存し、関数に渡し、`.then()` で合成できます。
 
-## 4. Functor Transforms
+## 4. Functor 変換
 
-With lenses in hand, we can define transformation functions that modify a specific field across an entire collection. `VecF::fmap` applies a function to every element of a `Vec`, and the lens's `.over()` method applies a function to the focused field:
+レンズがあれば、コレクション全体にわたって特定のフィールドを変更する変換関数を定義できます。`VecF::fmap` は `Vec` のすべての要素に 関数を適用し、Lens の `.over()` メソッドは焦点のフィールドに関数を適用します:
 
 ``` rust
-/// Apply a discount: reduce amount by a percentage.
+/// 割引を適用: 金額をパーセンテージで減らす。
 fn apply_discount(transactions: Vec<Transaction>, pct: f64) -> Vec<Transaction> {
     let lens = amount_lens();
     VecF::fmap(transactions, |t| {
@@ -136,7 +136,7 @@ fn apply_discount(transactions: Vec<Transaction>, pct: f64) -> Vec<Transaction> 
     })
 }
 
-/// Normalize names to uppercase.
+/// 名前を大文字に正規化。
 fn normalize_names(transactions: Vec<Transaction>) -> Vec<Transaction> {
     let lens = name_lens();
     VecF::fmap(transactions, |t| {
@@ -145,11 +145,11 @@ fn normalize_names(transactions: Vec<Transaction>) -> Vec<Transaction> {
 }
 ```
 
-`apply_discount` uses `amount_lens` to reach into each transaction and scale the `amount_cents` field. `normalize_names` uses `name_lens` to uppercase the `name` field. Neither function needs to know about the other fields in `Transaction` — the lens handles the boilerplate of reading, modifying, and writing back.
+`apply_discount` は `amount_lens` を使い各トランザクションに到達し `amount_cents` フィールドをスケールします。`normalize_names` は `name_lens` を使い `name` フィールドを大文字にします。どちらの関数も `Transaction` の他のフィールドを知る必要がありません — レンズが読み・変更・書き戻しのボイラープレートを処理します。
 
-## 5. Foldable + Monoid Aggregation
+## 5. Foldable + Monoid 集約
 
-The final stage of the pipeline aggregates transactions into summaries. Because `Summary` implements `Monoid`, we can use `VecF::fold_map` to convert each transaction into a single-element summary and then combine them all:
+パイプラインの最終段階はトランザクションをサマリーに集約します。`Summary` は `Monoid` を実装するため、`VecF::fold_map` を使い各トランザクションを単一要素サマリーに変換してからすべてを結合できます:
 
 ``` rust
 fn summarize(transactions: &[Transaction]) -> Summary {
@@ -160,9 +160,9 @@ fn summarize(transactions: &[Transaction]) -> Summary {
 }
 ```
 
-`fold_map` maps each element to a `Summary` (with count 1 and that transaction's amount), then combines all the summaries using `Semigroup::combine`, starting from `Monoid::empty()`. For an empty collection, it returns the identity summary (0 transactions, 0 total).
+`fold_map` は各要素を `Summary` (カウント 1 とそのトランザクションの金額) にマップし、`Monoid::empty()` から始めて `Semigroup::combine` ですべてのサマリーを結合します。空のコレクションの場合、単位サマリー (0 トランザクション、0 総額) を返します。
 
-For grouped aggregation, we partition by category and summarize each group independently:
+グループ化集約のため、カテゴリで分割し各グループを独立にサマリーします:
 
 ``` rust
 fn summarize_by_category(transactions: &[Transaction]) -> Vec<(String, Summary)> {
@@ -184,15 +184,15 @@ fn summarize_by_category(transactions: &[Transaction]) -> Vec<(String, Summary)>
 }
 ```
 
-Each category gets its own `Summary`, computed by the same `summarize` function. The monoidal structure means the aggregation logic is defined once (in `Semigroup` and `Monoid`) and reused everywhere.
+各カテゴリは同じ `summarize` 関数で計算された独自の `Summary` を持ちます。モノイダル構造により、集約ロジックは (`Semigroup` と `Monoid` で) 一度定義され、どこでも再利用されます。
 
-## 6. The Complete Pipeline
+## 6. 完全なパイプライン
 
-The `main` function ties everything together. It creates sample data, parses it, applies transformations, and prints aggregate results:
+`main` 関数がすべてを結び付けます。サンプルデータを作成し、パースし、変換を適用し、集約結果を出力します:
 
 ``` rust
 fn main() {
-    // Sample data
+    // サンプルデータ
     let records = vec![
         RawRecord { id: "1".into(), name: "Alice".into(),
                      amount: "99.99".into(), category: "electronics".into() },
@@ -204,39 +204,39 @@ fn main() {
                      amount: "12.75".into(), category: "books".into() },
     ];
 
-    // 1. Parse all records (Traversable)
+    // 1. すべてのレコードをパース (Traversable)
     let transactions = parse_all(records).expect("All records should parse");
 
-    // 2. Transform with Functor + Lens
+    // 2. Functor + Lens で変換
     let discounted = apply_discount(transactions.clone(), 10.0);
     let normalized = normalize_names(transactions.clone());
 
-    // 3. Aggregate with Foldable + Monoid
+    // 3. Foldable + Monoid で集約
     let summary = summarize(&transactions);
     let by_category = summarize_by_category(&transactions);
 
-    // 4. Demonstrate failed parse
+    // 4. 失敗したパースを実演
     let bad_records = vec![
         RawRecord { id: "5".into(), name: "Eve".into(),
                      amount: "50.00".into(), category: "food".into() },
         RawRecord { id: "bad".into(), name: "Frank".into(),
                      amount: "30.00".into(), category: "food".into() },
     ];
-    let result = parse_all(bad_records); // None -- "bad" is not a valid u32
+    let result = parse_all(bad_records); // None -- "bad" は有効な u32 ではない
 }
 ```
 
-The pipeline flows in a clear sequence: raw strings are parsed into typed values, transformed using lenses, and aggregated using monoidal folds. Each stage uses a different Karpal abstraction, but they compose seamlessly because they all operate on the same standard types.
+パイプラインは明確な順序で流れます: 生の文字列が型付き値にパースされ、レンズで変換され、モノイダルな畳み込みで集約されます。各段階は異なる Karpal 抽象化を使いますが、すべて同じ標準型上で動作するためシームレスに合成されます。
 
-## Run It
+## 実行
 
-From the workspace root:
+ワークスペースルートから:
 
 ``` rust
 cargo run -p karpal-std --example data_transformation
 ```
 
-Expected output:
+期待される出力:
 
     === Data Transformation Example ===
 
@@ -268,19 +268,17 @@ Expected output:
     --- Failed parse (bad data) ---
       parse_all result: None
 
-## Traits Used
+## 使用するトレイト
 
-| Trait         | Role in this example                                                         | Reference                                                        |
+| トレイト         | この例での役割                                                         | リファレンス                                                        |
 |---------------|------------------------------------------------------------------------------|------------------------------------------------------------------|
-| `Semigroup`   | Combines two `Summary` values by adding counts and totals                    | [Semigroup & Monoid](../reference/algebraic.md)                |
-| `Monoid`      | Provides the identity `Summary` (zero count, zero total) for folding         | [Semigroup & Monoid](../reference/algebraic.md)                |
-| `Functor`     | `VecF::fmap` applies discount and name normalization across transactions     | [Functor Family](../reference/functor-family.md)               |
-| `Chain`       | Powers the `do_!` macro for sequential parsing with short-circuit on failure | [Functor Family](../reference/functor-family.md)               |
-| `Foldable`    | `VecF::fold_map` aggregates transactions into monoidal summaries             | [Foldable & Traversable](../reference/foldable-traversable.md) |
-| `Traversable` | `VecF::traverse` parses all records with all-or-nothing semantics            | [Foldable & Traversable](../reference/foldable-traversable.md) |
-| `Lens`        | Provides composable getters/setters for `amount_cents` and `name` fields     | [Optics](../reference/optics.md)                               |
+| `Semigroup`   | カウントと総額を足して二つの `Summary` 値を結合                    | [半群とモノイド](../reference/semigroup-monoid.md)                |
+| `Monoid`      | 畳み込みのための単位 `Summary` (ゼロカウント、ゼロ総額) を提供         | [半群とモノイド](../reference/semigroup-monoid.md)                |
+| `Functor`     | `VecF::fmap` がトランザクションにわたり割引と名前正規化を適用     | [関手ファミリー](../reference/functor-family.md)               |
+| `Chain`       | 失敗時に短絡する逐次パースのための `do_!` マクロを駆動 | [関手ファミリー](../reference/functor-family.md)               |
+| `Foldable`    | `VecF::fold_map` がトランザクションをモノイダルサマリーに集約             | [Foldable と Traversable](../reference/foldable-traversable.md) |
+| `Traversable` | `VecF::traverse` がオールオアナッシング意味論ですべてのレコードをパース            | [Foldable と Traversable](../reference/foldable-traversable.md) |
+| `Lens`        | `amount_cents` と `name` フィールドのための合成可能な getter/setter     | [オプティクス](../reference/optics.md)                               |
 
 
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
