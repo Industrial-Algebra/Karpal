@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,19 +178,19 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="config-pipeline"><a class="header" href="#config-pipeline">Config Pipeline</a></h1>
-<p>Load application config from multiple sources using Alt, Traversable, Foldable, and Monoid.</p>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Real applications rarely load configuration from a single source. Environment variables, config files, and hardcoded defaults each provide a partial picture. This example builds a configuration pipeline that:</p>
+                        <h1 id="設定パイプライン"><a class="header" href="#設定パイプライン">設定パイプライン</a></h1>
+<p>Alt、Traversable、Foldable、Monoid を使って複数ソースからアプリケーション設定を読み込む。</p>
+<h2 id="概要"><a class="header" href="#概要">概要</a></h2>
+<p>実際のアプリケーションが単一ソースから設定を読み込むことは稀です。環境変数、設定ファイル、ハードコードされたデフォルトがそれぞれ部分的な情報を提供します。この例は以下を行う設定パイプラインを構築します:</p>
 <ul>
-<li>Uses <strong>Alt</strong> to create fallback chains across multiple config sources (env, file, defaults).</li>
-<li>Uses <strong><code>do_!</code></strong> to sequence dependent lookups into a connection string.</li>
-<li>Uses <strong>Traversable</strong> for all-or-nothing batch validation of port numbers.</li>
-<li>Uses <strong>Foldable</strong> with <strong>Monoid</strong> to aggregate a human-readable config summary.</li>
+<li><strong>Alt</strong> を使い、複数の設定ソース (env、ファイル、デフォルト) にまたがるフォールバック連鎖を作る。</li>
+<li><strong><code>do_!</code></strong> を使い、依存する参照を接続文字列に逐次化する。</li>
+<li><strong>Traversable</strong> を使い、ポート番号のオールオアナッシングなバッチ検証を行う。</li>
+<li><strong>Foldable</strong> と <strong>Monoid</strong> を使い、人間可読な設定サマリーを集約する。</li>
 </ul>
-<p>The full source is at <code>karpal-std/examples/config_pipeline.rs</code>.</p>
-<h2 id="1-domain-types"><a class="header" href="#1-domain-types">1. Domain Types</a></h2>
-<p>The example defines a simple <code>AppConfig</code> struct representing a database connection configuration:</p>
+<p>完全なソースは <code>karpal-std/examples/config_pipeline.rs</code> にあります。</p>
+<h2 id="1-ドメイン型"><a class="header" href="#1-ドメイン型">1. ドメイン型</a></h2>
+<p>この例はデータベース接続設定を表す単純な <code>AppConfig</code> 構造体を定義します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Debug, Clone, PartialEq)]
@@ -202,12 +202,12 @@ struct AppConfig {
     timeout_ms: u64,
 }
 <span class="boring">}</span></code></pre>
-<h2 id="2-simulated-config-sources"><a class="header" href="#2-simulated-config-sources">2. Simulated Config Sources</a></h2>
-<p>Three functions simulate different configuration sources. Each takes a key and returns <code>Option&lt;String&gt;</code> — <code>Some</code> if the source knows about that key, <code>None</code> otherwise.</p>
+<h2 id="2-シミュレートされた設定ソース"><a class="header" href="#2-シミュレートされた設定ソース">2. シミュレートされた設定ソース</a></h2>
+<p>三つの関数が異なる設定ソースをシミュレートします。各関数はキーを取り <code>Option&lt;String&gt;</code> を返します — ソースがそのキーを知っていれば <code>Some</code>、さもなくば <code>None</code>。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn from_env(key: &amp;str) -&gt; Option&lt;String&gt; {
-    // Simulate environment variables (only DB_HOST and DB_PORT are set)
+    // 環境変数をシミュレート (DB_HOST と DB_PORT のみ設定)
     match key {
         "DB_HOST" =&gt; Some("prod-db.example.com".into()),
         "DB_PORT" =&gt; Some("5432".into()),
@@ -216,7 +216,7 @@ struct AppConfig {
 }
 
 fn from_file(key: &amp;str) -&gt; Option&lt;String&gt; {
-    // Simulate a config file (has DB_NAME and MAX_CONNECTIONS)
+    // 設定ファイルをシミュレート (DB_NAME と MAX_CONNECTIONS を持つ)
     match key {
         "DB_NAME" =&gt; Some("myapp".into()),
         "MAX_CONNECTIONS" =&gt; Some("20".into()),
@@ -225,7 +225,7 @@ fn from_file(key: &amp;str) -&gt; Option&lt;String&gt; {
 }
 
 fn from_default(key: &amp;str) -&gt; Option&lt;String&gt; {
-    // Hardcoded defaults for everything
+    // すべてのハードコードされたデフォルト
     match key {
         "DB_HOST" =&gt; Some("localhost".into()),
         "DB_PORT" =&gt; Some("5432".into()),
@@ -236,28 +236,28 @@ fn from_default(key: &amp;str) -&gt; Option&lt;String&gt; {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>No single source has every key. Environment variables provide the host and port; the config file provides the database name and connection pool size; defaults fill in anything still missing, including the timeout.</p>
-<h2 id="3-alt-fallback-chains"><a class="header" href="#3-alt-fallback-chains">3. Alt Fallback Chains</a></h2>
-<p>The <a href="../reference/alt-family.html">Alt</a> trait provides an associative “or” operation on type constructors. For <code>Option</code>, <code>Alt::alt</code> returns the first <code>Some</code> value, falling through to the next source if the current one returns <code>None</code>.</p>
+<p>単一ソースがすべてのキーを持つわけではありません。環境変数はホストとポートを提供し; 設定ファイルはデータベース名と接続プールサイズを提供し; デフォルトがまだ残っているすべて (タイムアウトを含む) を埋めます。</p>
+<h2 id="3-alt-フォールバック連鎖"><a class="header" href="#3-alt-フォールバック連鎖">3. Alt フォールバック連鎖</a></h2>
+<p><a href="../reference/alt-family.html">Alt</a> トレイトは型コンストラクタ上の結合的な「or」演算を提供します。<code>Option</code> の場合、<code>Alt::alt</code> は最初の <code>Some</code> 値を返し、現在のソースが <code>None</code> を返せば次のソースにフォールスルーします。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Try env first, then file, then defaults.
+</span>/// env を最初に、次にファイル、次にデフォルトを試す。
 fn resolve(key: &amp;str) -&gt; Option&lt;String&gt; {
     OptionF::alt(OptionF::alt(from_env(key), from_file(key)), from_default(key))
 }
 <span class="boring">}</span></code></pre>
-<p>This reads inside-out: try <code>from_env</code>, fall back to <code>from_file</code>, then fall back to <code>from_default</code>. Because <code>Alt</code> is associative, the grouping does not matter — only the left-to-right priority order.</p>
-<p>For example, <code>resolve("DB_HOST")</code> returns <code>Some("prod-db.example.com")</code> from the environment, while <code>resolve("TIMEOUT_MS")</code> skips both env and file (neither has it) and returns <code>Some("5000")</code> from defaults.</p>
-<h2 id="4-loading-the-full-config"><a class="header" href="#4-loading-the-full-config">4. Loading the Full Config</a></h2>
-<p>With <code>resolve</code> in hand, loading the full <code>AppConfig</code> is straightforward. String fields are resolved directly; numeric fields are resolved and then parsed:</p>
+<p>これは内側から外側へ読みます: <code>from_env</code> を試し、<code>from_file</code> にフォールバックし、<code>from_default</code> にフォールバックします。<code>Alt</code> は結合的であるためグループ化は問いません — 左から右の優先順位だけが重要です。</p>
+<p>例えば <code>resolve("DB_HOST")</code> は環境から <code>Some("prod-db.example.com")</code> を返し、<code>resolve("TIMEOUT_MS")</code> は env とファイル (どちらも持たない) をスキップしデフォルトから <code>Some("5000")</code> を返します。</p>
+<h2 id="4-完全な設定の読み込み"><a class="header" href="#4-完全な設定の読み込み">4. 完全な設定の読み込み</a></h2>
+<p><code>resolve</code> があれば、完全な <code>AppConfig</code> の読み込みは単純です。文字列フィールドは直接解決され; 数値フィールドは解決されてからパースされます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn load_config() -&gt; Option&lt;AppConfig&gt; {
-    // Resolve each key independently via Alt fallback chains
+    // 各キーを Alt フォールバック連鎖で独立に解決
     let db_host = resolve("DB_HOST")?;
     let db_name = resolve("DB_NAME")?;
 
-    // For numeric fields, resolve then parse
+    // 数値フィールドは解決してからパース
     let db_port = resolve("DB_PORT").and_then(parse_u16)?;
     let max_connections = resolve("MAX_CONNECTIONS").and_then(parse_u16)?;
     let timeout_ms = resolve("TIMEOUT_MS").and_then(parse_u64)?;
@@ -271,9 +271,9 @@ fn resolve(key: &amp;str) -&gt; Option&lt;String&gt; {
     })
 }
 <span class="boring">}</span></code></pre>
-<p>The <code>?</code> operator short-circuits the entire function if any key cannot be resolved or any parse fails, returning <code>None</code>.</p>
-<h2 id="5-connection-string-with-do_"><a class="header" href="#5-connection-string-with-do_">5. Connection String with <code>do_!</code></a></h2>
-<p>The <a href="../reference/macros.html"><code>do_!</code> macro</a> provides monadic sequencing. Here it combines three resolved values into a formatted connection string:</p>
+<p><code>?</code> 演算子はキーが解決できないかパースが失敗すれば関数全体を短絡し、<code>None</code> を返します。</p>
+<h2 id="5-do_-による接続文字列"><a class="header" href="#5-do_-による接続文字列">5. <code>do_!</code> による接続文字列</a></h2>
+<p><a href="../reference/macros.html"><code>do_!</code> マクロ</a> はモナド的逐次化を提供します。ここでは三つの解決された値を整形された接続文字列に組み合わせます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn load_connection_string() -&gt; Option&lt;String&gt; {
@@ -285,9 +285,9 @@ fn resolve(key: &amp;str) -&gt; Option&lt;String&gt; {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>Each <code>name = expr</code> line unwraps the <code>Option</code>. If any call to <code>resolve</code> returns <code>None</code>, the entire block short-circuits. The final expression produces the connection string wrapped in <code>Some</code>.</p>
-<h2 id="6-batch-validation-with-traversable"><a class="header" href="#6-batch-validation-with-traversable">6. Batch Validation with Traversable</a></h2>
-<p><a href="../reference/foldable-traversable.html">Traversable</a> provides all-or-nothing semantics: apply a fallible function to every element in a collection, and if any element fails, the entire result is <code>None</code>.</p>
+<p>各 <code>name = expr</code> 行は <code>Option</code> をアンラップします。<code>resolve</code> のいずれかが <code>None</code> を返せばブロック全体が短絡します。最終式が <code>Some</code> で包まれた接続文字列を生成します。</p>
+<h2 id="6-traversable-によるバッチ検証"><a class="header" href="#6-traversable-によるバッチ検証">6. Traversable によるバッチ検証</a></h2>
+<p><a href="../reference/foldable-traversable.html">Traversable</a> はオールオアナッシング意味論を提供します: 失敗しうる関数をコレクションのすべての要素に適用し、いずれかの要素が失敗すれば結果全体が <code>None</code> になります。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn parse_u16(s: String) -&gt; Option&lt;u16&gt; {
@@ -301,7 +301,7 @@ fn validate_ports(ports: Vec&lt;&amp;str&gt;) -&gt; Option&lt;Vec&lt;u16&gt;&gt;
     )
 }
 <span class="boring">}</span></code></pre>
-<p><code>VecF::traverse</code> maps <code>parse_u16</code> over each element and collects the results. If every element parses successfully, the result is <code>Some(vec![...])</code>. If any element fails, the result is <code>None</code>:</p>
+<p><code>VecF::traverse</code> は各要素に <code>parse_u16</code> をマップし結果を集めます。すべての要素がパース成功すれば結果は <code>Some(vec![...])</code> です。いずれかの要素が失敗すれば結果は <code>None</code> です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let good = validate_ports(vec!["80", "443", "8080"]);
@@ -310,9 +310,9 @@ fn validate_ports(ports: Vec&lt;&amp;str&gt;) -&gt; Option&lt;Vec&lt;u16&gt;&gt;
 let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
 // =&gt; None
 <span class="boring">}</span></code></pre>
-<p>This is strictly stronger than filtering out failures — it guarantees that either <em>all</em> values are valid or the caller knows something went wrong.</p>
-<h2 id="7-config-summary-with-foldable-and-monoid"><a class="header" href="#7-config-summary-with-foldable-and-monoid">7. Config Summary with Foldable and Monoid</a></h2>
-<p><a href="../reference/foldable-traversable.html">Foldable</a> provides structural traversal, and <a href="../reference/algebraic.html">Monoid</a> provides an identity element and associative combination. Together, <code>fold_map</code> transforms each element and concatenates the results:</p>
+<p>これは失敗をフィルタするより厳密に強力です — すべての値が有効であるか、呼び出しが何か問題を起こしたことを知ることを保証します。</p>
+<h2 id="7-foldable-と-monoid-による設定サマリー"><a class="header" href="#7-foldable-と-monoid-による設定サマリー">7. Foldable と Monoid による設定サマリー</a></h2>
+<p><a href="../reference/foldable-traversable.html">Foldable</a> は構造的トラバーサルを提供し、<a href="../reference/algebraic.html">Monoid</a> は単位元と結合的合成を提供します。一緒に、<code>fold_map</code> は各要素を変換し結果を結合します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn summarize_keys(keys: Vec&lt;&amp;str&gt;) -&gt; String {
@@ -327,13 +327,13 @@ let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
     )
 }
 <span class="boring">}</span></code></pre>
-<p>For <code>String</code>, the Monoid instance uses the empty string as the identity and string concatenation as the combining operation. The result is a single string summarizing all resolved (or missing) configuration keys.</p>
-<h2 id="8-the-main-function"><a class="header" href="#8-the-main-function">8. The <code>main</code> Function</a></h2>
-<p>The <code>main</code> function exercises each section and prints the results:</p>
+<p><code>String</code> の場合、Monoid 実装は単位元として空文字列を、結合演算として文字列結合を使います。結果はすべての解決された (または欠落した) 設定キーを要約する単一の文字列です。</p>
+<h2 id="8-main-関数"><a class="header" href="#8-main-関数">8. <code>main</code> 関数</a></h2>
+<p><code>main</code> 関数は各セクションを実行し結果を出力します:</p>
 <pre class="playground"><code class="language-rust">fn main() {
     println!("=== Config Pipeline Example ===\n");
 
-    // 1. Alt fallback chains
+    // 1. Alt フォールバック連鎖
     println!("--- Resolving individual keys (Alt fallback) ---");
     println!("DB_HOST:         {:?}", resolve("DB_HOST"));
     println!("DB_PORT:         {:?}", resolve("DB_PORT"));
@@ -342,18 +342,18 @@ let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
     println!("TIMEOUT_MS:      {:?}", resolve("TIMEOUT_MS"));
     println!("UNKNOWN_KEY:     {:?}", resolve("UNKNOWN_KEY"));
 
-    // 2. Full config loading
+    // 2. 完全な設定の読み込み
     println!("\n--- Loading full config ---");
     match load_config() {
         Some(config) =&gt; println!("{:#?}", config),
         None =&gt; println!("Failed to load config!"),
     }
 
-    // 3. do_! for independent lookups
+    // 3. 独立した参照のための do_!
     println!("\n--- Connection string (do_!) ---");
     println!("{:?}", load_connection_string());
 
-    // 4. Traversable: all-or-nothing validation
+    // 4. Traversable: オールオアナッシング検証
     println!("\n--- Batch port validation (Traversable) ---");
     let good_ports = vec!["80", "443", "8080"];
     let good_result = validate_ports(good_ports.clone());
@@ -363,35 +363,35 @@ let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
     let bad_result = validate_ports(bad_ports.clone());
     println!("Mixed ports {:?}: {:?}", bad_ports, bad_result);
 
-    // 5. Foldable + Monoid: summarize
+    // 5. Foldable + Monoid: サマリー
     println!("\n--- Config summary (Foldable + Monoid) ---");
     let summary = summarize_keys(vec![
         "DB_HOST", "DB_PORT", "DB_NAME", "MAX_CONNECTIONS", "TIMEOUT_MS", "MISSING",
     ]);
     print!("{}", summary);
 }</code></pre>
-<h2 id="run-it"><a class="header" href="#run-it">Run It</a></h2>
-<p>From the workspace root:</p>
+<h2 id="実行"><a class="header" href="#実行">実行</a></h2>
+<p>ワークスペースルートから:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>cargo run -p karpal-std --example config_pipeline
 <span class="boring">}</span></code></pre>
-<h2 id="traits-used"><a class="header" href="#traits-used">Traits Used</a></h2>
+<h2 id="使用するトレイト"><a class="header" href="#使用するトレイト">使用するトレイト</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Trait</th><th>Purpose in this example</th><th>Reference</th></tr>
+<tr><th>トレイト</th><th>この例での目的</th><th>リファレンス</th></tr>
 </thead>
 <tbody>
-<tr><td><code>Alt</code></td><td>Fallback chains across config sources</td><td><a href="../reference/alt-family.html">Alt Family</a></td></tr>
-<tr><td><code>Monad</code> (via <code>do_!</code>)</td><td>Sequential composition of dependent lookups</td><td><a href="../reference/functor-family.html">Functor Family</a></td></tr>
-<tr><td><code>Traversable</code></td><td>All-or-nothing batch validation</td><td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td></tr>
-<tr><td><code>Foldable</code></td><td>Structural traversal with <code>fold_map</code></td><td><a href="../reference/foldable-traversable.html">Foldable &amp; Traversable</a></td></tr>
-<tr><td><code>Monoid</code></td><td>String concatenation as the combining operation for <code>fold_map</code></td><td><a href="../reference/algebraic.html">Semigroup &amp; Monoid</a></td></tr>
+<tr><td><code>Alt</code></td><td>設定ソースにまたがるフォールバック連鎖</td><td><a href="../reference/alt-family.html">Alt ファミリー</a></td></tr>
+<tr><td><code>Monad</code> (<code>do_!</code> 経由)</td><td>依存する参照の逐次合成</td><td><a href="../reference/functor-family.html">関手ファミリー</a></td></tr>
+<tr><td><code>Traversable</code></td><td>オールオアナッシングなバッチ検証</td><td><a href="../reference/foldable-traversable.html">Foldable と Traversable</a></td></tr>
+<tr><td><code>Foldable</code></td><td><code>fold_map</code> による構造的トラバーサル</td><td><a href="../reference/foldable-traversable.html">Foldable と Traversable</a></td></tr>
+<tr><td><code>Monoid</code></td><td><code>fold_map</code> の結合演算としての文字列結合</td><td><a href="../reference/semigroup-monoid.html">半群とモノイド</a></td></tr>
 </tbody>
 </table>
 </div>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,17 +178,17 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="domain-model-with-optics"><a class="header" href="#domain-model-with-optics">Domain Model with Optics</a></h1>
-<p>E-commerce domain model using Lens composition, Prism, and profunctor transform.</p>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Real-world domain models contain both <strong>product types</strong> (structs with named fields) and <strong>sum types</strong> (enums with distinct variants). Karpal provides two complementary optics for working with them:</p>
+                        <h1 id="ドメインモデルのオプティクス"><a class="header" href="#ドメインモデルのオプティクス">ドメインモデルのオプティクス</a></h1>
+<p>Lens 合成、Prism、プロ関手変換を使った e コマースドメインモデル。</p>
+<h2 id="概要"><a class="header" href="#概要">概要</a></h2>
+<p>現実世界のドメインモデルは <strong>直積型</strong> (名前付きフィールドを持つ構造体) と <strong>直和型</strong> (異なるバリアントを持つ列挙型) の両方を含みます。Karpal はそれらを扱うための二つの相補的なオプティクスを提供します:</p>
 <ul>
-<li><strong>Lens</strong> — focuses on a single field inside a product type. Every product has the field, so a Lens always succeeds. Lenses compose with <code>.then()</code> to reach deeply nested fields.</li>
-<li><strong>Prism</strong> — focuses on a single variant of a sum type. The variant may or may not be present, so a Prism can fail gracefully. Prisms let you preview, construct, and modify individual variants without touching the others.</li>
+<li><strong>Lens</strong> — 直積型内の単一フィールドに焦点を当てます。すべての直積はそのフィールドを持つため、Lens は常に成功します。Lens は <code>.then()</code> で合成し、深く入れ子になったフィールドに到達できます。</li>
+<li><strong>Prism</strong> — 直和型の単一バリアントに焦点を当てます。バリアントは存在する也可能で、Prism は優雅に失敗できます。Prism により、他に触れずに個別のバリアントをプレビュー・構築・変更できます。</li>
 </ul>
-<p>Both optics support <code>transform</code>, which uses the <a href="../reference/profunctor-family.html">Profunctor</a> abstraction (<code>FnP</code>) to produce a reusable <code>S -&gt; S</code> update function from an <code>A -&gt; A</code> inner function. This is the key to composable, first-class data transformations.</p>
-<h2 id="the-domain-model"><a class="header" href="#the-domain-model">The Domain Model</a></h2>
-<p>The example defines an e-commerce order with nested structs and an enum for payment methods:</p>
+<p>どちらのオプティクスも <code>transform</code> をサポートし、<a href="../reference/profunctor-family.html">Profunctor</a> 抽象化 (<code>FnP</code>) を使って <code>A -&gt; A</code> の内側の関数から再利用可能な <code>S -&gt; S</code> 更新関数を生成します。これが合成可能で第一級のデータ変換の鍵です。</p>
+<h2 id="ドメインモデル"><a class="header" href="#ドメインモデル">ドメインモデル</a></h2>
+<p>この例は入れ子になった構造体と支払い方法の列挙型を持つ e コマース注文を定義します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Debug, Clone, PartialEq)]
@@ -226,9 +226,9 @@ enum Payment {
     Wallet { provider: String, balance_cents: i64 },
 }
 <span class="boring">}</span></code></pre>
-<p><code>Order</code>, <code>Customer</code>, <code>Address</code>, and <code>Item</code> are product types — every instance has every field. <code>Payment</code> is a sum type — each order uses exactly one payment method.</p>
-<h2 id="defining-lenses"><a class="header" href="#defining-lenses">Defining Lenses</a></h2>
-<p>A <code>SimpleLens&lt;S, A&gt;</code> is created with <code>Lens::new</code>, which takes a getter (<code>&amp;S -&gt; A</code>) and a setter (<code>(S, A) -&gt; S</code>):</p>
+<p><code>Order</code>、<code>Customer</code>、<code>Address</code>、<code>Item</code> は直積型です — すべてのインスタンスがすべてのフィールドを持ちます。<code>Payment</code> は直和型です — 各注文はちょうど一つの支払い方法を使います。</p>
+<h2 id="lens-の定義"><a class="header" href="#lens-の定義">Lens の定義</a></h2>
+<p><code>SimpleLens&lt;S, A&gt;</code> は <code>Lens::new</code> で作成し、getter (<code>&amp;S -&gt; A</code>) と setter (<code>(S, A) -&gt; S</code>) を取ります:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn customer_lens() -&gt; SimpleLens&lt;Order, Customer&gt; {
@@ -252,27 +252,27 @@ fn city_lens() -&gt; SimpleLens&lt;Address, String&gt; {
     )
 }
 <span class="boring">}</span></code></pre>
-<p>Each lens is a small, self-contained unit that knows how to read and write a single field. The setter uses Rust’s struct update syntax (<code>..o</code>) to copy all other fields unchanged.</p>
-<h2 id="lens-composition-with-then"><a class="header" href="#lens-composition-with-then">Lens Composition with <code>.then()</code></a></h2>
-<p>Individual lenses compose into a <code>ComposedLens</code> via <code>.then()</code>. This lets you reach deeply nested fields without manually threading getters and setters:</p>
+<p>各 Lens は単一フィールドの読み書き方法を知る小さく自己完結した単位です。setter は Rust の構造体更新構文 (<code>..o</code>) を使い、他のすべてのフィールドを変更なくコピーします。</p>
+<h2 id="then-による-lens-合成"><a class="header" href="#then-による-lens-合成"><code>.then()</code> による Lens 合成</a></h2>
+<p>個別の Lens は <code>.then()</code> で <code>ComposedLens</code> に合成します。これにより、getter と setter を手動で繋がずに深く入れ子になったフィールドに到達できます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let order_city = customer_lens().then(address_lens()).then(city_lens());
 let order_zip  = customer_lens().then(address_lens()).then(zip_lens());
 
-// Deep get
+// 深い取得
 println!("Order city: {}", order_city.get(&amp;order));
 println!("Order zip:  {}", order_zip.get(&amp;order));
 
-// Deep set (returns a new Order, original unchanged)
+// 深い設定 (新しい Order を返す、元は変更なし)
 let updated = order_city.set(order.clone(), "Shelbyville".into());
 
-// Deep over (apply a function to the focused value)
+// 深い over (焦点の値に関数を適用)
 let uppercased = order_city.over(order.clone(), |c| c.to_uppercase());
 <span class="boring">}</span></code></pre>
-<p>The composed lens <code>order_city</code> has type <code>ComposedLens&lt;Order, String&gt;</code>. It supports the same <code>get</code>, <code>set</code>, and <code>over</code> operations as a simple lens, but it reaches three levels deep: <code>Order -&gt; Customer -&gt; Address -&gt; city</code>.</p>
-<h2 id="lens-transform-with-fnp"><a class="header" href="#lens-transform-with-fnp">Lens Transform with <code>FnP</code></a></h2>
-<p>The <code>transform</code> method converts a lens and an inner function into a reusable update function. It uses the <code>FnP</code> profunctor (a boxed function type) to lift an <code>A -&gt; A</code> function into an <code>S -&gt; S</code> function:</p>
+<p>合成 Lens <code>order_city</code> は <code>ComposedLens&lt;Order, String&gt;</code> 型です。単純な Lens と同じ <code>get</code>、<code>set</code>、<code>over</code> 操作をサポートしますが、三レベル深く到達します: <code>Order -&gt; Customer -&gt; Address -&gt; city</code>。</p>
+<h2 id="fnp-による-lens-変換"><a class="header" href="#fnp-による-lens-変換"><code>FnP</code> による Lens 変換</a></h2>
+<p><code>transform</code> メソッドは Lens と内側の関数を再利用可能な更新関数に変換します。<code>FnP</code> プロ関手 (boxed 関数型) を使い、<code>A -&gt; A</code> 関数を <code>S -&gt; S</code> 関数に持ち上げます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let normalize_city: Box&lt;dyn Fn(String) -&gt; String&gt; =
@@ -287,9 +287,9 @@ let addr = Address {
 let normalized = normalize_order_city(addr);
 // normalized.city == "NEW YORK"
 <span class="boring">}</span></code></pre>
-<p>The result is a plain <code>Address -&gt; Address</code> function that normalizes only the city field. You can store it, pass it around, and apply it to any <code>Address</code> value.</p>
-<h2 id="defining-prisms"><a class="header" href="#defining-prisms">Defining Prisms</a></h2>
-<p>A <code>SimplePrism&lt;S, A&gt;</code> is created with <code>Prism::new</code>, which takes a match function (<code>S -&gt; Result&lt;A, S&gt;</code>) and a build function (<code>A -&gt; S</code>). The match returns <code>Ok(a)</code> if the variant matches, or <code>Err(s)</code> with the original value if it does not:</p>
+<p>結果は city フィールドだけを正規化するプレーンな <code>Address -&gt; Address</code> 関数です。保存し、受け渡し、任意の <code>Address</code> 値に適用できます。</p>
+<h2 id="prism-の定義"><a class="header" href="#prism-の定義">Prism の定義</a></h2>
+<p><code>SimplePrism&lt;S, A&gt;</code> は <code>Prism::new</code> で作成し、マッチ関数 (<code>S -&gt; Result&lt;A, S&gt;</code>) とビルド関数 (<code>A -&gt; S</code>) を取ります。マッチはバリアントが一致すれば <code>Ok(a)</code> を返し、さもなくば元の値で <code>Err(s)</code> を返します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn credit_card_prism() -&gt; SimplePrism&lt;Payment, (String, String)&gt; {
@@ -322,40 +322,40 @@ fn bank_transfer_prism() -&gt; SimplePrism&lt;Payment, String&gt; {
     )
 }
 <span class="boring">}</span></code></pre>
-<h2 id="prism-operations"><a class="header" href="#prism-operations">Prism Operations</a></h2>
-<p>Prisms provide three core operations:</p>
+<h2 id="prism-操作"><a class="header" href="#prism-操作">Prism 操作</a></h2>
+<p>Prism は三つのコア操作を提供します:</p>
 <ul>
-<li><strong><code>preview(&amp;S) -&gt; Option&lt;A&gt;</code></strong> — attempts to extract the focused variant. Returns <code>Some(a)</code> on match, <code>None</code> otherwise.</li>
-<li><strong><code>review(A) -&gt; S</code></strong> — constructs a sum type value from the variant’s inner data.</li>
-<li><strong><code>over(S, Fn(A) -&gt; A) -&gt; S</code></strong> — modifies the focused variant if it matches; passes through unchanged if it does not.</li>
+<li><strong><code>preview(&amp;S) -&gt; Option&lt;A&gt;</code></strong> — 焦点のバリアントの抽出を試みます。マッチすれば <code>Some(a)</code>、さもなくば <code>None</code>。</li>
+<li><strong><code>review(A) -&gt; S</code></strong> — バリアントの内側のデータから直和型の値を構築します。</li>
+<li><strong><code>over(S, Fn(A) -&gt; A) -&gt; S</code></strong> — マッチすれば焦点のバリアントを変更; さもなくば変更なく通過させます。</li>
 </ul>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let cc = credit_card_prism();
 let wallet = wallet_prism();
 
-// preview: extract if matched
+// preview: マッチすれば抽出
 cc.preview(&amp;order.payment);      // Some(("4242", "12/25"))
-wallet.preview(&amp;order.payment);  // None (order pays by credit card)
+wallet.preview(&amp;order.payment);  // None (注文はクレジットカード支払い)
 
-// review: construct a variant
+// review: バリアントを構築
 let new_payment = wallet.review(("PayPal".into(), 5000));
 // Payment::Wallet { provider: "PayPal", balance_cents: 5000 }
 
-// over: modify only if matched
+// over: マッチ時のみ変更
 let updated_payment = cc.over(order.payment.clone(), |(last4, _exp)| {
     (last4, "01/28".into())
 });
-// Updates the expiry; leaves other fields intact
+// 有効期限を更新; 他のフィールドはそのまま
 
-// over on non-matching variant: passes through unchanged
+// 非マッチバリアントでの over: 変更なく通過
 let unchanged = wallet.over(order.payment.clone(), |(prov, bal)| {
     (prov, bal + 1000)
 });
-// Still CreditCard — wallet.over is a no-op here
+// まだ CreditCard — wallet.over はここでは何もしない
 <span class="boring">}</span></code></pre>
-<h2 id="prism-transform"><a class="header" href="#prism-transform">Prism Transform</a></h2>
-<p>Like lenses, prisms support <code>transform</code> to produce a reusable <code>S -&gt; S</code> function. The transformed function applies the inner modification when the variant matches and returns the value unchanged otherwise:</p>
+<h2 id="prism-変換"><a class="header" href="#prism-変換">Prism 変換</a></h2>
+<p>Lens と同様に、Prism は <code>transform</code> をサポートし再利用可能な <code>S -&gt; S</code> 関数を生成します。変換された関数はバリアントがマッチすれば内側の変更を適用し、さもなくば値を変更なく返します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let add_balance: Box&lt;dyn Fn((String, i64)) -&gt; (String, i64)&gt; =
@@ -369,12 +369,12 @@ let wallet_payment = Payment::Wallet {
 let topped_up = add_wallet_balance(wallet_payment);
 // Payment::Wallet { provider: "PayPal", balance_cents: 12500 }
 
-// Apply to a non-wallet payment — passes through unchanged
+// 非ウォレット支払いに適用 — 変更なく通過
 let still_cc = add_wallet_balance(order.payment.clone());
-// Still CreditCard { last4: "4242", exp: "12/25" }
+// まだ CreditCard { last4: "4242", exp: "12/25" }
 <span class="boring">}</span></code></pre>
-<h2 id="combining-lenses-and-prisms"><a class="header" href="#combining-lenses-and-prisms">Combining Lenses and Prisms</a></h2>
-<p>In practice you use lenses and prisms together. Lenses drill into product type fields; prisms branch on sum type variants. The example demonstrates iterating over a collection of orders and using both optics:</p>
+<h2 id="lens-と-prism-の組み合わせ"><a class="header" href="#lens-と-prism-の組み合わせ">Lens と Prism の組み合わせ</a></h2>
+<p>実際には Lens と Prism を一緒に使います。Lens は直積型フィールドにドリルし; Prism は直和型バリアントで分岐します。この例は注文のコレクションを反復し両方のオプティクスを使うことを実演します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let order_city_lens = customer_lens().then(address_lens()).then(city_lens());
@@ -390,7 +390,7 @@ for o in &amp;orders {
     println!("Order #{}: {} ({}, pays via {})", o.id, city, name, payment_type);
 }
 
-// Extract all bank IBANs using a prism
+// Prism を使ってすべての銀行 IBAN を抽出
 let bank = bank_transfer_prism();
 for o in &amp;orders {
     if let Some(iban) = bank.preview(&amp;o.payment) {
@@ -398,29 +398,12 @@ for o in &amp;orders {
     }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="run-it"><a class="header" href="#run-it">Run It</a></h2>
-<p>To run this example from the workspace root:</p>
+<h2 id="実行"><a class="header" href="#実行">実行</a></h2>
+<p>ワークスペースルートからこの例を実行:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>cargo run -p karpal-std --example domain_model_optics
 <span class="boring">}</span></code></pre>
-<h2 id="traits-used"><a class="header" href="#traits-used">Traits Used</a></h2>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait / Type</th><th>Role in this example</th><th>Reference</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Lens</code> / <code>SimpleLens</code></td><td>Focus on a single field in a product type; get, set, over</td><td><a href="../reference/optics.html">Optics</a></td></tr>
-<tr><td><code>ComposedLens</code></td><td>Chain lenses with <code>.then()</code> for deep nested access</td><td><a href="../reference/optics.html">Optics</a></td></tr>
-<tr><td><code>Prism</code> / <code>SimplePrism</code></td><td>Focus on a single variant of a sum type; preview, review, over</td><td><a href="../reference/optics.html">Optics</a></td></tr>
-<tr><td><code>FnP</code></td><td>Profunctor marker type for <code>transform</code>; lifts <code>A -&gt; A</code> to <code>S -&gt; S</code></td><td><a href="../reference/profunctor-family.html">Profunctor Family</a></td></tr>
-<tr><td><code>Strong</code></td><td>Profunctor subclass used internally by Lens transform</td><td><a href="../reference/profunctor-family.html">Profunctor Family</a></td></tr>
-<tr><td><code>Choice</code></td><td>Profunctor subclass used internally by Prism transform</td><td><a href="../reference/profunctor-family.html">Profunctor Family</a></td></tr>
-</tbody>
-</table>
-</div>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
 
                     </main>
 

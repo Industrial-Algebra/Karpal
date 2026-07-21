@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,67 +178,67 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="functor-family"><a class="header" href="#functor-family">Functor Family</a></h1>
-<p>The covariant functor hierarchy: Functor through Monad.</p>
-<h2 id="hierarchy"><a class="header" href="#hierarchy">Hierarchy</a></h2>
-<p>The Functor family forms a linear chain of increasingly powerful abstractions. Each trait extends the one above it:</p>
+                        <h1 id="関手ファミリー"><a class="header" href="#関手ファミリー">関手ファミリー</a></h1>
+<p>共変関手階層: Functor から Monad まで。</p>
+<h2 id="階層"><a class="header" href="#階層">階層</a></h2>
+<p>Functor ファミリーは次第に強力な抽象化の線形連鎖を形成します。各トレイトは上位のものを拡張します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>Functor           // fmap: lift A -&gt; B into F&lt;A&gt; -&gt; F&lt;B&gt;
+</span>Functor           // fmap: A -&gt; B を F&lt;A&gt; -&gt; F&lt;B&gt; に持ち上げる
   |
   v
-Apply             // ap: apply F&lt;A -&gt; B&gt; to F&lt;A&gt;, producing F&lt;B&gt;
+Apply             // ap: F&lt;A -&gt; B&gt; を F&lt;A&gt; に適用し、F&lt;B&gt; を生成
   |
   v
-Applicative       // pure: lift a value A into F&lt;A&gt;
+Applicative       // pure: 値 A を F&lt;A&gt; に持ち上げる
   |
-  +--- Chain      // chain: monadic bind (flatMap)
+  +--- Chain      // chain: モナド束縛 (flatMap)
   |      |
   v      v
-  Monad           // Applicative + Chain (blanket impl, no extra methods)
+  Monad           // Applicative + Chain (ブランケット実装、追加メソッドなし)
 <span class="boring">}</span></code></pre>
-<p><code>Monad</code> is provided as a blanket implementation: any type that implements both <code>Applicative</code> and <code>Chain</code> automatically implements <code>Monad</code>. There is no need to write an explicit <code>impl Monad for ...</code> block.</p>
+<p><code>Monad</code> はブランケット実装として提供されます: <code>Applicative</code> と <code>Chain</code> の両方を実装する任意の型は自動的に <code>Monad</code> を実装します。明示的な <code>impl Monad for ...</code> ブロックを書く必要はありません。</p>
 <h3 id="functor"><a class="header" href="#functor">Functor</a></h3>
-<p>Covariant functor: lifts a function <code>A -&gt; B</code> into <code>F&lt;A&gt; -&gt; F&lt;B&gt;</code>.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>共変関手: 関数 <code>A -&gt; B</code> を <code>F&lt;A&gt; -&gt; F&lt;B&gt;</code> に持ち上げます。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Functor: HKT {
     fn fmap&lt;A, B&gt;(fa: Self::Of&lt;A&gt;, f: impl Fn(A) -&gt; B) -&gt; Self::Of&lt;B&gt;;
 }
 <span class="boring">}</span></code></pre>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p><strong>Identity:</strong> Mapping the identity function is a no-op.<br><code>F::fmap(fa, |x| x) == fa</code></p>
-<p><strong>Composition:</strong> Mapping two functions sequentially is the same as mapping their composition.<br><code>F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))</code></p>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p><strong>単位律:</strong> 恒等関数でマップしても何も変わりません。<br><code>F::fmap(fa, |x| x) == fa</code></p>
+<p><strong>合成律:</strong> 二つの関数を順にマップするのは、それらの合成をマップするのと同じです。<br><code>F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))</code></p>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Delegates to <code>Option::map</code></td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Delegates to <code>Result::map</code></td></tr>
-<tr><td><code>VecF</code></td><td>Requires <code>alloc</code> or <code>std</code> feature</td></tr>
-<tr><td><code>IdentityF</code></td><td>Applies <code>f</code> directly: <code>f(fa)</code></td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Requires <code>alloc</code> or <code>std</code> feature</td></tr>
-<tr><td><code>EnvF&lt;E&gt;</code></td><td>Maps over the second element of the tuple <code>(E, A)</code></td></tr>
+<tr><td><code>OptionF</code></td><td><code>Option::map</code> に委譲</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Result::map</code> に委譲</td></tr>
+<tr><td><code>VecF</code></td><td><code>alloc</code> または <code>std</code> フィーチャーが必要</td></tr>
+<tr><td><code>IdentityF</code></td><td><code>f</code> を直接適用: <code>f(fa)</code></td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td><code>alloc</code> または <code>std</code> フィーチャーが必要</td></tr>
+<tr><td><code>EnvF&lt;E&gt;</code></td><td>タプル <code>(E, A)</code> の第二要素でマップ</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Concrete usage
+// 具体的な使用
 let doubled = OptionF::fmap(Some(5), |x| x * 2);
 assert_eq!(doubled, Some(10));
 
 let lengths = VecF::fmap(vec!["hello", "world"], |s| s.len());
 assert_eq!(lengths, vec![5, 5]);
 
-// Generic over any Functor
+// 任意の Functor について汎用的
 fn increment&lt;F: Functor&gt;(fa: F::Of&lt;i32&gt;) -&gt; F::Of&lt;i32&gt; {
     F::fmap(fa, |x| x + 1)
 }
@@ -247,8 +247,8 @@ assert_eq!(increment::&lt;OptionF&gt;(Some(9)), Some(10));
 assert_eq!(increment::&lt;VecF&gt;(vec![1, 2]), vec![2, 3]);
 <span class="boring">}</span></code></pre>
 <h3 id="apply"><a class="header" href="#apply">Apply</a></h3>
-<p>A Functor that can apply a wrapped function to a wrapped value.</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>包まれた関数を包まれた値に適用できる Functor。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Apply: Functor {
@@ -258,57 +258,57 @@ assert_eq!(increment::&lt;VecF&gt;(vec![1, 2]), vec![2, 3]);
         F: Fn(A) -&gt; B;
 }
 <span class="boring">}</span></code></pre>
-<p>The <code>A: Clone</code> bound is required because some instances (such as <code>VecF</code>) apply multiple functions to each value, consuming the value more than once.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p><strong>Associative composition:</strong> Applying composed functions is the same as composing applications.<br><code>ap(ap(fmap(compose, f), g), x) == ap(f, ap(g, x))</code></p>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<p>一部の実装 (<code>VecF</code> など) は各値に複数の関数を適用し、値を複数回消費するため、<code>A: Clone</code> 境界が必要です。</p>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
+<p><strong>結合的合成:</strong> 合成された関数を適用するのは、適用を合成するのと同じです。<br><code>ap(ap(fmap(compose, f), g), x) == ap(f, ap(g, x))</code></p>
+<h4 id="実装-1"><a class="header" href="#実装-1">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Applies function if both are <code>Some</code>; otherwise <code>None</code></td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Applies function if both are <code>Ok</code>; first <code>Err</code> wins</td></tr>
-<tr><td><code>VecF</code></td><td>Cartesian product: each function applied to each value</td></tr>
-<tr><td><code>IdentityF</code></td><td>Direct application: <code>ff(fa)</code></td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Cartesian product (requires <code>alloc</code> or <code>std</code>)</td></tr>
+<tr><td><code>OptionF</code></td><td>両方が <code>Some</code> なら関数を適用; さもなくば <code>None</code></td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td>両方が <code>Ok</code> なら関数を適用; 最初の <code>Err</code> が勝つ</td></tr>
+<tr><td><code>VecF</code></td><td>直積: 各関数を各値に適用</td></tr>
+<tr><td><code>IdentityF</code></td><td>直接適用: <code>ff(fa)</code></td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td>直積 (<code>alloc</code> または <code>std</code> が必要)</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
+<h4 id="例-1"><a class="header" href="#例-1">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Apply a wrapped function to a wrapped value
+// 包まれた関数を包まれた値に適用
 let f: Option&lt;fn(i32) -&gt; i32&gt; = Some(|x| x * 2);
 let result = OptionF::ap(f, Some(21));
 assert_eq!(result, Some(42));
 
-// Vec: cartesian product of functions and values
+// Vec: 関数と値の直積
 let fs: Vec&lt;fn(i32) -&gt; i32&gt; = vec![|x| x + 1, |x| x * 10];
 let result = VecF::ap(fs, vec![1, 2, 3]);
 assert_eq!(result, vec![2, 3, 4, 10, 20, 30]);
 <span class="boring">}</span></code></pre>
 <h3 id="applicative"><a class="header" href="#applicative">Applicative</a></h3>
-<p>An Apply that can lift a pure value into the functor.</p>
-<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
+<p>純粋な値を関手に持ち上げられる Apply。</p>
+<h4 id="シグネチャ-2"><a class="header" href="#シグネチャ-2">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Applicative: Apply {
     fn pure&lt;A&gt;(a: A) -&gt; Self::Of&lt;A&gt;;
 }
 <span class="boring">}</span></code></pre>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p><strong>Identity:</strong> Applying a pure identity function is a no-op.<br><code>ap(pure(id), v) == v</code></p>
-<p><strong>Homomorphism:</strong> Lifting a function and a value, then applying, is the same as lifting the result directly.<br><code>ap(pure(f), pure(x)) == pure(f(x))</code></p>
-<p><strong>Interchange:</strong> The order of lifting does not matter when the value is pure.<br><code>ap(u, pure(y)) == ap(pure(|f| f(y)), u)</code></p>
-<h4 id="instances-2"><a class="header" href="#instances-2">Instances</a></h4>
+<h4 id="法則-2"><a class="header" href="#法則-2">法則</a></h4>
+<p><strong>単位律:</strong> 純粋な恒等関数を適用しても何も変わりません。<br><code>ap(pure(id), v) == v</code></p>
+<p><strong>準同型律:</strong> 関数と値を持ち上げて適用するのは、結果を直接持ち上げるのと同じです。<br><code>ap(pure(f), pure(x)) == pure(f(x))</code></p>
+<p><strong>交換律:</strong> 値が純粋な場合、持ち上げの順序は問いません。<br><code>ap(u, pure(y)) == ap(pure(|f| f(y)), u)</code></p>
+<h4 id="実装-2"><a class="header" href="#実装-2">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>pure(a)</code> returns</th></tr>
+<tr><th>型コンストラクタ</th><th><code>pure(a)</code> が返す</th></tr>
 </thead>
 <tbody>
 <tr><td><code>OptionF</code></td><td><code>Some(a)</code></td></tr>
@@ -319,19 +319,19 @@ assert_eq!(result, vec![2, 3, 4, 10, 20, 30]);
 </tbody>
 </table>
 </div>
-<h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
+<h4 id="例-2"><a class="header" href="#例-2">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Lift a value into any Applicative context
+// 値を任意の Applicative 文脈に持ち上げる
 let opt: Option&lt;i32&gt; = OptionF::pure(42);
 assert_eq!(opt, Some(42));
 
 let v: Vec&lt;i32&gt; = VecF::pure(42);
 assert_eq!(v, vec![42]);
 
-// Generic lifting
+// 汎用的な持ち上げ
 fn wrap&lt;F: Applicative&gt;(x: i32) -&gt; F::Of&lt;i32&gt; {
     F::pure(x)
 }
@@ -340,38 +340,38 @@ assert_eq!(wrap::&lt;OptionF&gt;(7), Some(7));
 assert_eq!(wrap::&lt;VecF&gt;(7), vec![7]);
 <span class="boring">}</span></code></pre>
 <h3 id="chain"><a class="header" href="#chain">Chain</a></h3>
-<p>An Apply with monadic bind (flatMap). Enables sequential computations where each step depends on the previous result.</p>
-<h4 id="signature-3"><a class="header" href="#signature-3">Signature</a></h4>
+<p>モナド束縛 (flatMap) を持つ Apply。各ステップが前の結果に依存する逐次計算を可能にします。</p>
+<h4 id="シグネチャ-3"><a class="header" href="#シグネチャ-3">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Chain: Apply {
     fn chain&lt;A, B&gt;(fa: Self::Of&lt;A&gt;, f: impl Fn(A) -&gt; Self::Of&lt;B&gt;) -&gt; Self::Of&lt;B&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>Note that the function <code>f</code> returns <code>Self::Of&lt;B&gt;</code>, not just <code>B</code>. This is what distinguishes <code>chain</code> from <code>fmap</code>: the callback itself produces a wrapped value, and <code>chain</code> flattens the result.</p>
-<h4 id="laws-3"><a class="header" href="#laws-3">Laws</a></h4>
-<p><strong>Associativity:</strong> Chaining is associative – nesting does not matter.<br><code>chain(chain(m, f), g) == chain(m, |x| chain(f(x), g))</code></p>
-<h4 id="instances-3"><a class="header" href="#instances-3">Instances</a></h4>
+<p>関数 <code>f</code> は単なる <code>B</code> ではなく <code>Self::Of&lt;B&gt;</code> を返すことに注意してください。これが <code>chain</code> を <code>fmap</code> と区別します: コールバック自体が包まれた値を生成し、<code>chain</code> が結果を平坦化します。</p>
+<h4 id="法則-3"><a class="header" href="#法則-3">法則</a></h4>
+<p><strong>結合律:</strong> 束縛は結合的です — 入れ子にしても同じです。<br><code>chain(chain(m, f), g) == chain(m, |x| chain(f(x), g))</code></p>
+<h4 id="実装-3"><a class="header" href="#実装-3">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Delegates to <code>Option::and_then</code></td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Delegates to <code>Result::and_then</code></td></tr>
-<tr><td><code>VecF</code></td><td><code>flat_map</code>: each element produces a Vec, results are concatenated</td></tr>
-<tr><td><code>IdentityF</code></td><td>Direct application: <code>f(fa)</code></td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Concatenates non-empty results (requires <code>alloc</code> or <code>std</code>)</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Option::and_then</code> に委譲</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td><code>Result::and_then</code> に委譲</td></tr>
+<tr><td><code>VecF</code></td><td><code>flat_map</code>: 各要素が Vec を生成し、結果は結合</td></tr>
+<tr><td><code>IdentityF</code></td><td>直接適用: <code>f(fa)</code></td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td>空でない結果を結合 (<code>alloc</code> または <code>std</code> が必要)</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-3"><a class="header" href="#example-3">Example</a></h4>
+<h4 id="例-3"><a class="header" href="#例-3">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Option: short-circuits on None
+// Option: None で短絡
 fn safe_sqrt(x: f64) -&gt; Option&lt;f64&gt; {
     if x &gt;= 0.0 { Some(x.sqrt()) } else { None }
 }
@@ -382,46 +382,46 @@ assert_eq!(result, Some(4.0));
 let result = OptionF::chain(Some(-1.0), safe_sqrt);
 assert_eq!(result, None);
 
-// Vec: flatMap (each element expands into a list)
+// Vec: flatMap (各要素がリストに展開)
 let result = VecF::chain(vec![1, 2, 3], |x| vec![x, x * 10]);
 assert_eq!(result, vec![1, 10, 2, 20, 3, 30]);
 <span class="boring">}</span></code></pre>
 <h3 id="monad"><a class="header" href="#monad">Monad</a></h3>
-<p>Applicative + Chain. A blanket implementation with no extra methods.</p>
-<h4 id="signature-4"><a class="header" href="#signature-4">Signature</a></h4>
+<p>Applicative + Chain。追加メソッドのないブランケット実装。</p>
+<h4 id="シグネチャ-4"><a class="header" href="#シグネチャ-4">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Monad: Applicative + Chain {}
 
 impl&lt;F: Applicative + Chain&gt; Monad for F {}
 <span class="boring">}</span></code></pre>
-<p><code>Monad</code> is a <strong>marker trait</strong>. It adds no new methods; it simply certifies that a type implements both <code>Applicative</code> (for <code>pure</code>) and <code>Chain</code> (for <code>chain</code>). The blanket <code>impl</code> means you never write <code>impl Monad for MyType</code> – just implement <code>Applicative</code> and <code>Chain</code>, and <code>Monad</code> comes for free.</p>
-<h4 id="laws-4"><a class="header" href="#laws-4">Laws</a></h4>
-<p>In addition to the Applicative and Chain laws, a Monad must satisfy:</p>
-<p><strong>Left identity:</strong> Lifting a value with <code>pure</code> then chaining is the same as calling the function directly.<br><code>chain(pure(a), f) == f(a)</code></p>
-<p><strong>Right identity:</strong> Chaining with <code>pure</code> is a no-op.<br><code>chain(m, pure) == m</code></p>
-<h4 id="instances-4"><a class="header" href="#instances-4">Instances</a></h4>
-<p>Every type that implements both <code>Applicative</code> and <code>Chain</code> is automatically a <code>Monad</code>:</p>
+<p><code>Monad</code> は <strong>マーカートレイト</strong> です。新しいメソッドを追加しません; 単に型が <code>Applicative</code> (<code>pure</code> 用) と <code>Chain</code> (<code>chain</code> 用) の両方を実装することを証明します。ブランケット <code>impl</code> により、<code>impl Monad for MyType</code> を書くことはありません — <code>Applicative</code> と <code>Chain</code> を実装すれば <code>Monad</code> は自動的に付いてきます。</p>
+<h4 id="法則-4"><a class="header" href="#法則-4">法則</a></h4>
+<p>Applicative と Chain の法則に加え、Monad は以下を満たさなければなりません:</p>
+<p><strong>左単位律:</strong> <code>pure</code> で値を持ち上げて束縛するのは、関数を直接呼ぶのと同じです。<br><code>chain(pure(a), f) == f(a)</code></p>
+<p><strong>右単位律:</strong> <code>pure</code> で束縛しても何も変わりません。<br><code>chain(m, pure) == m</code></p>
+<h4 id="実装-4"><a class="header" href="#実装-4">実装</a></h4>
+<p><code>Applicative</code> と <code>Chain</code> の両方を実装するすべての型が自動的に <code>Monad</code> になります:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>OptionF</code></td><td>Blanket impl</td></tr>
-<tr><td><code>ResultF&lt;E&gt;</code></td><td>Blanket impl</td></tr>
-<tr><td><code>VecF</code></td><td>Blanket impl (requires <code>alloc</code> or <code>std</code>)</td></tr>
-<tr><td><code>IdentityF</code></td><td>Blanket impl</td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td>Blanket impl (requires <code>alloc</code> or <code>std</code>)</td></tr>
+<tr><td><code>OptionF</code></td><td>ブランケット実装</td></tr>
+<tr><td><code>ResultF&lt;E&gt;</code></td><td>ブランケット実装</td></tr>
+<tr><td><code>VecF</code></td><td>ブランケット実装 (<code>alloc</code> または <code>std</code> が必要)</td></tr>
+<tr><td><code>IdentityF</code></td><td>ブランケット実装</td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td>ブランケット実装 (<code>alloc</code> または <code>std</code> が必要)</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-4"><a class="header" href="#example-4">Example</a></h4>
+<h4 id="例-4"><a class="header" href="#例-4">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Use Monad as a trait bound to require both pure and chain
+// トレイト境界として Monad を使い、pure と chain の両方を要求
 fn bind_and_wrap&lt;M: Monad&gt;(x: i32) -&gt; M::Of&lt;String&gt;
 where
     M::Of&lt;i32&gt;: Clone,
@@ -431,7 +431,7 @@ where
 
 assert_eq!(bind_and_wrap::&lt;OptionF&gt;(42), Some("value: 42".to_string()));
 
-// The do_! macro desugars into chain calls, so it requires Monad
+// do_! マクロは chain 呼び出しに脱糖されるため、Monad が必要
 let result = do_! { OptionF;
     x = Some(10);
     y = Some(x + 20);
@@ -439,14 +439,14 @@ let result = do_! { OptionF;
 };
 assert_eq!(result, Some(40));
 <span class="boring">}</span></code></pre>
-<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<h2 id="関連項目"><a class="header" href="#関連項目">関連項目</a></h2>
 <ul>
-<li><a href="alt-family.html"><strong>Alt Family</strong></a> – the Alt / Plus / Alternative branch, which extends Functor in a different direction (choice and failure).</li>
-<li><a href="macros.html"><strong>Macros</strong></a> – the <code>do_!</code> and <code>ado_!</code> macros that provide ergonomic syntax for Chain and Applicative computations.</li>
-<li><a href="foldable-traversable.html"><strong>Foldable &amp; Traversable</strong></a> – folding and traversing structures, which combine naturally with Applicative.</li>
-<li><a href="../getting-started.html"><strong>Getting Started</strong></a> – a tutorial introduction to HKTs, Functor, and monadic notation.</li>
+<li><a href="alt-family.html"><strong>Alt ファミリー</strong></a> – 選択と失敗という異なる方向に Functor を拡張する Alt / Plus / Alternative 枝。</li>
+<li><a href="macros.html"><strong>マクロ</strong></a> – Chain と Applicative の計算に快適な構文を提供する <code>do_!</code> と <code>ado_!</code> マクロ。</li>
+<li><a href="foldable-traversable.html"><strong>Foldable と Traversable</strong></a> – 構造の畳み込みと走査。Applicative と自然に組み合わさります。</li>
+<li><a href="../getting-started.html"><strong>はじめての利用</strong></a> – HKT、Functor、モナド記法のチュートリアル入門。</li>
 </ul>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

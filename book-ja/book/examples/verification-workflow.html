@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,17 +178,17 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="verification-workflow"><a class="header" href="#verification-workflow">Verification Workflow</a></h1>
-<p>This example walks through a realistic <code>karpal-verify</code> workflow: define a bundle of algebraic obligations, export SMT and Lean artifacts, preview commands with a dry run, produce CI-oriented summaries, and finally import an external certificate through the explicit trust boundary.</p>
-<h2 id="scenario"><a class="header" href="#scenario">Scenario</a></h2>
-<p>Suppose you have a type that behaves like an additive monoid and you want three things:</p>
+                        <h1 id="検証ワークフロー"><a class="header" href="#検証ワークフロー">検証ワークフロー</a></h1>
+<p>この例は現実的な <code>karpal-verify</code> ワークフローを歩きます: 代数オブリゲーションのバンドルを定義し、SMT と Lean アーティファクトをエクスポートし、ドライランでコマンドをプレビューし、CI 指向のサマリーを生成し、最後に明示的な信頼境界を通じて外部証明書をインポートします。</p>
+<h2 id="シナリオ"><a class="header" href="#シナリオ">シナリオ</a></h2>
+<p>加法的モノイドのように振る舞う型があり、三つのことが欲しいとします:</p>
 <ul>
-<li>a machine-readable description of its laws,</li>
-<li>export artifacts for SMT and Lean, and</li>
-<li>a reviewable path from external verification back into Rust.</li>
+<li>その法則の機械可読な記述、</li>
+<li>SMT と Lean のためのエクスポートアーティファクト、そして</li>
+<li>外部検証から Rust に戻るレビュー可能な経路。</li>
 </ul>
-<p>The <code>karpal-verify</code> stack is designed exactly for this flow.</p>
-<h2 id="1-build-an-obligation-bundle"><a class="header" href="#1-build-an-obligation-bundle">1. Build an obligation bundle</a></h2>
+<p><code>karpal-verify</code> スタックはまさにこの流れのために設計されています。</p>
+<h2 id="1-オブリゲーションバンドルを構築"><a class="header" href="#1-オブリゲーションバンドルを構築">1. オブリゲーションバンドルを構築</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -202,8 +202,8 @@ let bundle = ObligationBundle::monoid(
 
 assert_eq!(bundle.obligations().len(), 3);
 <span class="boring">}</span></code></pre>
-<p>The resulting bundle contains associativity, left identity, and right identity. The bundle becomes the shared source for every downstream step.</p>
-<h2 id="2-export-smt-and-lean-artifacts"><a class="header" href="#2-export-smt-and-lean-artifacts">2. Export SMT and Lean artifacts</a></h2>
+<p>結果のバンドルは結合律、左単位律、右単位律を含みます。バンドルがすべての下流ステップの共有ソースになります。</p>
+<h2 id="2-smt-と-lean-アーティファクトをエクスポート"><a class="header" href="#2-smt-と-lean-アーティファクトをエクスポート">2. SMT と Lean アーティファクトをエクスポート</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let smt_scripts = export_smt_bundle(&amp;bundle);
@@ -212,9 +212,9 @@ let lean_module = export_lean_bundle("KarpalVerify", &amp;bundle);
 assert_eq!(smt_scripts.len(), 3);
 assert!(lean_module.contains("namespace KarpalVerify"));
 <span class="boring">}</span></code></pre>
-<p>At this stage you still have plain strings in memory. This is useful when integrating with other tools or building higher-level export pipelines.</p>
-<h2 id="3-write-artifacts-and-inspect-invocation-plans"><a class="header" href="#3-write-artifacts-and-inspect-invocation-plans">3. Write artifacts and inspect invocation plans</a></h2>
-<p>Once you choose a root layout, <code>karpal-verify</code> can materialize files and the command plans needed to run them.</p>
+<p>この段階ではまだメモリ内のプレーンな文字列です。他のツールと統合したり、より高レベルなエクスポートパイプラインを構築したりするのに有用です。</p>
+<h2 id="3-アーティファクトを書き出し起動計画を検査"><a class="header" href="#3-アーティファクトを書き出し起動計画を検査">3. アーティファクトを書き出し、起動計画を検査</a></h2>
+<p>ルートレイアウトを選ぶと、<code>karpal-verify</code> はファイルとそれらを実行するために必要なコマンド計画を具体化できます。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let layout = ArtifactLayout::new("target/karpal-verify-example");
@@ -230,9 +230,9 @@ for plan in &amp;batch.plans {
     println!("{}", plan.render_shell());
 }
 <span class="boring">}</span></code></pre>
-<p>A dry-run batch is especially useful while wiring CI, because it validates paths and exporter output without requiring solver binaries to be available. The batch also carries structured Lean export metadata, generated Lean project data, and a typed Lean manifest model that will later be serialized beside the generated module.</p>
-<h2 id="4-orchestrate-build--run--report"><a class="header" href="#4-orchestrate-build--run--report">4. Orchestrate build → run → report</a></h2>
-<p>The orchestration layer wraps the lower-level pieces into one cohesive flow. For example, here is a dry-run CI-style session:</p>
+<p>ドライランバッチは CI を配線する際に特に有用です。ソルバーバイナリが利用可能でなくても、パスとエクスポータ出力を検証できるからです。バッチは構造化 Lean エクスポートメタデータ、生成された Lean プロジェクトデータ、後で生成モジュールの隣にシリアライズされる型付き Lean マニフェストモデルも運びます。</p>
+<h2 id="4-ビルド--実行--報告をオーケストレーション"><a class="header" href="#4-ビルド--実行--報告をオーケストレーション">4. ビルド → 実行 → 報告をオーケストレーション</a></h2>
+<p>オーケストレーション層は低レベルの部品を一つのまとまった流れに包みます。例えば、ドライラン CI スタイルのセッションです:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let output = verify_bundle_with_ci_outputs(
@@ -248,18 +248,18 @@ assert_eq!(output.report.obligation_count(), 3);
 assert!(output.report_files.json_path.ends_with("verification-report.json"));
 assert!(output.report_files.markdown_path.ends_with("verification-report.md"));
 <span class="boring">}</span></code></pre>
-<p>This one call does all of the following:</p>
+<p>この一回の呼び出しで以下をすべて行います:</p>
 <ul>
-<li>writes SMT and Lean artifacts,</li>
-<li>creates invocation plans,</li>
-<li>runs them with the supplied runner,</li>
-<li>builds a <code>VerificationReport</code>,</li>
-<li>writes JSON / Markdown summaries beside the generated artifacts,</li>
-<li>writes a schema-versioned Lean diagnostics sidecar, and</li>
-<li>cross-links a schema-versioned Lean manifest back to those report files.</li>
+<li>SMT と Lean アーティファクトを書き出す、</li>
+<li>起動計画を作成する、</li>
+<li>指定されたランナーでそれらを実行する、</li>
+<li><code>VerificationReport</code> を構築する、</li>
+<li>生成されたアーティファクトの隣に JSON / Markdown サマリーを書き出す、</li>
+<li>スキーマバージョン管理された Lean 診断サイドカーを書き出す、</li>
+<li>スキーマバージョン管理された Lean マニフェストをそれらのレポートファイルに相互リンクする。</li>
 </ul>
-<h2 id="5-understand-backend-semantics"><a class="header" href="#5-understand-backend-semantics">5. Understand backend semantics</a></h2>
-<p>The same word “success” means different things depending on the backend:</p>
+<h2 id="5-バックエンドの意味論を理解する"><a class="header" href="#5-バックエンドの意味論を理解する">5. バックエンドの意味論を理解する</a></h2>
+<p>同じ「成功」という言葉がバックエンドによって異なる意味を持ちます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>assert!(VerificationPolicy::for_kind(CommandKind::Smt)
@@ -267,9 +267,9 @@ assert!(output.report_files.markdown_path.ends_with("verification-report.md"));
 assert!(VerificationPolicy::for_kind(CommandKind::Lean)
     .accepts(ExecutionStatus::Success));
 <span class="boring">}</span></code></pre>
-<p>For SMT backends, Karpal exports the negation of the law, so <code>unsat</code> is the success case. For Lean, success is an accepted module together with parsed diagnostics that report no errors. Lean diagnostics are then mapped back to exported theorem identities, using source-line spans as a fallback when the diagnostic message does not name the theorem directly.</p>
-<h2 id="6-use-the-session-builder-for-more-control"><a class="header" href="#6-use-the-session-builder-for-more-control">6. Use the session builder for more control</a></h2>
-<p>If you need to configure tool names, extra arguments, or custom report names, use <code>VerificationSession</code> directly:</p>
+<p>SMT バックエンドでは、Karpal は法則の否定をエクスポートするため、<code>unsat</code> が成功ケースです。Lean では、成功は受理されたモジュールとエラーを報告しない解析された診断です。Lean 診断はエクスポートされた定理の同一性にマップバックされ、診断メッセージが直接定理を名指さない場合はソース行スパンをフォールバックとして使います。</p>
+<h2 id="6-より制御のためにセッションビルダーを使う"><a class="header" href="#6-より制御のためにセッションビルダーを使う">6. より制御のためにセッションビルダーを使う</a></h2>
+<p>ツール名、追加引数、カスタムレポート名を設定する必要がある場合は、<code>VerificationSession</code> を直接使います:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let session = VerificationSession::new(
@@ -287,8 +287,8 @@ assert!(VerificationPolicy::for_kind(CommandKind::Lean)
 let dry_report = session.dry_run_report();
 assert!(dry_report.obligations.iter().all(|o| o.status().is_some()));
 <span class="boring">}</span></code></pre>
-<h2 id="7-import-external-evidence-explicitly"><a class="header" href="#7-import-external-evidence-explicitly">7. Import external evidence explicitly</a></h2>
-<p>The final step is intentionally explicit. External evidence first becomes a certificate and a <code>Certified&lt;...&gt;</code> wrapper, not a <code>Proven&lt;...&gt;</code> value.</p>
+<h2 id="7-外部の証拠を明示的にインポート"><a class="header" href="#7-外部の証拠を明示的にインポート">7. 外部の証拠を明示的にインポート</a></h2>
+<p>最後のステップは意図的に明示的です。外部の証拠はまず証明書と <code>Certified&lt;...&gt;</code> ラッパになり、<code>Proven&lt;...&gt;</code> 値にはなりません。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_proof::{IsAssociative, Proven};
@@ -299,15 +299,15 @@ let imported =
     unsafe { Certified::&lt;SmtCertificate, IsAssociative, i32&gt;::assume(1, cert) };
 let _: Proven&lt;IsAssociative, i32&gt; = unsafe { imported.into_proven() };
 <span class="boring">}</span></code></pre>
-<p>This is the deliberate trust handoff in <code>karpal-verify</code>: external evidence is useful, but it is not silently conflated with Rust-native proof evidence.</p>
-<h2 id="where-to-go-next"><a class="header" href="#where-to-go-next">Where to go next</a></h2>
+<p>これが <code>karpal-verify</code> の意図的な信頼の引き渡えです: 外部の証拠は有用ですが、Rust ネイティブの証拠と暗黙に混同されることはありません。</p>
+<h2 id="次にどこへ"><a class="header" href="#次にどこへ">次にどこへ</a></h2>
 <ul>
-<li><a href="../reference/proof-verification.html">Proof &amp; Verification</a> for the full API overview.</li>
-<li><a href="../reference/verification-ci.html">Verification CI Workflow</a> for CI-focused layout and reporting guidance.</li>
-<li><a href="../reference/verification-schemas.html">Verification Schemas</a> for report/manifest/sidecar compatibility details.</li>
-<li><a href="../dev/phase-12-trust-model.html">Trust Model</a> for the imported-proof boundary design note.</li>
+<li>完全な API 概要は <a href="../reference/proof-verification.html">証明と検証</a>。</li>
+<li>CI に焦点を当てたレイアウトと報告の指針は <a href="../reference/verification-ci.html">検証 CI ワークフロー</a>。</li>
+<li>レポート/マニフェスト/サイドカーの互換性の詳細は <a href="../reference/verification-schemas.html">検証スキーマ</a>。</li>
+<li>インポートされた証明の境界の設計メモは <a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md">信頼モデル</a>。</li>
 </ul>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

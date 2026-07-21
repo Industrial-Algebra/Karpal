@@ -1,40 +1,40 @@
-[Home](index.md) \> Architecture
+[ホーム](index.md) \> アーキテクチャ
 
-# Architecture
+# アーキテクチャ
 
-This page explains the core design decisions behind Karpal: how it encodes higher-kinded types in Rust, the full trait hierarchy, and the Static Land pattern that makes it all work within Rust's type system.
+このページは Karpal の背後にあるコア設計決定を説明します: Rust で高階型をエンコードする方法、完全なトレイト階層、そしてそれらを Rust の型システム内で機能させる Static Land パターン。
 
-## HKT Encoding
+## HKT エンコーディング
 
-### The problem
+### 問題
 
-Rust has no native higher-kinded types. You cannot write a trait that is generic over a *type constructor* like `Option` or `Vec` — only over concrete types like `Option<i32>`. This means there is no built-in way to express "for any container `F`, give me an `fmap` that works on `F<A>`."
+Rust にはネイティブの高階型がありません。`Option` や `Vec` のような *型コンストラクタ* について汎用的なトレイトは書けません — `Option<i32>` のような具体的な型についてのみ書けます。つまり「任意のコンテナ `F` について、`F<A>` で動作する `fmap` をください」と表現する組み込みの方法がありません。
 
-### The GAT solution
+### GAT 解決策
 
-Karpal encodes type constructors as **marker types** that implement a trait with a Generic Associated Type (GAT). The `HKT` trait acts as a type-level function: given a type `T`, it produces `Self::Of<T>`.
+Karpal は型コンストラクタを Generic Associated Type (GAT) を持つトレイトを実装する **マーカー型** としてエンコードします。`HKT` トレイトは型レベル関数として機能します: 型 `T` を与えられると `Self::Of<T>` を生成します。
 
 ``` rust
-/// Higher-Kinded Type encoding via GATs.
+/// GAT による高階型エンコーディング。
 ///
-/// A type implementing `HKT` acts as a type-level function:
-/// given a type `T`, it produces `Self::Of<T>`.
+/// `HKT` を実装する型は型レベル関数として機能する:
+/// 型 `T` を与えられると `Self::Of<T>` を生成する。
 pub trait HKT {
     type Of<T>;
 }
 ```
 
-Each standard container gets a zero-sized marker type that maps `Of<T>` to the real type:
+各標準コンテナは `Of<T>` を実際の型にマップするゼロサイズのマーカー型を持ちます:
 
 ``` rust
-/// Type constructor for `Option<T>`.
+/// `Option<T>` の型コンストラクタ。
 pub struct OptionF;
 
 impl HKT for OptionF {
     type Of<T> = Option<T>;
 }
 
-/// Type constructor for `Result<T, E>` (fixed error type `E`).
+/// `Result<T, E>` の型コンストラクタ (固定エラー型 `E`)。
 pub struct ResultF<E> {
     _marker: PhantomData<E>,
 }
@@ -43,7 +43,7 @@ impl<E> HKT for ResultF<E> {
     type Of<T> = Result<T, E>;
 }
 
-/// Type constructor for `Vec<T>` (alloc-gated).
+/// `Vec<T>` の型コンストラクタ (alloc ゲート)。
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub struct VecF;
 
@@ -53,24 +53,24 @@ impl HKT for VecF {
 }
 ```
 
-### Two-parameter HKT
+### 二パラメータ HKT
 
-For types with two type parameters — bifunctors and profunctors — Karpal provides `HKT2`:
+二つの型パラメータを持つ型 — バイファンクタとプロ関手 — のため、Karpal は `HKT2` を提供します:
 
 ``` rust
-/// Two-parameter type constructor (HKT for bifunctors / profunctors).
+/// 二パラメータ型コンストラクタ (バイファンクタ / プロ関手用 HKT)。
 pub trait HKT2 {
     type P<A, B>;
 }
 
-/// Result as a bifunctor (both parameters vary).
+/// バイファンクタとしての Result (両パラメータが変化)。
 pub struct ResultBF;
 
 impl HKT2 for ResultBF {
     type P<A, B> = Result<B, A>;
 }
 
-/// Tuple as a bifunctor.
+/// バイファンクタとしてのタプル。
 pub struct TupleF;
 
 impl HKT2 for TupleF {
@@ -78,63 +78,63 @@ impl HKT2 for TupleF {
 }
 ```
 
-### Tradeoffs
+### トレードオフ
 
-| Property     | Detail                                                                                                                 |
+| 性質     | 詳細                                                                                                                 |
 |--------------|------------------------------------------------------------------------------------------------------------------------|
-| Runtime cost | Zero. Marker types are ZSTs; all dispatch is monomorphized at compile time.                                            |
-| Dependencies | None. Pure Rust with no external crates for the encoding itself.                                                       |
-| Toolchain    | Requires nightly Rust (edition 2024). GATs are stable since 1.65, but Karpal also uses `use<>` precise-capture syntax. |
-| Ergonomics   | Callers write `OptionF::fmap(...)` instead of `value.fmap(...)`. This is the Static Land style (see below).            |
+| 実行時コスト | ゼロ。マーカー型は ZST; すべてのディスパッチはコンパイル時に単相化される。                                            |
+| 依存関係 | なし。エンコーディング自体に外部クレートを使わないピュア Rust。                                                       |
+| ツールチェーン    | nightly Rust が必要 (edition 2024)。GAT は 1.65 から安定だが、Karpal は `use<>` precise-capture 構文も使う。 |
+| エルゴノミクス   | 呼び出しは `value.fmap(...)` ではなく `OptionF::fmap(...)` と書く。これが Static Land スタイル (下記参照)。            |
 
-## Trait Hierarchy
+## トレイト階層
 
-The diagram below shows the full trait hierarchy implemented in `karpal-core`, `karpal-profunctor`, and `karpal-arrow`. Arrows point from supertrait to subtrait. Dashed borders indicate blanket implementations (no manual impl needed).
+下の図は `karpal-core`、`karpal-profunctor`、`karpal-arrow` に実装された完全なトレイト階層を示します。矢印はスーパートレイトからサブトレイトへ向きます。破線の枠はブランケット実装 (手動 impl が不要) を示します。
 
-![](data:image/svg+xml;base64,PHN2ZyB2aWV3Ym94PSIwIDAgODAwIDc4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0ibWF4LXdpZHRoOiA4MDBweDsgd2lkdGg6IDEwMCU7IGhlaWdodDogYXV0bzsgZm9udC1mYW1pbHk6ICYjMzk7SW50ZXImIzM5Oywgc2Fucy1zZXJpZjsiPgogICAgICA8ZGVmcz4KICAgICAgICA8bWFya2VyIGlkPSJhcnJvdyIgdmlld2JveD0iMCAwIDEwIDEwIiByZWZ4PSIxMCIgcmVmeT0iNSIgbWFya2Vyd2lkdGg9IjgiIG1hcmtlcmhlaWdodD0iOCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPgogICAgICAgICAgPHBhdGggZD0iTSAwIDAgTCAxMCA1IEwgMCAxMCB6IiBmaWxsPSJ2YXIoLS10ZXh0LW11dGVkLCAjOGI5NDllKSIgLz4KICAgICAgICA8L21hcmtlcj4KICAgICAgICA8c3R5bGU+CiAgICAgICAgICAubm9kZSB7IGZpbGw6IHZhcigtLWJnLWNhcmQsICMxNjFiMjIpOyBzdHJva2U6IHZhcigtLWJvcmRlciwgIzMwMzYzZCk7IHN0cm9rZS13aWR0aDogMS41OyByeDogNjsgcnk6IDY7IH0KICAgICAgICAgIC5ub2RlLWJsYW5rZXQgeyBmaWxsOiB2YXIoLS1iZy1jYXJkLCAjMTYxYjIyKTsgc3Ryb2tlOiB2YXIoLS1ib3JkZXIsICMzMDM2M2QpOyBzdHJva2Utd2lkdGg6IDEuNTsgc3Ryb2tlLWRhc2hhcnJheTogNSAzOyByeDogNjsgcnk6IDY7IH0KICAgICAgICAgIC5ub2RlLWxhYmVsIHsgZmlsbDogdmFyKC0tdGV4dC1wcmltYXJ5LCAjZTZlZGYzKTsgZm9udC1zaXplOiAxMXB4OyBmb250LXdlaWdodDogNjAwOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBkb21pbmFudC1iYXNlbGluZTogY2VudHJhbDsgfQogICAgICAgICAgLmVkZ2UgeyBzdHJva2U6IHZhcigtLXRleHQtbXV0ZWQsICM4Yjk0OWUpOyBzdHJva2Utd2lkdGg6IDEuMjsgZmlsbDogbm9uZTsgbWFya2VyLWVuZDogdXJsKCNhcnJvdyk7IH0KICAgICAgICAgIC5zZWN0aW9uLWxhYmVsIHsgZmlsbDogdmFyKC0tdGV4dC1tdXRlZCwgIzhiOTQ5ZSk7IGZvbnQtc2l6ZTogOXB4OyBmb250LXdlaWdodDogNTAwOyB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOyBsZXR0ZXItc3BhY2luZzogMC4wOGVtOyB9CiAgICAgICAgPC9zdHlsZT4KICAgICAgPC9kZWZzPgoKICAgICAgPCEtLSBTZWN0aW9uIGxhYmVscyAtLT4KICAgICAgPHRleHQgeD0iMTYiIHk9IjE4IiBjbGFzcz0ic2VjdGlvbi1sYWJlbCI+Q292YXJpYW50IChGdW5jdG9yIGZhbWlseSk8L3RleHQ+CiAgICAgIDx0ZXh0IHg9IjE2IiB5PSIyOTgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Db21vbmFkIGZhbWlseTwvdGV4dD4KICAgICAgPHRleHQgeD0iNDMwIiB5PSIyOTgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Db250cmF2YXJpYW50IGZhbWlseTwvdGV4dD4KICAgICAgPHRleHQgeD0iMTYiIHk9IjQ0OCIgY2xhc3M9InNlY3Rpb24tbGFiZWwiPkFsZ2VicmFpYzwvdGV4dD4KICAgICAgPHRleHQgeD0iMjUwIiB5PSI0NDgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Gb2xkYWJsZSAvIFRyYXZlcnNhYmxlPC90ZXh0PgogICAgICA8dGV4dCB4PSIxNiIgeT0iNTQ4IiBjbGFzcz0ic2VjdGlvbi1sYWJlbCI+UHJvZnVuY3RvciBmYW1pbHkgKEhLVDIpPC90ZXh0PgoKICAgICAgPCEtLSA9PT0gQ292YXJpYW50IHJvdyAxOiBGdW5jdG9yIC0+IEFwcGx5IC0+IEFwcGxpY2F0aXZlIC0+IEFsdGVybmF0aXZlIChibGFua2V0KSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iMzAiIHdpZHRoPSI3MiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjUyIiB5PSI0NSI+RnVuY3RvcjwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMjgiIHk9IjMwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNTgiIHk9IjQ1Ij5BcHBseTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyMjgiIHk9IjMwIiB3aWR0aD0iOTAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIyNzMiIHk9IjQ1Ij5BcHBsaWNhdGl2ZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlLWJsYW5rZXQiIHg9IjM1OCIgeT0iMzAiIHdpZHRoPSI5MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjQwMyIgeT0iNDUiPkFsdGVybmF0aXZlPC90ZXh0PgoKICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI4OCIgeTE9IjQ1IiB4Mj0iMTI2IiB5Mj0iNDUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxODgiIHkxPSI0NSIgeDI9IjIyNiIgeTI9IjQ1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMzE4IiB5MT0iNDUiIHgyPSIzNTYiIHkyPSI0NSI+PC9saW5lPgoKICAgICAgPCEtLSA9PT0gQ292YXJpYW50IHJvdyAyOiBDaGFpbiwgU2VsZWN0aXZlID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjEyOCIgeT0iODAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE1OCIgeT0iOTUiPkNoYWluPC90ZXh0PgoKICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjIyOCIgeT0iODAiIHdpZHRoPSI5MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI3MyIgeT0iOTUiPlNlbGVjdGl2ZTwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMTU4IiB5MT0iNjAiIHgyPSIxNTgiIHkyPSI3OCI+PC9saW5lPgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjI3MyIgeTE9IjYwIiB4Mj0iMjczIiB5Mj0iNzgiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IENvdmFyaWFudCByb3cgMzogTW9uYWQgKGJsYW5rZXQpID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUtYmxhbmtldCIgeD0iMTY4IiB5PSIxMzAiIHdpZHRoPSI3MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjIwMyIgeT0iMTQ1Ij5Nb25hZDwvdGV4dD4KCiAgICAgIDwhLS0gTGluZXMgZnJvbSBBcHBsaWNhdGl2ZSBhbmQgQ2hhaW4gdG8gTW9uYWQgLS0+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjczIiB5MT0iNjAiIHgyPSIyMzAiIHkyPSIxMjgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxNTgiIHkxPSIxMTAiIHgyPSIxODUiIHkyPSIxMjgiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEFsdCByb3c6IEZ1bmN0b3IgLT4gQWx0IC0+IFBsdXMgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTI4IiB5PSIxODUiIHdpZHRoPSI0OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE1MiIgeT0iMjAwIj5BbHQ8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMjE2IiB5PSIxODUiIHdpZHRoPSI1MiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI0MiIgeT0iMjAwIj5QbHVzPC90ZXh0PgoKICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI2MiIgeTE9IjYwIiB4Mj0iMTQwIiB5Mj0iMTgzIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMTc2IiB5MT0iMjAwIiB4Mj0iMjE0IiB5Mj0iMjAwIj48L2xpbmU+CgogICAgICA8IS0tIFBsdXMgLT4gQWx0ZXJuYXRpdmUgLS0+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjY4IiB5MT0iMjAwIiB4Mj0iNDAzIiB5Mj0iNjIiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEZ1bmN0b3JGaWx0ZXIgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTAwIiB5PSIzMCIgd2lkdGg9IjEwNSIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU1MiIgeT0iNDUiPkZ1bmN0b3JGaWx0ZXI8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9Ijg4IiB5MT0iMzgiIHgyPSI0OTgiIHkyPSIzOCI+PC9saW5lPgoKICAgICAgPCEtLSA9PT0gSW52YXJpYW50ID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjY1MCIgeT0iMzAiIHdpZHRoPSI3NiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjY4OCIgeT0iNDUiPkludmFyaWFudDwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iODgiIHkxPSI1MiIgeDI9IjY0OCIgeTI9IjUyIj48L2xpbmU+CgogICAgICA8IS0tID09PSBCaWZ1bmN0b3IgKEhLVDIpID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjU2MCIgeT0iODAiIHdpZHRoPSI4MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjYwMCIgeT0iOTUiPkJpZnVuY3RvcjwvdGV4dD4KCiAgICAgIDwhLS0gTmF0dXJhbFRyYW5zZm9ybWF0aW9uIHN0YW5kYWxvbmUgLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NjAiIHk9IjEzMCIgd2lkdGg9IjE0NSIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjYzMiIgeT0iMTQ1Ij5OYXR1cmFsVHJhbnNmb3JtYXRpb248L3RleHQ+CgogICAgICA8IS0tID09PSBDb21vbmFkIGZhbWlseSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iMzEwIiB3aWR0aD0iNjgiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI1MCIgeT0iMzI1Ij5FeHRlbmQ8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTI0IiB5PSIzMTAiIHdpZHRoPSI3OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE2MyIgeT0iMzI1Ij5Db21vbmFkPC90ZXh0PgoKICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjI0MiIgeT0iMzEwIiB3aWR0aD0iOTAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIyODciIHk9IjMyNSI+Q29tb25hZEVudjwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyNDIiIHk9IjM1NSIgd2lkdGg9Ijk4IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMjkxIiB5PSIzNzAiPkNvbW9uYWRTdG9yZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyNDIiIHk9IjQwMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI5MiIgeT0iNDE1Ij5Db21vbmFkVHJhY2VkPC90ZXh0PgoKICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI2MiIgeTE9IjYwIiB4Mj0iNDAiIHkyPSIzMDgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI4NCIgeTE9IjMyNSIgeDI9IjEyMiIgeTI9IjMyNSI+PC9saW5lPgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjIwMiIgeTE9IjMyNSIgeDI9IjI0MCIgeTI9IjMyNSI+PC9saW5lPgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjIwMiIgeTE9IjMzMCIgeDI9IjI0MCIgeTI9IjM2NSI+PC9saW5lPgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjIwMiIgeTE9IjMzNSIgeDI9IjI0MCIgeTI9IjQwNSI+PC9saW5lPgoKICAgICAgPCEtLSA9PT0gQ29udHJhdmFyaWFudCBmYW1pbHkgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNDMwIiB5PSIzMTAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI0ODAiIHk9IjMyNSI+Q29udHJhdmFyaWFudDwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NzAiIHk9IjMxMCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAyIiB5PSIzMjUiPkRpdmlkZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NzQiIHk9IjMxMCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzEwIiB5PSIzMjUiPkRpdmlzaWJsZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NzAiIHk9IjM1NSIgd2lkdGg9IjY0IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAyIiB5PSIzNzAiPkRlY2lkZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NzQiIHk9IjM1NSIgd2lkdGg9Ijc4IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzEzIiB5PSIzNzAiPkNvbmNsdWRlPC90ZXh0PgoKICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI1MzAiIHkxPSIzMjUiIHgyPSI1NjgiIHkyPSIzMjUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI2MzQiIHkxPSIzMjUiIHgyPSI2NzIiIHkyPSIzMjUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI1MzAiIHkxPSIzMzUiIHgyPSI1NjgiIHkyPSIzNjUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI2MzQiIHkxPSIzNzAiIHgyPSI2NzIiIHkyPSIzNzAiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEFsZ2VicmFpYyA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iNDYwIiB3aWR0aD0iODIiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI1NyIgeT0iNDc1Ij5TZW1pZ3JvdXA8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTM4IiB5PSI0NjAiIHdpZHRoPSI2OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE3MiIgeT0iNDc1Ij5Nb25vaWQ8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9Ijk4IiB5MT0iNDc1IiB4Mj0iMTM2IiB5Mj0iNDc1Ij48L2xpbmU+CgogICAgICA8IS0tID09PSBGb2xkYWJsZSAvIFRyYXZlcnNhYmxlID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjI4MCIgeT0iNDYwIiB3aWR0aD0iNzIiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIzMTYiIHk9IjQ3NSI+Rm9sZGFibGU8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMzkyIiB5PSI0NjAiIHdpZHRoPSI5MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjQzNyIgeT0iNDc1Ij5UcmF2ZXJzYWJsZTwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMzUyIiB5MT0iNDc1IiB4Mj0iMzkwIiB5Mj0iNDc1Ij48L2xpbmU+CgogICAgICA8IS0tID09PSBQcm9mdW5jdG9yIGZhbWlseSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iNTYwIiB3aWR0aD0iODYiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI1OSIgeT0iNTc1Ij5Qcm9mdW5jdG9yPC90ZXh0PgoKICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjE0MiIgeT0iNTYwIiB3aWR0aD0iNjQiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNzQiIHk9IjU3NSI+U3Ryb25nPC90ZXh0PgoKICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjE0MiIgeT0iNjAwIiB3aWR0aD0iNjQiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNzQiIHk9IjYxNSI+Q2hvaWNlPC90ZXh0PgoKICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxMDIiIHkxPSI1NzAiIHgyPSIxNDAiIHkyPSI1NzAiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxMDIiIHkxPSI1ODAiIHgyPSIxNDAiIHkyPSI2MTAiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEFycm93IGZhbWlseSAoSEtUMikgPT09IC0tPgogICAgICA8dGV4dCB4PSIzNTAiIHk9IjU0OCIgY2xhc3M9InNlY3Rpb24tbGFiZWwiPkFycm93IGZhbWlseSAoSEtUMik8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMzUwIiB5PSI1NjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI0MDAiIHk9IjU3NSI+U2VtaWdyb3Vwb2lkPC90ZXh0PgoKICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjQ5MCIgeT0iNTYwIiB3aWR0aD0iNzIiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI1MjYiIHk9IjU3NSI+Q2F0ZWdvcnk8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNjAyIiB5PSI1NjAiIHdpZHRoPSI1NiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjYzMCIgeT0iNTc1Ij5BcnJvdzwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI3MDAiIHk9IjU0MCIgd2lkdGg9IjkyIiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzQ2IiB5PSI1NTMiPkFycm93Q2hvaWNlPC90ZXh0PgoKICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjcwMCIgeT0iNTcwIiB3aWR0aD0iODYiIGhlaWdodD0iMjYiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI3NDMiIHk9IjU4MyI+QXJyb3dBcHBseTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI3MDAiIHk9IjYwMCIgd2lkdGg9Ijg2IiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzQzIiB5PSI2MTMiPkFycm93TG9vcDwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NDAiIHk9IjYxMCIgd2lkdGg9IjgyIiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNTgxIiB5PSI2MjMiPkFycm93WmVybzwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NjAiIHk9IjY0MCIgd2lkdGg9IjgyIiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzAxIiB5PSI2NTMiPkFycm93UGx1czwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNDUwIiB5MT0iNTc1IiB4Mj0iNDg4IiB5Mj0iNTc1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTYyIiB5MT0iNTc1IiB4Mj0iNjAwIiB5Mj0iNTc1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTY4IiB4Mj0iNjk4IiB5Mj0iNTU1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTc1IiB4Mj0iNjk4IiB5Mj0iNTgwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTgyIiB4Mj0iNjk4IiB5Mj0iNjEwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjMwIiB5MT0iNTkwIiB4Mj0iNTcwIiB5Mj0iNjA4Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIyIiB5MT0iNjM2IiB4Mj0iNjU4IiB5Mj0iNjQ4Ij48L2xpbmU+CiAgICA8L3N2Zz4=)
+![](data:image/svg+xml;base64,PHN2ZyB2aWV3Ym94PSIwIDAgODAwIDc4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0ibWF4LXdpZHRoOiA4MDBweDsgd2lkdGg6IDEwMCU7IGhlaWdodDogYXV0bzsgZm9udC1mYW1pbHk6ICYjMzk7SW50ZXImIzM5Oywgc2Fucy1zZXJpZjsiPgogICAgICA8ZGVmcz4KICAgICAgICA8bWFya2VyIGlkPSJhcnJvdyIgdmlld2JveD0iMCAwIDEwIDEwIiByZWZ4PSIxMCIgcmVmeT0iNSIgbWFya2Vyd2lkdGg9IjgiIG1hcmtlcmhlaWdodD0iOCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPgogICAgICAgICAgPHBhdGggZD0iTSAwIDAgTCAxMCA1IEwgMCAxMCB6IiBmaWxsPSJ2YXIoLS10ZXh0LW11dGVkLCAjOGI5NDllKSIgLz4KICAgICAgICA8L21hcmtlcj4KICAgICAgICA8c3R5bGU+CiAgICAgICAgICAubm9kZSB7IGZpbGw6IHZhcigtLWJnLWNhcmQsICMxNjFiMjIpOyBzdHJva2U6IHZhcigtLWJvcmRlciwgIzMwMzYzZCk7IHN0cm9rZS13aWR0aDogMS41OyByeDogNjsgcnk6IDY7IH0KICAgICAgICAgIC5ub2RlLWJsYW5rZXQgeyBmaWxsOiB2YXIoLS1iZy1jYXJkLCAjMTYxYjIyKTsgc3Ryb2tlOiB2YXIoLS1ib3JkZXIsICMzMDM2M2QpOyBzdHJva2Utd2lkdGg6IDEuNTsgc3Ryb2tlLWRhc2hhcnJheTogNSAzOyByeDogNjsgcnk6IDY7IH0KICAgICAgICAgIC5ub2RlLWxhYmVsIHsgZmlsbDogdmFyKC0tdGV4dC1wcmltYXJ5LCAjZTZlZGYzKTsgZm9udC1zaXplOiAxMXB4OyBmb250LXdlaWdodDogNjAwOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBkb21pbmFudC1iYXNlbGluZTogY2VudHJhbDsgfQogICAgICAgICAgLmVkZ2UgeyBzdHJva2U6IHZhcigtLXRleHQtbXV0ZWQsICM4Yjk0OWUpOyBzdHJva2Utd2lkdGg6IDEuMjsgZmlsbDogbm9uZTsgbWFya2VyLWVuZDogdXJsKCNhcnJvdyk7IH0KICAgICAgICAgIC5zZWN0aW9uLWxhYmVsIHsgZmlsbDogdmFyKC0tdGV4dC1tdXRlZCwgIzhiOTQ5ZSk7IGZvbnQtc2l6ZTogOXB4OyBmb250LXdlaWdodDogNTAwOyB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOyBsZXR0ZXItc3BhY2luZzogMC4wOGVtOyB9CiAgICAgICAgPC9zdHlsZT4KICAgICAgPC9kZWZzPgoKICAgICAgPCEtLSBTZWN0aW9uIGxhYmVscyAtLT4KICAgICAgPHRleHQgeD0iMTYiIHk9IjE4IiBjbGFzcz0ic2VjdGlvbi1sYWJlbCI+Q292YXJpYW50IChGdW5jdG9yIGZhbWlseSk8L3RleHQ+CiAgICAgIDx0ZXh0IHg9IjE2IiB5PSIyOTgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Db21vbmFkIGZhbWlseTwvdGV4dD4KICAgICAgPHRleHQgeD0iNDMwIiB5PSIyOTgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Db250cmF2YXJpYW50IGZhbWlseTwvdGV4dD4KICAgICAgPHRleHQgeD0iMTYiIHk9IjQ0OCIgY2xhc3M9InNlY3Rpb24tbGFiZWwiPkFsZ2VicmFpYzwvdGV4dD4KICAgICAgPHRleHQgeD0iMjUwIiB5PSI0NDgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Gb2xkYWJsZSAvIFRyYXZlcnNhYmxlPC90ZXh0PgogICAgICA8dGV4dCB4PSIxNiIgeT0iNTQ4IiBjbGFzcz0ic2VjdGlvbi1sYWJlbCI+UHJvZnVuY3RvciBmYW1pbHkgKEhLVDIpPC90ZXh0PgoKICAgICAgPCEtLSA9PT0gQ292YXJpYW50IHJvdyAxOiBGdW5jdG9yIC0+IEFwcGx5IC0+IEFwcGxpY2F0aXZlIC0+IEFsdGVybmF0aXZlIChibGFua2V0KSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iMzAiIHdpZHRoPSI3MiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjUyIiB5PSI0NSI+RnVuY3RvcjwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMjgiIHk9IjMwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNTgiIHk9IjQ1Ij5BcHBseTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyMjgiIHk9IjMwIiB3aWR0aD0iOTAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIyNzMiIHk9IjQ1Ij5BcHBsaWNhdGl2ZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlLWJsYW5rZXQiIHg9IjM1OCIgeT0iMzAiIHdpZHRoPSI5MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjQwMyIgeT0iNDUiPkFsdGVybmF0aXZlPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iODgiIHkxPSI0NSIgeDI9IjEyNiI5Mj0iNDUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxODgiIHkxPSI0NSIgeDI9IjIyNiI5Mj0iNDUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIzMTgiIHkxPSI0NSIgeDI9IjM1NiI5Mj0iNDUiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IENvdmFyaWFudCByb3cgMjogQ2hhaW4sIFNlbGVjdGl2ZSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMjgiIHk9IjgwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNTgiIHk9Ijk1Ij5DaGFpbjwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyMjgiIHk9IjgwIiB3aWR0aD0iOTAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIyNzMiIHk9Ijk1Ij5TZWxlY3RpdmU8L3RleHQ+CiAgICAgIAogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjE1OCIgeTE9IjYwIiB4Mj0iMTU4IiB5Mj0iNzgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIyNzMiIHkxPSI2MCIgeDI9IjI3MyI5Mj0iNzgiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IENvdmFyaWFudCByb3cgMzogTW9uYWQgKGJsYW5rZXQpID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUtYmxhbmtldCIgeD0iMTY4IiB5PSIxMzAiIHdpZHRoPSI3MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjIwMyIgeT0iMTQ1Ij5Nb25hZDwvdGV4dD4KCiAgICAgIDwhLS0gTGluZXMgZnJvbSBBcHBsaWNhdGl2ZSBhbmQgQ2hhaW4gdG8gTW9uYWQgLS0+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjczIiB5MT0iNjAiIHgyPSIyMzAiIHkyPSIxMjgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxNTgiIHkxPSIxMTAiIHgyPSIxODUiIHkyPSIxMjgiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEFsdCByb3c6IEZ1bmN0b3IgLT4gQWx0IC0+IFBsdXMgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTI4IiB5PSIxODUiIHdpZHRoPSI0OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE1MiIgeT0iMjAwIj5BbHQ8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMjE2IiB5PSIxODUiIHdpZHRoPSI1MiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI0MiIgeT0iMjAwIj5QbHVzPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIiIHkxPSI2MCIgeDI9IjE0MCI9Mj0iMTgzIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMTc2IiB5MT0iMjAwIiB4Mj0iMjE0IiB5Mj0iMjAwIj48L2xpbmU+CgogICAgICA8IS0tIFBsdXMgLT4gQWx0ZXJuYXRpdmUgLS0+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjY4IiB5MT0iMjAwIiB4Mj0iNDAzIiB5Mj0iNjIiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEZ1bmN0b3JGaWx0ZXIgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTAwIiB5PSIzMCIgd2lkdGg9IjEwNSIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU1MiIgeT0iNDUiPkZ1bmN0b3JGaWx0ZXI8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9Ijg4IiB5MT0iMzgiIHgyPSI0OTgiIHkyPSIzOCI+PC9saW5lPgoKICAgICAgPCEtLSA9PT0gSW52YXJpYW50ID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjY1MCIgeT0iMzAiIHdpZHRoPSI3NiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjY4OCIgeT0iNDUiPkludmFyaWFudDwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iODgiIHkxPSI1MiI9Mj0iNjQ4IiB5Mj0iNTIiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEJpZnVuY3RvciAoSEtUMikgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTYwIiB5PSI4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAwIiB5PSI5NSI+QmlmdW5jdG9yPC90ZXh0D4KCiAgICAgIDwhLS0gTmF0dXJhbFRyYW5zZm9ybWF0aW9uIHN0YW5kYWxvbmUgLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NjAiIHk9IjEzMCIgd2lkdGg9IjE0NSIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjYzMiIgeT0iMTQ1Ij5OYXR1cmFsVHJhbnNmb3JtYXRpb248L3RleHQ+CgogICAgICA8IS0tID09PSBDb21vbmFkIGZhbWlseSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iMzEwIiB3aWR0aD0iNjgiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI1MCIgeT0iMzI1Ij5FeHRlbmQ8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTI0IiB5PSIzMTAiIHdpZHRoPSI3OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE2MyIgeT0iMzI1Ij5Db21vbmFkPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyNDIiIHk9IjMxMCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMjg3IiB5PSIzMjUiPkNvbW9uYWRFbnY8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMjQyIiB5PSIzNTUiIHdpZHRoPSI5OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI5MSIgeT0iMzcwiPkNvbW9uYWRTdG9yZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyNDIiIHk9IjQwMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI5MiIgeT0iNDE1Ij5Db21vbmFkVHJhY2VkPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIiIHkxPSI2MCI9Mj0iNDAiIHkyPSIzMDgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI4NCI9Mj0iMTIyIiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjAyIiB5MT0iMzI1IiB4Mj0iMjQwIiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjAyIiB5MT0iMzMwIiB4Mj0iMjQwIiB5Mj0iMzY1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjAyIiB5MT0iMzM1IiB4Mj0iMjQwIiB5Mj0iNDA1Ij48L2xpbmU+CgogICAgICA8IS0tID09PSBDb250cmF2YXJpYW50IGZhbWlseSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI0MzAiIHk9IjMxMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjQ4MCIgeT0iMzI1Ij5Db250cmF2YXJpYW50PC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NzAiIHk9IjMxMCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAyIiB5PSIzMjUiPkRpdmlkZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NzQiIHk9IjMxMCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzEwIiB5PSIzMjUiPkRpdmlzaWJsZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NzAiIHk9IjM1NSIgd2lkdGg9IjY0IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAyIiB5PSIzNzAiPkRlY2lkZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NzQiIHk9IjM1NSIgd2lkdGg9Ijc4IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzEzIiB5PSIzNzAiPkNvbmNsdWRlPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTMwIiB5MT0iMzI1IiB4Mj0iNTY4IiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjM0IiB5MT0iMzI1IiB4Mj0iNjcyIiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTMwIiB5MT0iMzM1IiB4Mj0iNTY4IiB5Mj0iMzY1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjM0IiB5MT0iMzcwIiB4Mj0iNjcyIiB5Mj0iMzcwIj48L2xpbmU+CgogICAgICA8IS0tID09PSBBbGdlYnJhaWMgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTYiIHk9IjQ2MCIgd2lkdGg9IjgyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNTciIHk9IjQ3NSI+U2VtaWdyb3VwPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMzgiIHk9IjQ2MCIgd2lkdGg9IjY4IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMTcyIiB5PSI0NzUiPk1vbm9pZDwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iOTgiIHkxPSI0NzUiIHgyPSIxMzYiIHkyPSI0NzUiPjwvbGluZT4KICAgICAgPCEtLSA9PT0gRm9sZGFibGUgLyBUcmF2ZXJzYWJsZSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyODAiIHk9IjQ2MCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMzE2IiB5PSI0NzUiPkZvbGRhYmxlPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIzOTIiIHk9IjQ2MCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNDM3IiB5PSI0NzUiPlRyYXZlcnNhYmxlPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMzUyIiB5MT0iNDc1IiB4Mj0iMzkwIiB5Mj0iNDc1Ij48L2xpbmU+CiAgICAgIDwhLS0gPT09IFByb2Z1bmN0b3IgZmFtaWx5ID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjE2IiB5PSI1NjAiIHdpZHRoPSI4NiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU5IiB5PSI1NzUiPlByb2Z1bmN0b3I8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTQyIiB5PSI1NjAiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE3NCIgeT0iNTc1Ij5TdHJvbmc8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTQyIiB5PSI2MDAiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE3NCIgeT0iNjE1Ij5DaG9pY2U8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjEwMiIgeTE9IjU3MCI9Mj0iMTQwIiB5Mj0iNTcwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMTAyIiB5MT0iNTgwIiB4Mj0iMTQwIiB5Mj0iNjEwIj48L2xpbmU+CgogICAgICA8IS0tID09PSBBcnJvdyBmYW1pbHkgKEhLVDIpID09PSAtLT4KICAgICAgPHRleHQgeD0iMzUwIiB5PSI1NDgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5BcnJvdyBmYW1pbHkgKEhLVDIpPC90ZXh0D4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjM1MCIgeT0iNTYwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNDAwIiB5PSI1NzUiPlNlbWlncm91cG9pZDwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI0OTAiIHk9IjU2MCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNTI2IiB5PSI1NzUiPkNhdGVnb3J5PC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2MDIiIHk9IjU2MCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjMwIiB5PSI1NzUiPkFycm93PC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI3MDAiIHk9IjU0MCIgd2lkdGg9IjkyIiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzQ2IiB5PSI1NTMiPkFycm93Q2hvaWNlPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI3MDAiIHk9IjU3MCIgd2lkdGg9Ijg2IiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzQzIiB5PSI1ODMiPkFycm93QXBwbHk8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNzAwIiB5PSI2MDAiIHdpZHRoPSI4NiIgaGVpZ2h0PSIyNiIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9Ijc0MyIgeT0iNjEzIj5BcnJvd0xvb3A8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTQwIiB5PSI2MTAiIHdpZHRoPSI4MiIgaGVpZ2h0PSIyNiIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU4MSIgeT0iNjIzIj5BcnJvd1plcm88L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNjYwIiB5PSI2NDAiIHdpZHRoPSI4MiIgaGVpZ2h0PSIyNiIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjcwMSIgeT0iNjUzIj5BcnJvd1BsdXM8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjQ1MCI9Mj0iNDg4IiB5Mj0iNTc1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTYyIiB5MT0iNTc1IiB4Mj0iNjAwIiB5Mj0iNTc1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTY4IiB4Mj0iNjk4IiB5Mj0iNTU1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTc1IiB4Mj0iNjk4IiB5Mj0iNTgwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTgyIiB4Mj0iNjk4IiB5Mj0iNjEwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjMwIiB5MT0iNTkwIiB4Mj0iNTcwIiB5Mj0iNjA4Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIyIiB5MT0iNjM2IiB4Mj0iNjU4IiB5Mj0iNjQ4Ij48L2xpbmU+CiAgICA8L3N2Zz4=)
 
-**Key:** Solid borders are standard traits. **Dashed borders** indicate blanket implementations — `Monad` is automatically derived for any type that implements both `Applicative` and `Chain`, and `Alternative` for `Applicative + Plus`.
+**凡例:** 実線の枠は標準トレイト。**破線の枠** はブランケット実装を示します — `Monad` は `Applicative` と `Chain` の両方を実装する任意の型に自動的に導出され、`Alternative` は `Applicative + Plus` に導出されます。
 
-## The Static Land Pattern
+## Static Land パターン
 
-Karpal uses **associated functions on marker types**, not methods on values. Instead of calling `some_value.fmap(f)`, you write:
+Karpal は値のメソッドではなく、**マーカー型上の関連関数** を使います。`some_value.fmap(f)` を呼ぶ代わりに:
 
 ``` rust
-// Karpal's Static Land style
+// Karpal の Static Land スタイル
 let result = OptionF::fmap(Some(42), |x| x + 1);
 
-// NOT the method-on-value style (not possible in Karpal)
+// 値のメソッドスタイルではない (Karpal では不可能)
 // let result = Some(42).fmap(|x| x + 1);
 ```
 
-### Why this approach?
+### なぜこのアプローチか?
 
-Rust's **trait coherence rules** (the orphan rule) prevent you from implementing a foreign trait on a foreign type. Since `Option` is defined in `std` and `Functor` is defined in Karpal, you cannot write `impl Functor for Option<T>` directly.
+Rust の **トレイトコヒーレンス規則** (孤立規則) は、外国のトレイトを外国の型に実装することを防ぎます。`Option` は `std` で定義され、`Functor` は Karpal で定義されるため、`impl Functor for Option<T>` を直接書けません。
 
-The marker-type approach sidesteps this entirely. `OptionF` is *owned by Karpal*, so Karpal can freely implement any trait on it. The `HKT` GAT bridges the gap back to the actual container type via the `Of<T>` associated type.
+マーカー型アプローチはこれを完全に回避します。`OptionF` は *Karpal が所有する* ため、Karpal は自由に任意のトレイトを実装できます。`HKT` GAT が `Of<T>` 関連型を介して実際のコンテナ型へ橋渡しします。
 
-### Comparison with other ecosystems
+### 他のエコシステムとの比較
 
-| Ecosystem          | Approach                                                        | Tradeoff                                                     |
+| エコシステム          | アプローチ                                                        | トレードオフ                                                     |
 |--------------------|-----------------------------------------------------------------|--------------------------------------------------------------|
-| Haskell            | Native typeclasses with HKT support                             | Ideal ergonomics; not available in Rust                      |
-| Scala              | Implicits / given instances with `Kind` projections             | Powerful but complex; relies on JVM runtime                  |
-| fp-ts (TypeScript) | Static Land — functions in module namespaces (`O.map`, `A.map`) | Closest analogue to Karpal's design; same ergonomic tradeoff |
-| **Karpal (Rust)**  | Static Land — associated functions on marker types              | Zero-cost, type-safe, but verbose call syntax                |
+| Haskell            | HKT サポート付きネイティブ型クラス                             | 理想的なエルゴノミクス; Rust では利用不可                      |
+| Scala              | `Kind` 射影付きの暗黙的 / given インスタンス             | 強力だが複雑; JVM ランタイムに依存                  |
+| fp-ts (TypeScript) | Static Land — モジュール名前空間内の関数 (`O.map`, `A.map`) | Karpal の設計に最も近い類似物; 同じエルゴノミックトレードオフ |
+| **Karpal (Rust)**  | Static Land — マーカー型上の関連関数              | ゼロコスト、型安全、しかし冗長な呼び出し構文                |
 
-## Design Decisions
+## 設計決定
 
-### `no_std` first
+### `no_std` ファースト
 
-`karpal-core`, `karpal-profunctor`, and `karpal-arrow` compile without `std`. Types that require heap allocation — `VecF`, `NonEmptyVecF`, `PredicateF`, `StoreF`, `TracedF` — are gated behind the `alloc` or `std` feature flags. This makes Karpal usable in embedded and `no_std` environments.
+`karpal-core`、`karpal-profunctor`、`karpal-arrow` は `std` なしでコンパイルされます。ヒープアロケーションを必要とする型 — `VecF`、`NonEmptyVecF`、`PredicateF`、`StoreF`、`TracedF` — は `alloc` または `std` フィーチャーフラグの背後でゲートされます。これにより Karpal は組み込みや `no_std` 環境で利用可能です。
 
-### Nightly edition 2024
+### nightly edition 2024
 
-The toolchain is pinned to nightly via `rust-toolchain.toml`. While GATs themselves stabilized in Rust 1.65, Karpal also relies on `use<>` precise-capture syntax (edition 2024) and the `alloc` feature gate for `no_std` builds. The nightly pin ensures all contributors use the same compiler.
+ツールチェーンは `rust-toolchain.toml` 経由で nightly に固定されます。GAT 自体は Rust 1.65 で安定化しましたが、Karpal は `use<>` precise-capture 構文 (edition 2024) と `no_std` ビルドの `alloc` フィーチャーゲートにも依存します。nightly 固定によりすべての貢献者が同じコンパイラを使います。
 
-### `fn` pointers in optics
+### オプティクスの `fn` ポインタ
 
-The `Lens` struct stores plain function pointers rather than closures:
+`Lens` 構造体はクロージャではなくプレーンな関数ポインタを格納します:
 
 ``` rust
 pub struct Lens<S, T, A, B> {
@@ -143,41 +143,41 @@ pub struct Lens<S, T, A, B> {
 }
 ```
 
-This keeps `Lens` `Copy`-able and avoids lifetime complications. When lenses are composed via `Lens::then()`, the result is a `ComposedLens` that uses `Box<dyn Fn>` closures instead, since closure composition cannot produce `fn` pointers.
+これにより `Lens` は `Copy` 可能になり、ライフタイムの複雑さを回避します。`Lens::then()` で合成されると、結果はクロージャ合成が `fn` ポインタを生成できないため、代わりに `Box<dyn Fn>` クロージャを使う `ComposedLens` になります。
 
-### `'static` bounds on `Box<dyn Fn>`
+### `Box<dyn Fn>` の `'static` 境界
 
-Types whose inner representation is a boxed closure — `PredicateF`, `FnP`, `FnA`, `KleisliF`, `CokleisliF`, `StoreF`, `TracedF` — require `'static` bounds. This is an inherent limitation of `Box<dyn Fn>` in Rust. As a consequence, `StoreF` and `TracedF` cannot implement the generic `Functor` trait (whose signature does not carry a `'static` bound); they provide their own `fmap` through the `Extend`/`Comonad` implementation instead.
+内側の表現が boxed クロージャである型 — `PredicateF`、`FnP`、`FnA`、`KleisliF`、`CokleisliF`、`StoreF`、`TracedF` — は `'static` 境界を必要とします。これは Rust の `Box<dyn Fn>` の固有の制限です。結果として、`StoreF` と `TracedF` は汎用 `Functor` トレイト (シグネチャが `'static` 境界を持たない) を実装できません; 代わりに `Extend`/`Comonad` 実装を通じて独自の `fmap` を提供します。
 
-### Blanket implementations
+### ブランケット実装
 
-Where the theory permits, Karpal uses blanket impls to eliminate boilerplate:
+理論が許すところでは、Karpal はボイラープレートを排除するためにブランケット impl を使います:
 
 ``` rust
-/// Monad: Applicative + Chain with no extra methods (blanket impl).
+/// Monad: Applicative + Chain で追加メソッドなし (ブランケット impl)。
 pub trait Monad: Applicative + Chain {}
 
 impl<F: Applicative + Chain> Monad for F {}
 ```
 
-Any marker type that implements both `Applicative` and `Chain` is automatically a `Monad`. The same pattern applies to `Alternative` (= `Applicative + Plus`). Implementors only need to provide the primitive operations; the composed abstractions come for free.
+`Applicative` と `Chain` の両方を実装する任意のマーカー型は自動的に `Monad` になります。同じパターンが `Alternative` (= `Applicative + Plus`) に適用されます。実装者は原始演算を提供するだけで済みます; 合成された抽象化は無料で付いてきます。
 
-### Property-based law testing
+### プロパティベースの法則テスト
 
-Every algebraic trait in Karpal has [proptest](https://crates.io/crates/proptest)-based law tests that verify the required algebraic identities hold. For example, the Functor laws:
+Karpal のすべての代数的トレイトには、要求される代数的同一性が成り立つことを検証する [proptest](https://crates.io/crates/proptest) ベースの法則テストがあります。例えば Functor の法則:
 
 ``` rust
 proptest! {
     #[test]
     fn option_identity(x in any::<Option<i32>>()) {
-        // Identity law: fmap(id, fa) == fa
+        // 単位律: fmap(id, fa) == fa
         let result = OptionF::fmap(x.clone(), |a| a);
         prop_assert_eq!(result, x);
     }
 
     #[test]
     fn option_composition(x in any::<Option<i32>>()) {
-        // Composition law: fmap(g . f, fa) == fmap(g, fmap(f, fa))
+        // 合成律: fmap(g . f, fa) == fmap(g, fmap(f, fa))
         let f = |a: i32| a.wrapping_add(1);
         let g = |a: i32| a.wrapping_mul(2);
         let left = OptionF::fmap(x.clone(), |a| g(f(a)));
@@ -187,42 +187,40 @@ proptest! {
 }
 ```
 
-This approach catches subtle bugs that unit tests miss — such as associativity violations in `Semigroup` implementations or distributivity failures in `Alternative`.
+このアプローチは、ユニットテストが見逃す微妙なバグ — `Semigroup` 実装の結合律違反や `Alternative` の分配律の失敗など — を捕捉します。
 
-## Proof and Verification Layering
+## 証明と検証の階層化
 
-`karpal-proof` and `karpal-verify` extend this architecture above the trait hierarchy with two distinct reasoning layers.
+`karpal-proof` と `karpal-verify` は、トレイト階層の上に二つの異なる推論層でこのアーキテクチャを拡張します。
 
-| Layer                 | Crate           | Architectural role                                                                                    |
+| 層                 | クレート           | アーキテクチャ上の役割                                                                                    |
 |-----------------------|-----------------|-------------------------------------------------------------------------------------------------------|
-| Internal evidence     | `karpal-proof`  | Encodes law witnesses, rewrites, and refinement types directly in Rust APIs                           |
-| External verification | `karpal-verify` | Bridges Karpal obligations to SMT and Lean, then reports results and imported certificates explicitly |
+| 内部証拠     | `karpal-proof`  | 法則証拠、書き換え、精密化型を Rust API に直接エンコード                           |
+| 外部検証 | `karpal-verify` | Karpal のオブリゲーションを SMT や Lean にブリッジし、結果とインポートされた証明書を明示的に報告 |
 
-### Why two layers?
+### なぜ二つの層か?
 
-`karpal-proof` and `karpal-verify` intentionally solve different problems. The first lets Rust code carry structured evidence after local checks, trait-derived witnesses, or audited assumptions. The second lets Karpal talk to external provers without pretending that a solver result is the same thing as compiler-checked evidence.
+`karpal-proof` と `karpal-verify` は意図的に異なる問題を解決します。前者はローカルチェック、トレイト由来の証拠、監査された仮定の後に Rust コードが構造化された証拠を運べるようにします。後者は、ソルバーの結果がコンパイラチェックされた証拠と同じものだと見せかけずに、Karpal が外部の証明器と対話できるようにします。
 
-### `karpal-verify` pipeline
+### `karpal-verify` パイプライン
 
-The external verification layer is organized as a pipeline:
+外部検証層はパイプラインとして編成されます:
 
-1.  Model a goal as an `Obligation` or `ObligationBundle`.
-2.  Export the bundle to SMT-LIB2 scripts or a Lean module.
-3.  Attach structured Lean metadata such as theorem identities, declaration spans, imports, aliases, and package/project scaffold data.
-4.  Write artifacts and build `InvocationPlan` values.
-5.  Execute those plans through a `VerifierRunner`, including project-aware `lake env lean` or `lake build` flows when desired.
-6.  Parse solver or Lean output, including Lean diagnostics and theorem-aware failure mapping.
-7.  Interpret success through an explicit `VerificationPolicy` per backend.
-8.  Aggregate results into a `VerificationReport`, Lean manifest, and diagnostics sidecar, all suitable for CI serialization.
-9.  Import successful evidence as `Certified<B, P, T>`, not directly as `Proven<P, T>`.
+1.  目標を `Obligation` または `ObligationBundle` としてモデル化する。
+2.  バンドルを SMT-LIB2 スクリプトまたは Lean モジュールにエクスポートする。
+3.  定理の同一性、宣言スパン、インポート、エイリアス、パッケージ/プロジェクトスキャフォールドデータなどの構造化 Lean メタデータを添付する。
+4.  アーティファクトを書き、`InvocationPlan` 値を構築する。
+5.  それらの計画を `VerifierRunner` 経由で実行する (望む場合はプロジェクト認識の `lake env lean` や `lake build` フローを含む)。
+6.  ソルバーまたは Lean の出力をパースする (Lean 診断と定理認識失敗マッピングを含む)。
+7.  バックエンドごとの明示的な `VerificationPolicy` を通じて成功を解釈する。
+8.  結果を CI シリアライズに適した `VerificationReport`、Lean マニフェスト、診断サイドカーに集約する。
+9.  成功した証拠を `Proven<P, T>` ではなく `Certified<B, P, T>` としてインポートする。
 
-### Trust boundary
+### 信頼境界
 
-This separation is deliberate. External evidence crosses a visible boundary through `Certified<...>` and only becomes `Proven<...>` via an explicit `unsafe` conversion. That keeps imported trust searchable in code review and avoids conflating theorem prover output with Rust-native guarantees.
+この分離は意図的です。外部証拠は `Certified<...>` を通じて可視的な境界を越え、明示的な `unsafe` 変換経由でのみ `Proven<...>` になります。これによりインポートされた信頼をコードレビューで検索可能に保ち、定理証明器の出力と Rust ネイティブの保証を混同しないようにします。
 
-For API details, see the [Proof & Verification reference](reference/proof-verification.md). For CI-specific execution/reporting guidance, see [Verification CI Workflow](reference/verification-ci.md). For serialized artifact compatibility, see [Verification Schemas](reference/verification-schemas.md). For a walkthrough example, see [Verification Workflow](examples/verification-workflow.md). For a domain-boundary example that combines `karpal-proof` and `karpal-verify`, see [Verified Domain API](examples/verified-domain-api.md). For the design note focused on imported trust, see [Trust Model](dev/phase-12-trust-model.md).
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+API の詳細は [証明と検証リファレンス](reference/proof-verification.md) を参照してください。CI 固有の実行/報告指針は [検証 CI ワークフロー](reference/verification-ci.md) を、シリアライズされたアーティファクトの互換性は [検証スキーマ](reference/verification-schemas.md) を、チュートリアル例は [検証ワークフロー](examples/verification-workflow.md) を、`karpal-proof` と `karpal-verify` を組み合わせたドメイン境界の例は [検証済みドメイン API](examples/verified-domain-api.md) を、インポートされた信頼に焦点を当てた設計メモは [信頼モデル](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md) を参照してください。
 
 
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。

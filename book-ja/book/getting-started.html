@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-94c6eba9.js"></script>
@@ -178,44 +178,44 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
-<p>This guide walks you through adding Karpal to your Rust project, understanding its HKT encoding, and using the core abstractions: Functor, Monad, and the ergonomic <code>do_!</code> and <code>ado_!</code> macros.</p>
-<h2 id="1-installation"><a class="header" href="#1-installation">1. Installation</a></h2>
-<p>The easiest way to use Karpal is through the <code>karpal-std</code> crate, which re-exports everything from the other workspace crates in a single prelude.</p>
-<p>Add it to your <code>Cargo.toml</code>:</p>
+                        <h1 id="はじめての利用"><a class="header" href="#はじめての利用">はじめての利用</a></h1>
+<p>このガイドは Rust プロジェクトに Karpal を追加し、その HKT エンコーディングを理解し、コア抽象化である Functor、Monad、快適な <code>do_!</code> と <code>ado_!</code> マクロを使うまでを案内します。</p>
+<h2 id="1-インストール"><a class="header" href="#1-インストール">1. インストール</a></h2>
+<p>Karpal を使う最も簡単な方法は <code>karpal-std</code> クレート経由です。これは他のワークスペースクレートのすべてを単一のプレリュードに再エクスポートします。</p>
+<p><code>Cargo.toml</code> に追加:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[dependencies]
 karpal-std = "0.7"
 <span class="boring">}</span></code></pre>
-<p>Then import the prelude at the top of any module that uses Karpal types and traits:</p>
+<p>次に Karpal の型とトレイトを使うモジュールの先頭でプレリュードをインポート:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 <span class="boring">}</span></code></pre>
-<p>This single import brings in all type constructors (<code>OptionF</code>, <code>VecF</code>, <code>ResultF</code>, etc.), all traits (<code>Functor</code>, <code>Applicative</code>, <code>Monad</code>, <code>Foldable</code>, etc.), and the <code>do_!</code> and <code>ado_!</code> macros.</p>
-<h3 id="toolchain-requirements"><a class="header" href="#toolchain-requirements">Toolchain requirements</a></h3>
-<p>Karpal requires <strong>nightly Rust</strong> because it uses edition 2024 features. The repository includes a <code>rust-toolchain.toml</code> that pins the exact nightly version, so if you are working within the Karpal workspace, Cargo and rustup will select the correct toolchain automatically.</p>
-<p>If you are consuming Karpal as a dependency in your own project, make sure your project also uses a nightly toolchain. You can create a <code>rust-toolchain.toml</code> in your project root:</p>
+<p>この単一のインポートがすべての型コンストラクタ (<code>OptionF</code>、<code>VecF</code>、<code>ResultF</code> など)、すべてのトレイト (<code>Functor</code>、<code>Applicative</code>、<code>Monad</code>、<code>Foldable</code> など)、<code>do_!</code> と <code>ado_!</code> マクロをもたらします。</p>
+<h3 id="ツールチェーン要件"><a class="header" href="#ツールチェーン要件">ツールチェーン要件</a></h3>
+<p>Karpal は edition 2024 の機能を使うため <strong>nightly Rust</strong> が必要です。リポジトリには正確な nightly バージョンを固定する <code>rust-toolchain.toml</code> が含まれているため、Karpal ワークスペース内で作業する場合、Cargo と rustup が自動的に正しいツールチェーンを選択します。</p>
+<p>自分のプロジェクトの依存関係として Karpal を利用する場合、プロジェクトも nightly ツールチェーンを使うようにしてください。プロジェクトルートに <code>rust-toolchain.toml</code> を作成できます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[toolchain]
 channel = "nightly"
 <span class="boring">}</span></code></pre>
-<h2 id="2-your-first-hkt"><a class="header" href="#2-your-first-hkt">2. Your First HKT</a></h2>
-<p>Higher-Kinded Types (HKTs) let you abstract over <em>type constructors</em> — not just concrete types like <code>Option&lt;i32&gt;</code>, but the <code>Option</code> constructor itself. Rust does not natively support HKTs, but Karpal encodes them using Generic Associated Types (GATs), which have been stable since Rust 1.65.</p>
-<p>The core trait is:</p>
+<h2 id="2-最初の-hkt"><a class="header" href="#2-最初の-hkt">2. 最初の HKT</a></h2>
+<p>高階型 (HKT) により、<em>型コンストラクタ</em> について抽象化できます — <code>Option&lt;i32&gt;</code> のような具体的な型だけでなく、<code>Option</code> コンストラクタ自体について。Rust はネイティブには HKT をサポートしませんが、Karpal は Rust 1.65 から安定している Generic Associated Types (GAT) を使ってエンコードします。</p>
+<p>コアトレイトは:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trait HKT {
     type Of&lt;T&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>A type that implements <code>HKT</code> is a <strong>type constructor</strong> — a marker type that, given a parameter <code>T</code>, produces a concrete type. Karpal provides several built-in constructors:</p>
+<p><code>HKT</code> を実装する型は <strong>型コンストラクタ</strong> です — パラメータ <code>T</code> を与えられると具体的な型を生成するマーカー型です。Karpal はいくつかの組み込みコンストラクタを提供します:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Marker type</th><th><code>Of&lt;T&gt;</code> resolves to</th></tr>
+<tr><th>マーカー型</th><th><code>Of&lt;T&gt;</code> の解決結果</th></tr>
 </thead>
 <tbody>
 <tr><td><code>OptionF</code></td><td><code>Option&lt;T&gt;</code></td></tr>
@@ -224,12 +224,12 @@ channel = "nightly"
 </tbody>
 </table>
 </div>
-<p>So <code>&lt;OptionF as HKT&gt;::Of&lt;i32&gt;</code> is simply <code>Option&lt;i32&gt;</code>. Nothing new at the value level — the magic is at the <em>type</em> level. You can now write functions that are generic over the <em>shape</em> of the container, not just its contents:</p>
+<p>したがって <code>&lt;OptionF as HKT&gt;::Of&lt;i32&gt;</code> は単に <code>Option&lt;i32&gt;</code> です。値レベルでは何も新しいことはありません — 魔法は <em>型</em> レベルにあります。これでコンテナの中身ではなく <em>形</em> について汎用的な関数を書けます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-/// Wraps a value in any container that supports `Applicative::pure`.
+/// Applicative::pure をサポートする任意のコンテナに値を包む。
 fn wrap&lt;F: Applicative&gt;(value: i32) -&gt; F::Of&lt;i32&gt; {
     F::pure(value)
 }
@@ -237,9 +237,9 @@ fn wrap&lt;F: Applicative&gt;(value: i32) -&gt; F::Of&lt;i32&gt; {
 let opt: Option&lt;i32&gt; = wrap::&lt;OptionF&gt;(42);   // Some(42)
 let vec: Vec&lt;i32&gt;    = wrap::&lt;VecF&gt;(42);      // vec![42]
 <span class="boring">}</span></code></pre>
-<p>The caller chooses the container by supplying a type constructor as a generic parameter. The function body stays the same regardless of which container is selected.</p>
-<h2 id="3-your-first-functor"><a class="header" href="#3-your-first-functor">3. Your First Functor</a></h2>
-<p>A <strong>Functor</strong> is any type constructor that supports mapping a function over its contents. If you have used <code>Option::map</code> or <code>Iterator::map</code>, you already know the idea — Karpal just gives it a uniform interface.</p>
+<p>呼び出しが型コンストラクタをジェネリックパラメータとして指定してコンテナを選びます。関数本体はどのコンテナが選ばれても同じです。</p>
+<h2 id="3-最初の-functor"><a class="header" href="#3-最初の-functor">3. 最初の Functor</a></h2>
+<p><strong>Functor</strong> とは、内容に関数をマップできる任意の型コンストラクタです。<code>Option::map</code> や <code>Iterator::map</code> を使ったことがあれば、アイデアは既に知っています — Karpal は単に統一インターフェースを与えるだけです。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -250,7 +250,7 @@ assert_eq!(result, Some(6));
 let result = VecF::fmap(vec![1, 2, 3], |x| x + 10);
 assert_eq!(result, vec![11, 12, 13]);
 <span class="boring">}</span></code></pre>
-<p>This looks similar to calling <code>.map()</code> directly, and at the concrete level it behaves identically. The difference is that <code>Functor::fmap</code> is a trait method on the <em>type constructor</em>, which means you can write functions that work with any functor:</p>
+<p>これは直接 <code>.map()</code> を呼ぶのと似ており、具体的なレベルでは同一に振る舞います。違いは <code>Functor::fmap</code> が <em>型コンストラクタ</em> 上のトレイトメソッドであることです。つまり任意の関手で動作する関数を書けます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -259,26 +259,26 @@ fn double_inner&lt;F: Functor&gt;(fa: F::Of&lt;i32&gt;) -&gt; F::Of&lt;i32&gt; {
     F::fmap(fa, |x| x * 2)
 }
 
-// Works with Option
+// Option で動作
 assert_eq!(double_inner::&lt;OptionF&gt;(Some(5)), Some(10));
 assert_eq!(double_inner::&lt;OptionF&gt;(None), None);
 
-// Works with Vec
+// Vec で動作
 assert_eq!(double_inner::&lt;VecF&gt;(vec![1, 2, 3]), vec![2, 4, 6]);
 <span class="boring">}</span></code></pre>
-<p>One function, multiple container types, zero code duplication.</p>
-<h3 id="functor-laws"><a class="header" href="#functor-laws">Functor laws</a></h3>
-<p>Every <code>Functor</code> implementation must satisfy two laws. Karpal verifies these with property-based tests, but they are worth knowing informally:</p>
+<p>一つの関数、複数のコンテナ型、コード重複ゼロ。</p>
+<h3 id="functor-の法則"><a class="header" href="#functor-の法則">Functor の法則</a></h3>
+<p>すべての <code>Functor</code> 実装は二つの法則を満たさなければなりません。Karpal はプロパティベースのテストでこれらを検証しますが、非公式に知っておく価値があります:</p>
 <ul>
-<li><strong>Identity:</strong> mapping the identity function changes nothing. <code>F::fmap(fa, |x| x) == fa</code></li>
-<li><strong>Composition:</strong> mapping <code>f</code> then <code>g</code> is the same as mapping <code>|x| g(f(x))</code>. <code>F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))</code></li>
+<li><strong>単位律:</strong> 恒等関数でマップしても何も変わりません。<code>F::fmap(fa, |x| x) == fa</code></li>
+<li><strong>合成律:</strong> <code>f</code> でマップしてから <code>g</code> でマップするのは <code>|x| g(f(x))</code> でマップするのと同じです。<code>F::fmap(F::fmap(fa, f), g) == F::fmap(fa, |x| g(f(x)))</code></li>
 </ul>
-<p>These laws guarantee that <code>fmap</code> only transforms values — it never adds, removes, or reorders elements in the container.</p>
-<h2 id="4-monadic-notation-with-do_"><a class="header" href="#4-monadic-notation-with-do_">4. Monadic Notation with <code>do_!</code></a></h2>
-<p>Monadic computations in Rust quickly turn into deeply nested <code>.and_then()</code> chains. Each step that depends on the previous value adds another level of indentation:</p>
+<p>これらの法則は <code>fmap</code> が値を変換することだけを保証します — コンテナ内の要素を追加・削除・並べ替えすることはありません。</p>
+<h2 id="4-do_-によるモナド記法"><a class="header" href="#4-do_-によるモナド記法">4. <code>do_!</code> によるモナド記法</a></h2>
+<p>Rust のモナド的計算はすぐに深く入れ子になった <code>.and_then()</code> 連鎖になります。前の値に依存する各ステップがインデントのレベルを一つ追加します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// The nesting problem: every step pushes the code further right
+</span>// 入れ子の問題: 各ステップがコードをさらに右に押し出す
 fn fetch_dashboard(user_id: &amp;str) -&gt; Option&lt;Dashboard&gt; {
     lookup_user(user_id).and_then(|user| {
         load_preferences(&amp;user).and_then(|prefs| {
@@ -289,7 +289,7 @@ fn fetch_dashboard(user_id: &amp;str) -&gt; Option&lt;Dashboard&gt; {
     })
 }
 <span class="boring">}</span></code></pre>
-<p>With three steps this is manageable; with six or seven it becomes painful to read. The <code>do_!</code> macro flattens this into a top-to-bottom sequence of bindings:</p>
+<p>三ステップなら管理できますが、六、七になると読むのが苦痛になります。<code>do_!</code> マクロはこれを上から下への束縛シーケンスに平坦化します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -303,24 +303,24 @@ fn fetch_dashboard(user_id: &amp;str) -&gt; Option&lt;Dashboard&gt; {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>Each <code>name = expr</code> line binds the unwrapped value from the monadic expression on the right. If any step returns <code>None</code> (or <code>Err</code> for <code>ResultF</code>), the entire block short-circuits immediately. The final expression (without a binding) is the return value of the block.</p>
-<h3 id="syntax-reference"><a class="header" href="#syntax-reference">Syntax reference</a></h3>
+<p>各 <code>name = expr</code> 行が右辺のモナド式からアンラップされた値を束縛します。いずれかのステップが <code>None</code> (<code>ResultF</code> の場合は <code>Err</code>) を返せば、ブロック全体が直ちに短絡します。最終式 (束縛のないもの) がブロックの戻り値です。</p>
+<h3 id="構文リファレンス"><a class="header" href="#構文リファレンス">構文リファレンス</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>do_! { TypeConstructor;
     binding1 = monadic_expr1;
     binding2 = monadic_expr2;
-    // ... more bindings ...
+    // ... さらなる束縛 ...
     final_monadic_expr
 }
 <span class="boring">}</span></code></pre>
 <ul>
-<li>The first token is the type constructor (<code>OptionF</code>, <code>VecF</code>, <code>ResultF&lt;E&gt;</code>, etc.), followed by a semicolon.</li>
-<li>Each binding uses <code>=</code>, not <code>&lt;-</code>. Rust edition 2024 reserves <code>&lt;-</code> as a token, so the arrow syntax is not available.</li>
-<li>The final line must be an expression of type <code>F::Of&lt;T&gt;</code> — it is the value returned by the whole <code>do_!</code> block.</li>
-<li>Bindings can reference earlier bindings — each step has access to all names bound above it.</li>
+<li>最初のトークンは型コンストラクタ (<code>OptionF</code>、<code>VecF</code>、<code>ResultF&lt;E&gt;</code> など) で、セミコロンが続きます。</li>
+<li>各束縛は <code>&lt;-</code> ではなく <code>=</code> を使います。Rust edition 2024 は <code>&lt;-</code> をトークンとして予約するため、矢印構文は使えません。</li>
+<li>最終行は <code>F::Of&lt;T&gt;</code> 型の式でなければなりません — これが <code>do_!</code> ブロック全体の戻り値です。</li>
+<li>束縛は前の束縛を参照できます — 各ステップはその上で束縛されたすべての名前にアクセスできます。</li>
 </ul>
-<h3 id="a-concrete-example"><a class="header" href="#a-concrete-example">A concrete example</a></h3>
+<h3 id="具体的な例"><a class="header" href="#具体的な例">具体的な例</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -338,8 +338,8 @@ let result = do_! { OptionF;
 
 assert_eq!(result, Some(3.5));
 <span class="boring">}</span></code></pre>
-<h2 id="5-applicative-notation-with-ado_"><a class="header" href="#5-applicative-notation-with-ado_">5. Applicative Notation with <code>ado_!</code></a></h2>
-<p>When your computations are <em>independent</em> — none of them need the result of a previous step — you do not need the full power of <code>do_!</code>. The <code>ado_!</code> macro expresses this pattern and makes the independence explicit:</p>
+<h2 id="5-ado_-によるアプリカティブ記法"><a class="header" href="#5-ado_-によるアプリカティブ記法">5. <code>ado_!</code> によるアプリカティブ記法</a></h2>
+<p>計算が <em>独立</em> しているとき — どれも前のステップの結果を必要としないとき — <code>do_!</code> の完全な力は必要ありません。<code>ado_!</code> マクロはこのパターンを表現し、独立性を明示します:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -357,40 +357,40 @@ let config = ado_! { OptionF;
 
 assert_eq!(config, Some("localhost:8080 (4 workers)".to_string()));
 <span class="boring">}</span></code></pre>
-<p>The <code>yield</code> line combines all the bound values into a final result. Unlike <code>do_!</code>, the bindings in <code>ado_!</code> cannot reference each other — they are all evaluated independently, and the results are combined at the end.</p>
-<h3 id="syntax-reference-1"><a class="header" href="#syntax-reference-1">Syntax reference</a></h3>
+<p><code>yield</code> 行がすべての束縛された値を最終結果に結合します。<code>do_!</code> と異なり、<code>ado_!</code> の束縛は互いを参照できません — すべて独立に評価され、結果が最後に結合されます。</p>
+<h3 id="構文リファレンス-1"><a class="header" href="#構文リファレンス-1">構文リファレンス</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>ado_! { TypeConstructor;
     binding1 = applicative_expr1;
     binding2 = applicative_expr2;
-    // ... more bindings ...
+    // ... さらなる束縛 ...
     yield combining_expression
 }
 <span class="boring">}</span></code></pre>
 <ul>
-<li>Same first-token convention as <code>do_!</code>: the type constructor, then a semicolon.</li>
-<li>Each binding uses <code>=</code>. Bindings are independent and must not reference each other.</li>
-<li>The <code>yield</code> line combines all bound values into the final result. The expression after <code>yield</code> is a <em>pure</em> function of the bound names — it is automatically lifted into the applicative context.</li>
-<li>If any binding evaluates to <code>None</code> (or <code>Err</code>), the whole block short-circuits.</li>
+<li><code>do_!</code> と同じ最初のトークンの慣習: 型コンストラクタ、続いてセミコロン。</li>
+<li>各束縛は <code>=</code> を使います。束縛は独立しており、互いに参照してはなりません。</li>
+<li><code>yield</code> 行がすべての束縛値を最終結果に結合します。<code>yield</code> の後の式は束縛名の <em>純粋な</em> 関数です — 自動的にアプリカティブ文脈に持ち上げられます。</li>
+<li>いずれかの束縛が <code>None</code> (または <code>Err</code>) に評価されれば、ブロック全体が短絡します。</li>
 </ul>
-<h3 id="when-to-use-ado_-vs-do_"><a class="header" href="#when-to-use-ado_-vs-do_">When to use <code>ado_!</code> vs <code>do_!</code></a></h3>
+<h3 id="ado_-と-do_-の使い分け"><a class="header" href="#ado_-と-do_-の使い分け"><code>ado_!</code> と <code>do_!</code> の使い分け</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Use this</th><th>When</th></tr>
+<tr><th>これを使う</th><th>場合</th></tr>
 </thead>
 <tbody>
-<tr><td><code>do_!</code></td><td>Later steps depend on earlier results (sequential)</td></tr>
-<tr><td><code>ado_!</code></td><td>All steps are independent (parallel-safe)</td></tr>
+<tr><td><code>do_!</code></td><td>後のステップが前の結果に依存する (逐次)</td></tr>
+<tr><td><code>ado_!</code></td><td>すべてのステップが独立 (並列安全)</td></tr>
 </tbody>
 </table>
 </div>
-<p>In practice, <code>ado_!</code> documents intent: it tells the reader that the computations have no data dependencies. For types where order does not matter (like <code>Option</code>), the runtime behavior is identical, but the semantic clarity is valuable.</p>
-<h2 id="6-proof-and-external-verification"><a class="header" href="#6-proof-and-external-verification">6. Proof and External Verification</a></h2>
-<p>Once you are comfortable with Karpal’s core abstractions, the next layer is reasoning about laws explicitly.</p>
-<p><code>karpal-proof</code> gives you Rust-native evidence types like <code>Proven&lt;P, T&gt;</code>, refinement wrappers like <code>NonEmpty&lt;T&gt;</code> and <code>Positive&lt;T&gt;</code>, and derive helpers that generate algebraic law tests.</p>
-<p><code>karpal-verify</code> takes the next step outward: it lets you model proof obligations, export them to SMT-LIB2 or Lean 4, write artifacts, execute verification runs, and collect JSON / Markdown reports suitable for CI. Imported certificates remain explicit and do not silently become Rust proof witnesses.</p>
+<p>実際には、<code>ado_!</code> は意図を文書化します: 計算にデータ依存がないことを読み手に伝えます。順序が問わない型 (<code>Option</code> など) では実行時の振る舞いは同じですが、意味的な明確さが価値を持ちます。</p>
+<h2 id="6-証明と外部検証"><a class="header" href="#6-証明と外部検証">6. 証明と外部検証</a></h2>
+<p>Karpal のコア抽象化に慣れたら、次の層は法則について明示的に推論することです。</p>
+<p><code>karpal-proof</code> は <code>Proven&lt;P, T&gt;</code> のような Rust ネイティブの証拠型、<code>NonEmpty&lt;T&gt;</code> や <code>Positive&lt;T&gt;</code> のような精密化ラッパ、代数法則テストを生成する derive ヘルパを与えます。</p>
+<p><code>karpal-verify</code> は次のステップを外側に進めます: 証明オブリゲーションをモデル化し、それらを SMT-LIB2 や Lean 4 にエクスポートし、アーティファクトを書き、検証実行し、CI に適した JSON / Markdown レポートを収集できます。インポートされた証明書は明示的なままであり、暗黙に Rust の証拠証拠にはなりません。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -411,23 +411,23 @@ let report = verify_bundle(
 ).expect("verification session should succeed");
 assert_eq!(report.obligation_count(), 3);
 <span class="boring">}</span></code></pre>
-<p>See the <a href="reference/proof-verification.html">Proof &amp; Verification reference</a> for the full workflow and trust model, the <a href="reference/verification-ci.html">Verification CI Workflow</a> guide for artifact/report orchestration, and the <a href="reference/verification-schemas.html">Verification Schemas</a> page for serialized compatibility details.</p>
-<h2 id="7-next-steps"><a class="header" href="#7-next-steps">7. Next Steps</a></h2>
-<p>Now that you can install Karpal, map over containers generically, flatten monadic chains, and understand where proofs fit into the ecosystem, here is where to go next:</p>
+<p>完全なワークフローと信頼モデルは <a href="reference/proof-verification.html">証明と検証リファレンス</a> を、アーティファクト/レポートのオーケストレーションは <a href="reference/verification-ci.html">検証 CI ワークフロー</a> ガイドを、シリアライズされた互換性の詳細は <a href="reference/verification-schemas.html">検証スキーマ</a> ページを参照してください。</p>
+<h2 id="7-次のステップ"><a class="header" href="#7-次のステップ">7. 次のステップ</a></h2>
+<p>Karpal をインストールし、コンテナを汎用的にマップし、モナド連鎖を平坦化し、証拠がエコシステムのどこに適合するか理解できたら、次はここへ:</p>
 <ul>
-<li><a href="architecture-full.html"><strong>Architecture</strong></a> — understand the full functor hierarchy, from <code>Functor</code> through <code>Monad</code>, and the Alt/Alternative branch. See how the traits relate and which type constructors implement each one.</li>
-<li><a href="reference/functor-family.html"><strong>Functor Family reference</strong></a> — detailed documentation for <code>Functor</code>, <code>Apply</code>, <code>Applicative</code>, <code>Chain</code>, and <code>Monad</code>, including all method signatures and implementation notes.</li>
-<li><a href="reference/macros.html"><strong>Macros reference</strong></a> — the full syntax and edge cases for <code>do_!</code> and <code>ado_!</code>, including usage with <code>ResultF</code> and <code>VecF</code>.</li>
-<li><a href="reference/optics.html"><strong>Optics</strong></a> — profunctor-based Lens and Prism for composable, first-class field access and pattern matching.</li>
-<li><a href="reference/proof-verification.html"><strong>Proof &amp; Verification reference</strong></a> — law witnesses, derive-based checks, Lean/SMT obligation export, project-aware Lean execution, diagnostics mapping, trust boundaries, and CI-oriented verification reports.</li>
-<li><a href="reference/verification-ci.html"><strong>Verification CI Workflow</strong></a> — artifact layout, report writing, backend policies, Lean manifest/sidecar generation, and CI integration guidance for <code>karpal-verify</code>.</li>
-<li><a href="reference/verification-schemas.html"><strong>Verification Schemas</strong></a> — schema-versioned report, manifest, and diagnostics formats plus compatibility guidance for consumers.</li>
-<li><a href="examples/config-pipeline.html"><strong>Config Pipeline example</strong></a> — a realistic end-to-end example combining Functor, Applicative, and monadic chaining to build a configuration loader.</li>
-<li><a href="examples/data-transformation.html"><strong>Data Transformation example</strong></a> — using Foldable, Traversable, and FunctorFilter to process collections generically.</li>
-<li><a href="examples/verification-workflow.html"><strong>Verification Workflow example</strong></a> — a full <code>karpal-verify</code> walkthrough from obligation bundle to CI report files and explicit certificate import.</li>
-<li><a href="examples/verified-domain-api.html"><strong>Verified Domain API example</strong></a> — how <code>karpal-proof</code> <code>Proven&lt;...&gt;</code>-based APIs and <code>karpal-verify</code> <code>Certified&lt;...&gt;</code> imports fit together at a domain boundary.</li>
+<li><a href="architecture-full.html"><strong>アーキテクチャ</strong></a> — Functor から Monad までの完全な関手階層と Alt/Alternative 枝を理解する。トレイトがどう関連し、どの型コンストラクタがそれぞれを実装するかを見る。</li>
+<li><a href="reference/functor-family.html"><strong>関手ファミリーリファレンス</strong></a> — <code>Functor</code>、<code>Apply</code>、<code>Applicative</code>、<code>Chain</code>、<code>Monad</code> の詳細ドキュメント (すべてのメソッドシグネチャと実装メモを含む)。</li>
+<li><a href="reference/macros.html"><strong>マクロリファレンス</strong></a> — <code>do_!</code> と <code>ado_!</code> の完全な構文とエッジケース (<code>ResultF</code> や <code>VecF</code> との使用を含む)。</li>
+<li><a href="reference/optics.html"><strong>オプティクス</strong></a> — 合成可能で第一級のフィールドアクセスとパターンマッチングのためのプロ関手ベースの Lens と Prism。</li>
+<li><a href="reference/proof-verification.html"><strong>証明と検証リファレンス</strong></a> — 法則証拠、derive ベースのチェック、Lean/SMT オブリゲーションエクスポート、プロジェクト認識 Lean 実行、診断マッピング、信頼境界、CI 指向検証レポート。</li>
+<li><a href="reference/verification-ci.html"><strong>検証 CI ワークフロー</strong></a> — アーティファクトレイアウト、レポート書き出し、バックエンドポリシー、Lean マニフェスト/サイドカー生成、<code>karpal-verify</code> の CI 統合指針。</li>
+<li><a href="reference/verification-schemas.html"><strong>検証スキーマ</strong></a> — スキーマバージョン管理されたレポート、マニフェスト、診断形式とコンシューマの互換性指針。</li>
+<li><a href="examples/config-pipeline.html"><strong>設定パイプラインの例</strong></a> — Functor、Applicative、モナド連鎖を組み合わせて設定ローダを構築する現実的なエンドツーエンドの例。</li>
+<li><a href="examples/data-transformation.html"><strong>データ変換の例</strong></a> — Foldable、Traversable、FunctorFilter を使ってコレクションを汎用的に処理する。</li>
+<li><a href="examples/verification-workflow.html"><strong>検証ワークフローの例</strong></a> — オブリゲーションバンドルから CI レポートファイルと明示的な証明書インポートまでの完全な <code>karpal-verify</code> チュートリアル。</li>
+<li><a href="examples/verified-domain-api.html"><strong>検証済みドメイン API の例</strong></a> — <code>karpal-proof</code> の <code>Proven&lt;...&gt;</code> ベース API と <code>karpal-verify</code> の <code>Certified&lt;...&gt;</code> インポートがドメイン境界でどう組み合わさるか。</li>
 </ul>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

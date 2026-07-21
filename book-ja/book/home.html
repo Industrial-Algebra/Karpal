@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-94c6eba9.js"></script>
@@ -180,28 +180,28 @@
                     <main>
                         <h1 id="karpal"><a class="header" href="#karpal">Karpal</a></h1>
 <blockquote>
-<p>Higher-Kinded Types and algebraic structures for Rust</p>
+<p>Rust のための高階型と代数構造</p>
 </blockquote>
-<p><a href="./getting-started.html">Get Started</a> | <a href="./reference/functor-family.html">Browse Reference</a> | <a href="https://github.com/Industrial-Algebra/Karpal">GitHub</a></p>
+<p><a href="./getting-started.html">はじめる</a> | <a href="./reference/functor-family.html">リファレンスを見る</a> | <a href="https://github.com/Industrial-Algebra/Karpal">GitHub</a></p>
 <hr>
-<h2 id="features"><a class="header" href="#features">Features</a></h2>
-<h3 id="type-safe-abstractions"><a class="header" href="#type-safe-abstractions">Type-Safe Abstractions</a></h3>
-<p>HKT encoding via GATs lets you write functions generic over <code>Option</code>, <code>Result</code>, <code>Vec</code>, and any container that supports mapping, sequencing, or folding.</p>
-<h3 id="complete-hierarchy"><a class="header" href="#complete-hierarchy">Complete Hierarchy</a></h3>
-<p>Functor through Monad, Alt through Alternative, Foldable, Traversable, Comonad, and contravariant duals — all with property-based law verification.</p>
-<h3 id="profunctor-optics"><a class="header" href="#profunctor-optics">Profunctor Optics</a></h3>
-<p>Lens, Prism, and composition powered by the profunctor hierarchy. Build reusable, first-class field accessors and pattern matchers.</p>
-<h3 id="ergonomic-macros"><a class="header" href="#ergonomic-macros">Ergonomic Macros</a></h3>
-<p><code>do_!</code> flattens nested <code>.and_then()</code> chains. <code>ado_!</code> combines independent computations. Both work with any Monad or Applicative.</p>
-<h3 id="proof--verification"><a class="header" href="#proof--verification">Proof &amp; Verification</a></h3>
-<p><code>karpal-proof</code> provides law witnesses and refinement types, while <code>karpal-verify</code> exports obligations to SMT and Lean with explicit trust boundaries.</p>
-<h2 id="quick-example"><a class="header" href="#quick-example">Quick Example</a></h2>
-<p>Flatten nested error handling with <code>do_!</code>:</p>
+<h2 id="機能"><a class="header" href="#機能">機能</a></h2>
+<h3 id="型安全な抽象化"><a class="header" href="#型安全な抽象化">型安全な抽象化</a></h3>
+<p>GAT による HKT エンコーディングにより、<code>Option</code>、<code>Result</code>、<code>Vec</code>、およびマッピング・逐次化・畳み込みをサポートする任意のコンテナについて汎用的な関数を書けます。</p>
+<h3 id="完全な階層"><a class="header" href="#完全な階層">完全な階層</a></h3>
+<p>Functor から Monad、Alt から Alternative、Foldable、Traversable、Comonad、および反変双対 — すべてプロパティベースの法則検証付き。</p>
+<h3 id="プロ関手オプティクス"><a class="header" href="#プロ関手オプティクス">プロ関手オプティクス</a></h3>
+<p>プロ関手階層で駆動される Lens、Prism、合成。再利用可能で第一級のフィールドアクセサとパターンマッチャを構築。</p>
+<h3 id="快適なマクロ"><a class="header" href="#快適なマクロ">快適なマクロ</a></h3>
+<p><code>do_!</code> は入れ子になった <code>.and_then()</code> 連鎖を平坦化します。<code>ado_!</code> は独立した計算を組み合わせます。どちらも任意の Monad や Applicative で動作します。</p>
+<h3 id="証明と検証"><a class="header" href="#証明と検証">証明と検証</a></h3>
+<p><code>karpal-proof</code> は法則証拠と精密化型を提供し、<code>karpal-verify</code> は明示的な信頼境界付きでオブリゲーションを SMT と Lean にエクスポートします。</p>
+<h2 id="クイック例"><a class="header" href="#クイック例">クイック例</a></h2>
+<p><code>do_!</code> で入れ子になったエラー処理を平坦化:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
-// Without do_! — rightward drift with every step
+// do_! なし — 各ステップで右にドリフト
 fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
     parse_id(input).and_then(|id| {
         lookup_user(id).and_then(|user| {
@@ -212,7 +212,7 @@ fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
     })
 }
 
-// With do_! — reads top-to-bottom
+// do_! あり — 上から下へ読める
 fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
     do_! { OptionF;
         id = parse_id(input);
@@ -222,51 +222,52 @@ fn process(input: &amp;str) -&gt; Option&lt;String&gt; {
     }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="workspace"><a class="header" href="#workspace">Workspace</a></h2>
+<h2 id="ワークスペース"><a class="header" href="#ワークスペース">ワークスペース</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Crate</th><th>Description</th></tr>
+<tr><th>クレート</th><th>説明</th></tr>
 </thead>
 <tbody>
-<tr><td><code>karpal-core</code></td><td>HKT encoding, functor hierarchy, Semigroup, Monoid, macros</td></tr>
-<tr><td><code>karpal-profunctor</code></td><td>Profunctor, Strong, Choice, FnP</td></tr>
-<tr><td><code>karpal-optics</code></td><td>Profunctor optics: Lens, Prism, composition</td></tr>
-<tr><td><code>karpal-arrow</code></td><td>Arrow hierarchy: Category, Arrow, ArrowChoice, Kleisli, Cokleisli</td></tr>
-<tr><td><code>karpal-free</code></td><td>Free constructions: Coyoneda, Yoneda, Free Monad, Cofree Comonad</td></tr>
-<tr><td><code>karpal-recursion</code></td><td>Recursion schemes: Fix, cata, ana, hylo, para, histo, chrono</td></tr>
-<tr><td><code>karpal-algebra</code></td><td>Abstract algebra: Group, Ring, Field, Lattice, Module, VectorSpace</td></tr>
-<tr><td><code>karpal-effect</code></td><td>Monad transformers and static-bound functor hierarchy</td></tr>
-<tr><td><code>karpal-proof</code></td><td>Law witnesses, refinement types, rewrite evidence, and derive-based law checks</td></tr>
-<tr><td><code>karpal-verify</code></td><td>External verification bridge: obligations, exporters, runners, reporting, and trust model</td></tr>
-<tr><td><code>karpal-diagram</code></td><td>Monoidal categories and string diagrams</td></tr>
-<tr><td><code>karpal-schubert-types</code></td><td>Schubert intersection types</td></tr>
-<tr><td><code>karpal-higher</code></td><td>2-categories, enriched categories, bicategories</td></tr>
-<tr><td><code>karpal-std</code></td><td>Standard prelude re-exports</td></tr>
+<tr><td><code>karpal-core</code></td><td>HKT エンコーディング、関手階層、Semigroup、Monoid、マクロ</td></tr>
+<tr><td><code>karpal-profunctor</code></td><td>Profunctor、Strong、Choice、FnP</td></tr>
+<tr><td><code>karpal-optics</code></td><td>プロ関手オプティクス: Lens、Prism、合成</td></tr>
+<tr><td><code>karpal-arrow</code></td><td>Arrow 階層: Category、Arrow、ArrowChoice、Kleisli、Cokleisli</td></tr>
+<tr><td><code>karpal-free</code></td><td>自由構成: Coyoneda、Yoneda、Free Monad、Cofree Comonad</td></tr>
+<tr><td><code>karpal-recursion</code></td><td>帰納スキーム: Fix、cata、ana、hylo、para、histo、chrono</td></tr>
+<tr><td><code>karpal-algebra</code></td><td>抽象代数: Group、Ring、Field、Lattice、Module、VectorSpace</td></tr>
+<tr><td><code>karpal-effect</code></td><td>モナド変換子と static-bound 関手階層</td></tr>
+<tr><td><code>karpal-proof</code></td><td>法則証拠、精密化型、書き換え証拠、derive ベースの法則チェック</td></tr>
+<tr><td><code>karpal-verify</code></td><td>外部検証ブリッジ: オブリゲーション、エクスポータ、ランナー、報告、信頼モデル</td></tr>
+<tr><td><code>karpal-diagram</code></td><td>モノイダル圏とストリング図式</td></tr>
+<tr><td><code>karpal-schubert-types</code></td><td>シューベルト交点型</td></tr>
+<tr><td><code>karpal-higher</code></td><td>2-圏、豊饒圏、バイ圏</td></tr>
+<tr><td><code>karpal-topos</code></td><td>前層、篩、部分対象分類子、グロタンディーク位相、層</td></tr>
+<tr><td><code>karpal-std</code></td><td>標準プレリュード再エクスポート</td></tr>
 </tbody>
 </table>
 </div>
-<p><code>karpal-core</code>, <code>karpal-profunctor</code>, <code>karpal-arrow</code>, <code>karpal-free</code>, <code>karpal-recursion</code>, <code>karpal-algebra</code>, <code>karpal-effect</code>, <code>karpal-proof</code>, and the modeling/export portions of <code>karpal-verify</code> are <code>no_std</code> compatible with optional <code>std</code>/<code>alloc</code> feature gates.</p>
-<h2 id="documentation-map"><a class="header" href="#documentation-map">Documentation Map</a></h2>
+<p><code>karpal-core</code>、<code>karpal-profunctor</code>、<code>karpal-arrow</code>、<code>karpal-free</code>、<code>karpal-recursion</code>、<code>karpal-algebra</code>、<code>karpal-effect</code>、<code>karpal-proof</code>、および <code>karpal-verify</code> のモデリング/エクスポート部分は、オプションの <code>std</code>/<code>alloc</code> フィーチャーゲート付きで <code>no_std</code> 互換です。</p>
+<h2 id="ドキュメントマップ"><a class="header" href="#ドキュメントマップ">ドキュメントマップ</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Need</th><th>Where to start</th></tr>
+<tr><th>目的</th><th>どこから始める</th></tr>
 </thead>
 <tbody>
-<tr><td>Core HKT and trait hierarchy</td><td><a href="./getting-started.html">Getting Started</a> and <a href="./architecture-full.html">Architecture</a></td></tr>
-<tr><td>Detailed typeclass APIs</td><td><a href="./reference/functor-family.html">Reference pages</a></td></tr>
-<tr><td><code>karpal-proof</code> law witnesses and refinement types</td><td><a href="./reference/proof-verification.html">Proof &amp; Verification</a></td></tr>
-<tr><td><code>karpal-verify</code> exporters, runners, and trust model</td><td><a href="./reference/proof-verification.html">Proof &amp; Verification</a></td></tr>
-<tr><td>CI artifact/report workflow</td><td><a href="./reference/verification-ci.html">Verification CI Workflow</a></td></tr>
-<tr><td>Serialized artifact schemas and compatibility</td><td><a href="./reference/verification-schemas.html">Verification Schemas</a></td></tr>
-<tr><td>End-to-end verification walkthrough</td><td><a href="./examples/verification-workflow.html">Verification Workflow</a></td></tr>
-<tr><td>Importing verified evidence into domain APIs</td><td><a href="./examples/verified-domain-api.html">Verified Domain API</a></td></tr>
+<tr><td>コア HKT とトレイト階層</td><td><a href="./getting-started.html">はじめての利用</a> と <a href="./architecture-full.html">アーキテクチャ</a></td></tr>
+<tr><td>詳細な型クラス API</td><td><a href="./reference/functor-family.html">リファレンスページ</a></td></tr>
+<tr><td><code>karpal-proof</code> 法則証拠と精密化型</td><td><a href="./reference/proof-verification.html">証明と検証</a></td></tr>
+<tr><td><code>karpal-verify</code> エクスポータ、ランナー、信頼モデル</td><td><a href="./reference/proof-verification.html">証明と検証</a></td></tr>
+<tr><td>CI アーティファクト/レポートワークフロー</td><td><a href="./reference/verification-ci.html">検証 CI ワークフロー</a></td></tr>
+<tr><td>シリアライズされたアーティファクトスキーマと互換性</td><td><a href="./reference/verification-schemas.html">検証スキーマ</a></td></tr>
+<tr><td>エンドツーエンド検証のチュートリアル</td><td><a href="./examples/verification-workflow.html">検証ワークフロー</a></td></tr>
+<tr><td>検証済み証拠のドメイン API へのインポート</td><td><a href="./examples/verified-domain-api.html">検証済みドメイン API</a></td></tr>
 </tbody>
 </table>
 </div>
 <hr>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

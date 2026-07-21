@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,80 +178,80 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="macros"><a class="header" href="#macros">Macros</a></h1>
-<p>Monadic and applicative notation macros.</p>
-<p>Karpal provides two macros that flatten nested monadic and applicative computations into a readable, top-to-bottom sequence of bindings. Both macros use <code>=</code> for binding (not <code>&lt;-</code>, which is reserved in Rust edition 2024).</p>
+                        <h1 id="マクロ"><a class="header" href="#マクロ">マクロ</a></h1>
+<p>モナドおよびアプリカティブ記法マクロ。</p>
+<p>Karpal は、入れ子になったモナド的・アプリカティブな計算を読みやすい上から下への束縛シーケンスに平坦化する二つのマクロを提供します。どちらのマクロも束縛に <code>=</code> を使います (<code>&lt;-</code> は Rust edition 2024 で予約されているため使いません)。</p>
 <h3 id="do_"><a class="header" href="#do_"><code>do_!</code></a></h3>
-<p>Monadic do-notation. Desugars sequential bindings into nested <code>Chain::chain</code> calls.</p>
-<h4 id="syntax"><a class="header" href="#syntax">Syntax</a></h4>
+<p>モナド的 do 記法。逐次的な束縛を入れ子の <code>Chain::chain</code> 呼び出しに脱糖します。</p>
+<h4 id="構文"><a class="header" href="#構文">構文</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>do_! { F;
     x = monadic_expr_1;
-    y = monadic_expr_2;   // can reference x
-    // ... more bindings ...
-    final_monadic_expr     // bare expression, no binding
+    y = monadic_expr_2;   // x を参照できる
+    // ... さらなる束縛 ...
+    final_monadic_expr     // 束縛のない裸の式
 }
 <span class="boring">}</span></code></pre>
 <ul>
-<li>The first token <code>F</code> is the type constructor (<code>OptionF</code>, <code>VecF</code>, <code>ResultF&lt;E&gt;</code>, etc.), followed by a semicolon.</li>
-<li>Each binding uses <code>=</code>. Later bindings can reference names bound earlier – the steps are sequential.</li>
-<li>The final line is a bare expression of type <code>F::Of&lt;T&gt;</code>. It is the value returned by the whole <code>do_!</code> block.</li>
-<li>If any step produces a short-circuiting value (<code>None</code>, <code>Err(_)</code>), the entire block short-circuits immediately.</li>
+<li>最初のトークン <code>F</code> は型コンストラクタ (<code>OptionF</code>、<code>VecF</code>、<code>ResultF&lt;E&gt;</code> など) で、セミコロンが続きます。</li>
+<li>各束縛は <code>=</code> を使います。後の束縛は前に束縛された名前を参照できます — ステップは逐次です。</li>
+<li>最後の行は <code>F::Of&lt;T&gt;</code> 型の裸の式です。これが <code>do_!</code> ブロック全体の戻り値です。</li>
+<li>いずれかのステップが短絡する値 (<code>None</code>、<code>Err(_)</code>) を生成すると、ブロック全体が直ちに短絡します。</li>
 </ul>
-<h4 id="expansion"><a class="header" href="#expansion">Expansion</a></h4>
-<p>Each <code>x = expr;</code> binding desugars into a <code>Chain::chain</code> call. The macro expands recursively:</p>
+<h4 id="展開"><a class="header" href="#展開">展開</a></h4>
+<p>各 <code>x = expr;</code> 束縛は <code>Chain::chain</code> 呼び出しに脱糖されます。マクロは再帰的に展開されます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// This:
+</span>// これが:
 do_! { F;
     x = expr_a;
     y = expr_b;
     expr_c
 }
 
-// Expands to:
+// こう展開される:
 &lt;F as Chain&gt;::chain(expr_a, |x| {
     &lt;F as Chain&gt;::chain(expr_b, |y| {
         expr_c
     })
 })
 <span class="boring">}</span></code></pre>
-<p>A single bare expression (no bindings) is returned as-is:</p>
+<p>束縛のない単一の裸の式はそのまま返されます:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>do_! { F; some_expr }
-// Expands to:
+// 展開:
 some_expr
 <span class="boring">}</span></code></pre>
-<h4 id="requirements"><a class="header" href="#requirements">Requirements</a></h4>
-<p>The type constructor <code>F</code> must implement <code>Chain</code> (and therefore <code>Apply</code> and <code>Functor</code>). In practice, any type that implements <code>Monad</code> satisfies this requirement, since <code>Monad</code> is a blanket trait over <code>Applicative + Chain</code>.</p>
-<h4 id="examples"><a class="header" href="#examples">Examples</a></h4>
-<h5 id="optionf--sequential-computation-with-short-circuiting"><a class="header" href="#optionf--sequential-computation-with-short-circuiting">OptionF – sequential computation with short-circuiting</a></h5>
+<h4 id="要件"><a class="header" href="#要件">要件</a></h4>
+<p>型コンストラクタ <code>F</code> は <code>Chain</code> を実装しなければなりません (したがって <code>Apply</code> と <code>Functor</code> も)。実際には、<code>Monad</code> を実装する任意の型がこの要件を満たします。<code>Monad</code> は <code>Applicative + Chain</code> 上のブランケットトレイトだからです。</p>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
+<h5 id="optionf--短絡付きの逐次計算"><a class="header" href="#optionf--短絡付きの逐次計算">OptionF — 短絡付きの逐次計算</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
 let result = do_! { OptionF;
     x = Some(1);
-    y = Some(x + 1);       // y depends on x
-    OptionF::pure(x + y)   // final expression wraps in Some
+    y = Some(x + 1);       // y は x に依存
+    OptionF::pure(x + y)   // 最終式が Some で包む
 };
 assert_eq!(result, Some(3));
 <span class="boring">}</span></code></pre>
-<h5 id="optionf--short-circuiting-on-none"><a class="header" href="#optionf--short-circuiting-on-none">OptionF – short-circuiting on None</a></h5>
+<h5 id="optionf--none-での短絡"><a class="header" href="#optionf--none-での短絡">OptionF — None での短絡</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
 
 let result: Option&lt;i32&gt; = do_! { OptionF;
     x = Some(1);
-    _y = None::&lt;i32&gt;;     // short-circuits here
-    OptionF::pure(x)       // never reached
+    _y = None::&lt;i32&gt;;     // ここで短絡
+    OptionF::pure(x)       // 到達しない
 };
 assert_eq!(result, None);
 <span class="boring">}</span></code></pre>
-<h5 id="optionf--single-expression-no-bindings"><a class="header" href="#optionf--single-expression-no-bindings">OptionF – single expression (no bindings)</a></h5>
+<h5 id="optionf--単一式-束縛なし"><a class="header" href="#optionf--単一式-束縛なし">OptionF — 単一式 (束縛なし)</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -261,7 +261,7 @@ let result = do_! { OptionF;
 };
 assert_eq!(result, Some(42));
 <span class="boring">}</span></code></pre>
-<h5 id="resultf--chaining-fallible-operations"><a class="header" href="#resultf--chaining-fallible-operations">ResultF – chaining fallible operations</a></h5>
+<h5 id="resultf--失敗しうる操作の連鎖"><a class="header" href="#resultf--失敗しうる操作の連鎖">ResultF — 失敗しうる操作の連鎖</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -277,7 +277,7 @@ let result = do_! { ResultF&lt;String&gt;;
 };
 assert_eq!(result, Ok("port=8080".to_string()));
 <span class="boring">}</span></code></pre>
-<h5 id="vecf--list-comprehension-cartesian-product"><a class="header" href="#vecf--list-comprehension-cartesian-product">VecF – list comprehension (cartesian product)</a></h5>
+<h5 id="vecf--リスト内包表記-直積"><a class="header" href="#vecf--リスト内包表記-直積">VecF — リスト内包表記 (直積)</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -290,54 +290,54 @@ let result = do_! { VecF;
 assert_eq!(result, vec![11, 21, 12, 22]);
 <span class="boring">}</span></code></pre>
 <h3 id="ado_"><a class="header" href="#ado_"><code>ado_!</code></a></h3>
-<p>Applicative do-notation. Collects independent bindings and combines them with <code>Apply::ap</code> and <code>Functor::fmap</code>.</p>
-<h4 id="syntax-1"><a class="header" href="#syntax-1">Syntax</a></h4>
+<p>アプリカティブ do 記法。独立した束縛を収集し、<code>Apply::ap</code> と <code>Functor::fmap</code> で組み合わせます。</p>
+<h4 id="構文-1"><a class="header" href="#構文-1">構文</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>ado_! { F;
     x = applicative_expr_1;
     y = applicative_expr_2;
-    // ... up to 4 bindings ...
+    // ... 最大 4 つの束縛 ...
     yield combining_expression
 }
 <span class="boring">}</span></code></pre>
 <ul>
-<li>Same first-token convention as <code>do_!</code>: the type constructor, then a semicolon.</li>
-<li>Each binding uses <code>=</code>. Bindings are <strong>independent</strong> and must not reference each other.</li>
-<li>The <code>yield</code> keyword introduces the combining expression. This expression is a pure function of the bound names – it is automatically lifted into the applicative context.</li>
-<li>Supports 1 to 4 bindings.</li>
-<li>If any binding evaluates to a short-circuiting value (<code>None</code>, <code>Err(_)</code>), the whole block short-circuits.</li>
+<li><code>do_!</code> と同じ最初のトークンの慣習: 型コンストラクタ、続いてセミコロン。</li>
+<li>各束縛は <code>=</code> を使います。束縛は <strong>独立しており</strong>、互いに参照してはなりません。</li>
+<li><code>yield</code> キーワードが結合式を導入します。この式は束縛された名前の純粋関数です — 自動的にアプリカティブ文脈に持ち上げられます。</li>
+<li>1 から 4 つの束縛をサポートします。</li>
+<li>いずれかの束縛が短絡する値 (<code>None</code>、<code>Err(_)</code>) に評価されると、ブロック全体が短絡します。</li>
 </ul>
-<h4 id="expansion-1"><a class="header" href="#expansion-1">Expansion</a></h4>
-<p>The expansion depends on the number of bindings. With one binding, the macro uses <code>Functor::fmap</code>. With two or more, it builds a curried closure and applies it with <code>Apply::ap</code>:</p>
-<h5 id="1-binding"><a class="header" href="#1-binding">1 binding</a></h5>
+<h4 id="展開-1"><a class="header" href="#展開-1">展開</a></h4>
+<p>展開は束縛の数に依存します。束縛が一つの場合、マクロは <code>Functor::fmap</code> を使います。二つ以上の場合、カリー化されたクロージャを構築し <code>Apply::ap</code> で適用します:</p>
+<h5 id="1-つの束縛"><a class="header" href="#1-つの束縛">1 つの束縛</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// This:
+</span>// これが:
 ado_! { F; x = expr; yield body }
 
-// Expands to:
+// こう展開される:
 &lt;F as Functor&gt;::fmap(expr, |x| body)
 <span class="boring">}</span></code></pre>
-<h5 id="2-bindings"><a class="header" href="#2-bindings">2 bindings</a></h5>
+<h5 id="2-つの束縛"><a class="header" href="#2-つの束縛">2 つの束縛</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// This:
+</span>// これが:
 ado_! { F; x = e1; y = e2; yield body }
 
-// Expands to:
+// こう展開される:
 &lt;F as Apply&gt;::ap(
     &lt;F as Functor&gt;::fmap(e1, |x| move |y| body),
     e2,
 )
 <span class="boring">}</span></code></pre>
-<h5 id="3-bindings"><a class="header" href="#3-bindings">3 bindings</a></h5>
+<h5 id="3-つの束縛"><a class="header" href="#3-つの束縛">3 つの束縛</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// This:
+</span>// これが:
 ado_! { F; x = e1; y = e2; z = e3; yield body }
 
-// Expands to:
+// こう展開される:
 &lt;F as Apply&gt;::ap(
     &lt;F as Apply&gt;::ap(
         &lt;F as Functor&gt;::fmap(e1, |x| move |y| move |z| body),
@@ -346,13 +346,13 @@ ado_! { F; x = e1; y = e2; z = e3; yield body }
     e3,
 )
 <span class="boring">}</span></code></pre>
-<h5 id="4-bindings"><a class="header" href="#4-bindings">4 bindings</a></h5>
+<h5 id="4-つの束縛"><a class="header" href="#4-つの束縛">4 つの束縛</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// This:
+</span>// これが:
 ado_! { F; a = e1; b = e2; c = e3; d = e4; yield body }
 
-// Expands to:
+// こう展開される:
 &lt;F as Apply&gt;::ap(
     &lt;F as Apply&gt;::ap(
         &lt;F as Apply&gt;::ap(
@@ -364,10 +364,10 @@ ado_! { F; a = e1; b = e2; c = e3; d = e4; yield body }
     e4,
 )
 <span class="boring">}</span></code></pre>
-<h4 id="requirements-1"><a class="header" href="#requirements-1">Requirements</a></h4>
-<p>The type constructor <code>F</code> must implement <code>Applicative</code> (and therefore <code>Apply</code> and <code>Functor</code>). Unlike <code>do_!</code>, it does <strong>not</strong> require <code>Chain</code> – applicative computations are strictly less powerful than monadic ones, which is the point: they express the absence of sequential dependencies.</p>
-<h4 id="examples-1"><a class="header" href="#examples-1">Examples</a></h4>
-<h5 id="optionf--single-binding-fmap"><a class="header" href="#optionf--single-binding-fmap">OptionF – single binding (fmap)</a></h5>
+<h4 id="要件-1"><a class="header" href="#要件-1">要件</a></h4>
+<p>型コンストラクタ <code>F</code> は <code>Applicative</code> を実装しなければなりません (したがって <code>Apply</code> と <code>Functor</code> も)。<code>do_!</code> と異なり <code>Chain</code> を必要と <strong>しません</strong> — アプリカティブ計算はモナド計算より厳密に弱く、それが要点です: 逐次依存の不在を表現します。</p>
+<h4 id="例-1"><a class="header" href="#例-1">例</a></h4>
+<h5 id="optionf--単一束縛-fmap"><a class="header" href="#optionf--単一束縛-fmap">OptionF — 単一束縛 (fmap)</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -378,7 +378,7 @@ let result = ado_! { OptionF;
 };
 assert_eq!(result, Some(10));
 <span class="boring">}</span></code></pre>
-<h5 id="optionf--combining-two-independent-values"><a class="header" href="#optionf--combining-two-independent-values">OptionF – combining two independent values</a></h5>
+<h5 id="optionf--二つの独立した値の結合"><a class="header" href="#optionf--二つの独立した値の結合">OptionF — 二つの独立した値の結合</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -390,7 +390,7 @@ let result = ado_! { OptionF;
 };
 assert_eq!(result, Some(3));
 <span class="boring">}</span></code></pre>
-<h5 id="optionf--short-circuiting-on-none-1"><a class="header" href="#optionf--short-circuiting-on-none-1">OptionF – short-circuiting on None</a></h5>
+<h5 id="optionf--none-での短絡-1"><a class="header" href="#optionf--none-での短絡-1">OptionF — None での短絡</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -402,7 +402,7 @@ let result = ado_! { OptionF;
 };
 assert_eq!(result, None);
 <span class="boring">}</span></code></pre>
-<h5 id="optionf--combining-three-values"><a class="header" href="#optionf--combining-three-values">OptionF – combining three values</a></h5>
+<h5 id="optionf--三つの値の結合"><a class="header" href="#optionf--三つの値の結合">OptionF — 三つの値の結合</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -415,7 +415,7 @@ let result = ado_! { OptionF;
 };
 assert_eq!(result, Some(6));
 <span class="boring">}</span></code></pre>
-<h5 id="optionf--combining-four-values"><a class="header" href="#optionf--combining-four-values">OptionF – combining four values</a></h5>
+<h5 id="optionf--四つの値の結合"><a class="header" href="#optionf--四つの値の結合">OptionF — 四つの値の結合</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -429,7 +429,7 @@ let result = ado_! { OptionF;
 };
 assert_eq!(result, Some(10));
 <span class="boring">}</span></code></pre>
-<h5 id="vecf--cartesian-product-with-applicative"><a class="header" href="#vecf--cartesian-product-with-applicative">VecF – cartesian product with applicative</a></h5>
+<h5 id="vecf--アプリカティブでの直積"><a class="header" href="#vecf--アプリカティブでの直積">VecF — アプリカティブでの直積</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -441,7 +441,7 @@ let result = ado_! { VecF;
 };
 assert_eq!(result, vec![11, 21, 12, 22]);
 <span class="boring">}</span></code></pre>
-<h5 id="resultf--combining-independent-fallible-lookups"><a class="header" href="#resultf--combining-independent-fallible-lookups">ResultF – combining independent fallible lookups</a></h5>
+<h5 id="resultf--独立した失敗しうる参照の結合"><a class="header" href="#resultf--独立した失敗しうる参照の結合">ResultF — 独立した失敗しうる参照の結合</a></h5>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_std::prelude::*;
@@ -453,21 +453,21 @@ let result = ado_! { ResultF&lt;String&gt;;
 };
 assert_eq!(result, Ok("localhost:3000".to_string()));
 <span class="boring">}</span></code></pre>
-<h2 id="choosing-between-do_-and-ado_"><a class="header" href="#choosing-between-do_-and-ado_">Choosing Between <code>do_!</code> and <code>ado_!</code></a></h2>
+<h2 id="do_-と-ado_-の使い分け"><a class="header" href="#do_-と-ado_-の使い分け"><code>do_!</code> と <code>ado_!</code> の使い分け</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Macro</th><th>Trait required</th><th>Bindings</th><th>Use when</th></tr>
+<tr><th>マクロ</th><th>必要なトレイト</th><th>束縛</th><th>使う場面</th></tr>
 </thead>
 <tbody>
-<tr><td><code>do_!</code></td><td><code>Chain</code> (Monad)</td><td>Sequential – later bindings can depend on earlier ones</td><td>Steps have data dependencies</td></tr>
-<tr><td><code>ado_!</code></td><td><code>Applicative</code></td><td>Independent – bindings must not reference each other</td><td>Steps are independent; documents the absence of dependencies</td></tr>
+<tr><td><code>do_!</code></td><td><code>Chain</code> (Monad)</td><td>逐次 — 後の束縛が前のものに依存できる</td><td>ステップ間にデータ依存がある</td></tr>
+<tr><td><code>ado_!</code></td><td><code>Applicative</code></td><td>独立 — 束縛は互いに参照してはならない</td><td>ステップが独立; 依存の不在を文書化</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="why--instead-of--"><a class="header" href="#why--instead-of--">Why <code>=</code> Instead of <code>&lt;-</code>?</a></h2>
-<p>Languages like Haskell and PureScript use <code>&lt;-</code> for monadic bindings. Karpal uses <code>=</code> instead because Rust edition 2024 reserves the <code>&lt;-</code> token, making it unavailable inside macros. The <code>=</code> syntax integrates naturally with Rust’s existing patterns and avoids any conflict with reserved tokens.</p>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<h2 id="なぜ---ではなく--なのか"><a class="header" href="#なぜ---ではなく--なのか">なぜ <code>&lt;-</code> ではなく <code>=</code> なのか?</a></h2>
+<p>Haskell や PureScript のような言語はモナド束縛に <code>&lt;-</code> を使います。Karpal は代わりに <code>=</code> を使います。Rust edition 2024 が <code>&lt;-</code> トークンを予約しており、マクロ内で使えないからです。<code>=</code> 構文は Rust の既存パターンに自然に統合され、予約トークンとの競合を避けます。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

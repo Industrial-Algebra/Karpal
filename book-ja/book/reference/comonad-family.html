@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f52c589f.js";
+            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,16 +178,16 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="comonad-family"><a class="header" href="#comonad-family">Comonad Family</a></h1>
-<p>Dual of the monad hierarchy: comonadic context and extraction.</p>
-<p>Where a Monad lets you <em>inject</em> values into a context and <em>sequence</em> context-producing computations, a Comonad lets you <em>extract</em> values from a context and <em>extend</em> context-consuming functions across an entire structure. The comonad family in Karpal consists of five traits arranged in a linear hierarchy with three specialized branches.</p>
-<h2 id="hierarchy"><a class="header" href="#hierarchy">Hierarchy</a></h2>
+                        <h1 id="コモナドファミリー"><a class="header" href="#コモナドファミリー">コモナドファミリー</a></h1>
+<p>モナド階層の双対: コモナド的文脈と抽出。</p>
+<p>Monad が文脈に値を <em>注入</em> し文脈を生成する計算を <em>逐次化</em> できるのに対し、Comonad は文脈から値を <em>抽出</em> し、文脈を消費する関数を構造全体に <em>拡張</em> できます。Karpal のコモナドファミリーは、線形階層に配置された五つのトレイトと三つの特殊化された枝で構成されます。</p>
+<h2 id="階層"><a class="header" href="#階層">階層</a></h2>
 <p>Functor → Extend → Comonad → ComonadEnv<br>Functor → Extend → Comonad → ComonadStore *<br>Functor → Extend → Comonad → ComonadTraced *</p>
-<p><strong>* Design note:</strong> <code>ComonadStore</code> and <code>ComonadTraced</code> require <code>HKT</code> (not <code>Comonad</code>) as their supertrait. This is because <code>StoreF</code> and <code>TracedF</code> use <code>Box&lt;dyn Fn&gt;</code> internally, which imposes <code>'static</code> bounds that are incompatible with the generic <code>Functor</code> signature. Since <code>Functor</code> is a supertrait of <code>Extend</code> and <code>Comonad</code>, these types cannot implement the full comonad chain. Instead, they provide their own <code>extract</code> method directly on the trait, defined as a default method in terms of <code>peek</code>/<code>trace</code>.</p>
+<p><strong>* 設計メモ:</strong> <code>ComonadStore</code> と <code>ComonadTraced</code> は (<code>Comonad</code> ではなく) <code>HKT</code> をスーパートレイトとして必要とします。これは <code>StoreF</code> と <code>TracedF</code> が内部で <code>Box&lt;dyn Fn&gt;</code> を使い、これが汎用 <code>Functor</code> シグネチャと互換性のない <code>'static</code> 境界を課すためです。<code>Functor</code> は <code>Extend</code> と <code>Comonad</code> のスーパートレイトであるため、これらの型は完全なコモナド連鎖を実装できません。代わりに、トレイト上に <code>peek</code>/<code>trace</code> を使ったデフォルトメソッドとして直接 <code>extract</code> メソッドを提供します。</p>
 <h2 id="extend"><a class="header" href="#extend">Extend</a></h2>
 <h3 id="extend-1"><a class="header" href="#extend-1">Extend</a></h3>
-<p>The dual of Chain. Enables cooperative, context-aware computation.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>Chain の双対。協調的で文脈認識的な計算を可能にします。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Extend: Functor {
@@ -201,33 +201,33 @@
         Self::Of&lt;A&gt;: Clone;
 }
 <span class="boring">}</span></code></pre>
-<p>Given a value in context <code>W&lt;A&gt;</code> and a function <code>&amp;W&lt;A&gt; -&gt; B</code> that can inspect the full context, <code>extend</code> applies that function at every “position” in the structure, producing <code>W&lt;B&gt;</code>. The <code>duplicate</code> method has a default implementation: <code>Self::extend(wa, |w| w.clone())</code>.</p>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Associativity</p>
+<p>文脈 <code>W&lt;A&gt;</code> 内の値と、完全な文脈を検査できる関数 <code>&amp;W&lt;A&gt; -&gt; B</code> を与えると、<code>extend</code> はその関数を構造のすべての「位置」で適用し、<code>W&lt;B&gt;</code> を生成します。<code>duplicate</code> メソッドにはデフォルト実装があります: <code>Self::extend(wa, |w| w.clone())</code>。</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>結合律</p>
 <p>extend(f, extend(g, w)) == extend(|w| f(&amp;extend(g, w.clone())), w)</p>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>IdentityF</code></td><td><code>A</code></td><td>Trivially applies <code>f</code> to the value</td></tr>
-<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td>Applies <code>f</code> if <code>Some</code>; returns <code>None</code> otherwise</td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec&lt;A&gt;</code></td><td>Applies <code>f</code> to each suffix (alloc-gated)</td></tr>
-<tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td>Applies <code>f</code> to the pair, preserving the environment</td></tr>
+<tr><td><code>IdentityF</code></td><td><code>A</code></td><td>自明に値に <code>f</code> を適用</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td><code>Some</code> なら <code>f</code> を適用; さもなくば <code>None</code></td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec&lt;A&gt;</code></td><td>各接尾辞に <code>f</code> を適用 (alloc ゲート)</td></tr>
+<tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td>ペアに <code>f</code> を適用し、環境を保持</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::prelude::*;
 
-// NonEmptyVec extend: apply a summary function to each suffix
+// NonEmptyVec extend: 各接尾辞に要約関数を適用
 let nev = NonEmptyVec::new(1, vec![2, 3]);
 let sums = NonEmptyVecF::extend(nev, |w| w.iter().sum::&lt;i32&gt;());
-// Suffixes: [1,2,3], [2,3], [3]  =&gt;  Sums: 6, 5, 3
+// 接尾辞: [1,2,3], [2,3], [3]  =&gt;  和: 6, 5, 3
 assert_eq!(sums, NonEmptyVec::new(6, vec![5, 3]));
 
 // Option extend
@@ -237,62 +237,62 @@ let doubled = OptionF::extend(Some(3), |opt| match opt {
 });
 assert_eq!(doubled, Some(6));
 
-// duplicate: embed the structure inside itself
+// duplicate: 構造をそれ自身の内側に埋め込む
 let nested = OptionF::duplicate(Some(42));
 assert_eq!(nested, Some(Some(42)));
 <span class="boring">}</span></code></pre>
 <h2 id="comonad"><a class="header" href="#comonad">Comonad</a></h2>
 <h3 id="comonad-1"><a class="header" href="#comonad-1">Comonad</a></h3>
-<p>The categorical dual of Monad. Extract a value from context.</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>Monad の圏論的双対。文脈から値を抽出します。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait Comonad: Extend {
     fn extract&lt;A: Clone&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
 }
 <span class="boring">}</span></code></pre>
-<p>A Comonad can <code>extract</code> a value from a context and <code>extend</code> a context-aware function over the entire structure. Where <code>Monad::pure</code> injects a value into a minimal context, <code>Comonad::extract</code> pulls a value out of an existing context.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>Left identity</p>
+<p>Comonad は文脈から値を <code>extract</code> でき、文脈認識関数を構造全体に <code>extend</code> できます。<code>Monad::pure</code> が値を最小の文脈に注入するのに対し、<code>Comonad::extract</code> は既存の文脈から値を引き出します。</p>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
+<p>左単位律</p>
 <p>extract(&amp;extend(w, f)) == f(&amp;w)</p>
-<p>Right identity</p>
+<p>右単位律</p>
 <p>extend(w, |w| extract(w)) == w</p>
-<p>Associativity is inherited from <code>Extend</code>.</p>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<p>結合律は <code>Extend</code> から継承されます。</p>
+<h4 id="実装-1"><a class="header" href="#実装-1">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>IdentityF</code></td><td><code>A</code></td><td>Returns the value directly</td></tr>
-<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td>Panics on <code>None</code> (partial comonad)</td></tr>
-<tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec&lt;A&gt;</code></td><td>Returns the head element (alloc-gated)</td></tr>
-<tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td>Returns the <code>A</code> component, discarding the environment</td></tr>
+<tr><td><code>IdentityF</code></td><td><code>A</code></td><td>値を直接返す</td></tr>
+<tr><td><code>OptionF</code></td><td><code>Option&lt;A&gt;</code></td><td><code>None</code> でパニック (部分コモナド)</td></tr>
+<tr><td><code>NonEmptyVecF</code></td><td><code>NonEmptyVec&lt;A&gt;</code></td><td>先頭要素を返す (alloc ゲート)</td></tr>
+<tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td><code>A</code> 成分を返し、環境を破棄</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
+<h4 id="例-1"><a class="header" href="#例-1">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::prelude::*;
 
-// Extract from NonEmptyVec: always returns the head
+// NonEmptyVec から抽出: 常に先頭を返す
 let nev = NonEmptyVec::new(10, vec![20, 30]);
 assert_eq!(NonEmptyVecF::extract(&amp;nev), 10);
 
-// Extract from Env: discards the environment, keeps the value
+// Env から抽出: 環境を破棄し、値を保持
 assert_eq!(EnvF::&lt;&amp;str&gt;::extract(&amp;("config", 42)), 42);
 
-// Left identity law in action:
+// 左単位律の実例:
 let f = |w: &amp;NonEmptyVec&lt;i32&gt;| w.head + 1;
 let extended = NonEmptyVecF::extend(nev.clone(), f);
 assert_eq!(NonEmptyVecF::extract(&amp;extended), f(&amp;nev));
 <span class="boring">}</span></code></pre>
 <h2 id="comonadenv"><a class="header" href="#comonadenv">ComonadEnv</a></h2>
 <h3 id="comonadenve"><a class="header" href="#comonadenve">ComonadEnv&lt;E&gt;</a></h3>
-<p>A Comonad with access to an environment value. Dual of Reader/MonadReader.</p>
-<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
+<p>環境値にアクセスできる Comonad。Reader/MonadReader の双対。</p>
+<h4 id="シグネチャ-2"><a class="header" href="#シグネチャ-2">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait ComonadEnv&lt;E&gt;: Comonad {
@@ -300,37 +300,37 @@ assert_eq!(NonEmptyVecF::extract(&amp;extended), f(&amp;nev));
     fn local&lt;A&gt;(wa: Self::Of&lt;A&gt;, f: impl Fn(E) -&gt; E) -&gt; Self::Of&lt;A&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p><code>ask</code> retrieves the environment from the comonadic value. <code>local</code> transforms the environment while leaving the focus value unchanged.</p>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p>Local preserves extract</p>
+<p><code>ask</code> はコモナド値から環境を取得します。<code>local</code> は焦点の値を変更せずに環境を変換します。</p>
+<h4 id="法則-2"><a class="header" href="#法則-2">法則</a></h4>
+<p>local は extract を保存</p>
 <p>extract(local(wa, f)) == extract(wa)</p>
-<h4 id="instances-2"><a class="header" href="#instances-2">Instances</a></h4>
+<h4 id="実装-2"><a class="header" href="#実装-2">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td><code>ask</code> returns <code>E</code>; <code>local</code> transforms <code>E</code> via <code>f</code></td></tr>
+<tr><td><code>EnvF&lt;E&gt;</code></td><td><code>(E, A)</code></td><td><code>ask</code> は <code>E</code> を返す; <code>local</code> は <code>f</code> で <code>E</code> を変換</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
+<h4 id="例-2"><a class="header" href="#例-2">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::prelude::*;
 
 let w = ("hello", 42);
 
-// ask: retrieve the environment
+// ask: 環境を取得
 assert_eq!(EnvF::&lt;&amp;str&gt;::ask(&amp;w), "hello");
 
-// local: transform the environment, keep the value
+// local: 環境を変換し、値を保持
 let w2 = (10i32, "value");
 let result = EnvF::&lt;i32&gt;::local(w2, |e| e * 2);
 assert_eq!(result, (20, "value"));
 
-// Law: local does not change the extracted value
+// 法則: local は抽出される値を変更しない
 assert_eq!(
     EnvF::&lt;i32&gt;::extract(&amp;EnvF::&lt;i32&gt;::local((5, 99), |e| e + 1)),
     EnvF::&lt;i32&gt;::extract(&amp;(5, 99))
@@ -338,98 +338,98 @@ assert_eq!(
 <span class="boring">}</span></code></pre>
 <h2 id="comonadstore"><a class="header" href="#comonadstore">ComonadStore</a></h2>
 <h3 id="comonadstores"><a class="header" href="#comonadstores">ComonadStore&lt;S&gt;</a></h3>
-<p>A comonad with a notion of position and peeking. Dual of State.</p>
-<h4 id="signature-3"><a class="header" href="#signature-3">Signature</a></h4>
+<p>位置と覗き見の概念を持つコモナド。State の双対。</p>
+<h4 id="シグネチャ-3"><a class="header" href="#シグネチャ-3">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait ComonadStore&lt;S&gt;: HKT {
     fn pos&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; S;
     fn peek&lt;A&gt;(s: S, wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
 
-    /// Extract the focused value (equivalent to `peek(pos(wa), wa)`).
+    /// 焦点の値を抽出 (`peek(pos(wa), wa)` と等価)。
     fn extract&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; A
     where
         S: Clone;
 }
 <span class="boring">}</span></code></pre>
-<p><code>pos</code> returns the current position (index, key, cursor) within the store. <code>peek</code> retrieves the value at an arbitrary position. The default <code>extract</code> method is defined as <code>peek(pos(wa), wa)</code>.</p>
-<p><strong>Design note:</strong> <code>ComonadStore</code> requires <code>HKT</code> rather than <code>Comonad</code> as its supertrait. <code>StoreF&lt;S&gt;</code> is represented as <code>(Box&lt;dyn Fn(S) -&gt; A&gt;, S)</code>, which requires <code>'static</code> bounds on <code>S</code>. The generic <code>Functor</code> trait does not carry this bound, so <code>StoreF</code> cannot implement <code>Functor</code> and therefore cannot implement <code>Extend</code> or <code>Comonad</code>. The <code>extract</code> method is provided directly on this trait instead.</p>
-<h4 id="laws-3"><a class="header" href="#laws-3">Laws</a></h4>
-<p>Peek-pos identity</p>
+<p><code>pos</code> はストア内の現在位置 (インデックス、キー、カーソル) を返します。<code>peek</code> は任意の位置の値を取得します。デフォルトの <code>extract</code> メソッドは <code>peek(pos(wa), wa)</code> として定義されます。</p>
+<p><strong>設計メモ:</strong> <code>ComonadStore</code> は <code>Comonad</code> ではなく <code>HKT</code> をスーパートレイトとして必要とします。<code>StoreF&lt;S&gt;</code> は <code>(Box&lt;dyn Fn(S) -&gt; A&gt;, S)</code> として表現され、<code>S</code> に <code>'static</code> 境界を必要とします。汎用 <code>Functor</code> トレイトはこの境界を持たないため、<code>StoreF</code> は <code>Functor</code> を実装できず、したがって <code>Extend</code> や <code>Comonad</code> を実装できません。代わりに <code>extract</code> メソッドがこのトレイトに直接提供されます。</p>
+<h4 id="法則-3"><a class="header" href="#法則-3">法則</a></h4>
+<p>peek-pos 単位律</p>
 <p>peek(pos(wa), wa) == extract(wa)</p>
-<h4 id="instances-3"><a class="header" href="#instances-3">Instances</a></h4>
+<h4 id="実装-3"><a class="header" href="#実装-3">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>StoreF&lt;S&gt;</code></td><td><code>(Box&lt;dyn Fn(S) -&gt; A&gt;, S)</code></td><td>Alloc-gated; requires <code>S: Clone + 'static</code></td></tr>
+<tr><td><code>StoreF&lt;S&gt;</code></td><td><code>(Box&lt;dyn Fn(S) -&gt; A&gt;, S)</code></td><td>alloc ゲート; <code>S: Clone + 'static</code> が必要</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-3"><a class="header" href="#example-3">Example</a></h4>
+<h4 id="例-3"><a class="header" href="#例-3">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::prelude::*;
 
-// A Store is a pair of (lookup function, current position)
+// Store は (参照関数、現在位置) のペア
 let store: (Box&lt;dyn Fn(i32) -&gt; String&gt;, i32) =
     (Box::new(|s| format!("value_{}", s)), 42);
 
-// pos: get the current position
+// pos: 現在位置を取得
 assert_eq!(StoreF::&lt;i32&gt;::pos(&amp;store), 42);
 
-// peek: look up the value at any position
+// peek: 任意の位置の値を参照
 assert_eq!(StoreF::&lt;i32&gt;::peek(10, &amp;store), "value_10");
 
-// extract: peek at the current position
+// extract: 現在位置を覗く
 assert_eq!(StoreF::&lt;i32&gt;::extract(&amp;store), "value_42");
 <span class="boring">}</span></code></pre>
 <h2 id="comonadtraced"><a class="header" href="#comonadtraced">ComonadTraced</a></h2>
 <h3 id="comonadtracedm-monoid"><a class="header" href="#comonadtracedm-monoid">ComonadTraced&lt;M: Monoid&gt;</a></h3>
-<p>A comonad with a monoidal trace/accumulator. Dual of Writer.</p>
-<h4 id="signature-4"><a class="header" href="#signature-4">Signature</a></h4>
+<p>モノイダルなトレース/アキュムレータを持つコモナド。Writer の双対。</p>
+<h4 id="シグネチャ-4"><a class="header" href="#シグネチャ-4">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait ComonadTraced&lt;M: Monoid&gt;: HKT {
     fn trace&lt;A&gt;(m: M, wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
 
-    /// Extract the focused value (equivalent to `trace(M::empty(), wa)`).
+    /// 焦点の値を抽出 (`trace(M::empty(), wa)` と等価)。
     fn extract&lt;A&gt;(wa: &amp;Self::Of&lt;A&gt;) -&gt; A;
 }
 <span class="boring">}</span></code></pre>
-<p><code>trace</code> queries the comonadic value with a monoidal input. The default <code>extract</code> method traces with the monoidal identity (<code>M::empty()</code>), yielding the “current” value without any accumulated trace.</p>
-<p><strong>Design note:</strong> Like <code>ComonadStore</code>, this trait requires <code>HKT</code> rather than <code>Comonad</code> as its supertrait. <code>TracedF&lt;M&gt;</code> is represented as <code>Box&lt;dyn Fn(M) -&gt; A&gt;</code>, which imposes <code>'static</code> bounds incompatible with the generic <code>Functor</code> signature.</p>
-<h4 id="laws-4"><a class="header" href="#laws-4">Laws</a></h4>
-<p>Identity trace</p>
+<p><code>trace</code> はモノイダル入力でコモナド値を問い合わせます。デフォルトの <code>extract</code> メソッドはモノイダル単位 (<code>M::empty()</code>) でトレースし、蓄積されたトレースなしの「現在の」値を得ます。</p>
+<p><strong>設計メモ:</strong> <code>ComonadStore</code> と同様に、このトレイトは <code>Comonad</code> ではなく <code>HKT</code> をスーパートレイトとして必要とします。<code>TracedF&lt;M&gt;</code> は <code>Box&lt;dyn Fn(M) -&gt; A&gt;</code> として表現され、汎用 <code>Functor</code> シグネチャと互換性のない <code>'static</code> 境界を課します。</p>
+<h4 id="法則-4"><a class="header" href="#法則-4">法則</a></h4>
+<p>単位トレース</p>
 <p>trace(M::empty(), wa) == extract(wa)</p>
-<h4 id="instances-4"><a class="header" href="#instances-4">Instances</a></h4>
+<h4 id="実装-4"><a class="header" href="#実装-4">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;A&gt;</code></th><th>Notes</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;A&gt;</code></th><th>備考</th></tr>
 </thead>
 <tbody>
-<tr><td><code>TracedF&lt;M&gt;</code></td><td><code>Box&lt;dyn Fn(M) -&gt; A&gt;</code></td><td>Alloc-gated; requires <code>M: Monoid + Clone + 'static</code></td></tr>
+<tr><td><code>TracedF&lt;M&gt;</code></td><td><code>Box&lt;dyn Fn(M) -&gt; A&gt;</code></td><td>alloc ゲート; <code>M: Monoid + Clone + 'static</code> が必要</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="example-4"><a class="header" href="#example-4">Example</a></h4>
+<h4 id="例-4"><a class="header" href="#例-4">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::prelude::*;
 
-// A Traced comonad is a function from a monoid to a value
+// Traced コモナドはモノイドから値への関数
 let w: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|m| format!("traced_{}", m));
 
-// trace: query with a specific monoidal value
+// trace: 特定のモノイダル値で問い合わせ
 assert_eq!(TracedF::&lt;i32&gt;::trace(5, &amp;w), "traced_5");
 
-// extract: trace with the monoidal identity (i32::empty() == 0)
+// extract: モノイダル単位でトレース (i32::empty() == 0)
 assert_eq!(TracedF::&lt;i32&gt;::extract(&amp;w), "traced_0");
 <span class="boring">}</span></code></pre>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 
