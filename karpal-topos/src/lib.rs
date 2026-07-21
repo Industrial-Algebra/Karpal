@@ -32,6 +32,9 @@
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 
+pub mod classifier;
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub mod limits;
 pub mod presheaf;
 pub mod representable;
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -39,6 +42,9 @@ pub mod sieve;
 pub mod small_category;
 pub mod yoneda;
 
+pub use classifier::{Omega, Terminal, TruthValue, truth_at};
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub use limits::{characteristic_at, equalizer_fiber, pullback_fiber};
 pub use presheaf::{ConstantPresheaf, Presheaf};
 pub use representable::Representable;
 #[cfg(any(feature = "std", feature = "alloc"))]
