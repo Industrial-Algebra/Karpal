@@ -1,10 +1,10 @@
-# Comonad Family
+# コモナドファミリー
 
-Dual of the monad hierarchy: comonadic context and extraction.
+モナド階層の双対: コモナド的文脈と抽出。
 
-Where a Monad lets you *inject* values into a context and *sequence* context-producing computations, a Comonad lets you *extract* values from a context and *extend* context-consuming functions across an entire structure. The comonad family in Karpal consists of five traits arranged in a linear hierarchy with three specialized branches.
+Monad が文脈に値を *注入* し文脈を生成する計算を *逐次化* できるのに対し、Comonad は文脈から値を *抽出* し、文脈を消費する関数を構造全体に *拡張* できます。Karpal のコモナドファミリーは、線形階層に配置された五つのトレイトと三つの特殊化された枝で構成されます。
 
-## Hierarchy
+## 階層
 
 
 Functor → Extend → Comonad → ComonadEnv  
@@ -12,17 +12,17 @@ Functor → Extend → Comonad → ComonadStore \*
 Functor → Extend → Comonad → ComonadTraced \*
 
 
-**\* Design note:** `ComonadStore` and `ComonadTraced` require `HKT` (not `Comonad`) as their supertrait. This is because `StoreF` and `TracedF` use `Box<dyn Fn>` internally, which imposes `'static` bounds that are incompatible with the generic `Functor` signature. Since `Functor` is a supertrait of `Extend` and `Comonad`, these types cannot implement the full comonad chain. Instead, they provide their own `extract` method directly on the trait, defined as a default method in terms of `peek`/`trace`.
+**\* 設計メモ:** `ComonadStore` と `ComonadTraced` は (`Comonad` ではなく) `HKT` をスーパートレイトとして必要とします。これは `StoreF` と `TracedF` が内部で `Box<dyn Fn>` を使い、これが汎用 `Functor` シグネチャと互換性のない `'static` 境界を課すためです。`Functor` は `Extend` と `Comonad` のスーパートレイトであるため、これらの型は完全なコモナド連鎖を実装できません。代わりに、トレイト上に `peek`/`trace` を使ったデフォルトメソッドとして直接 `extract` メソッドを提供します。
 
 ## Extend
 
 
 ### Extend
 
-The dual of Chain. Enables cooperative, context-aware computation.
+Chain の双対。協調的で文脈認識的な計算を可能にします。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Extend: Functor {
@@ -37,35 +37,35 @@ pub trait Extend: Functor {
 }
 ```
 
-Given a value in context `W<A>` and a function `&W<A> -> B` that can inspect the full context, `extend` applies that function at every "position" in the structure, producing `W<B>`. The `duplicate` method has a default implementation: `Self::extend(wa, |w| w.clone())`.
+文脈 `W<A>` 内の値と、完全な文脈を検査できる関数 `&W<A> -> B` を与えると、`extend` はその関数を構造のすべての「位置」で適用し、`W<B>` を生成します。`duplicate` メソッドにはデフォルト実装があります: `Self::extend(wa, |w| w.clone())`。
 
-#### Laws
+#### 法則
 
 
-Associativity
+結合律
 
 
 extend(f, extend(g, w)) == extend(\|w\| f(&extend(g, w.clone())), w)
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `Of<A>`          | Notes                                               |
+| 型コンストラクタ | `Of<A>`          | 備考                                               |
 |------------------|------------------|-----------------------------------------------------|
-| `IdentityF`      | `A`              | Trivially applies `f` to the value                  |
-| `OptionF`        | `Option<A>`      | Applies `f` if `Some`; returns `None` otherwise     |
-| `NonEmptyVecF`   | `NonEmptyVec<A>` | Applies `f` to each suffix (alloc-gated)            |
-| `EnvF<E>`        | `(E, A)`         | Applies `f` to the pair, preserving the environment |
+| `IdentityF`      | `A`              | 自明に値に `f` を適用                  |
+| `OptionF`        | `Option<A>`      | `Some` なら `f` を適用; さもなくば `None`     |
+| `NonEmptyVecF`   | `NonEmptyVec<A>` | 各接尾辞に `f` を適用 (alloc ゲート)            |
+| `EnvF<E>`        | `(E, A)`         | ペアに `f` を適用し、環境を保持 |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_core::prelude::*;
 
-// NonEmptyVec extend: apply a summary function to each suffix
+// NonEmptyVec extend: 各接尾辞に要約関数を適用
 let nev = NonEmptyVec::new(1, vec![2, 3]);
 let sums = NonEmptyVecF::extend(nev, |w| w.iter().sum::<i32>());
-// Suffixes: [1,2,3], [2,3], [3]  =>  Sums: 6, 5, 3
+// 接尾辞: [1,2,3], [2,3], [3]  =>  和: 6, 5, 3
 assert_eq!(sums, NonEmptyVec::new(6, vec![5, 3]));
 
 // Option extend
@@ -75,7 +75,7 @@ let doubled = OptionF::extend(Some(3), |opt| match opt {
 });
 assert_eq!(doubled, Some(6));
 
-// duplicate: embed the structure inside itself
+// duplicate: 構造をそれ自身の内側に埋め込む
 let nested = OptionF::duplicate(Some(42));
 assert_eq!(nested, Some(Some(42)));
 ```
@@ -86,10 +86,10 @@ assert_eq!(nested, Some(Some(42)));
 
 ### Comonad
 
-The categorical dual of Monad. Extract a value from context.
+Monad の圏論的双対。文脈から値を抽出します。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Comonad: Extend {
@@ -97,47 +97,47 @@ pub trait Comonad: Extend {
 }
 ```
 
-A Comonad can `extract` a value from a context and `extend` a context-aware function over the entire structure. Where `Monad::pure` injects a value into a minimal context, `Comonad::extract` pulls a value out of an existing context.
+Comonad は文脈から値を `extract` でき、文脈認識関数を構造全体に `extend` できます。`Monad::pure` が値を最小の文脈に注入するのに対し、`Comonad::extract` は既存の文脈から値を引き出します。
 
-#### Laws
+#### 法則
 
 
-Left identity
+左単位律
 
 
 extract(&extend(w, f)) == f(&w)
 
 
-Right identity
+右単位律
 
 
 extend(w, \|w\| extract(w)) == w
 
 
-Associativity is inherited from `Extend`.
+結合律は `Extend` から継承されます。
 
-#### Instances
+#### 実装
 
-| Type constructor | `Of<A>`          | Notes                                                 |
+| 型コンストラクタ | `Of<A>`          | 備考                                                 |
 |------------------|------------------|-------------------------------------------------------|
-| `IdentityF`      | `A`              | Returns the value directly                            |
-| `OptionF`        | `Option<A>`      | Panics on `None` (partial comonad)                    |
-| `NonEmptyVecF`   | `NonEmptyVec<A>` | Returns the head element (alloc-gated)                |
-| `EnvF<E>`        | `(E, A)`         | Returns the `A` component, discarding the environment |
+| `IdentityF`      | `A`              | 値を直接返す                            |
+| `OptionF`        | `Option<A>`      | `None` でパニック (部分コモナド)                    |
+| `NonEmptyVecF`   | `NonEmptyVec<A>` | 先頭要素を返す (alloc ゲート)                |
+| `EnvF<E>`        | `(E, A)`         | `A` 成分を返し、環境を破棄 |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_core::prelude::*;
 
-// Extract from NonEmptyVec: always returns the head
+// NonEmptyVec から抽出: 常に先頭を返す
 let nev = NonEmptyVec::new(10, vec![20, 30]);
 assert_eq!(NonEmptyVecF::extract(&nev), 10);
 
-// Extract from Env: discards the environment, keeps the value
+// Env から抽出: 環境を破棄し、値を保持
 assert_eq!(EnvF::<&str>::extract(&("config", 42)), 42);
 
-// Left identity law in action:
+// 左単位律の実例:
 let f = |w: &NonEmptyVec<i32>| w.head + 1;
 let extended = NonEmptyVecF::extend(nev.clone(), f);
 assert_eq!(NonEmptyVecF::extract(&extended), f(&nev));
@@ -149,10 +149,10 @@ assert_eq!(NonEmptyVecF::extract(&extended), f(&nev));
 
 ### ComonadEnv\<E\>
 
-A Comonad with access to an environment value. Dual of Reader/MonadReader.
+環境値にアクセスできる Comonad。Reader/MonadReader の双対。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait ComonadEnv<E>: Comonad {
@@ -161,39 +161,39 @@ pub trait ComonadEnv<E>: Comonad {
 }
 ```
 
-`ask` retrieves the environment from the comonadic value. `local` transforms the environment while leaving the focus value unchanged.
+`ask` はコモナド値から環境を取得します。`local` は焦点の値を変更せずに環境を変換します。
 
-#### Laws
+#### 法則
 
 
-Local preserves extract
+local は extract を保存
 
 
 extract(local(wa, f)) == extract(wa)
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `Of<A>`  | Notes                                             |
+| 型コンストラクタ | `Of<A>`  | 備考                                             |
 |------------------|----------|---------------------------------------------------|
-| `EnvF<E>`        | `(E, A)` | `ask` returns `E`; `local` transforms `E` via `f` |
+| `EnvF<E>`        | `(E, A)` | `ask` は `E` を返す; `local` は `f` で `E` を変換 |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_core::prelude::*;
 
 let w = ("hello", 42);
 
-// ask: retrieve the environment
+// ask: 環境を取得
 assert_eq!(EnvF::<&str>::ask(&w), "hello");
 
-// local: transform the environment, keep the value
+// local: 環境を変換し、値を保持
 let w2 = (10i32, "value");
 let result = EnvF::<i32>::local(w2, |e| e * 2);
 assert_eq!(result, (20, "value"));
 
-// Law: local does not change the extracted value
+// 法則: local は抽出される値を変更しない
 assert_eq!(
     EnvF::<i32>::extract(&EnvF::<i32>::local((5, 99), |e| e + 1)),
     EnvF::<i32>::extract(&(5, 99))
@@ -206,58 +206,58 @@ assert_eq!(
 
 ### ComonadStore\<S\>
 
-A comonad with a notion of position and peeking. Dual of State.
+位置と覗き見の概念を持つコモナド。State の双対。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait ComonadStore<S>: HKT {
     fn pos<A>(wa: &Self::Of<A>) -> S;
     fn peek<A>(s: S, wa: &Self::Of<A>) -> A;
 
-    /// Extract the focused value (equivalent to `peek(pos(wa), wa)`).
+    /// 焦点の値を抽出 (`peek(pos(wa), wa)` と等価)。
     fn extract<A>(wa: &Self::Of<A>) -> A
     where
         S: Clone;
 }
 ```
 
-`pos` returns the current position (index, key, cursor) within the store. `peek` retrieves the value at an arbitrary position. The default `extract` method is defined as `peek(pos(wa), wa)`.
+`pos` はストア内の現在位置 (インデックス、キー、カーソル) を返します。`peek` は任意の位置の値を取得します。デフォルトの `extract` メソッドは `peek(pos(wa), wa)` として定義されます。
 
-**Design note:** `ComonadStore` requires `HKT` rather than `Comonad` as its supertrait. `StoreF<S>` is represented as `(Box<dyn Fn(S) -> A>, S)`, which requires `'static` bounds on `S`. The generic `Functor` trait does not carry this bound, so `StoreF` cannot implement `Functor` and therefore cannot implement `Extend` or `Comonad`. The `extract` method is provided directly on this trait instead.
+**設計メモ:** `ComonadStore` は `Comonad` ではなく `HKT` をスーパートレイトとして必要とします。`StoreF<S>` は `(Box<dyn Fn(S) -> A>, S)` として表現され、`S` に `'static` 境界を必要とします。汎用 `Functor` トレイトはこの境界を持たないため、`StoreF` は `Functor` を実装できず、したがって `Extend` や `Comonad` を実装できません。代わりに `extract` メソッドがこのトレイトに直接提供されます。
 
-#### Laws
+#### 法則
 
 
-Peek-pos identity
+peek-pos 単位律
 
 
 peek(pos(wa), wa) == extract(wa)
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `Of<A>`                    | Notes                                      |
+| 型コンストラクタ | `Of<A>`                    | 備考                                      |
 |------------------|----------------------------|--------------------------------------------|
-| `StoreF<S>`      | `(Box<dyn Fn(S) -> A>, S)` | Alloc-gated; requires `S: Clone + 'static` |
+| `StoreF<S>`      | `(Box<dyn Fn(S) -> A>, S)` | alloc ゲート; `S: Clone + 'static` が必要 |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_core::prelude::*;
 
-// A Store is a pair of (lookup function, current position)
+// Store は (参照関数、現在位置) のペア
 let store: (Box<dyn Fn(i32) -> String>, i32) =
     (Box::new(|s| format!("value_{}", s)), 42);
 
-// pos: get the current position
+// pos: 現在位置を取得
 assert_eq!(StoreF::<i32>::pos(&store), 42);
 
-// peek: look up the value at any position
+// peek: 任意の位置の値を参照
 assert_eq!(StoreF::<i32>::peek(10, &store), "value_10");
 
-// extract: peek at the current position
+// extract: 現在位置を覗く
 assert_eq!(StoreF::<i32>::extract(&store), "value_42");
 ```
 
@@ -267,55 +267,53 @@ assert_eq!(StoreF::<i32>::extract(&store), "value_42");
 
 ### ComonadTraced\<M: Monoid\>
 
-A comonad with a monoidal trace/accumulator. Dual of Writer.
+モノイダルなトレース/アキュムレータを持つコモナド。Writer の双対。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait ComonadTraced<M: Monoid>: HKT {
     fn trace<A>(m: M, wa: &Self::Of<A>) -> A;
 
-    /// Extract the focused value (equivalent to `trace(M::empty(), wa)`).
+    /// 焦点の値を抽出 (`trace(M::empty(), wa)` と等価)。
     fn extract<A>(wa: &Self::Of<A>) -> A;
 }
 ```
 
-`trace` queries the comonadic value with a monoidal input. The default `extract` method traces with the monoidal identity (`M::empty()`), yielding the "current" value without any accumulated trace.
+`trace` はモノイダル入力でコモナド値を問い合わせます。デフォルトの `extract` メソッドはモノイダル単位 (`M::empty()`) でトレースし、蓄積されたトレースなしの「現在の」値を得ます。
 
-**Design note:** Like `ComonadStore`, this trait requires `HKT` rather than `Comonad` as its supertrait. `TracedF<M>` is represented as `Box<dyn Fn(M) -> A>`, which imposes `'static` bounds incompatible with the generic `Functor` signature.
+**設計メモ:** `ComonadStore` と同様に、このトレイトは `Comonad` ではなく `HKT` をスーパートレイトとして必要とします。`TracedF<M>` は `Box<dyn Fn(M) -> A>` として表現され、汎用 `Functor` シグネチャと互換性のない `'static` 境界を課します。
 
-#### Laws
+#### 法則
 
 
-Identity trace
+単位トレース
 
 
 trace(M::empty(), wa) == extract(wa)
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `Of<A>`               | Notes                                               |
+| 型コンストラクタ | `Of<A>`               | 備考                                               |
 |------------------|-----------------------|-----------------------------------------------------|
-| `TracedF<M>`     | `Box<dyn Fn(M) -> A>` | Alloc-gated; requires `M: Monoid + Clone + 'static` |
+| `TracedF<M>`     | `Box<dyn Fn(M) -> A>` | alloc ゲート; `M: Monoid + Clone + 'static` が必要 |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_core::prelude::*;
 
-// A Traced comonad is a function from a monoid to a value
+// Traced コモナドはモノイドから値への関数
 let w: Box<dyn Fn(i32) -> String> = Box::new(|m| format!("traced_{}", m));
 
-// trace: query with a specific monoidal value
+// trace: 特定のモノイダル値で問い合わせ
 assert_eq!(TracedF::<i32>::trace(5, &w), "traced_5");
 
-// extract: trace with the monoidal identity (i32::empty() == 0)
+// extract: モノイダル単位でトレース (i32::empty() == 0)
 assert_eq!(TracedF::<i32>::extract(&w), "traced_0");
 ```
 
 
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。

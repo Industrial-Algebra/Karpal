@@ -1,30 +1,30 @@
-# Proof & Verification
+# 証明と検証
 
-Karpal now has complementary layers for reasoning about laws. `karpal-proof` provides in-Rust witnesses, refinement types, and derive-based law checks. `karpal-verify` extends that story outward with an obligation IR, exporters for SMT-LIB2 and Lean 4, optional amari-flynn statistical verification hooks, artifact generation, execution planning, reporting, three-tier bundle summaries, and an explicit trust boundary for imported certificates. Together these APIs now cover Karpal's full external verification foundation.
+Karpal は法則について推論するための相補的な層を持つようになりました。`karpal-proof` は Rust 内の証拠、精密化型、derive ベースの法則チェックを提供します。`karpal-verify` はその物語を外側に拡張し、オブリゲーション IR、SMT-LIB2 と Lean 4 のエクスポータ、オプションの amari-flynn 統計検証フック、アーティファクト生成、実行計画、報告、三層バンドルサマリー、インポートされた証明書のための明示的な信頼境界を提供します。これらの API が一緒になって Karpal の完全な外部検証基盤を覆います。
 
-## Overview
+## 概要
 
-| Crate                 | Role                                           | Typical use                                                                                                              |
+| クレート                 | 役割                                           | 典型的な使い方                                                                                                              |
 |-----------------------|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `karpal-proof`        | Internal law witnesses and refinement evidence | Encode that a value is known to satisfy a property inside Rust                                                           |
-| `karpal-proof-derive` | Derive-driven law verification helpers         | Generate tests that check algebraic laws for your types                                                                  |
-| `karpal-verify`       | External verification bridge                   | Export obligations to external provers, bridge rare-event checks through amari-flynn, and import certificates explicitly |
+| `karpal-proof`        | 内部の法則証拠と精密化証拠 | Rust 内で値が性質を満たすことが知られていることをエンコード                                                           |
+| `karpal-proof-derive` | derive 駆動の法則検証ヘルパ         | 型の代数法則をチェックするテストを生成                                                                  |
+| `karpal-verify`       | 外部検証ブリッジ                   | オブリゲーションを外部の証明器にエクスポートし、amari-flynn で稀有事象チェックをブリッジし、証明書を明示的にインポート |
 
-## Crate map
+## クレートマップ
 
-| Crate           | Focus                                                                                                |
+| クレート           | 焦点                                                                                                |
 |-----------------|------------------------------------------------------------------------------------------------------|
-| `karpal-proof`  | Law witnesses, rewrite evidence, refinement types, and derive-based law verification                 |
-| `karpal-verify` | Obligation IR, exporters, execution/reporting, orchestration, and explicit imported-trust boundaries |
+| `karpal-proof`  | 法則証拠、書き換え証拠、精密化型、derive ベースの法則検証                 |
+| `karpal-verify` | オブリゲーション IR、エクスポータ、実行/報告、オーケストレーション、明示的なインポート信頼境界 |
 
-## The `karpal-proof` layer
+## `karpal-proof` 層
 
-`karpal-proof` models law evidence as values and phantom markers. The core idea is that a property like associativity or monoid structure can be reflected in the type system without pretending the compiler proved it from first principles.
+`karpal-proof` は法則の証拠を値とファントムマーカーとしてモデル化します。中核のアイデアは、結合律やモノイド構造のような性質を、コンパイラが第一原理から証明したと見せかけずに型システムに反映できるということです。
 
 
 ### Proven\<P, T\>
 
-A value `T` paired with evidence for property marker `P`.
+性質マーカー `P` の証拠と対になった値 `T`。
 
 
 ``` rust
@@ -34,12 +34,12 @@ let checked: Proven<IsMonoid, i32> = Proven::from_monoid(5);
 let value: i32 = checked.into_inner();
 ```
 
-Property markers such as `IsAssociative`, `IsMonoid`, `IsGroup`, and `IsSemiring` let downstream APIs require evidence rather than a raw trait bound.
+`IsAssociative`、`IsMonoid`、`IsGroup`、`IsSemiring` のような性質マーカーにより、下流の API は生のトレイト境界ではなく証拠を要求できます。
 
 
-### Refinement types
+### 精密化型
 
-Small runtime-checked wrappers for stronger domain invariants.
+より強いドメイン不変量のための小さな実行時チェック付きラッパ。
 
 
 ``` rust
@@ -49,20 +49,20 @@ let xs = NonEmpty::try_new(vec![1, 2, 3]).expect("vector is non-empty");
 let p = Positive::new(42).expect("value is positive");
 ```
 
-These wrappers are useful even when you are not doing external verification: they make illegal states unrepresentable after construction.
+外部検証をしていなくてもこれらのラッパは有用です: 構築後に不正な状態を表現不可能にします。
 
 
-### Rewrite witnesses
+### 書き換え証拠
 
-Composable evidence for algebraic rewriting steps.
-
-
-Rewrites capture law-guided transformations such as associativity, commutativity, identity elimination, distributivity, and inverse cancellation. They are a good fit for normalization, symbolic simplification, and proof-oriented APIs inside Rust.
+代数的書き換えステップの合成可能な証拠。
 
 
-### Derive-based law checks
+書き換えは結合律・可換律・単位除去・分配律・逆元相殺のような法則ガイド付き変換を捉えます。正規化、記号的簡略化、Rust 内の証明指向 API に適しています。
 
-`karpal-proof-derive` provides macros like `VerifySemigroup`, `VerifyMonoid`, `VerifyGroup`, `VerifySemiring`, and `VerifyLattice`. These derive helpers generate tests that exercise the relevant algebraic laws for your type.
+
+### derive ベースの法則チェック
+
+`karpal-proof-derive` は `VerifySemigroup`、`VerifyMonoid`、`VerifyGroup`、`VerifySemiring`、`VerifyLattice` のようなマクロを提供します。これらの derive ヘルパは型の関連する代数法則を行使するテストを生成します。
 
 ``` rust
 use karpal_proof::VerifyMonoid;
@@ -71,15 +71,15 @@ use karpal_proof::VerifyMonoid;
 struct SumI32(i32);
 ```
 
-This remains a Rust-native, test-oriented workflow: it is excellent for continuous checking and regression prevention, but it is distinct from importing a theorem prover result.
+これは Rust ネイティブのテスト指向ワークフローです: 継続的チェックと回帰防止に優れていますが、定理証明器の結果をインポートすることとは異なります。
 
-## The `karpal-verify` layer
+## `karpal-verify` 層
 
-`karpal-verify` is Karpal's bridge for external verification. It deliberately separates *modeling*, *export*, *execution*, and *trust* so each step stays inspectable.
+`karpal-verify` は外部検証のための Karpal のブリッジです。*モデリング*、*エクスポート*、*実行*、*信頼* を意図的に分離し、各ステップを検査可能に保ちます。
 
-### Obligation IR
+### オブリゲーション IR
 
-The core intermediate representation is backend-agnostic and can describe algebraic laws without committing to a specific prover syntax.
+中核の中間表現はバックエンドに依存せず、特定の証明器構文に commit することなく代数法則を記述できます。
 
 ``` rust
 use karpal_verify::{Obligation, Origin, Sort};
@@ -92,16 +92,16 @@ let assoc = Obligation::associativity(
 );
 ```
 
-The IR includes:
+IR には以下が含まれます:
 
-- `Obligation` for named proof goals
-- `Origin` for provenance
-- `Declaration`, `Sort`, and `Term` for signatures and formulas
-- `VerificationTier` and `ProofDialect` for classification metadata
+- 名前付き証明目標のための `Obligation`
+- 来歴のための `Origin`
+- シグネチャと式のための `Declaration`、`Sort`、`Term`
+- 分類メタデータのための `VerificationTier` と `ProofDialect`
 
-### Algebraic signatures and bundles
+### 代数シグネチャとバンドル
 
-`AlgebraicSignature` registers semantic roles like `combine`, `identity`, `inverse`, `add`, `mul`, `meet`, and `join`. `ObligationBundle` then groups the relevant laws for a structure such as a semigroup, monoid, group, semiring, or lattice.
+`AlgebraicSignature` は `combine`、`identity`、`inverse`、`add`、`mul`、`meet`、`join` のような意味的役割を登録します。`ObligationBundle` は半群・モノイド・群・半環・束のような構造の関連法則をまとめます。
 
 ``` rust
 use karpal_verify::{AlgebraicSignature, ObligationBundle, Origin, Sort};
@@ -115,12 +115,12 @@ let bundle = ObligationBundle::group(
 assert_eq!(bundle.obligations().len(), 5);
 ```
 
-### Exporters
+### エクスポータ
 
-The same obligation bundle can be exported to different backends:
+同じオブリゲーションバンドルを異なるバックエンドにエクスポートできます:
 
-- **SMT-LIB2** via `SmtLib2` and `export_smt_bundle(...)`
-- **Lean 4** via `Lean4`, `export_lean_bundle(...)`, and the structured Lean export APIs
+- **SMT-LIB2** は `SmtLib2` と `export_smt_bundle(...)` 経由
+- **Lean 4** は `Lean4`、`export_lean_bundle(...)`、構造化 Lean エクスポート API 経由
 
 ``` rust
 use karpal_verify::{export_smt_bundle, export_lean_bundle};
@@ -129,37 +129,37 @@ let smt_scripts = export_smt_bundle(&bundle);
 let lean_module = export_lean_bundle("KarpalVerify", &bundle);
 ```
 
-### Lean integration
+### Lean 統合
 
-The Lean bridge is more than plain text export. Structured Lean metadata tracks theorem identities, declaration spans, module imports, symbol aliases, project/package information, and report cross-links. This lets Karpal preserve a stable connection between exported obligations, generated Lean source, CI artifacts, and parsed Lean diagnostics.
+Lean ブリッジは単なるテキストエクスポート以上です。構造化 Lean メタデータは定理の同一性、宣言スパン、モジュールインポート、シンボルエイリアス、プロジェクト/パッケージ情報、レポート相互リンクを追跡します。これにより Karpal はエクスポートされたオブリゲーション、生成された Lean ソース、CI アーティファクト、解析された Lean 診断の間に安定した接続を保てます。
 
-- **Prelude/import bridging** via `LeanPrelude`, `LeanImport`, and `LeanAlias`
-- **Structured theorem metadata** via `LeanTheorem` and `LeanExport`
-- **Project scaffolding** via `LeanProject` plus generated `lakefile.lean` and `lean-toolchain`
-- **Project-aware execution** through `LeanDriver::LakeEnv` and `LeanDriver::LakeBuild`
-- **Parsed diagnostics** via `parse_lean_output(...)`, including theorem-name hits and line-aware fallback mapping
-- **CI sidecars and manifests** through schema-versioned report JSON, Lean manifest JSON, and Lean diagnostics sidecar JSON
+- `LeanPrelude`、`LeanImport`、`LeanAlias` 経由の **プレリュード/インポートブリッジング**
+- `LeanTheorem` と `LeanExport` による **構造化定理メタデータ**
+- `LeanProject` と生成された `lakefile.lean` および `lean-toolchain` による **プロジェクトスキャフォールディング**
+- `LeanDriver::LakeEnv` と `LeanDriver::LakeBuild` による **プロジェクト認識実行**
+- `parse_lean_output(...)` 経由の **解析された診断** (定理名ヒットと行認識フォールバックマッピングを含む)
+- スキーマバージョン管理されたレポート JSON、Lean マニフェスト JSON、Lean 診断サイドカー JSON による **CI サイドカーとマニフェスト**
 
-### Artifacts, planning, and execution
+### アーティファクト、計画、実行
 
-With the `std` feature, `karpal-verify` can prepare artifact layouts, write files, build invocation plans, and execute those plans either as dry runs or as local processes.
+`std` フィーチャーで、`karpal-verify` はアーティファクトレイアウトの準備、ファイル書き込み、起動計画の構築、ドライランまたはローカルプロセスとしての実行ができます。
 
-Those serialized artifacts are schema-versioned as well: report JSON, Lean manifest JSON, and Lean diagnostics sidecars all carry `schema_version` markers so CI tooling can detect compatible vs. breaking format changes explicitly.
+これらのシリアライズされたアーティファクトもスキーマバージョン管理されます: レポート JSON、Lean マニフェスト JSON、Lean 診断サイドカーはすべて `schema_version` マーカーを持ち、CI ツールが互換性のある形式変更と破壊的変更を明示的に検出できます。
 
-| Type                 | Responsibility                                                     |
+| 型                 | 責任                                                     |
 |----------------------|--------------------------------------------------------------------|
-| `ArtifactLayout`     | Directory layout for generated SMT and Lean artifacts              |
-| `ArtifactBatch`      | Records plus invocation plans for a verification batch             |
-| `InvocationPlan`     | Executable, args, working directory, and tracked input files       |
-| `DryRunner`          | Returns shell-rendered dry-run results without spawning processes  |
-| `LocalProcessRunner` | Executes local solver or Lean commands via `std::process::Command` |
+| `ArtifactLayout`     | 生成された SMT と Lean アーティファクトのディレクトリレイアウト              |
+| `ArtifactBatch`      | 検証バッチのレコードと起動計画             |
+| `InvocationPlan`     | 実行可能ファイル、引数、作業ディレクトリ、追跡入力ファイル       |
+| `DryRunner`          | プロセスを起動せずにシェル描画されたドライラン結果を返す  |
+| `LocalProcessRunner` | `std::process::Command` 経由でローカルソルバーまたは Lean コマンドを実行 |
 
-### Backend-specific verification policies
+### バックエンド固有の検証ポリシー
 
-`karpal-verify` defines explicit backend policies so success is not interpreted uniformly across all tools:
+`karpal-verify` は明示的なバックエンドポリシーを定義し、成功がすべてのツールで一様に解釈されないようにします:
 
-- **SMT**: a verification success means the negated obligation is `unsat`
-- **Lean**: a verification success means the process exits successfully and parsed Lean diagnostics report no errors
+- **SMT**: 検証成功は否定されたオブリゲーションが `unsat` であることを意味
+- **Lean**: 検証成功はプロセスが成功で終了し、解析された Lean 診断がエラーを報告しないことを意味
 
 ``` rust
 use karpal_verify::{CommandKind, ExecutionStatus, VerificationPolicy};
@@ -170,11 +170,11 @@ assert!(VerificationPolicy::for_kind(CommandKind::Lean)
     .accepts(ExecutionStatus::Success));
 ```
 
-SMT output parsing also records richer detail through `SmtOutput`, including the parsed status, simple model text after `sat`, and `:reason-unknown` metadata. Lean parsing records structured diagnostics, theorem hits, and location-aware fallback matching so reports can attach failures back to the correct exported theorem even when Lean emits only source locations.
+SMT 出力解析は `SmtOutput` を通じてより豊かな詳細も記録し、解析された状態、`sat` 後の単純なモデルテキスト、`:reason-unknown` メタデータを含みます。Lean 解析は構造化診断、定理ヒット、位置認識フォールバックマッチングを記録し、Lean がソース位置だけを出力する場合でもレポートが失敗を正しいエクスポートされた定理に添付できます。
 
-### Reporting and orchestration
+### 報告とオーケストレーション
 
-The reporting layer attaches results, artifact paths, and optional certificates back to each obligation. The new session/orchestration layer then offers a higher-level workflow for build → run → report.
+報告層は結果、アーティファクトパス、オプションの証明書を各オブリゲーションに添付します。新しいセッション/オーケストレーション層はビルド → 実行 → 報告のためのより高レベルなワークフローを提供します。
 
 ``` rust
 use karpal_verify::{
@@ -199,11 +199,11 @@ let report = verify_bundle(
 assert_eq!(report.obligation_count(), 1);
 ```
 
-`VerificationSession::verify_with_ci_outputs(...)` additionally writes JSON and Markdown summaries directly beside the generated artifacts, plus a schema-versioned Lean diagnostics sidecar and a typed Lean manifest with cross-links back to the CI report files. See [Verification CI Workflow](verification-ci.md) for CI-specific guidance, artifact layout recommendations, and [Verification Schemas](verification-schemas.md) for the serialized compatibility contract.
+`VerificationSession::verify_with_ci_outputs(...)` は加えて、JSON と Markdown サマリーを生成されたアーティファクトの隣に直接書き出し、スキーマバージョン管理された Lean 診断サイドカーと CI レポートファイルへの相互リンクを持つ型付き Lean マニフェストも書き出します。CI 固有の指針、アーティファクトレイアウトの推奨については [検証 CI ワークフロー](verification-ci.md) を、シリアライズされた互換性契約については [検証スキーマ](verification-schemas.md) を参照してください。
 
-## Explicit trust boundary
+## 明示的な信頼境界
 
-External certificates do **not** silently become Rust proof witnesses. Imported evidence first becomes `Certified<B, P, T>`, where `B` identifies the backend, `P` is the claimed property, and `T` is the wrapped value. Crossing into `Proven<P, T>` remains an explicit `unsafe` action.
+外部証明書は暗黙に Rust の証拠証拠にはなりません。インポートされた証拠はまず `Certified<B, P, T>` になります。ここで `B` はバックエンド、`P` は主張された性質、`T` は包まれた値です。`Proven<P, T>` への交差は明示的な `unsafe` アクションのままです。
 
 ``` rust
 use karpal_proof::{IsAssociative, Proven};
@@ -215,21 +215,19 @@ let externally_checked =
 let _: Proven<IsAssociative, i32> = unsafe { externally_checked.into_proven() };
 ```
 
-This policy keeps imported trust searchable, reviewable, and distinct from evidence derived directly from Rust traits or runtime checks. For a design note focused specifically on the trust model, see [Trust Model](../dev/phase-12-trust-model.md).
+この方針により、インポートされた信頼を検索可能・レビュー可能に保ち、Rust トレイトや実行時チェックから直接導出された証拠と区別します。信頼モデルに特化した設計メモは [信頼モデル](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md) を参照してください。
 
-## Recommended workflow
+## 推奨ワークフロー
 
-1.  Model the law as an `Obligation` or `ObligationBundle`.
-2.  Export SMT-LIB2 scripts or a Lean module.
-3.  Write artifacts and generate invocation plans.
-4.  Execute with an explicit backend policy.
-5.  Collect a `VerificationReport` and optional CI summaries.
-6.  Import external evidence only through `Certified<...>`.
-7.  Cross into `Proven<...>` only at carefully audited boundaries.
+1.  法則を `Obligation` または `ObligationBundle` としてモデル化する。
+2.  SMT-LIB2 スクリプトまたは Lean モジュールをエクスポートする。
+3.  アーティファクトを書き、起動計画を生成する。
+4.  明示的なバックエンドポリシーで実行する。
+5.  `VerificationReport` とオプションの CI サマリーを収集する。
+6.  外部の証拠は `Certified<...>` 経由でのみインポートする。
+7.  注意深く監査された境界でのみ `Proven<...>` に交差する。
 
-For a walkthrough-style example, see [Verification Workflow](../examples/verification-workflow.md).
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+チュートリアル形式の例は [検証ワークフロー](../examples/verification-workflow.md) を参照してください。
 
 
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。

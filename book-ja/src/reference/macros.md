@@ -1,44 +1,44 @@
-# Macros
+# マクロ
 
-Monadic and applicative notation macros.
+モナドおよびアプリカティブ記法マクロ。
 
-Karpal provides two macros that flatten nested monadic and applicative computations into a readable, top-to-bottom sequence of bindings. Both macros use `=` for binding (not `<-`, which is reserved in Rust edition 2024).
+Karpal は、入れ子になったモナド的・アプリカティブな計算を読みやすい上から下への束縛シーケンスに平坦化する二つのマクロを提供します。どちらのマクロも束縛に `=` を使います (`<-` は Rust edition 2024 で予約されているため使いません)。
 
 
 ### `do_!`
 
-Monadic do-notation. Desugars sequential bindings into nested `Chain::chain` calls.
+モナド的 do 記法。逐次的な束縛を入れ子の `Chain::chain` 呼び出しに脱糖します。
 
 
-#### Syntax
+#### 構文
 
 ``` rust
 do_! { F;
     x = monadic_expr_1;
-    y = monadic_expr_2;   // can reference x
-    // ... more bindings ...
-    final_monadic_expr     // bare expression, no binding
+    y = monadic_expr_2;   // x を参照できる
+    // ... さらなる束縛 ...
+    final_monadic_expr     // 束縛のない裸の式
 }
 ```
 
-- The first token `F` is the type constructor (`OptionF`, `VecF`, `ResultF<E>`, etc.), followed by a semicolon.
-- Each binding uses `=`. Later bindings can reference names bound earlier -- the steps are sequential.
-- The final line is a bare expression of type `F::Of<T>`. It is the value returned by the whole `do_!` block.
-- If any step produces a short-circuiting value (`None`, `Err(_)`), the entire block short-circuits immediately.
+- 最初のトークン `F` は型コンストラクタ (`OptionF`、`VecF`、`ResultF<E>` など) で、セミコロンが続きます。
+- 各束縛は `=` を使います。後の束縛は前に束縛された名前を参照できます — ステップは逐次です。
+- 最後の行は `F::Of<T>` 型の裸の式です。これが `do_!` ブロック全体の戻り値です。
+- いずれかのステップが短絡する値 (`None`、`Err(_)`) を生成すると、ブロック全体が直ちに短絡します。
 
-#### Expansion
+#### 展開
 
-Each `x = expr;` binding desugars into a `Chain::chain` call. The macro expands recursively:
+各 `x = expr;` 束縛は `Chain::chain` 呼び出しに脱糖されます。マクロは再帰的に展開されます:
 
 ``` rust
-// This:
+// これが:
 do_! { F;
     x = expr_a;
     y = expr_b;
     expr_c
 }
 
-// Expands to:
+// こう展開される:
 <F as Chain>::chain(expr_a, |x| {
     <F as Chain>::chain(expr_b, |y| {
         expr_c
@@ -46,47 +46,47 @@ do_! { F;
 })
 ```
 
-A single bare expression (no bindings) is returned as-is:
+束縛のない単一の裸の式はそのまま返されます:
 
 ``` rust
 do_! { F; some_expr }
-// Expands to:
+// 展開:
 some_expr
 ```
 
-#### Requirements
+#### 要件
 
-The type constructor `F` must implement `Chain` (and therefore `Apply` and `Functor`). In practice, any type that implements `Monad` satisfies this requirement, since `Monad` is a blanket trait over `Applicative + Chain`.
+型コンストラクタ `F` は `Chain` を実装しなければなりません (したがって `Apply` と `Functor` も)。実際には、`Monad` を実装する任意の型がこの要件を満たします。`Monad` は `Applicative + Chain` 上のブランケットトレイトだからです。
 
-#### Examples
+#### 例
 
-##### OptionF -- sequential computation with short-circuiting
+##### OptionF — 短絡付きの逐次計算
 
 ``` rust
 use karpal_std::prelude::*;
 
 let result = do_! { OptionF;
     x = Some(1);
-    y = Some(x + 1);       // y depends on x
-    OptionF::pure(x + y)   // final expression wraps in Some
+    y = Some(x + 1);       // y は x に依存
+    OptionF::pure(x + y)   // 最終式が Some で包む
 };
 assert_eq!(result, Some(3));
 ```
 
-##### OptionF -- short-circuiting on None
+##### OptionF — None での短絡
 
 ``` rust
 use karpal_std::prelude::*;
 
 let result: Option<i32> = do_! { OptionF;
     x = Some(1);
-    _y = None::<i32>;     // short-circuits here
-    OptionF::pure(x)       // never reached
+    _y = None::<i32>;     // ここで短絡
+    OptionF::pure(x)       // 到達しない
 };
 assert_eq!(result, None);
 ```
 
-##### OptionF -- single expression (no bindings)
+##### OptionF — 単一式 (束縛なし)
 
 ``` rust
 use karpal_std::prelude::*;
@@ -97,7 +97,7 @@ let result = do_! { OptionF;
 assert_eq!(result, Some(42));
 ```
 
-##### ResultF -- chaining fallible operations
+##### ResultF — 失敗しうる操作の連鎖
 
 ``` rust
 use karpal_std::prelude::*;
@@ -114,7 +114,7 @@ let result = do_! { ResultF<String>;
 assert_eq!(result, Ok("port=8080".to_string()));
 ```
 
-##### VecF -- list comprehension (cartesian product)
+##### VecF — リスト内包表記 (直積)
 
 ``` rust
 use karpal_std::prelude::*;
@@ -130,60 +130,60 @@ assert_eq!(result, vec![11, 21, 12, 22]);
 
 ### `ado_!`
 
-Applicative do-notation. Collects independent bindings and combines them with `Apply::ap` and `Functor::fmap`.
+アプリカティブ do 記法。独立した束縛を収集し、`Apply::ap` と `Functor::fmap` で組み合わせます。
 
 
-#### Syntax
+#### 構文
 
 ``` rust
 ado_! { F;
     x = applicative_expr_1;
     y = applicative_expr_2;
-    // ... up to 4 bindings ...
+    // ... 最大 4 つの束縛 ...
     yield combining_expression
 }
 ```
 
-- Same first-token convention as `do_!`: the type constructor, then a semicolon.
-- Each binding uses `=`. Bindings are **independent** and must not reference each other.
-- The `yield` keyword introduces the combining expression. This expression is a pure function of the bound names -- it is automatically lifted into the applicative context.
-- Supports 1 to 4 bindings.
-- If any binding evaluates to a short-circuiting value (`None`, `Err(_)`), the whole block short-circuits.
+- `do_!` と同じ最初のトークンの慣習: 型コンストラクタ、続いてセミコロン。
+- 各束縛は `=` を使います。束縛は **独立しており**、互いに参照してはなりません。
+- `yield` キーワードが結合式を導入します。この式は束縛された名前の純粋関数です — 自動的にアプリカティブ文脈に持ち上げられます。
+- 1 から 4 つの束縛をサポートします。
+- いずれかの束縛が短絡する値 (`None`、`Err(_)`) に評価されると、ブロック全体が短絡します。
 
-#### Expansion
+#### 展開
 
-The expansion depends on the number of bindings. With one binding, the macro uses `Functor::fmap`. With two or more, it builds a curried closure and applies it with `Apply::ap`:
+展開は束縛の数に依存します。束縛が一つの場合、マクロは `Functor::fmap` を使います。二つ以上の場合、カリー化されたクロージャを構築し `Apply::ap` で適用します:
 
-##### 1 binding
+##### 1 つの束縛
 
 ``` rust
-// This:
+// これが:
 ado_! { F; x = expr; yield body }
 
-// Expands to:
+// こう展開される:
 <F as Functor>::fmap(expr, |x| body)
 ```
 
-##### 2 bindings
+##### 2 つの束縛
 
 ``` rust
-// This:
+// これが:
 ado_! { F; x = e1; y = e2; yield body }
 
-// Expands to:
+// こう展開される:
 <F as Apply>::ap(
     <F as Functor>::fmap(e1, |x| move |y| body),
     e2,
 )
 ```
 
-##### 3 bindings
+##### 3 つの束縛
 
 ``` rust
-// This:
+// これが:
 ado_! { F; x = e1; y = e2; z = e3; yield body }
 
-// Expands to:
+// こう展開される:
 <F as Apply>::ap(
     <F as Apply>::ap(
         <F as Functor>::fmap(e1, |x| move |y| move |z| body),
@@ -193,13 +193,13 @@ ado_! { F; x = e1; y = e2; z = e3; yield body }
 )
 ```
 
-##### 4 bindings
+##### 4 つの束縛
 
 ``` rust
-// This:
+// これが:
 ado_! { F; a = e1; b = e2; c = e3; d = e4; yield body }
 
-// Expands to:
+// こう展開される:
 <F as Apply>::ap(
     <F as Apply>::ap(
         <F as Apply>::ap(
@@ -212,13 +212,13 @@ ado_! { F; a = e1; b = e2; c = e3; d = e4; yield body }
 )
 ```
 
-#### Requirements
+#### 要件
 
-The type constructor `F` must implement `Applicative` (and therefore `Apply` and `Functor`). Unlike `do_!`, it does **not** require `Chain` -- applicative computations are strictly less powerful than monadic ones, which is the point: they express the absence of sequential dependencies.
+型コンストラクタ `F` は `Applicative` を実装しなければなりません (したがって `Apply` と `Functor` も)。`do_!` と異なり `Chain` を必要と **しません** — アプリカティブ計算はモナド計算より厳密に弱く、それが要点です: 逐次依存の不在を表現します。
 
-#### Examples
+#### 例
 
-##### OptionF -- single binding (fmap)
+##### OptionF — 単一束縛 (fmap)
 
 ``` rust
 use karpal_std::prelude::*;
@@ -230,7 +230,7 @@ let result = ado_! { OptionF;
 assert_eq!(result, Some(10));
 ```
 
-##### OptionF -- combining two independent values
+##### OptionF — 二つの独立した値の結合
 
 ``` rust
 use karpal_std::prelude::*;
@@ -243,7 +243,7 @@ let result = ado_! { OptionF;
 assert_eq!(result, Some(3));
 ```
 
-##### OptionF -- short-circuiting on None
+##### OptionF — None での短絡
 
 ``` rust
 use karpal_std::prelude::*;
@@ -256,7 +256,7 @@ let result = ado_! { OptionF;
 assert_eq!(result, None);
 ```
 
-##### OptionF -- combining three values
+##### OptionF — 三つの値の結合
 
 ``` rust
 use karpal_std::prelude::*;
@@ -270,7 +270,7 @@ let result = ado_! { OptionF;
 assert_eq!(result, Some(6));
 ```
 
-##### OptionF -- combining four values
+##### OptionF — 四つの値の結合
 
 ``` rust
 use karpal_std::prelude::*;
@@ -285,7 +285,7 @@ let result = ado_! { OptionF;
 assert_eq!(result, Some(10));
 ```
 
-##### VecF -- cartesian product with applicative
+##### VecF — アプリカティブでの直積
 
 ``` rust
 use karpal_std::prelude::*;
@@ -298,7 +298,7 @@ let result = ado_! { VecF;
 assert_eq!(result, vec![11, 21, 12, 22]);
 ```
 
-##### ResultF -- combining independent fallible lookups
+##### ResultF — 独立した失敗しうる参照の結合
 
 ``` rust
 use karpal_std::prelude::*;
@@ -312,18 +312,16 @@ assert_eq!(result, Ok("localhost:3000".to_string()));
 ```
 
 
-## Choosing Between `do_!` and `ado_!`
+## `do_!` と `ado_!` の使い分け
 
-| Macro   | Trait required  | Bindings                                                | Use when                                                     |
+| マクロ   | 必要なトレイト  | 束縛                                                | 使う場面                                                     |
 |---------|-----------------|---------------------------------------------------------|--------------------------------------------------------------|
-| `do_!`  | `Chain` (Monad) | Sequential -- later bindings can depend on earlier ones | Steps have data dependencies                                 |
-| `ado_!` | `Applicative`   | Independent -- bindings must not reference each other   | Steps are independent; documents the absence of dependencies |
+| `do_!`  | `Chain` (Monad) | 逐次 — 後の束縛が前のものに依存できる | ステップ間にデータ依存がある                                 |
+| `ado_!` | `Applicative`   | 独立 — 束縛は互いに参照してはならない   | ステップが独立; 依存の不在を文書化 |
 
-## Why `=` Instead of `<-`?
+## なぜ `<-` ではなく `=` なのか?
 
-Languages like Haskell and PureScript use `<-` for monadic bindings. Karpal uses `=` instead because Rust edition 2024 reserves the `<-` token, making it unavailable inside macros. The `=` syntax integrates naturally with Rust's existing patterns and avoids any conflict with reserved tokens.
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+Haskell や PureScript のような言語はモナド束縛に `<-` を使います。Karpal は代わりに `=` を使います。Rust edition 2024 が `<-` トークンを予約しており、マクロ内で使えないからです。`=` 構文は Rust の既存パターンに自然に統合され、予約トークンとの競合を避けます。
 
 
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
