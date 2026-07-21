@@ -1,14 +1,14 @@
-# Alt Family
+# Alt ファミリー
 
-Fallback and choice combinators: Alt, Plus, Alternative.
+フォールバックと選択コンビネータ: Alt、Plus、Alternative。
 
-## Hierarchy
-
-
-Functor  →  Alt  →  Plus  →  (+ Applicative) →  Alternative  (blanket)
+## 階層
 
 
-The Alt branch of the functor hierarchy provides combinators for expressing fallback and choice. `Alt` gives an associative choice operation, `Plus` adds an identity element (zero/empty), and `Alternative` combines `Plus` with `Applicative` via a blanket impl.
+Functor  →  Alt  →  Plus  →  (+ Applicative) →  Alternative  (ブランケット)
+
+
+関手階層の Alt 枝はフォールバックと選択を表現するためのコンビネータを提供します。`Alt` は結合的な選択演算を与え、`Plus` は単位元 (zero/empty) を追加し、`Alternative` はブランケット実装を介して `Plus` と `Applicative` を組み合わせます。
 
 ## Alt
 
@@ -16,10 +16,10 @@ The Alt branch of the functor hierarchy provides combinators for expressing fall
 ### Alt
 
 
-A Functor with an associative choice operation.
+結合的な選択演算を持つ Functor。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Alt: Functor {
@@ -27,51 +27,51 @@ pub trait Alt: Functor {
 }
 ```
 
-`alt` takes two values of the same functor type and returns one, preferring the first when both are "successful." The exact semantics depend on the instance: for `OptionF` it is `.or()`, for `VecF` it is concatenation.
+`alt` は同じ関手型の二つの値を取り、一つを返します。両方が「成功」のときは最初のものを優先します。正確な意味論は実装に依存します: `OptionF` では `.or()`、`VecF` では結合です。
 
-#### Laws
+#### 法則
 
 
-Associativity
+結合律
 
 
 alt(alt(a, b), c) == alt(a, alt(b, c))
 
 
-Distributivity
+分配律
 
 
 fmap(f, alt(a, b)) == alt(fmap(f, a), fmap(f, b))
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Behaviour of `alt`                                                                |
+| 型コンストラクタ | `alt` の振る舞い                                                                |
 |------------------|-----------------------------------------------------------------------------------|
-| `OptionF`        | `fa1.or(fa2)` — returns the first `Some`, or `None` if both are `None`            |
-| `ResultF<E>`     | `fa1.or(fa2)` — returns the first `Ok`, or the second value if the first is `Err` |
-| `VecF`           | Concatenation — extends `fa1` with all elements of `fa2`                          |
-| `NonEmptyVecF`   | Concatenation — appends the head and tail of `fa2` onto `fa1`                     |
+| `OptionF`        | `fa1.or(fa2)` — 最初の `Some` を返す、両方が `None` なら `None`            |
+| `ResultF<E>`     | `fa1.or(fa2)` — 最初の `Ok` を返す、最初が `Err` なら二番目の値を返す |
+| `VecF`           | 結合 — `fa1` に `fa2` の全要素を追加                          |
+| `NonEmptyVecF`   | 結合 — `fa1` に `fa2` の先頭と末尾を追加                     |
 
-`VecF` and `NonEmptyVecF` require the `alloc` or `std` feature.
+`VecF` と `NonEmptyVecF` は `alloc` または `std` フィーチャーが必要です。
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Fallback: try the first source, fall back to the second
+// フォールバック: 最初のソースを試し、二番目にフォールバック
 let primary: Option<i32> = None;
 let fallback: Option<i32> = Some(42);
 
 let result = OptionF::alt(primary, fallback);
 assert_eq!(result, Some(42));
 
-// When both are present, the first wins
+// 両方が存在する場合、最初が勝つ
 let result = OptionF::alt(Some(1), Some(2));
 assert_eq!(result, Some(1));
 
-// Vec: concatenation
+// Vec: 結合
 let combined = VecF::alt(vec![1, 2], vec![3, 4]);
 assert_eq!(combined, vec![1, 2, 3, 4]);
 ```
@@ -83,10 +83,10 @@ assert_eq!(combined, vec![1, 2, 3, 4]);
 ### Plus
 
 
-An Alt with a zero/empty element.
+zero/empty 要素を持つ Alt。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Plus: Alt {
@@ -94,58 +94,58 @@ pub trait Plus: Alt {
 }
 ```
 
-`zero` produces the identity element for `alt`. Combined with the Alt laws, this gives a monoid structure over the functor type.
+`zero` は `alt` の単位元を生成します。Alt の法則と合わせて、これが関手型上のモノイド構造を与えます。
 
-#### Laws
+#### 法則
 
 
-Left identity
+左単位律
 
 
 alt(zero(), a) == a
 
 
-Right identity
+右単位律
 
 
 alt(a, zero()) == a
 
 
-Annihilation
+消滅律
 
 
 fmap(f, zero()) == zero()
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `zero()` returns            |
+| 型コンストラクタ | `zero()` が返す            |
 |------------------|-----------------------------|
 | `OptionF`        | `None`                      |
-| `VecF`           | `Vec::new()` (empty vector) |
+| `VecF`           | `Vec::new()` (空のベクタ) |
 
-`ResultF<E>` does **not** implement `Plus` because there is no way to produce a `Result<A, E>` without an `E` value. `NonEmptyVecF` also lacks an instance because a non-empty vector cannot be empty by definition.
+`ResultF<E>` は `E` 値なしに `Result<A, E>` を生成できないため **`Plus` を実装しません**。`NonEmptyVecF` も、空でないベクタは定義上空になり得ないため実装を持ちません。
 
-`VecF` requires the `alloc` or `std` feature.
+`VecF` は `alloc` または `std` フィーチャーが必要です。
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// zero() for Option is None
+// Option の zero() は None
 let empty: Option<i32> = OptionF::zero();
 assert_eq!(empty, None);
 
-// zero() for Vec is an empty vector
+// Vec の zero() は空のベクタ
 let empty_vec: Vec<i32> = VecF::zero();
 assert_eq!(empty_vec, Vec::<i32>::new());
 
-// Left identity: alt(zero(), a) == a
+// 左単位律: alt(zero(), a) == a
 let a = Some(10);
 assert_eq!(OptionF::alt(OptionF::zero(), a), a);
 
-// Right identity: alt(a, zero()) == a
+// 右単位律: alt(a, zero()) == a
 assert_eq!(OptionF::alt(a, OptionF::zero()), a);
 ```
 
@@ -156,10 +156,10 @@ assert_eq!(OptionF::alt(a, OptionF::zero()), a);
 ### Alternative
 
 
-Applicative + Plus with no extra methods (blanket impl).
+追加メソッドなしの Applicative + Plus (ブランケット実装)。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Alternative: Applicative + Plus {}
@@ -167,63 +167,60 @@ pub trait Alternative: Applicative + Plus {}
 impl<F: Applicative + Plus> Alternative for F {}
 ```
 
-`Alternative` is a marker trait that combines `Applicative` and `Plus`. It introduces no new methods — any type that implements both `Applicative` and `Plus` automatically implements `Alternative` via the blanket impl.
+`Alternative` は `Applicative` と `Plus` を組み合わせるマーカートレイトです。新しいメソッドを導入しません — `Applicative` と `Plus` の両方を実装する任意の型はブランケット実装経由で自動的に `Alternative` を実装します。
 
-#### Laws
+#### 法則
 
-Alternative inherits all laws from Alt, Plus, and Applicative, and adds two of its own:
+Alternative は Alt、Plus、Applicative のすべての法則を継承し、二つを追加します:
 
 
-Distributivity
+分配律
 
 
 ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
 
 
-Annihilation
+消滅律
 
 
 ap(zero(), x) == zero()
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Notes                                                                                                            |
+| 型コンストラクタ | 備考                                                                                                            |
 |------------------|------------------------------------------------------------------------------------------------------------------|
-| `OptionF`        | Implements both `Applicative` and `Plus`, so `Alternative` is provided automatically                             |
-| `VecF`           | Implements both `Applicative` and `Plus`, so `Alternative` is provided automatically (requires `alloc` or `std`) |
+| `OptionF`        | `Applicative` と `Plus` の両方を実装するため、`Alternative` は自動的に提供                             |
+| `VecF`           | `Applicative` と `Plus` の両方を実装するため、`Alternative` は自動的に提供 (`alloc` または `std` が必要) |
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Alternative lets you combine choice (Alt/Plus) with
-// applicative computation (Applicative).
+// Alternative は選択 (Alt/Plus) とアプリカティブ計算 (Applicative) を組み合わせる。
 
-// Distributivity: ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
+// 分配律: ap(alt(f, g), x) == alt(ap(f, x), ap(g, x))
 let f: Option<fn(i32) -> i32> = Some(|a| a + 1);
 let g: Option<fn(i32) -> i32> = Some(|a| a * 2);
 let x = Some(10);
 
 let left  = OptionF::ap(OptionF::alt(f, g), x);
 let right = OptionF::alt(OptionF::ap(f, x), OptionF::ap(g, x));
-assert_eq!(left, right);  // Both are Some(11)
+assert_eq!(left, right);  // どちらも Some(11)
 
-// Annihilation: ap(zero(), x) == zero()
+// 消滅律: ap(zero(), x) == zero()
 let no_fn: Option<fn(i32) -> i32> = OptionF::zero();
 let result = OptionF::ap(no_fn, Some(5));
 assert_eq!(result, None);
 ```
 
 
-## See Also
+## 関連項目
 
-- [**Functor Family**](functor-family.md) — the Functor → Apply → Applicative → Chain → Monad branch that Alt builds upon.
-- [**Semigroup & Monoid**](algebraic.md) — the value-level analogue: Semigroup provides an associative `combine`, Monoid adds an `empty` identity, mirroring the Alt/Plus relationship at the functor level.
-- [**Foldable & Traversable**](foldable-traversable.md) — traits for collapsing and sequencing containers, which compose naturally with Alt and Plus.
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
+- [**Functor ファミリー**](functor-family.md) — Alt が構築される Functor → Apply → Applicative → Chain → Monad 枝。
+- [**半群とモノイド**](semigroup-monoid.md) — 値レベルの類似物: Semigroup は結合的な `combine` を提供し、Monoid は `empty` 単位元を追加。関手レベルでの Alt/Plus の関係を反映。
+- [**Foldable と Traversable**](foldable-traversable.md) — コンテナを潰し、逐次化するトレイト。Alt や Plus と自然に合成します。
 
 
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。

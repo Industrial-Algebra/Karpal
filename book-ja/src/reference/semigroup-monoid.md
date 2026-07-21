@@ -1,70 +1,70 @@
-# Semigroup & Monoid
+# 半群とモノイド
 
-Algebraic typeclasses for combining values.
+値の結合のための代数的型クラス。
 
-Semigroup and Monoid are the foundational algebraic abstractions in Karpal. A `Semigroup` provides an associative binary operation for combining two values of the same type. A `Monoid` extends `Semigroup` with an identity element, enabling operations like folding an empty collection to a default value.
+Semigroup と Monoid は Karpal の基礎的な代数的抽象化です。`Semigroup` は同じ型の二つの値を結合する結合的 二項演算を提供します。`Monoid` は `Semigroup` を単位元で拡張し、空のコレクションをデフォルト値に畳み込むような操作を可能にします。
 
 
 ### Semigroup
 
-A type with an associative binary operation.
+結合的 二項演算を持つ型。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
-/// A type with an associative binary operation.
+/// 結合的二項演算を持つ型。
 pub trait Semigroup {
     fn combine(self, other: Self) -> Self;
 }
 ```
 
-The `combine` method takes ownership of both values and produces a new value of the same type. Because it consumes `self`, there is no hidden aliasing -- the implementation is free to reuse allocations (and Karpal's `String` and `Vec` implementations do exactly that).
+`combine` メソッドは両方の値の所有権を取り、同じ型の新しい値を生成します。`self` を消費するため、隠れたエイリアスはなく — 実装はアロケーションを再利用できます (Karpal の `String` と `Vec` の実装はまさにそうします)。
 
-#### Laws
+#### 法則
 
 
-Associativity
+結合律
 
-For all `a`, `b`, `c` of type `T: Semigroup`:
+型 `T: Semigroup` のすべての `a`、`b`、`c` について:
 
 ``` rust
 a.combine(b).combine(c) == a.combine(b.combine(c))
 ```
 
-The grouping of operations does not matter. This is the only law a `Semigroup` must satisfy.
+演算のグループ化は問いません。これが `Semigroup` が満たすべき唯一の法則です。
 
 
-#### Instances
+#### 実装
 
-| Type                              | Behavior of `combine`                                                     | Feature gate     |
+| 型                              | `combine` の振る舞い                                                     | フィーチャーゲート     |
 |-----------------------------------|---------------------------------------------------------------------------|------------------|
-| `i8`, `i16`, `i32`, `i64`, `i128` | Addition (`self + other`)                                                 | none (`no_std`)  |
-| `u8`, `u16`, `u32`, `u64`, `u128` | Addition (`self + other`)                                                 | none (`no_std`)  |
-| `f32`, `f64`                      | Addition (`self + other`)                                                 | none (`no_std`)  |
-| `String`                          | Concatenation (`push_str`)                                                | `std` or `alloc` |
-| `Vec<T>`                          | Concatenation (`extend`)                                                  | `std` or `alloc` |
-| `Option<T: Semigroup>`            | Combines inner values if both are `Some`; keeps the `Some` side otherwise | none (`no_std`)  |
-| `NonEmptyVec<T>`                  | Concatenation (head + tails merged)                                       | `std` or `alloc` |
+| `i8`, `i16`, `i32`, `i64`, `i128` | 加算 (`self + other`)                                                 | なし (`no_std`)  |
+| `u8`, `u16`, `u32`, `u64`, `u128` | 加算 (`self + other`)                                                 | なし (`no_std`)  |
+| `f32`, `f64`                      | 加算 (`self + other`)                                                 | なし (`no_std`)  |
+| `String`                          | 結合 (`push_str`)                                                | `std` または `alloc` |
+| `Vec<T>`                          | 結合 (`extend`)                                                  | `std` または `alloc` |
+| `Option<T: Semigroup>`            | 両方が `Some` なら内側の値を結合; そうでなければ `Some` の側を保持 | なし (`no_std`)  |
+| `NonEmptyVec<T>`                  | 結合 (先頭 + 末尾をマージ)                                       | `std` または `alloc` |
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_core::semigroup::Semigroup;
 
-// Numeric addition
+// 数値の加算
 assert_eq!(3i32.combine(4), 7);
 
-// String concatenation
+// 文字列の結合
 assert_eq!(
     "hello ".to_string().combine("world".to_string()),
     "hello world"
 );
 
-// Vec concatenation
+// Vec の結合
 assert_eq!(vec![1, 2].combine(vec![3, 4]), vec![1, 2, 3, 4]);
 
-// Option lifts the inner Semigroup
+// Option は内側の Semigroup を持ち上げる
 assert_eq!(Some(3i32).combine(Some(4)), Some(7));
 assert_eq!(Some(3i32).combine(None), Some(3));
 assert_eq!(None::<i32>.combine(Some(4)), Some(4));
@@ -73,83 +73,83 @@ assert_eq!(None::<i32>.combine(Some(4)), Some(4));
 
 ### Monoid
 
-A Semigroup with an identity element.
+単位元を持つ Semigroup。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 use crate::semigroup::Semigroup;
 
-/// A `Semigroup` with an identity element.
+/// 単位元を持つ `Semigroup`。
 pub trait Monoid: Semigroup {
     fn empty() -> Self;
 }
 ```
 
-The `empty` method returns the identity element for the type's `combine` operation. Combining any value with `empty()` (on either side) must return that value unchanged.
+`empty` メソッドはその型の `combine` 演算の単位元を返します。任意の値と `empty()` を (どちら側で) 結合しても、その値が変更なく返されなければなりません。
 
-#### Laws
+#### 法則
 
 
-Left Identity
+左単位律
 
-For all `a` of type `T: Monoid`:
+型 `T: Monoid` のすべての `a` について:
 
 ``` rust
 T::empty().combine(a) == a
 ```
 
 
-Right Identity
+右単位律
 
-For all `a` of type `T: Monoid`:
+型 `T: Monoid` のすべての `a` について:
 
 ``` rust
 a.combine(T::empty()) == a
 ```
 
 
-Together with the `Semigroup` associativity law, these two laws make `(T, combine, empty)` a monoid in the algebraic sense.
+`Semigroup` の結合律と合わせて、これら二つの法則により `(T, combine, empty)` は代数的な意味でモノイドになります。
 
-#### Instances
+#### 実装
 
-| Type                              | `empty()` value                | Feature gate     |
+| 型                              | `empty()` の値                | フィーチャーゲート     |
 |-----------------------------------|--------------------------------|------------------|
-| `i8`, `i16`, `i32`, `i64`, `i128` | `0`                            | none (`no_std`)  |
-| `u8`, `u16`, `u32`, `u64`, `u128` | `0`                            | none (`no_std`)  |
-| `f32`, `f64`                      | `0.0`                          | none (`no_std`)  |
-| `String`                          | `String::new()` (empty string) | `std` or `alloc` |
-| `Vec<T>`                          | `Vec::new()` (empty vec)       | `std` or `alloc` |
-| `Option<T: Semigroup>`            | `None`                         | none (`no_std`)  |
+| `i8`, `i16`, `i32`, `i64`, `i128` | `0`                            | なし (`no_std`)  |
+| `u8`, `u16`, `u32`, `u64`, `u128` | `0`                            | なし (`no_std`)  |
+| `f32`, `f64`                      | `0.0`                          | なし (`no_std`)  |
+| `String`                          | `String::new()` (空文字列) | `std` または `alloc` |
+| `Vec<T>`                          | `Vec::new()` (空の vec)       | `std` または `alloc` |
+| `Option<T: Semigroup>`            | `None`                         | なし (`no_std`)  |
 
-Note that `NonEmptyVec<T>` implements `Semigroup` but **not** `Monoid` -- by definition it always contains at least one element, so there is no valid identity value.
+`NonEmptyVec<T>` は `Semigroup` を実装しますが **モノイドではありません** — 定義上常に少なくとも一つの要素を含むため、有効な単位元が存在しません。
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_core::semigroup::Semigroup;
 use karpal_core::monoid::Monoid;
 
-// Numeric identity
+// 数値の単位元
 assert_eq!(i32::empty(), 0);
 assert_eq!(i32::empty().combine(42), 42);
 assert_eq!(42i32.combine(i32::empty()), 42);
 
-// String identity
+// 文字列の単位元
 assert_eq!(String::empty(), "");
 
-// Vec identity
+// Vec の単位元
 assert_eq!(Vec::<i32>::empty(), Vec::<i32>::new());
 
-// Option identity
+// Option の単位元
 assert_eq!(Option::<i32>::empty(), None);
 ```
 
 
-## Foldable and Monoid
+## Foldable と Monoid
 
-The `Monoid` trait plays a central role in the [Foldable](foldable-traversable.md) typeclass. `Foldable` defines `fold_map`, which maps each element of a structure through a function that returns a `Monoid`, then combines all the results using `combine` and `empty`:
+`Monoid` トレイトは [Foldable](foldable-traversable.md) 型クラスで中心的な役割を果たします。`Foldable` は `fold_map` を定義します。これは構造の各要素を `Monoid` を返す関数でマップし、すべての結果を `combine` と `empty` を使って結合します:
 
 ``` rust
 pub trait Foldable: HKT {
@@ -161,33 +161,31 @@ pub trait Foldable: HKT {
 }
 ```
 
-The default implementation of `fold_map` starts with `M::empty()` as the initial accumulator and folds right, combining each mapped element with the accumulator. Because `Monoid` guarantees associativity and identity, the result is well-defined regardless of the folding direction.
+`fold_map` のデフォルト実装は `M::empty()` を初期アキュムレータとして右畳み込みし、各マップされた要素をアキュムレータと結合します。`Monoid` は結合律と単位律を保証するため、畳み込み方向に関わらず結果は well-defined です。
 
-#### Example: summing a collection
+#### 例: コレクションの合計
 
 ``` rust
 use karpal_core::prelude::*;
 
-// fold_map with the identity function sums the elements,
-// because i32's Semigroup instance uses addition.
+// 恒等関数での fold_map は要素を合計する。
+// なぜなら i32 の Semigroup 実装は加算を使うから。
 let total = VecF::fold_map(vec![1, 2, 3], |a: i32| a);
 assert_eq!(total, 6);
 ```
 
-#### Example: collecting strings
+#### 例: 文字列の収集
 
 ``` rust
 use karpal_core::prelude::*;
 
-// Map each number to its string representation, then combine.
-// String's Semigroup concatenates, and its Monoid starts from "".
+// 各数値を文字列表現にマップし、結合する。
+// String の Semigroup は結合し、その Monoid は "" から始まる。
 let result = VecF::fold_map(vec![1, 2, 3], |a: i32| a.to_string());
 assert_eq!(result, "123".to_string());
 ```
 
-This pattern -- map then combine -- is the essence of `fold_map` and is the reason `Monoid` is so important in functional programming. Any time you need to reduce a collection to a single summary value, `Monoid` provides the structure to do it generically.
+このパターン — マップして結合 — が `fold_map` の本質であり、関数型プログラミングで `Monoid` がそれほど重要な理由です。コレクションを単一の要約値に還元したいときはいつでも、`Monoid` が汎用的に行うための構造を提供します。
 
 
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
