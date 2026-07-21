@@ -1,76 +1,76 @@
-# Recursion Schemes
+# 帰納スキーム
 
-Recursion schemes provide structured, composable patterns for folding and unfolding recursive data. They live in the `karpal-recursion` crate and depend on `karpal-core` (HKT, Functor) and `karpal-free` (Cofree, Free).
+帰納スキームは再帰的データを fold と unfold するための構造化された合成可能なパターンを提供します。これらは `karpal-recursion` クレートにあり、`karpal-core` (HKT、Functor) と `karpal-free` (Cofree、Free) に依存します。
 
-## Overview
+## 概要
 
-| Type / Function | Category             | Key idea                                                     |
+| 型 / 関数 | カテゴリ             | 主要なアイデア                                                     |
 |-----------------|----------------------|--------------------------------------------------------------|
-| `Fix<F>`        | Fixed point          | Ties the recursive knot: `Fix<F> ≅ F<Fix<F>>`                |
-| `Mu<F>`         | Least fixed point    | Type alias for `Fix<F>` (Rust can't enforce finiteness)      |
-| `Nu<F, Seed>`   | Greatest fixed point | Seed + coalgebra; lazy observation of corecursive structures |
-| `cata`          | Fold                 | Catamorphism — fold bottom-up with `F<A> → A`                |
-| `ana`           | Unfold               | Anamorphism — unfold top-down with `A → F<A>`                |
-| `hylo`          | Refold               | Hylomorphism — unfold then fold, no intermediate `Fix`       |
-| `para`          | Fold+                | Paramorphism — fold with access to original subterms         |
-| `apo`           | Unfold+              | Apomorphism — unfold with early termination via `Either`     |
-| `histo`         | Fold++               | Histomorphism — fold with full history via `Cofree`          |
-| `futu`          | Unfold++             | Futumorphism — multi-step unfold via `Free`                  |
-| `zygo`          | Composite            | Zygomorphism — fold with auxiliary fold in parallel          |
-| `chrono`        | Composite            | Chronomorphism — `futu` ; `histo` in a single pass           |
+| `Fix<F>`        | 不動点          | 再帰の結び目を結ぶ: `Fix<F> ≅ F<Fix<F>>`                |
+| `Mu<F>`         | 最小不動点    | `Fix<F>` の型エイリアス (Rust は有限性を強制できない)      |
+| `Nu<F, Seed>`   | 最大不動点 | シード + 余代数; 余再帰的構造の遅延観察 |
+| `cata`          | Fold                 | カタモルフィズム — `F<A> → A` でボトムアップに fold                |
+| `ana`           | Unfold               | アナモルフィズム — `A → F<A>` でトップダウンに unfold                |
+| `hylo`          | Refold               | ハイロモルフィズム — unfold してから fold、中間の `Fix` なし       |
+| `para`          | Fold+                | パラモルフィズム — 元の部分項へのアクセス付き fold         |
+| `apo`           | Unfold+              | アポモルフィズム — `Either` による早期終了付き unfold     |
+| `histo`         | Fold++               | ヒストモルフィズム — `Cofree` による完全な履歴付き fold          |
+| `futu`          | Unfold++             | フュートモルフィズム — `Free` による複数ステップ unfold                  |
+| `zygo`          | Composite            | ジゴモルフィズム — 補助 fold と並行に fold          |
+| `chrono`        | Composite            | クロノモルフィズム — `futu` ; `histo` を一回で           |
 
-## Fixed Points
+## 不動点
 
 
 ### Fix\<F\>
 
-The fixed point of a functor. Ties the recursive knot so that `Fix<F> ≅ F<Fix<F>>`.
+関手の不動点。`Fix<F> ≅ F<Fix<F>>` となるよう再帰の結び目を結びます。
 
 
-#### Definition
+#### 定義
 
 ``` rust
 pub struct Fix<F: HKT>(Rc<F::Of<Fix<F>>>);
 
-// Unconditional Clone via Rc reference counting
+// Rc 参照カウント経由の無条件 Clone
 impl<F: HKT> Clone for Fix<F> { ... }
 
 pub type Mu<F> = Fix<F>;
 ```
 
-#### Key Methods
+#### 主要メソッド
 
 ``` rust
-// Wrap one layer
+// 一層包む
 Fix::new(f: F::Of<Fix<F>>) -> Fix<F>
 
-// Unwrap one layer (consuming)
-fix.unfix() -> F::Of<Fix<F>>  // where F::Of<Fix<F>>: Clone
+// 一層剥がす (消費)
+fix.unfix() -> F::Of<Fix<F>>  // ただし F::Of<Fix<F>>: Clone
 
-// Borrow one layer
+// 一層借用
 fix.unfix_ref() -> &F::Of<Fix<F>>
 ```
 
-#### Design: Rc vs Box
+#### 設計: Rc 対 Box
 
-`Fix` uses `Rc` instead of `Box` for indirection. This makes `Fix<F>: Clone` unconditional (just a reference count bump), which is essential for paramorphism — it needs to both preserve and consume each subterm. Rust's trait solver cannot prove coinductive Clone bounds like `Fix<OptionF>: Clone ↔ Option<Fix<OptionF>>: Clone`, so `Box` would make `Clone` impossible.
+`Fix` は間接化に `Box` ではなく `Rc` を使います。これにより `Fix<F>: Clone` が無条件 (単なる参照カウントのインクリメント) になり、パラモルフィズムに不可欠です — パラモルフィズムは各部分項を保存と消費の両方をする必要があります。Rust のトレイトソルバは `Fix<OptionF>: Clone ↔ Option<Fix<OptionF>>: Clone` のような余帰納的 Clone 境界を証明できないため、`Box` は `Clone` を不可能にします。
 
-#### Example: Natural Numbers
+#### 例: 自然数
 
 ``` rust
 use karpal_recursion::{Fix, cata, ana};
 use karpal_core::hkt::OptionF;
 
-// None = Zero, Some(n) = Succ(n)
+// None = Zero、Some(n) = Succ(n)
 let three: Fix<OptionF> = Fix::new(Some(Fix::new(Some(Fix::new(None)))));
 
-// Or build with ana:
+// または ana で構築:
 let five: Fix<OptionF> = ana(
     |n: u32| if n == 0 { None } else { Some(n - 1) },
     5,
 );
 
-// Fold with cata:
+// cata で fold:
 let count = cata::<OptionF, u32>(
     |layer| match layer {
         None => 0,
@@ -84,10 +84,10 @@ assert_eq!(count, 5);
 
 ### Nu\<F, Seed\>
 
-Greatest fixed point — a seed paired with a coalgebra for lazy observation.
+最大不動点 — 遅延観察のための余代数と対になったシード。
 
 
-#### Definition
+#### 定義
 
 ``` rust
 pub struct Nu<F: HKT, Seed> {
@@ -96,15 +96,15 @@ pub struct Nu<F: HKT, Seed> {
 }
 ```
 
-#### Key Methods
+#### 主要メソッド
 
 ``` rust
 Nu::new(seed, coalgebra) -> Nu<F, Seed>
-nu.observe() -> F::Of<Seed>   // apply coalgebra once
-nu.to_fix() -> Fix<F>         // fully unfold via ana
+nu.observe() -> F::Of<Seed>   // 余代数を一回適用
+nu.to_fix() -> Fix<F>         // ana 経由で完全に unfold
 ```
 
-#### Example
+#### 例
 
 ``` rust
 use karpal_recursion::Nu;
@@ -117,15 +117,15 @@ assert_eq!(countdown.observe(), Some(2));
 ```
 
 
-## Recursion Schemes
+## 帰納スキーム
 
 
-### cata — Catamorphism
+### cata — カタモルフィズム
 
-Fold a recursive structure bottom-up. The fundamental "tear down" operation.
+再帰的構造をボトムアップに fold します。基本的な「解体」演算です。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub fn cata<F: HKT + Functor, A>(
@@ -134,7 +134,7 @@ pub fn cata<F: HKT + Functor, A>(
 ) -> A
 ```
 
-#### Example: Sum Natural Numbers
+#### 例: 自然数の和
 
 ``` rust
 let n = ana(|s: u32| if s == 0 { None } else { Some(s - 1) }, 5);
@@ -148,17 +148,17 @@ let sum = cata::<OptionF, u32>(
 assert_eq!(sum, 5);
 ```
 
-#### Laws
+#### 法則
 
-- `cata(Fix::new, x) == x` — folding with the constructor is identity
-
-
-### ana — Anamorphism
-
-Unfold a recursive structure top-down from a seed.
+- `cata(Fix::new, x) == x` — コンストラクタで fold すれば恒等
 
 
-#### Signature
+### ana — アナモルフィズム
+
+シードから再帰的構造をトップダウンに unfold します。
+
+
+#### シグネチャ
 
 ``` rust
 pub fn ana<F: HKT + Functor, A>(
@@ -167,7 +167,7 @@ pub fn ana<F: HKT + Functor, A>(
 ) -> Fix<F>
 ```
 
-#### Example: Build Natural Numbers
+#### 例: 自然数の構築
 
 ``` rust
 let three: Fix<OptionF> = ana(
@@ -176,17 +176,17 @@ let three: Fix<OptionF> = ana(
 );
 ```
 
-#### Laws
+#### 法則
 
 - `cata(alg, ana(coalg, seed)) == hylo(alg, coalg, seed)`
 
 
-### hylo — Hylomorphism
+### hylo — ハイロモルフィズム
 
-Unfold then fold in a single pass — no intermediate `Fix` is allocated.
+一回で unfold してから fold します — 中間の `Fix` は割り当てられません。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub fn hylo<F: HKT + Functor, A, B>(
@@ -196,204 +196,33 @@ pub fn hylo<F: HKT + Functor, A, B>(
 ) -> B
 ```
 
-#### Key Property
+#### 主要な性質
 
-`hylo(alg, coalg, seed) == cata(alg, ana(coalg, seed))` but more efficient — the intermediate data structure is "deforested" away.
+`hylo` は `cata` と `ana` を融合します: 中間の `Fix<F>` 構造を構築せずに、unfold と fold を一回の走査で行います。これは効率上重要です — ハイロモルフィズムは中間データ構造をメモリに保持しません。
 
+### para — パラモルフィズム
 
-### para — Paramorphism
+元の部分項へのアクセス付き fold。`cata` と異なり、`para` は各ノードで折り畳んだ結果 *と* 元の部分木の両方にアクセスできます。これにより、結果が入力の構造に依存する fold を表現できます。
 
-Fold with access to original subterms. The algebra receives both the folded result and the original sub-structure.
+### apo — アポモルフィズム
 
+`Either` による早期終了付き unfold。`ana` と異なり、`apo` は再帰を早期に停止でき、残りを「既に構築済み」として直接挿入できます。
 
-#### Signature
+### histo — ヒストモルフィズム
 
-``` rust
-pub fn para<F: HKT + Functor, A>(
-    alg: impl Fn(F::Of<(Fix<F>, A)>) -> A,
-    fix: Fix<F>,
-) -> A
-```
+`Cofree` による完全な履歴付き fold。`cata` は各ノードで子の結果しか見ませんが、`histo` は結果の *完全な履歴* (すべての祖先ノードの結果) にアクセスできます。これにより動的計画法のパターンを表現できます。
 
-#### Example: Factorial
+### futu — フュートモルフィズム
 
-``` rust
-let factorial = para::<OptionF, u64>(
-    |layer| match layer {
-        None => 1,           // 0! = 1
-        Some((sub, acc)) => {
-            let n = count(&sub) + 1;  // read current number from subterm
-            (n as u64) * acc
-        }
-    },
-    nat(5),
-);
-assert_eq!(factorial, 120);
-```
+`Free` による複数ステップ unfold。`ana` は一度に一層しか生成しませんが、`futu` は複数層を一度に生成でき、より柔軟なコア再帰を可能にします。
 
-#### Laws
+### zygo — ジゴモルフィズム
 
-- When ignoring the `Fix<F>` subterm, `para` degenerates to `cata`
+補助 fold と並行に fold。二つの代数を同時に走査し、一方の結果を他方の計算で利用できます。
 
+### chrono — クロノモルフィズム
 
-### apo — Apomorphism
+`futu ; histo` を単一パスで。最も一般的な帰納スキームで、複数ステップの展開と完全な履歴へのアクセスを組み合わせます。
 
-Unfold with early termination. The coalgebra can short-circuit by injecting a pre-built `Fix`.
 
-
-#### Signature
-
-``` rust
-pub fn apo<F: HKT + Functor, A>(
-    coalg: impl Fn(A) -> F::Of<Either<Fix<F>, A>>,
-    seed: A,
-) -> Fix<F>
-```
-
-#### Key Idea
-
-`Either::Right(seed)` continues unfolding, `Either::Left(fix)` embeds an already-built subtree directly. When always returning `Right`, `apo` degenerates to `ana`.
-
-
-### histo — Histomorphism
-
-Fold with full history via `Cofree`. At each step, access all previously-computed results.
-
-
-#### Signature
-
-``` rust
-pub fn histo<F: HKT + Functor, A>(
-    alg: impl Fn(&F::Of<Cofree<F, A>>) -> A,
-    fix: Fix<F>,
-) -> A
-```
-
-#### Example: Fibonacci
-
-``` rust
-let fib = histo::<OptionF, u64>(
-    |layer| match layer {
-        None => 0,                      // fib(0) = 0
-        Some(cofree) => {
-            let prev = cofree.head;      // fib(n-1)
-            match cofree.tail.as_ref() {
-                None => 1,               // fib(1) = 1
-                Some(gc) => prev + gc.head,  // fib(n-1) + fib(n-2)
-            }
-        }
-    },
-    nat(10),
-);
-assert_eq!(fib, 55);
-```
-
-#### Design Note
-
-The algebra takes `&F::Of<Cofree<F, A>>` (a reference) rather than ownership. This avoids needing `Clone` on the recursive `Cofree` structure, which Rust's trait solver cannot prove coinductively.
-
-
-### futu — Futumorphism
-
-Multi-step unfold via `Free`. Generate multiple layers of structure at once.
-
-
-#### Signature
-
-``` rust
-pub fn futu<F: HKT + Functor, A>(
-    coalg: impl Fn(A) -> F::Of<Free<F, A>>,
-    seed: A,
-) -> Fix<F>
-```
-
-#### Key Idea
-
-`Free::Pure(seed)` continues with one more coalgebra application. `Free::Roll(f)` injects multiple layers at once. When always returning `Pure`, `futu` degenerates to `ana`.
-
-
-### zygo — Zygomorphism
-
-Fold with an auxiliary fold running in parallel.
-
-
-#### Signature
-
-``` rust
-pub fn zygo<F: HKT + Functor, A, B>(
-    aux: impl Fn(F::Of<B>) -> B,
-    alg: impl Fn(F::Of<(B, A)>) -> A,
-    fix: Fix<F>,
-) -> A
-where F::Of<(B, A)>: Clone
-```
-
-#### Key Idea
-
-Two algebras run simultaneously: `aux` computes a helper value `B` at each layer, and `alg` has access to both `B` and the primary result `A` from sub-structures.
-
-
-### chrono — Chronomorphism
-
-Combines futumorphism and histomorphism in a single pass.
-
-
-#### Signature
-
-``` rust
-pub fn chrono<F: HKT + Functor, A, B>(
-    alg: impl Fn(&F::Of<Cofree<F, B>>) -> B,
-    coalg: impl Fn(A) -> F::Of<Free<F, A>>,
-    seed: A,
-) -> B
-```
-
-#### Key Idea
-
-Conceptually `chrono = histo . futu` — multi-step unfolding with history-aware folding — but computed in a single pass without building an intermediate `Fix`.
-
-
-## Either\<L, R\>
-
-
-### Either\<L, R\>
-
-A simple sum type used by apomorphism for early termination.
-
-
-#### Definition
-
-``` rust
-pub enum Either<L, R> {
-    Left(L),
-    Right(R),
-}
-
-// Methods: either, map_left, map_right
-```
-
-
-## Scheme Relationships
-
-The schemes form a lattice of generality:
-
-``` text
-        cata ────────── hylo ────────── ana
-         │                                │
-    para (+ subterms)              apo (+ early stop)
-         │                                │
-   histo (+ full history)         futu (+ multi-step)
-         │                                │
-         └──────── chrono ────────────────┘
-                     │
-                zygo (+ aux fold)
-```
-
-Each scheme on the left is the dual of the corresponding scheme on the right. Moving down adds more power (and constraints). `hylo` sits in the middle as the deforested composition of any fold and unfold.
-
-## Implementation Patterns
-
-- **`&dyn Fn` recursion** — all inner helper functions use `&dyn Fn` for the algebra/coalgebra to break monomorphization recursion (same pattern as `Free::fmap_inner`)
-- **`Rc` in Fix** — enables `Clone` without coinductive proofs; essential for `para`
-- **Reference algebras** — `histo` and `chrono` take `&F::Of<Cofree<F, A>>` to avoid cloning Cofree
-- **`F::Of<Fix<F>>: Clone`** — required by schemes that call `unfix()` (cata, para, histo, zygo) for the `Rc::try_unwrap` fallback path
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
