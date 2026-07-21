@@ -1,38 +1,38 @@
-# Contravariant Family
+# 反変関手ファミリー
 
-Contravariant functors and their combinators: the duals of the covariant hierarchy.
+反変関手とそのコンビネータ: 共変階層の双対。
 
-Where a covariant `Functor` consumes a function `A -> B` to transform `F<A>` into `F<B>`, a `Contravariant` functor consumes a function going the *other way* -- `B -> A` -- to transform `F<A>` into `F<B>`. The canonical example is a predicate: if you have a predicate on integers and a function that extracts an integer from a string, you can build a predicate on strings.
+共変 `Functor` が `F<A>` を `F<B>` に変換するために `A -> B` を消費するのに対し、`Contravariant` 関手は *逆方向* への関数 — `B -> A` — を消費して `F<A>` を `F<B>` に変換します。標準的な例は述語です: 整数の述語と文字列から整数を取り出す関数があれば、文字列の述語を構築できます。
 
-The contravariant family splits into two branches that mirror the covariant hierarchy:
+反変ファミリーは共変階層を反映する二つの枝に分かれます:
 
-- **Product side:** `Contravariant` → `Divide` → `Divisible`
-- **Sum side:** `Contravariant` → `Decide` → `Conclude`
+- **直積側:** `Contravariant` → `Divide` → `Divisible`
+- **直和側:** `Contravariant` → `Decide` → `Conclude`
 
-All contravariant types in Karpal are **alloc-gated** -- they require the `std` or `alloc` feature because they use `Box<dyn Fn>` internally.
+Karpal のすべての反変型は **alloc ゲート** です — 内部で `Box<dyn Fn>` を使うため `std` または `alloc` フィーチャーが必要です。
 
-## Duality with the Covariant Hierarchy
+## 共変階層との双対性
 
-Each contravariant trait is the dual of a corresponding covariant trait. The relationship is systematic: where the covariant side *produces* values, the contravariant side *consumes* them.
+各反変トレイトは対応する共変トレイトの双対です。関係は体系的です: 共変側が値を *生成* するところで、反変側は値を *消費* します。
 
-| Contravariant   | Covariant dual | Role                                              |
+| 反変            | 共変の双対     | 役割                                              |
 |-----------------|----------------|---------------------------------------------------|
-| `Contravariant` | `Functor`      | Adapt input type via a function                   |
-| `Divide`        | `Apply`        | Split input into parts, handle each independently |
-| `Divisible`     | `Applicative`  | Identity for splitting (accepts anything)         |
-| `Decide`        | `Alt`          | Route input to one of two handlers                |
-| `Conclude`      | `Plus`         | Identity for routing (uninhabited input)          |
+| `Contravariant` | `Functor`      | 関数経由で入力型を適応                   |
+| `Divide`        | `Apply`        | 入力を部分に分割、各々を独立に扱う |
+| `Divisible`     | `Applicative`  | 分割の単位元 (任意のものを受け入れる)         |
+| `Decide`        | `Alt`          | 入力を二つのハンドラのいずれかに経路付け              |
+| `Conclude`      | `Plus`         | 経路付けの単位元 (非居住入力)          |
 
 
 ### Contravariant
 
-A functor that maps over inputs rather than outputs.
+出力ではなく入力でマップする関手。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
-/// Contravariant functor: lifts a function `B -> A` into `F<A> -> F<B>`.
+/// 反変関手: 関数 `B -> A` を `F<A> -> F<B>` に持ち上げる。
 pub trait Contravariant: HKT {
     fn contramap<A: 'static, B>(
         fa: Self::Of<A>,
@@ -41,63 +41,63 @@ pub trait Contravariant: HKT {
 }
 ```
 
-Given a value of type `F<A>` and a function `B -> A`, `contramap` produces a value of type `F<B>`. The function goes in the *opposite* direction compared to `Functor::fmap`. The `'static` bounds are required because `PredicateF` stores the function inside a `Box<dyn Fn>`.
+型 `F<A>` の値と関数 `B -> A` を与えられると、`contramap` は型 `F<B>` の値を生成します。関数は `Functor::fmap` と比べて *逆* 方向へ進みます。`PredicateF` が関数を `Box<dyn Fn>` の内側に格納するため、`'static` 境界が必要です。
 
-#### Laws
+#### 法則
 
 
-Identity
+単位律
 
-Contramapping the identity function changes nothing:
+恒等関数で contramap しても何も変わりません:
 
 ``` rust
 Contravariant::contramap(fa, |x| x) == fa
 ```
 
 
-Composition
+合成律
 
-Contramapping a composed function is the same as contramapping each function in sequence (note the reversed order):
+合成された関数で contramap するのは、各関数を順に contramap するのと同じです (順序が逆になることに注意):
 
 ``` rust
 contramap(f . g, fa) == contramap(g, contramap(f, fa))
 ```
 
 
-#### Instances
+#### 実装
 
-| Type constructor | `Of<T>`                  | Behavior                                                  | Feature gate     |
+| 型コンストラクタ | `Of<T>`                  | 振る舞い                                                  | フィーチャーゲート     |
 |------------------|--------------------------|-----------------------------------------------------------|------------------|
-| `PredicateF`     | `Box<dyn Fn(T) -> bool>` | Pre-composes the adaptation function before the predicate | `std` or `alloc` |
+| `PredicateF`     | `Box<dyn Fn(T) -> bool>` | 述語の前に適応関数を事前合成 | `std` または `alloc` |
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_core::contravariant::{Contravariant, PredicateF};
 
-// A predicate on integers
+// 整数の述語
 let is_positive: Box<dyn Fn(i32) -> bool> = Box::new(|x| x > 0);
 
-// Adapt it to work on strings by extracting the length
+// 長さを取り出して文字列で動作するように適応
 let str_len_positive = PredicateF::contramap(is_positive, |s: &str| s.len() as i32);
 
-assert!(str_len_positive("hello"));  // len 5 > 0
-assert!(!str_len_positive(""));      // len 0, not > 0
+assert!(str_len_positive("hello"));  // 長さ 5 > 0
+assert!(!str_len_positive(""));      // 長さ 0、> 0 ではない
 ```
 
 
 ### Divide
 
-The contravariant analogue of Apply -- split an input into parts and handle each independently.
+Apply の反変類似物 — 入力を部分に分割し各々を独立に扱う。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
-/// Divide: the contravariant analogue of Apply.
+/// Divide: Apply の反変類似物。
 ///
-/// Given a way to split `C` into `(A, B)`, and contravariant functors over
-/// `A` and `B`, produce a contravariant functor over `C`.
+/// `C` を `(A, B)` に分割する方法と、`A` と `B` 上の反変関手を与えられ、
+/// `C` 上の反変関手を生成する。
 pub trait Divide: Contravariant {
     fn divide<A: 'static, B: 'static, C: 'static>(
         f: impl Fn(C) -> (A, B) + 'static,
@@ -107,31 +107,31 @@ pub trait Divide: Contravariant {
 }
 ```
 
-Where `Apply` combines two containers of *outputs*, `Divide` combines two consumers of *inputs*. The splitting function `f` decomposes the input `C` into a pair `(A, B)`, then each part is handled by its respective consumer.
+`Apply` が *出力* の二つのコンテナを結合するところで、`Divide` は *入力* の二つの消費者を結合します。分割関数 `f` は入力 `C` をペア `(A, B)` に分解し、各部分がそれぞれの消費者で扱われます。
 
-For `PredicateF`, `divide` produces a predicate that splits the input and returns `true` only if **both** sub-predicates accept their respective parts.
+`PredicateF` の場合、`divide` は入力を分割し、**両方の** 副述語がそれぞれの部分を受け入れる場合にのみ `true` を返す述語を生成します。
 
-#### Laws
+#### 法則
 
 
-Associativity
+結合律
 
-Nesting `divide` on the left or right produces equivalent results, as long as the splitting functions decompose the input consistently:
+分割関数が一貫して入力を分解する限り、左または右に `divide` を入れ子にしても同等の結果になります:
 
 ``` rust
 divide(f, divide(g, a, b), c) == divide(h, a, divide(i, b, c))
 ```
 
-Where `f`, `g`, `h`, and `i` are appropriate splitting functions that distribute the components equivalently.
+ここで `f`、`g`、`h`、`i` は成分を等価に分配する適切な分割関数です。
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Behavior of `divide`                            | Feature gate     |
+| 型コンストラクタ | `divide` の振る舞い                            | フィーチャーゲート     |
 |------------------|-------------------------------------------------|------------------|
-| `PredicateF`     | Splits the input, then returns `fa(a) && fb(b)` | `std` or `alloc` |
+| `PredicateF`     | 入力を分割し、`fa(a) && fb(b)` を返す | `std` または `alloc` |
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_core::contravariant::PredicateF;
@@ -140,70 +140,70 @@ use karpal_core::divide::Divide;
 let is_positive: Box<dyn Fn(i32) -> bool> = Box::new(|x| x > 0);
 let is_even: Box<dyn Fn(i32) -> bool> = Box::new(|x| x % 2 == 0);
 
-// Split a tuple into its components, check both predicates
+// タプルを成分に分割し、両方の述語をチェック
 let both: Box<dyn Fn((i32, i32)) -> bool> =
     PredicateF::divide(|pair: (i32, i32)| pair, is_positive, is_even);
 
-assert!(both((3, 4)));   // 3 > 0 AND 4 is even
-assert!(!both((-1, 4))); // -1 is not > 0
-assert!(!both((3, 3)));  // 3 is not even
+assert!(both((3, 4)));   // 3 > 0 かつ 4 は偶数
+assert!(!both((-1, 4))); // -1 は > 0 ではない
+assert!(!both((3, 3)));  // 3 は偶数ではない
 ```
 
 
 ### Divisible
 
-The contravariant analogue of Applicative -- adds an identity element for Divide.
+Applicative の反変類似物 — Divide の単位元を追加。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
-/// Divisible: the contravariant analogue of Applicative.
+/// Divisible: Applicative の反変類似物。
 ///
-/// Adds a `conquer` operation (the identity for `divide`), analogous to `pure`.
+/// `divide` の単位元 (pure に類似) となる `conquer` 演算を追加。
 pub trait Divisible: Divide {
     fn conquer<A: 'static>() -> Self::Of<A>;
 }
 ```
 
-The `conquer` method produces a consumer that accepts any input and always succeeds. It is the identity element for `divide` -- dividing against a `conquer()` value has no effect on the result.
+`conquer` メソッドは任意の入力を受け入れ常に成功する消費者を生成します。これは `divide` の単位元です — `conquer()` 値で divide しても結果に影響しません。
 
-For `PredicateF`, `conquer` returns a predicate that is always `true`.
+`PredicateF` の場合、`conquer` は常に `true` である述語を返します。
 
-#### Laws
+#### 法則
 
 
-Left Identity
+左単位律
 
-Dividing with `conquer()` on the left is equivalent to contramapping the second projection:
+左に `conquer()` で divide するのは第二射影の contramap と等価です:
 
 ``` rust
 divide(f, conquer(), fa) == contramap(snd . f, fa)
 ```
 
 
-Right Identity
+右単位律
 
-Dividing with `conquer()` on the right is equivalent to contramapping the first projection:
+右に `conquer()` で divide するのは第一射影の contramap と等価です:
 
 ``` rust
 divide(f, fa, conquer()) == contramap(fst . f, fa)
 ```
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Behavior of `conquer`                          | Feature gate     |
+| 型コンストラクタ | `conquer` の振る舞い                          | フィーチャーゲート     |
 |------------------|------------------------------------------------|------------------|
-| `PredicateF`     | Returns `Box::new(|_| true)` -- always accepts | `std` or `alloc` |
+| `PredicateF`     | `Box::new(|_| true)` を返す — 常に受け入れる | `std` または `alloc` |
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_core::contravariant::PredicateF;
 use karpal_core::divisible::Divisible;
 
-// conquer() produces a predicate that accepts everything
+// conquer() はすべてを受け入れる述語を生成
 let p: Box<dyn Fn(i32) -> bool> = PredicateF::conquer();
 assert!(p(42));
 assert!(p(-1));
@@ -215,30 +215,30 @@ use karpal_core::contravariant::PredicateF;
 use karpal_core::divide::Divide;
 use karpal_core::divisible::Divisible;
 
-// Left identity: divide with conquer() on the left has no effect
+// 左単位律: 左に conquer() で divide しても影響しない
 let fa: Box<dyn Fn(i32) -> bool> = Box::new(|a| a > 0);
 let result = PredicateF::divide(
     |a: i32| ((), a),
     PredicateF::conquer::<()>(),
     fa,
 );
-assert!(result(5));   // equivalent to the original predicate
+assert!(result(5));   // 元の述語と等価
 assert!(!result(-3));
 ```
 
 
 ### Decide
 
-The contravariant analogue of Alt -- route an input to one of two handlers.
+Alt の反変類似物 — 入力を二つのハンドラのいずれかに経路付け。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
-/// Decide: the contravariant analogue of Alt.
+/// Decide: Alt の反変類似物。
 ///
-/// Given a way to split `C` into either `A` or `B`, and contravariant
-/// functors over `A` and `B`, produce a contravariant functor over `C`.
+/// `C` を `A` か `B` のいずれかに分割する方法と、`A` と `B` 上の反変
+/// 関手を与えられ、`C` 上の反変関手を生成する。
 pub trait Decide: Contravariant {
     fn choose<A: 'static, B: 'static, C: 'static>(
         f: impl Fn(C) -> Result<A, B> + 'static,
@@ -248,31 +248,31 @@ pub trait Decide: Contravariant {
 }
 ```
 
-Where `Divide` handles the product case (split into *both* parts), `Decide` handles the sum case (route to *one* handler). The classification function `f` returns `Result<A, B>`, which serves as Karpal's encoding of `Either`: `Ok(a)` routes to `fa`, and `Err(b)` routes to `fb`.
+`Divide` が直積ケース (両方の部分に分割) を扱うところで、`Decide` は直和ケース (*一方* のハンドラに経路付け) を扱います。分類関数 `f` は `Result<A, B>` を返し、これは Karpal の `Either` エンコーディングとして機能します: `Ok(a)` は `fa` へ、`Err(b)` は `fb` へ経路付けします。
 
-For `PredicateF`, `choose` classifies the input and delegates to whichever predicate matches.
+`PredicateF` の場合、`choose` は入力を分類し、一致する述語に委譲します。
 
-#### Laws
+#### 法則
 
 
-Associativity
+結合律
 
-Nesting `choose` on the left or right produces equivalent results, as long as the routing functions classify consistently:
+経路付け関数が一貫して分類する限り、左または右に `choose` を入れ子にしても同等の結果になります:
 
 ``` rust
 choose(f, choose(g, a, b), c) == choose(h, a, choose(i, b, c))
 ```
 
-Where `f`, `g`, `h`, and `i` are appropriate routing functions that distribute the cases equivalently.
+ここで `f`、`g`、`h`、`i` はケースを等価に分配する適切な経路付け関数です。
 
 
-#### Instances
+#### 実装
 
-| Type constructor | Behavior of `choose`                                                 | Feature gate     |
+| 型コンストラクタ | `choose` の振る舞い                                                 | フィーチャーゲート     |
 |------------------|----------------------------------------------------------------------|------------------|
-| `PredicateF`     | Classifies input via `f`, then applies `fa` on `Ok` or `fb` on `Err` | `std` or `alloc` |
+| `PredicateF`     | `f` で入力を分類し、`Ok` で `fa`、`Err` で `fb` を適用 | `std` または `alloc` |
 
-#### Examples
+#### 例
 
 ``` rust
 use karpal_core::contravariant::PredicateF;
@@ -281,7 +281,7 @@ use karpal_core::decide::Decide;
 let is_positive: Box<dyn Fn(i32) -> bool> = Box::new(|x| x > 0);
 let is_short: Box<dyn Fn(String) -> bool> = Box::new(|s| s.len() < 5);
 
-// Classify input: integers go to Ok, strings go to Err
+// 入力を分類: 整数は Ok、文字列は Err
 let classifier = PredicateF::choose(
     |input: Result<i32, String>| input,
     is_positive,
@@ -289,130 +289,19 @@ let classifier = PredicateF::choose(
 );
 
 assert!(classifier(Ok(5)));                          // 5 > 0
-assert!(!classifier(Ok(-1)));                        // -1 not > 0
-assert!(classifier(Err("hi".to_string())));          // len 2 < 5
-assert!(!classifier(Err("hello world".to_string()))); // len 11, not < 5
+assert!(!classifier(Ok(-1)));                        // -1 は > 0 ではない
+assert!(classifier(Err("hi".to_string())));          // 長さ 2 < 5
+assert!(!classifier(Err("hello world".to_string()))); // 長さ 11、< 5 ではない
 ```
 
 
 ### Conclude
 
-The contravariant analogue of Plus -- the identity element for Decide.
+Plus の反変類似物 — Decide の単位元。
+
+`Conclude` は `Plus` の反変双対です。これは `Decide` のための単位元 (`conquer` が `Divide` のための単位元であるのと同様) を提供します。居住されていない入力 (決して生じないケース) を処理します。
+
+`PredicateF` の場合、これは常に `false` を返す述語を生成します — この分岐には決して到達しません。
 
 
-#### Signature
-
-``` rust
-/// Conclude: the contravariant analogue of Plus.
-///
-/// Adds a `conclude` operation (the identity for `choose`).
-/// `conclude` takes a function `A -> Infallible`, witnessing that `A` is
-/// uninhabited -- so the resulting predicate is vacuously true.
-pub trait Conclude: Decide {
-    fn conclude<A: 'static>(
-        f: impl Fn(A) -> core::convert::Infallible + 'static,
-    ) -> Self::Of<A>;
-}
-```
-
-The `conclude` method takes a function from `A` to `Infallible`. If such a function exists, it witnesses that `A` is uninhabited -- no value of type `A` can ever be constructed. The resulting consumer is vacuously valid: it will never be called with a real input.
-
-Rust uses `core::convert::Infallible` as its bottom type (the equivalent of Haskell's `Void`). For inhabited types, the function body typically uses `unreachable!()` since it can never actually execute in well-typed code.
-
-For `PredicateF`, `conclude` returns a predicate that is always `true`.
-
-#### Laws
-
-
-Left Identity
-
-Choosing with `conclude(absurd)` on the left is equivalent to contramapping the right projection:
-
-``` rust
-choose(f, conclude(absurd), fa) == contramap(from_right . f, fa)
-```
-
-
-Right Identity
-
-Choosing with `conclude(absurd)` on the right is equivalent to contramapping the left projection:
-
-``` rust
-choose(f, fa, conclude(absurd)) == contramap(from_left . f, fa)
-```
-
-
-#### Instances
-
-| Type constructor | Behavior of `conclude`                            | Feature gate     |
-|------------------|---------------------------------------------------|------------------|
-| `PredicateF`     | Returns `Box::new(|_| true)` -- vacuously accepts | `std` or `alloc` |
-
-#### Examples
-
-``` rust
-use karpal_core::contravariant::PredicateF;
-use karpal_core::conclude::Conclude;
-
-// conclude with an unreachable function -- the predicate is vacuously true
-let p: Box<dyn Fn(i32) -> bool> = PredicateF::conclude(|_: i32| unreachable!());
-assert!(p(42));
-assert!(p(-1));
-```
-
-``` rust
-use karpal_core::contravariant::PredicateF;
-use karpal_core::decide::Decide;
-use karpal_core::conclude::Conclude;
-
-// Right identity: choosing with conclude on the right has no effect
-let fa: Box<dyn Fn(i32) -> bool> = Box::new(|a| a > 0);
-let result = PredicateF::choose(
-    |a: i32| -> Result<i32, core::convert::Infallible> { Ok(a) },
-    fa,
-    PredicateF::conclude(|i: core::convert::Infallible| -> core::convert::Infallible { i }),
-);
-assert!(result(5));   // equivalent to the original predicate
-assert!(!result(-3));
-```
-
-
-## Combining Both Branches
-
-In practice, `Divide` and `Decide` complement each other. `Divide` handles product types (structs, tuples) by splitting into fields, while `Decide` handles sum types (enums) by routing to the matching variant. Together they let you build validators and predicates for complex data structures compositionally:
-
-``` rust
-use karpal_core::contravariant::{Contravariant, PredicateF};
-use karpal_core::divide::Divide;
-use karpal_core::decide::Decide;
-
-// Field-level predicates
-let name_valid: Box<dyn Fn(String) -> bool> = Box::new(|s| !s.is_empty());
-let age_valid: Box<dyn Fn(i32) -> bool> = Box::new(|a| a >= 0 && a <= 150);
-
-// Combine with Divide: validate a (name, age) pair
-let person_valid: Box<dyn Fn((String, i32)) -> bool> =
-    PredicateF::divide(|p: (String, i32)| p, name_valid, age_valid);
-
-assert!(person_valid(("Alice".to_string(), 30)));
-assert!(!person_valid(("".to_string(), 30)));       // empty name
-assert!(!person_valid(("Alice".to_string(), -1)));   // negative age
-
-// Sum-type routing with Decide: handle either a string or an integer
-let str_check: Box<dyn Fn(String) -> bool> = Box::new(|s| s.len() < 10);
-let int_check: Box<dyn Fn(i32) -> bool> = Box::new(|n| n > 0);
-
-let either_check = PredicateF::choose(
-    |input: Result<String, i32>| input,
-    str_check,
-    int_check,
-);
-
-assert!(either_check(Ok("short".to_string())));
-assert!(!either_check(Err(-5)));
-```
-
-
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
