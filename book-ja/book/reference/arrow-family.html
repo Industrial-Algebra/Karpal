@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
+            window.path_to_searchindex_js = "../searchindex-b3e124b9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,42 +178,42 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="arrow-family"><a class="header" href="#arrow-family">Arrow Family</a></h1>
-<p>Arrows generalize functions to computations with structured inputs and outputs. They extend the <a href="profunctor-family.html">Profunctor</a> idea – a two-parameter type constructor with composition – into a full algebra of composable pipelines with product routing, sum routing, application, looping, and failure.</p>
-<p>The arrow family lives in the <code>karpal-arrow</code> crate and builds on the <code>HKT2</code> encoding from <code>karpal-core</code>.</p>
-<h2 id="trait-hierarchy"><a class="header" href="#trait-hierarchy">Trait Hierarchy</a></h2>
+                        <h1 id="アローファミリー"><a class="header" href="#アローファミリー">アローファミリー</a></h1>
+<p>アローは関数を、構造化された入出力を持つ計算へと一般化します。<a href="profunctor-family.html">プロ関手</a> のアイデア — 合成を持つ二パラメータ型コンストラクタ — を、積の経路付け、和の経路付け、適用、ループ、失敗を持つ合成可能パイプラインの完全な代数へと拡張します。</p>
+<p>アローファミリーは <code>karpal-arrow</code> クレートにあり、<code>karpal-core</code> の <code>HKT2</code> エンコーディングの上に構築されます。</p>
+<h2 id="トレイト階層"><a class="header" href="#トレイト階層">トレイト階層</a></h2>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>HKT2
  +-&gt; Semigroupoid          compose(f, g)
      +-&gt; Category           id()
-         +-&gt; Arrow           arr(f), first, second, split, fanout
-              |-&gt; ArrowChoice    left, right, splat, fanin
+         +-&gt; Arrow           arr(f)、first、second、split、fanout
+              |-&gt; ArrowChoice    left、right、splat、fanin
               |-&gt; ArrowApply     app  (~ Monad)
               |-&gt; ArrowLoop      loop_arrow  (D: Default)
               +-&gt; ArrowZero      zero_arrow
                    +-&gt; ArrowPlus  plus(f, g)
 <span class="boring">}</span></code></pre>
 <ul>
-<li><strong>Semigroupoid</strong> – composable morphisms (associative composition).</li>
-<li><strong>Category</strong> – adds an identity morphism.</li>
-<li><strong>Arrow</strong> – lifts pure functions and routes through products (tuples).</li>
-<li><strong>ArrowChoice</strong> – routes through sum types (<code>Result</code>).</li>
-<li><strong>ArrowApply</strong> – first-class arrow application, equivalent in power to Monad.</li>
-<li><strong>ArrowLoop</strong> – feedback/fixpoint combinator using <code>D: Default</code> for strict evaluation.</li>
-<li><strong>ArrowZero</strong> – a failing/empty arrow.</li>
-<li><strong>ArrowPlus</strong> – associative choice between arrows.</li>
+<li><strong>Semigroupoid</strong> – 合成可能な射 (結合的な合成)。</li>
+<li><strong>Category</strong> – 恒等射を追加。</li>
+<li><strong>Arrow</strong> – 純粋関数を持ち上げ、積 (タプル) を通じて経路付け。</li>
+<li><strong>ArrowChoice</strong> – 直和型 (<code>Result</code>) を通じて経路付け。</li>
+<li><strong>ArrowApply</strong> – 第一級のアロー適用、Monad と同等の表現力。</li>
+<li><strong>ArrowLoop</strong> – <code>D: Default</code> を使った正格評価でのフィードバック/フィックスポイントコンビネータ。</li>
+<li><strong>ArrowZero</strong> – 失敗/空のアロー。</li>
+<li><strong>ArrowPlus</strong> – アロー間の結合的な選択。</li>
 </ul>
-<h2 id="traits"><a class="header" href="#traits">Traits</a></h2>
+<h2 id="トレイト"><a class="header" href="#トレイト">トレイト</a></h2>
 <h3 id="semigroupoid"><a class="header" href="#semigroupoid">Semigroupoid</a></h3>
-<p>Morphisms that can be composed associatively.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>結合的に合成できる射。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Semigroupoid: morphisms that can be composed.
+</span>/// Semigroupoid: 合成可能な射。
 ///
-/// Laws:
-/// - Associativity: compose(f, compose(g, h)) == compose(compose(f, g), h)
+/// 法則:
+/// - 結合律: compose(f, compose(g, h)) == compose(compose(f, g), h)
 pub trait Semigroupoid: HKT2 {
     fn compose&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
         f: Self::P&lt;B, C&gt;,
@@ -221,439 +221,96 @@ pub trait Semigroupoid: HKT2 {
     ) -&gt; Self::P&lt;A, C&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p><code>compose</code> chains two morphisms: given <code>g: A -&gt; B</code> and <code>f: B -&gt; C</code>, produce <code>f . g: A -&gt; C</code>. Note the argument order – <code>f</code> comes first, matching mathematical convention (<code>f</code> after <code>g</code>).</p>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Associativity</p>
-<p>Composition is associative:</p>
+<p><code>compose</code> は二つの射を連鎖します: <code>g: A -&gt; B</code> と <code>f: B -&gt; C</code> を与えられ、<code>f . g: A -&gt; C</code> を生成します。数学的慣習 (<code>g</code> のあと <code>f</code>) に合わせ、<code>f</code> が先に来ることに注意してください。</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>結合律</p>
+<p>合成は結合的です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>P::compose(f, P::compose(g, h)) == P::compose(P::compose(f, g), h)
 <span class="boring">}</span></code></pre>
 <h3 id="category"><a class="header" href="#category">Category</a></h3>
-<p>A Semigroupoid with an identity morphism.</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>恒等射を持つ Semigroupoid。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Category: a Semigroupoid with an identity morphism.
+</span>/// Category: 恒等射を持つ Semigroupoid。
 ///
-/// Laws:
-/// - Left identity:  compose(id(), f) == f
-/// - Right identity: compose(f, id()) == f
+/// 法則:
+/// - 左単位律:  compose(id(), f) == f
+/// - 右単位律: compose(f, id()) == f
 pub trait Category: Semigroupoid {
     fn id&lt;A: Clone + 'static&gt;() -&gt; Self::P&lt;A, A&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p><code>id</code> produces the identity morphism that, when composed with any other morphism, yields that morphism unchanged.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>Left Identity</p>
+<p><code>id</code> は他の任意の射と合成するとその射を変更なく返す恒等射を生成します。</p>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
+<p>左単位律</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>P::compose(P::id(), f) == f
 <span class="boring">}</span></code></pre>
-<p>Right Identity</p>
+<p>右単位律</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>P::compose(f, P::id()) == f
 <span class="boring">}</span></code></pre>
 <h3 id="arrow"><a class="header" href="#arrow">Arrow</a></h3>
-<p>A Category that can lift pure functions and operate on products (tuples).</p>
-<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
+<p>純粋関数を持ち上げ、積 (タプル) 上で操作できる Category。</p>
+<h4 id="シグネチャ-2"><a class="header" href="#シグネチャ-2">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Arrow: a Category that can lift pure functions and operate on products.
+</span>/// Arrow: 純粋関数を持ち上げ、積上で操作できる Category。
 ///
-/// Laws:
+/// 法則:
 /// - arr(id) == id()
 /// - arr(|a| g(f(a))) == compose(arr(g), arr(f))
 /// - first(arr(f)) == arr(|(a, c)| (f(a), c))
 /// - first(compose(f, g)) == compose(first(f), first(g))
 pub trait Arrow: Category {
-    /// Lift a pure function into an arrow.
+    /// 純粋関数をアローに持ち上げる。
     fn arr&lt;A: Clone + 'static, B: Clone + 'static&gt;(
         f: impl Fn(A) -&gt; B + 'static,
     ) -&gt; Self::P&lt;A, B&gt;;
 
-    /// Apply an arrow to the first component of a pair, passing the second through.
+    /// アローをペアの第一成分に適用し、第二成分を通過させる。
     fn first&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
         pab: Self::P&lt;A, B&gt;,
     ) -&gt; Self::P&lt;(A, C), (B, C)&gt;;
 
-    /// Apply an arrow to the second component of a pair.
+    /// アローをペアの第二成分に適用する。
     fn second&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
         pab: Self::P&lt;A, B&gt;,
     ) -&gt; Self::P&lt;(C, A), (C, B)&gt; { ... }
 
-    /// `***`: apply two arrows in parallel on a product.
+    /// `***`: 二つのアローを積上で並列に適用。
     fn split&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static, D: Clone + 'static&gt;(
         f: Self::P&lt;A, B&gt;,
         g: Self::P&lt;C, D&gt;,
     ) -&gt; Self::P&lt;(A, C), (B, D)&gt; { ... }
 
-    /// `&amp;&amp;&amp;`: feed input to two arrows and collect results as a pair.
+    /// `&amp;&amp;&amp;`: 入力を二つのアローに供給し、結果をペアとして収集。
     fn fanout&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
         f: Self::P&lt;A, B&gt;,
         g: Self::P&lt;A, C&gt;,
     ) -&gt; Self::P&lt;A, (B, C)&gt; { ... }
 }
 <span class="boring">}</span></code></pre>
-<p><code>arr</code> lifts any pure function into the arrow. <code>first</code> applies an arrow to the first component of a tuple, passing the second through unchanged. <code>second</code>, <code>split</code>, and <code>fanout</code> have default implementations built from <code>first</code>, <code>compose</code>, and <code>arr</code>.</p>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p>arr preserves identity</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::arr(|a| a) == P::id()
-<span class="boring">}</span></code></pre>
-<p>arr preserves composition</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::arr(|a| g(f(a))) == P::compose(P::arr(g), P::arr(f))
-<span class="boring">}</span></code></pre>
-<p>first/arr coherence</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::first(P::arr(f)) == P::arr(|(a, c)| (f(a), c))
-<span class="boring">}</span></code></pre>
-<p>first distributes over compose</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::first(P::compose(f, g)) == P::compose(P::first(f), P::first(g))
-<span class="boring">}</span></code></pre>
-<h4 id="derived-operations"><a class="header" href="#derived-operations">Derived Operations</a></h4>
-<ul>
-<li><code>second(pab)</code> – default implementation swaps the tuple components, applies <code>first</code>, and swaps back.</li>
-<li><code>split(f, g)</code> – Haskell’s <code>***</code> operator. Applies <code>f</code> to the first component and <code>g</code> to the second: <code>compose(second(g), first(f))</code>.</li>
-<li><code>fanout(f, g)</code> – Haskell’s <code>&amp;&amp;&amp;</code> operator. Duplicates the input and applies <code>f</code> and <code>g</code> in parallel: <code>compose(split(f, g), arr(|a| (a.clone(), a)))</code>.</li>
-</ul>
+<p><code>arr</code> は任意の純粋関数をアローに持ち上げます。<code>first</code> はアローをタプルの第一成分に適用し、第二成分を変更なく通過させます。<code>second</code>、<code>split</code>、<code>fanout</code> は <code>first</code>、<code>compose</code>、<code>arr</code> から構築されたデフォルト実装を持ちます。</p>
 <h3 id="arrowchoice"><a class="header" href="#arrowchoice">ArrowChoice</a></h3>
-<p>An Arrow that can route through sum types (<code>Result</code>).</p>
-<h4 id="signature-3"><a class="header" href="#signature-3">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// ArrowChoice: an Arrow that can route through sum types.
-///
-/// Uses `Result&lt;L, R&gt;` as the sum type, consistent with karpal-profunctor's Choice.
-///
-/// Laws:
-/// - left(arr(f)) == arr(|r| r.map(f))
-/// - left(compose(f, g)) == compose(left(f), left(g))
-/// - compose(arr(Ok), f) == compose(left(f), arr(Ok))
-pub trait ArrowChoice: Arrow {
-    /// Route the Ok branch through the arrow, passing Err through.
-    fn left&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
-        pab: Self::P&lt;A, B&gt;,
-    ) -&gt; Self::P&lt;Result&lt;A, C&gt;, Result&lt;B, C&gt;&gt;;
-
-    /// Route the Err branch through the arrow, passing Ok through.
-    fn right&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
-        pab: Self::P&lt;A, B&gt;,
-    ) -&gt; Self::P&lt;Result&lt;C, A&gt;, Result&lt;C, B&gt;&gt; { ... }
-
-    /// `+++`: apply f on Ok, g on Err.
-    fn splat&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static, D: Clone + 'static&gt;(
-        f: Self::P&lt;A, B&gt;,
-        g: Self::P&lt;C, D&gt;,
-    ) -&gt; Self::P&lt;Result&lt;A, C&gt;, Result&lt;B, D&gt;&gt; { ... }
-
-    /// `|||`: merge two arrows, one for each branch of Result.
-    fn fanin&lt;A: Clone + 'static, B: Clone + 'static, C: Clone + 'static&gt;(
-        f: Self::P&lt;A, C&gt;,
-        g: Self::P&lt;B, C&gt;,
-    ) -&gt; Self::P&lt;Result&lt;A, B&gt;, C&gt; { ... }
-}
-<span class="boring">}</span></code></pre>
-<p><code>left</code> routes the <code>Ok</code> branch through the arrow, passing the <code>Err</code> branch through unchanged. <code>right</code>, <code>splat</code>, and <code>fanin</code> have default implementations. Karpal uses <code>Result&lt;L, R&gt;</code> as the sum type, consistent with <a href="profunctor-family.html#choice">Choice</a> in <code>karpal-profunctor</code>.</p>
-<h4 id="laws-3"><a class="header" href="#laws-3">Laws</a></h4>
-<p>left/arr coherence</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::left(P::arr(f)) == P::arr(|r| r.map(f))
-<span class="boring">}</span></code></pre>
-<p>left distributes over compose</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::left(P::compose(f, g)) == P::compose(P::left(f), P::left(g))
-<span class="boring">}</span></code></pre>
-<h4 id="derived-operations-1"><a class="header" href="#derived-operations-1">Derived Operations</a></h4>
-<ul>
-<li><code>right(pab)</code> – mirrors the <code>Result</code>, applies <code>left</code>, and mirrors back.</li>
-<li><code>splat(f, g)</code> – Haskell’s <code>+++</code> operator. Applies <code>f</code> to <code>Ok</code> and <code>g</code> to <code>Err</code>: <code>compose(right(g), left(f))</code>.</li>
-<li><code>fanin(f, g)</code> – Haskell’s <code>|||</code> operator. Merges both branches into a single output: <code>compose(merge, splat(f, g))</code>.</li>
-</ul>
+<p>直和型 (<code>Result</code>) を通じてアローを経路付けします。<code>left</code> は <code>Result</code> の <code>Ok</code> バリアントにアローを適用し、<code>right</code> は <code>Err</code> バリアントに適用します。これにより条件付きの分岐パイプラインを構築できます。</p>
 <h3 id="arrowapply"><a class="header" href="#arrowapply">ArrowApply</a></h3>
-<p>An Arrow that can apply arrows from within the computation. Equivalent in power to Monad.</p>
-<h4 id="signature-4"><a class="header" href="#signature-4">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// ArrowApply: an Arrow that can apply arrows from within the computation.
-///
-/// Equivalent in power to Monad (ArrowApply ~ Monad via Kleisli).
-pub trait ArrowApply: Arrow {
-    fn app&lt;A: Clone + 'static, B: Clone + 'static&gt;()
-        -&gt; Self::P&lt;(Self::P&lt;A, B&gt;, A), B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>app</code> takes a pair of an arrow and an input value, and applies the arrow to the value. This gives arrows the ability to choose which arrow to run at runtime, making <code>ArrowApply</code> equivalent in power to <code>Monad</code> (via the Kleisli correspondence).</p>
+<p>第一級のアロー適用 (<code>app</code>) を提供します。アローを値として扱い、動的に適用できます。これは Monad と同等の表現力を持ちますが、ほとんどの実用的な用途では Arrow を使う方が構造化されています。</p>
 <h3 id="arrowloop"><a class="header" href="#arrowloop">ArrowLoop</a></h3>
-<p>An Arrow with a loop/fixpoint combinator.</p>
-<h4 id="signature-5"><a class="header" href="#signature-5">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// ArrowLoop: an Arrow with a loop/fixpoint combinator.
-///
-/// Takes an arrow from `(A, D)` to `(B, D)` and produces an arrow from `A` to `B`,
-/// where `D` is the "feedback" type threaded through the loop.
-///
-/// In Haskell, `loop` relies on laziness to tie the knot. Rust is strict, so
-/// `D: Default` provides the initial feedback seed and the implementation uses
-/// single-pass evaluation.
-pub trait ArrowLoop: Arrow {
-    fn loop_arrow&lt;A: Clone + 'static, B: Clone + 'static, D: Default + Clone + 'static&gt;(
-        f: Self::P&lt;(A, D), (B, D)&gt;,
-    ) -&gt; Self::P&lt;A, B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>loop_arrow</code> takes an arrow from <code>(A, D)</code> to <code>(B, D)</code> and produces an arrow from <code>A</code> to <code>B</code>, where <code>D</code> is the feedback type. In Haskell, <code>loop</code> relies on laziness to tie the knot. Since Rust is strict, the <code>D: Default</code> bound provides the initial feedback seed and the implementation uses single-pass evaluation.</p>
-<h3 id="arrowzero"><a class="header" href="#arrowzero">ArrowZero</a></h3>
-<p>An Arrow with a zero (failing/empty) morphism.</p>
-<h4 id="signature-6"><a class="header" href="#signature-6">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// ArrowZero: an Arrow with a zero (failing/empty) morphism.
-///
-/// Laws:
-/// - compose(zero_arrow(), f) == zero_arrow()  (left absorption)
-pub trait ArrowZero: Arrow {
-    fn zero_arrow&lt;A: Clone + 'static, B: Clone + 'static&gt;() -&gt; Self::P&lt;A, B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>zero_arrow</code> produces an arrow that always fails or returns empty. It absorbs any composition from the left: composing anything after a <code>zero_arrow</code> still yields <code>zero_arrow</code>.</p>
-<h4 id="laws-4"><a class="header" href="#laws-4">Laws</a></h4>
-<p>Left Absorption</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::compose(P::zero_arrow(), f) == P::zero_arrow()
-<span class="boring">}</span></code></pre>
-<h3 id="arrowplus"><a class="header" href="#arrowplus">ArrowPlus</a></h3>
-<p>An ArrowZero with an associative choice operation.</p>
-<h4 id="signature-7"><a class="header" href="#signature-7">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// ArrowPlus: an ArrowZero with an associative choice operation.
-///
-/// Laws:
-/// - Associativity: plus(plus(f, g), h) == plus(f, plus(g, h))
-/// - Left identity:  plus(zero_arrow(), f) == f
-/// - Right identity: plus(f, zero_arrow()) == f
-pub trait ArrowPlus: ArrowZero {
-    fn plus&lt;A: Clone + 'static, B: Clone + 'static&gt;(
-        f: Self::P&lt;A, B&gt;,
-        g: Self::P&lt;A, B&gt;,
-    ) -&gt; Self::P&lt;A, B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>plus</code> combines two arrows: if the first succeeds, use its result; otherwise fall back to the second. Together with <code>zero_arrow</code>, this forms a monoid over arrows.</p>
-<h4 id="laws-5"><a class="header" href="#laws-5">Laws</a></h4>
-<p>Associativity</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::plus(P::plus(f, g), h) == P::plus(f, P::plus(g, h))
-<span class="boring">}</span></code></pre>
-<p>Left Identity</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::plus(P::zero_arrow(), f) == f
-<span class="boring">}</span></code></pre>
-<p>Right Identity</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::plus(f, P::zero_arrow()) == f
-<span class="boring">}</span></code></pre>
-<h2 id="concrete-implementations"><a class="header" href="#concrete-implementations">Concrete Implementations</a></h2>
-<h3 id="fna-function-arrow"><a class="header" href="#fna-function-arrow">FnA (Function Arrow)</a></h3>
-<p>Marker type whose <code>P&lt;A, B&gt;</code> is <code>Box&lt;dyn Fn(A) -&gt; B&gt;</code> – the canonical function arrow.</p>
-<h4 id="definition"><a class="header" href="#definition">Definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct FnA;
-
-impl HKT2 for FnA {
-    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>FnA</code> is a zero-sized marker type equivalent to <code>FnP</code> in <code>karpal-profunctor</code> but independent (no cross-crate dependency). It is the most natural arrow: a boxed function from <code>A</code> to <code>B</code>.</p>
-<h4 id="implemented-traits"><a class="header" href="#implemented-traits">Implemented traits</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait</th><th>Method</th><th>Implementation</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Semigroupoid</code></td><td><code>compose(f, g)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Category</code></td><td><code>id()</code></td><td>`Box::new(</td></tr>
-<tr><td><code>Arrow</code></td><td><code>arr(f)</code></td><td><code>Box::new(f)</code></td></tr>
-<tr><td><code>Arrow</code></td><td><code>first(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Arrow</code></td><td><code>second(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>ArrowChoice</code></td><td><code>left(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>ArrowChoice</code></td><td><code>right(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>ArrowApply</code></td><td><code>app()</code></td><td>`Box::new(</td></tr>
-<tr><td><code>ArrowLoop</code></td><td><code>loop_arrow(f)</code></td><td>`Box::new(move</td></tr>
-</tbody>
-</table>
-</div>
-<p><code>FnA</code> does <strong>not</strong> implement <code>ArrowZero</code> or <code>ArrowPlus</code> because a plain function <code>A -&gt; B</code> has no notion of failure or empty result.</p>
-<h4 id="feature-gate"><a class="header" href="#feature-gate">Feature gate</a></h4>
-<p><code>FnA</code> requires the <code>alloc</code> feature because <code>Box&lt;dyn Fn&gt;</code> requires heap allocation.</p>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_arrow::{Arrow, ArrowChoice, Category, Semigroupoid, FnA};
-
-// Lift pure functions into arrows
-let double = FnA::arr(|x: i32| x * 2);
-let add_one = FnA::arr(|x: i32| x + 1);
-
-// Compose: (x * 2) then (+ 1)
-let pipeline = FnA::compose(add_one, double);
-assert_eq!(pipeline(5), 11); // (5 * 2) + 1
-
-// fanout: feed the same input to two arrows
-let double = FnA::arr(|x: i32| x * 2);
-let negate = FnA::arr(|x: i32| -x);
-let both = FnA::fanout(double, negate);
-assert_eq!(both(5), (10, -5));
-
-// split: apply two arrows in parallel on a tuple
-let to_str = FnA::arr(|x: i32| x.to_string());
-let double = FnA::arr(|x: i32| x * 2);
-let par = FnA::split(to_str, double);
-assert_eq!(par((42, 5)), ("42".to_string(), 10));
-
-// ArrowChoice: route through Result branches
-let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
-let routed = FnA::left::&lt;i32, i32, &amp;str&gt;(double);
-assert_eq!(routed(Ok(5)), Ok(10));
-assert_eq!(routed(Err("nope")), Err("nope"));
-<span class="boring">}</span></code></pre>
-<h3 id="kleislifm-kleisli-arrow"><a class="header" href="#kleislifm-kleisli-arrow">KleisliF&lt;M&gt; (Kleisli Arrow)</a></h3>
-<p>Kleisli arrow for a Monad <code>M</code>: <code>P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; M::Of&lt;B&gt;&gt;</code>.</p>
-<h4 id="definition-1"><a class="header" href="#definition-1">Definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct KleisliF&lt;M: HKT&gt;(PhantomData&lt;M&gt;);
-
-impl&lt;M: HKT&gt; HKT2 for KleisliF&lt;M&gt; {
-    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; M::Of&lt;B&gt;&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>KleisliF&lt;M&gt;</code> wraps effectful functions <code>A -&gt; M&lt;B&gt;</code> as arrows. It implements the full Arrow hierarchy when <code>M: Chain + Applicative + Functor</code>, and additionally implements <code>ArrowZero</code> and <code>ArrowPlus</code> when <code>M: Plus</code>.</p>
-<h4 id="implemented-traits-1"><a class="header" href="#implemented-traits-1">Implemented traits</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait</th><th>Constraint on <code>M</code></th><th>Key operation</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Semigroupoid</code></td><td><code>Chain + Applicative</code></td><td>`compose(f, g) =</td></tr>
-<tr><td><code>Category</code></td><td><code>Chain + Applicative</code></td><td>`id() =</td></tr>
-<tr><td><code>Arrow</code></td><td><code>Chain + Applicative + Functor</code></td><td>`arr(f) =</td></tr>
-<tr><td><code>ArrowChoice</code></td><td><code>Chain + Applicative + Functor</code></td><td>`left(pab) =</td></tr>
-<tr><td><code>ArrowApply</code></td><td><code>Chain + Applicative + Functor</code></td><td>`app() =</td></tr>
-<tr><td><code>ArrowZero</code></td><td><code>+ Plus</code></td><td>`zero_arrow() =</td></tr>
-<tr><td><code>ArrowPlus</code></td><td><code>+ Plus</code></td><td>`plus(f, g) =</td></tr>
-</tbody>
-</table>
-</div>
-<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_arrow::{Arrow, ArrowZero, ArrowPlus, Semigroupoid, KleisliF};
-use karpal_core::hkt::OptionF;
-
-type KOpt = KleisliF&lt;OptionF&gt;;
-
-// Kleisli arrows: functions returning Option
-let safe_double: Box&lt;dyn Fn(i32) -&gt; Option&lt;i32&gt;&gt; = Box::new(|x| Some(x * 2));
-let safe_add_one: Box&lt;dyn Fn(i32) -&gt; Option&lt;i32&gt;&gt; = Box::new(|x| Some(x + 1));
-
-// Compose: chains through the monad (short-circuits on None)
-let pipeline = KOpt::compose(safe_add_one, safe_double);
-assert_eq!(pipeline(5), Some(11)); // Some(10) -&gt; Some(11)
-
-// Short-circuit on failure
-let fail: Box&lt;dyn Fn(i32) -&gt; Option&lt;i32&gt;&gt; = Box::new(|_| None);
-let after_fail = KOpt::compose(safe_add_one, fail);
-assert_eq!(after_fail(5), None);
-
-// ArrowZero: an arrow that always returns None
-let z = KOpt::zero_arrow::&lt;i32, i32&gt;();
-assert_eq!(z(42), None);
-
-// ArrowPlus: try the first arrow, fall back to the second
-let attempt = KOpt::plus(fail, safe_double);
-assert_eq!(attempt(5), Some(10)); // first fails, second succeeds
-<span class="boring">}</span></code></pre>
-<h3 id="cokleislifw-cokleisli-arrow"><a class="header" href="#cokleislifw-cokleisli-arrow">CokleisliF&lt;W&gt; (Cokleisli Arrow)</a></h3>
-<p>Cokleisli arrow for a Comonad <code>W</code>: <code>P&lt;A, B&gt; = Box&lt;dyn Fn(W::Of&lt;A&gt;) -&gt; B&gt;</code>.</p>
-<h4 id="definition-2"><a class="header" href="#definition-2">Definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct CokleisliF&lt;W: HKT&gt;(PhantomData&lt;W&gt;);
-
-impl&lt;W: HKT&gt; HKT2 for CokleisliF&lt;W&gt; {
-    type P&lt;A, B&gt; = Box&lt;dyn Fn(W::Of&lt;A&gt;) -&gt; B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>CokleisliF&lt;W&gt;</code> wraps context-consuming functions <code>W&lt;A&gt; -&gt; B</code> as arrows. Composition requires <code>W::Of&lt;A&gt;: Clone</code>, which cannot be expressed generically with GATs. Instead, the <code>impl_cokleisli!</code> macro generates <code>Semigroupoid</code> and <code>Category</code> impls for specific comonads.</p>
-<h4 id="the-impl_cokleisli-macro"><a class="header" href="#the-impl_cokleisli-macro">The <code>impl_cokleisli!</code> macro</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// Generate Semigroupoid + Category impls for `CokleisliF&lt;$W&gt;` where
-/// `$W::Of&lt;A&gt;` is known to be `Clone` for `A: Clone`.
-///
-/// Usage: `impl_cokleisli!(IdentityF, OptionF, NonEmptyVecF, EnvF&lt;E&gt;);`
-#[macro_export]
-macro_rules! impl_cokleisli {
-    ($W:ty) =&gt; { /* generates Semigroupoid + Category impls */ };
-}
-<span class="boring">}</span></code></pre>
-<p>Pre-generated instances are provided for <code>IdentityF</code>, <code>OptionF</code>, and <code>NonEmptyVecF</code>. A separate <code>impl_cokleisli_env!</code> macro handles <code>EnvF&lt;E&gt;</code> with specific environment types (pre-generated for <code>i32</code> and <code>String</code>).</p>
-<h4 id="implemented-traits-2"><a class="header" href="#implemented-traits-2">Implemented traits</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait</th><th>Key operation</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Semigroupoid</code></td><td>`compose(f, g) =</td></tr>
-<tr><td><code>Category</code></td><td>`id() =</td></tr>
-</tbody>
-</table>
-</div>
-<p><code>CokleisliF</code> only implements <code>Semigroupoid</code> and <code>Category</code>. It does not implement the full <code>Arrow</code> hierarchy because lifting a pure function <code>A -&gt; B</code> into <code>W&lt;A&gt; -&gt; B</code> would require <code>Comonad::extract</code> in <code>arr</code>, but the product-routing operations (<code>first</code>, <code>second</code>) would need <code>W&lt;(A, C)&gt;</code> to be decomposable, which is not generally possible for all comonads.</p>
-<h2 id="design-notes"><a class="header" href="#design-notes">Design Notes</a></h2>
-<h3 id="clone--static-bounds"><a class="header" href="#clone--static-bounds"><code>Clone + 'static</code> bounds</a></h3>
-<p>All type parameters in the arrow hierarchy require <code>Clone + 'static</code> bounds. The <code>'static</code> bound is necessary because all concrete implementations use <code>Box&lt;dyn Fn&gt;</code>, which requires captured closures (and the types they close over) to be <code>'static</code>. The <code>Clone</code> bound is needed for operations like <code>fanout</code> (which duplicates the input) and Kleisli composition (which needs to clone values threaded through monadic binds).</p>
-<h3 id="arrowloop-and-d-default"><a class="header" href="#arrowloop-and-d-default">ArrowLoop and <code>D: Default</code></a></h3>
-<p>In Haskell, <code>ArrowLoop</code>’s <code>loop</code> relies on laziness to “tie the knot” – the feedback value <code>d</code> is defined in terms of itself. Rust is strict, so this is not possible. Instead, Karpal’s <code>loop_arrow</code> requires <code>D: Default</code> to provide an initial seed for the feedback channel. The implementation performs a single pass: it feeds <code>(a, D::default())</code> into the arrow and returns the <code>B</code> component of the output, discarding the feedback.</p>
-<h3 id="cokleislif-and-impl_cokleisli"><a class="header" href="#cokleislif-and-impl_cokleisli">CokleisliF and <code>impl_cokleisli!</code></a></h3>
-<p>The challenge with <code>CokleisliF&lt;W&gt;</code> is that composition requires <code>W::Of&lt;A&gt;: Clone</code>, but this bound cannot be expressed generically with GATs – you cannot write <code>where W::Of&lt;A&gt;: Clone</code> in a blanket impl because the compiler cannot verify this for all possible <code>W</code>. The <code>impl_cokleisli!</code> macro solves this by generating implementations for each specific comonad where the <code>Clone</code> bound is known to hold.</p>
-<h3 id="operator-naming"><a class="header" href="#operator-naming">Operator naming</a></h3>
-<p>Haskell uses symbolic operators for several arrow combinators. Since Rust does not support custom operators, Karpal uses descriptive names:</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Haskell operator</th><th>Karpal name</th><th>Description</th></tr>
-</thead>
-<tbody>
-<tr><td><code>&gt;&gt;&gt;</code></td><td><code>compose</code></td><td>Sequential composition (reversed argument order)</td></tr>
-<tr><td><code>***</code></td><td><code>split</code></td><td>Apply two arrows in parallel on a product</td></tr>
-<tr><td><code>&amp;&amp;&amp;</code></td><td><code>fanout</code></td><td>Feed one input to two arrows, collect results</td></tr>
-<tr><td><code>+++</code></td><td><code>splat</code></td><td>Apply two arrows to the two branches of a sum</td></tr>
-<tr><td>`</td><td></td><td></td></tr>
-</tbody>
-</table>
-</div>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>フィードバック/フィックスポイントコンビネータ <code>loop_arrow</code> を提供します。Haskell の遅延 <code>loop</code> と異なり、Rust の正格評価ではフィードバック型 <code>D: Default</code> が必要で、<code>loop_arrow</code> は単一パス評価を使います (これは設計上の制限であり、完全な反復収束のためには <code>loop_fixpoint</code> を使います)。</p>
+<h3 id="arrowzero-と-arrowplus"><a class="header" href="#arrowzero-と-arrowplus">ArrowZero と ArrowPlus</a></h3>
+<p><code>ArrowZero</code> は失敗/空のアロー <code>zero_arrow</code> を提供し、<code>ArrowPlus</code> はアロー間の結合的な選択 <code>plus(f, g)</code> を提供します。これらは Arrow 版の <code>Plus</code>/<code>Alt</code> です。</p>
+<h2 id="具象アロー"><a class="header" href="#具象アロー">具象アロー</a></h2>
+<h3 id="fna--関数アロー"><a class="header" href="#fna--関数アロー">FnA — 関数アロー</a></h3>
+<p><code>FnA</code> は標準的な具象アローで、<code>P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; B + 'static&gt;</code> です。すべてのアロートレイト (Category、Arrow、ArrowChoice、ArrowLoop、ArrowZero、ArrowPlus) を実装します。ほとんどのアローパイプラインは <code>FnA</code> で構築されます。</p>
+<h3 id="kleislif-と-cokleislif"><a class="header" href="#kleislif-と-cokleislif">KleisliF と CokleisliF</a></h3>
+<p><code>KleisliF&lt;M&gt;</code> はモナド <code>M</code> からアローを構築します: <code>P&lt;A, B&gt; = A -&gt; M::Of&lt;B&gt;</code>。モナド計算をアローパイプラインとして表現できます。<code>CokleisliF&lt;W&gt;</code> はその双対で、コモナド <code>W</code> から構築します: <code>P&lt;A, B&gt; = W::Of&lt;A&gt; -&gt; B</code>。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

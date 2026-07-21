@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
+            window.path_to_searchindex_js = "../searchindex-b3e124b9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,43 +178,43 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="optics"><a class="header" href="#optics">Optics</a></h1>
-<p>Profunctor optics: first-class field accessors and pattern matchers.</p>
-<p>Optics let you focus on parts of a data structure – reading, writing, and transforming nested fields or enum variants – without breaking encapsulation. Karpal provides a full hierarchy of optic types, each constrained by a different profunctor class:</p>
+                        <h1 id="オプティクス"><a class="header" href="#オプティクス">オプティクス</a></h1>
+<p>プロ関手オプティクス: 第一級のフィールドアクセサとパターンマッチャ。</p>
+<p>オプティクスにより、データ構造の一部 — 入れ子になったフィールドや列挙型バリアントの読み取り・書き込み・変換 — に焦点を当てられ、カプセル化を壊しません。Karpal は、それぞれ異なるプロ関手クラスで制約された完全なオプティクス型階層を提供します:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Optic</th><th>Focus</th><th>Profunctor constraint</th><th>Read</th><th>Write</th></tr>
+<tr><th>オプティクス</th><th>焦点</th><th>プロ関手制約</th><th>読み取り</th><th>書き込み</th></tr>
 </thead>
 <tbody>
-<tr><td><a href="#iso">Iso</a></td><td>Exactly 1 (isomorphism)</td><td>Profunctor</td><td>yes</td><td>yes</td></tr>
-<tr><td><a href="#lens">Lens</a></td><td>Exactly 1 (field)</td><td>Strong</td><td>yes</td><td>yes</td></tr>
-<tr><td><a href="#prism">Prism</a></td><td>0 or 1 (variant)</td><td>Choice</td><td>yes</td><td>yes</td></tr>
-<tr><td><a href="#traversal">Traversal</a></td><td>0 to many</td><td>Traversing</td><td>yes</td><td>yes</td></tr>
-<tr><td><a href="#getter">Getter</a></td><td>Exactly 1 (read-only)</td><td>–</td><td>yes</td><td>no</td></tr>
-<tr><td><a href="#review">Review</a></td><td>Construction only</td><td>–</td><td>no</td><td>yes</td></tr>
-<tr><td><a href="#setter">Setter</a></td><td>Modify only</td><td>–</td><td>no</td><td>yes</td></tr>
-<tr><td><a href="#fold">Fold</a></td><td>0 to many (read-only)</td><td>–</td><td>yes</td><td>no</td></tr>
+<tr><td><a href="#iso">Iso</a></td><td>ちょうど 1 (同型)</td><td>Profunctor</td><td>はい</td><td>はい</td></tr>
+<tr><td><a href="#lens">Lens</a></td><td>ちょうど 1 (フィールド)</td><td>Strong</td><td>はい</td><td>はい</td></tr>
+<tr><td><a href="#prism">Prism</a></td><td>0 または 1 (バリアント)</td><td>Choice</td><td>はい</td><td>はい</td></tr>
+<tr><td><a href="#traversal">Traversal</a></td><td>0 から多数</td><td>Traversing</td><td>はい</td><td>はい</td></tr>
+<tr><td><a href="#getter">Getter</a></td><td>ちょうど 1 (読み取り専用)</td><td>–</td><td>はい</td><td>いいえ</td></tr>
+<tr><td><a href="#review">Review</a></td><td>構築のみ</td><td>–</td><td>いいえ</td><td>はい</td></tr>
+<tr><td><a href="#setter">Setter</a></td><td>変更のみ</td><td>–</td><td>いいえ</td><td>はい</td></tr>
+<tr><td><a href="#fold">Fold</a></td><td>0 から多数 (読み取り専用)</td><td>–</td><td>はい</td><td>いいえ</td></tr>
 </tbody>
 </table>
 </div>
-<p>Optics form a subtyping hierarchy – every Iso can be used as a Lens or Prism, every Lens can be used as a Getter, Setter, Traversal, or Fold, and so on. Karpal provides explicit <code>to_*</code> conversion methods for these relationships.</p>
-<p>All optic types live in the <code>karpal-optics</code> crate and implement the <a href="#optic-trait"><code>Optic</code></a> marker trait.</p>
+<p>オプティクスはサブタイピング階層を形成します — すべての Iso は Lens や Prism として使え、すべての Lens は Getter、Setter、Traversal、Fold として使えます。Karpal はこれらの関係のために明示的な <code>to_*</code> 変換メソッドを提供します。</p>
+<p>すべてのオプティクス型は <code>karpal-optics</code> クレートにあり、<a href="#optic-トレイト"><code>Optic</code></a> マーカートレイトを実装します。</p>
 <h3 id="optic"><a class="header" href="#optic">Optic</a></h3>
-<p>Marker trait for the optic family.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>オプティクスファミリーのマーカートレイト。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Marker trait for all optics.
+</span>/// すべてのオプティクスのマーカートレイト。
 ///
-/// This trait exists to unify the optic family under a single taxonomy.
-/// Concrete optic types (Lens, Prism, etc.) implement this trait.
+/// このトレイトはオプティクスファミリーを単一の分類法の下に統一するために存在する。
+/// 具象オプティクス型 (Lens、Prism など) がこのトレイトを実装する。
 pub trait Optic {}
 <span class="boring">}</span></code></pre>
-<p><code>Optic</code> carries no methods. It exists solely to classify types as optics, which is useful for trait bounds and documentation. All concrete optic types implement <code>Optic</code>: <code>Iso</code>, <code>Lens</code>, <code>ComposedLens</code>, <code>Prism</code>, <code>Getter</code>, <code>ComposedGetter</code>, <code>Review</code>, <code>Setter</code>, <code>Traversal</code>, <code>ComposedTraversal</code>, <code>Fold</code>, and <code>ComposedFold</code>.</p>
+<p><code>Optic</code> はメソッドを持ちません。型をオプティクスとして分類するためだけに存在し、トレイト境界やドキュメントに有用です。すべての具象オプティクス型が <code>Optic</code> を実装します: <code>Iso</code>、<code>Lens</code>、<code>ComposedLens</code>、<code>Prism</code>、<code>Getter</code>、<code>ComposedGetter</code>、<code>Review</code>、<code>Setter</code>、<code>Traversal</code>、<code>ComposedTraversal</code>、<code>Fold</code>、<code>ComposedFold</code>。</p>
 <h3 id="iso"><a class="header" href="#iso">Iso</a></h3>
-<p>An isomorphism: a lossless, reversible conversion between two representations.</p>
-<h4 id="struct-definition"><a class="header" href="#struct-definition">Struct definition</a></h4>
+<p>同型: 二つの表現間の損失のない可逆変換。</p>
+<h4 id="構造体定義"><a class="header" href="#構造体定義">構造体定義</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct Iso&lt;S, T, A, B&gt; {
@@ -224,8 +224,8 @@ pub trait Optic {}
 
 pub type SimpleIso&lt;S, A&gt; = Iso&lt;S, S, A, A&gt;;
 <span class="boring">}</span></code></pre>
-<p>An <code>Iso</code> witnesses that <code>S</code> and <code>A</code> carry the same information. It is the strongest optic – it requires only <code>Profunctor</code> (no <code>Strong</code> or <code>Choice</code>), and can be converted to any other optic type.</p>
-<h4 id="methods"><a class="header" href="#methods">Methods</a></h4>
+<p><code>Iso</code> は <code>S</code> と <code>A</code> が同じ情報を運ぶことを証明します。最も強いオプティクスで — <code>Profunctor</code> だけを必要とし (<code>Strong</code> や <code>Choice</code> なし)、任意の他のオプティクス型に変換できます。</p>
+<h4 id="メソッド"><a class="header" href="#メソッド">メソッド</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>impl&lt;S, T, A, B&gt; Iso&lt;S, T, A, B&gt; {
@@ -234,10 +234,10 @@ pub type SimpleIso&lt;S, A&gt; = Iso&lt;S, S, A, A&gt;;
     pub fn review(&amp;self, b: B) -&gt; T;
     pub fn set(&amp;self, _s: S, b: B) -&gt; T;
 
-    /// Profunctor encoding -- only requires Profunctor (weakest constraint).
+    /// プロ関手エンコーディング -- Profunctor だけを必要とする (最弱の制約)。
     pub fn transform&lt;P: Profunctor&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;;
 
-    // Conversions
+    // 変換
     pub fn to_getter(&amp;self) -&gt; Getter&lt;S, A&gt;;
     pub fn to_review(&amp;self) -&gt; Review&lt;T, B&gt;;
     pub fn to_fold(&amp;self) -&gt; Fold&lt;S, A&gt;;
@@ -245,798 +245,94 @@ pub type SimpleIso&lt;S, A&gt; = Iso&lt;S, S, A, A&gt;;
 
 impl&lt;S: Clone, T, A, B&gt; Iso&lt;S, T, A, B&gt; {
     pub fn over(&amp;self, s: S, f: impl FnOnce(A) -&gt; B) -&gt; T;
-    pub fn to_lens(&amp;self) -&gt; ComposedLens&lt;S, T, A, B&gt;;   // boxed (captures backward)
+    pub fn to_lens(&amp;self) -&gt; ComposedLens&lt;S, T, A, B&gt;;   // boxed (backward を捕獲)
     pub fn to_setter(&amp;self) -&gt; Setter&lt;S, T, A, B&gt;;
     pub fn to_traversal(&amp;self) -&gt; Traversal&lt;S, T, A, B&gt;;
 }
 <span class="boring">}</span></code></pre>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Roundtrip (forward-backward)</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>ラウンドトリップ (前進-後退)</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>iso.review(iso.get(&amp;s)) == s
 <span class="boring">}</span></code></pre>
-<p>Roundtrip (backward-forward)</p>
+<p>ラウンドトリップ (後退-前進)</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>iso.get(&amp;iso.review(b)) == b
 <span class="boring">}</span></code></pre>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_optics::{Iso, SimpleIso};
 
-// Celsius &lt;-&gt; Fahrenheit
+// 摂氏 &lt;-&gt; 華氏
 let temp: SimpleIso&lt;f64, f64&gt; = Iso::new(
-    |c: &amp;f64| c * 9.0 / 5.0 + 32.0,  // forward: C -&gt; F
-    |f: f64| (f - 32.0) * 5.0 / 9.0,   // backward: F -&gt; C
+    |c: &amp;f64| c * 9.0 / 5.0 + 32.0,  // 前進: C -&gt; F
+    |f: f64| (f - 32.0) * 5.0 / 9.0,   // 後退: F -&gt; C
 );
 
 assert!((temp.get(&amp;100.0) - 212.0).abs() &lt; 1e-10);
 assert!((temp.review(32.0) - 0.0).abs() &lt; 1e-10);
 
-// Modify in the "other" representation
-let result = temp.over(0.0, |f| f + 18.0); // add 18F to 0C
+// 「もう一方の」表現で変更
+let result = temp.over(0.0, |f| f + 18.0); // 0C に 18F を加算
 assert!((result - 10.0).abs() &lt; 1e-10);    // = 10C
 <span class="boring">}</span></code></pre>
 <h3 id="lens"><a class="header" href="#lens">Lens</a></h3>
-<p>A first-class getter/setter pair for focusing on a field inside a product type.</p>
-<h4 id="struct-definition-1"><a class="header" href="#struct-definition-1">Struct definition</a></h4>
+<p>直積型内のフィールドに焦点を当てるための第一級の getter/setter ペア。</p>
+<h4 id="構造体定義-1"><a class="header" href="#構造体定義-1">構造体定義</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// A van Laarhoven-style lens encoded with getter/setter function pointers.
+</span>/// getter/setter 関数ポインタでエンコードされた van Laarhoven スタイルのレンズ。
 ///
-/// `S` -- source type, `T` -- modified source type,
-/// `A` -- focus type, `B` -- replacement type.
+/// `S` -- ソース型、`T` -- 変更されたソース型、
+/// `A` -- 焦点型、`B` -- 置換型。
 pub struct Lens&lt;S, T, A, B&gt; {
     getter: fn(&amp;S) -&gt; A,
     setter: fn(S, B) -&gt; T,
 }
 
-/// A simple (monomorphic) lens where `S == T` and `A == B`.
+/// `S == T` かつ `A == B` の単純な (単相) レンズ。
 pub type SimpleLens&lt;S, A&gt; = Lens&lt;S, S, A, A&gt;;
 <span class="boring">}</span></code></pre>
-<p>The four type parameters support <strong>polymorphic update</strong>: you can replace a field of type <code>A</code> with a value of type <code>B</code>, changing the source from <code>S</code> to <code>T</code>. In practice, most lenses are <em>simple</em> (monomorphic), where <code>S == T</code> and <code>A == B</code>. The <code>SimpleLens</code> type alias covers this common case.</p>
-<h4 id="methods-1"><a class="header" href="#methods-1">Methods</a></h4>
+<p>四つの型パラメータは <strong>多相更新</strong> をサポートします: 型 <code>A</code> のフィールドを型 <code>B</code> の値で置き換え、ソースを <code>S</code> から <code>T</code> に変更できます。実際にはほとんどのレンズは <code>S == T</code> かつ <code>A == B</code> の <em>単純</em> (単相) です。<code>SimpleLens</code> 型エイリアスがこの一般的なケースをカバーします。</p>
+<h4 id="メソッド-1"><a class="header" href="#メソッド-1">メソッド</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>impl&lt;S, T, A, B&gt; Lens&lt;S, T, A, B&gt; {
-    /// Create a new lens from a getter and setter.
+    /// getter と setter から新しいレンズを作成。
     pub fn new(getter: fn(&amp;S) -&gt; A, setter: fn(S, B) -&gt; T) -&gt; Self;
 
-    /// Extract the focus from the source.
+    /// ソースから焦点を抽出。
     pub fn get(&amp;self, s: &amp;S) -&gt; A;
 
-    /// Replace the focus, producing a new source.
+    /// 焦点を置き換え、新しいソースを生成。
     pub fn set(&amp;self, s: S, b: B) -&gt; T;
 
-    /// Chain another lens to focus deeper, producing a ComposedLens.
-    /// Requires all type parameters to be `'static`.
+    /// 別のレンズを連鎖して深く焦点を当て、ComposedLens を生成。
+    /// すべての型パラメータが `'static` である必要がある。
     pub fn then&lt;X, Y&gt;(self, inner: Lens&lt;A, B, X, Y&gt;) -&gt; ComposedLens&lt;S, T, X, Y&gt;
-    where
-        S: 'static, T: 'static, A: 'static, B: 'static,
-        X: 'static, Y: 'static;
-}
-
-impl&lt;S: Clone, T, A, B&gt; Lens&lt;S, T, A, B&gt; {
-    /// Modify the focus by applying a function. Requires `S: Clone`.
-    pub fn over(&amp;self, s: S, f: impl FnOnce(A) -&gt; B) -&gt; T;
-
-    /// Profunctor encoding: transform a `P&lt;A, B&gt;` into a `P&lt;S, T&gt;`.
-    /// Requires `S: Clone` and `Strong` profunctor `P`.
-    /// All type parameters must be `'static`.
-    pub fn transform&lt;P: Strong&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
-    where
-        S: 'static, T: 'static, A: 'static, B: 'static;
-
-    // Conversions (all type params must be 'static)
-    pub fn to_getter(&amp;self) -&gt; Getter&lt;S, A&gt;;
-    pub fn to_setter(&amp;self) -&gt; Setter&lt;S, T, A, B&gt;;
-    pub fn to_traversal(&amp;self) -&gt; Traversal&lt;S, T, A, B&gt;;
-    pub fn to_fold(&amp;self) -&gt; Fold&lt;S, A&gt;;
+    where ...;
 }
 <span class="boring">}</span></code></pre>
-<h4 id="how-transform-works-strong"><a class="header" href="#how-transform-works-strong">How <code>transform</code> works (Strong)</a></h4>
-<p>The <code>transform</code> method connects a concrete lens to the profunctor hierarchy through the <a href="profunctor-family.html"><code>Strong</code></a> trait. Given any <code>Strong</code> profunctor <code>P</code> and a value <code>pab: P&lt;A, B&gt;</code>, it produces <code>P&lt;S, T&gt;</code> by:</p>
-<ol>
-<li><code>P::first(pab)</code> lifts to <code>P&lt;(A, S), (B, S)&gt;</code></li>
-<li><code>P::dimap</code> pre-composes with <code>|s| (get(s), s)</code> and post-composes with <code>|(b, s)| set(s, b)</code></li>
-</ol>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub fn transform&lt;P: Strong&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
-where
-    S: 'static, T: 'static, A: 'static, B: 'static,
-{
-    let getter = self.getter;
-    let setter = self.setter;
-    let first_pab = P::first::&lt;A, B, S&gt;(pab);
-    P::dimap(
-        move |s: S| {
-            let a = getter(&amp;s);
-            (a, s)
-        },
-        move |(b, s)| setter(s, b),
-        first_pab,
-    )
-}
-<span class="boring">}</span></code></pre>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>A well-behaved lens must satisfy three laws:</p>
-<p>GetSet</p>
-<p>Setting a value you just got changes nothing:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>lens.set(s.clone(), lens.get(&amp;s)) == s
-<span class="boring">}</span></code></pre>
-<p>SetGet</p>
-<p>Getting after setting yields the value you set:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>lens.get(&amp;lens.set(s, b)) == b
-<span class="boring">}</span></code></pre>
-<p>SetSet</p>
-<p>Setting twice is the same as setting once with the second value:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>lens.set(lens.set(s.clone(), b1), b2) == lens.set(s, b2)
-<span class="boring">}</span></code></pre>
-<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Lens, SimpleLens};
-
-#[derive(Debug, Clone, PartialEq)]
-struct Person {
-    name: String,
-    age: u32,
-}
-
-let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
-    |p: &amp;Person| p.age,
-    |p, age| Person { age, ..p },
-);
-
-let alice = Person { name: "Alice".into(), age: 30 };
-
-// get
-assert_eq!(age_lens.get(&amp;alice), 30);
-
-// set
-let updated = age_lens.set(alice.clone(), 31);
-assert_eq!(updated.age, 31);
-
-// over -- modify the focus with a function
-let updated = age_lens.over(alice.clone(), |a| a + 1);
-assert_eq!(updated.age, 31);
-<span class="boring">}</span></code></pre>
-<h4 id="profunctor-usage-with-fnp"><a class="header" href="#profunctor-usage-with-fnp">Profunctor usage with FnP</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Lens, SimpleLens};
-use karpal_profunctor::FnP;
-
-let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
-    |p: &amp;Person| p.age,
-    |p, age| Person { age, ..p },
-);
-
-let increment: Box&lt;dyn Fn(u32) -&gt; u32&gt; = Box::new(|age| age + 1);
-let transform_fn = age_lens.transform::&lt;FnP&gt;(increment);
-
-let result = transform_fn(Person { name: "Alice".into(), age: 30 });
-assert_eq!(result.age, 31);
-<span class="boring">}</span></code></pre>
-<h3 id="composedlens"><a class="header" href="#composedlens">ComposedLens</a></h3>
-<p>A lens built by chaining two or more lenses for deep field access.</p>
-<h4 id="struct-definition-2"><a class="header" href="#struct-definition-2">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// A composed lens built from two lenses chained together.
-///
-/// Unlike `Lens`, which stores `fn` pointers, a composed lens stores
-/// boxed closures because closure composition cannot produce `fn` pointers.
-pub struct ComposedLens&lt;S, T, X, Y&gt; {
-    getter: Box&lt;dyn Fn(&amp;S) -&gt; X&gt;,
-    setter: Box&lt;dyn Fn(S, Y) -&gt; T&gt;,
-}
-
-/// A simple (monomorphic) composed lens where `S == T` and `X == Y`.
-pub type SimpleComposedLens&lt;S, X&gt; = ComposedLens&lt;S, S, X, X&gt;;
-<span class="boring">}</span></code></pre>
-<p><code>ComposedLens</code> is produced by calling <code>Lens::then()</code> or <code>ComposedLens::then()</code>. It stores <code>Box&lt;dyn Fn&gt;</code> closures instead of <code>fn</code> pointers because closure composition captures the outer lens’s getter and setter, which cannot be represented as bare function pointers.</p>
-<h4 id="methods-2"><a class="header" href="#methods-2">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;S, T, X, Y&gt; ComposedLens&lt;S, T, X, Y&gt; {
-    /// Extract the deeply-nested focus from the source.
-    pub fn get(&amp;self, s: &amp;S) -&gt; X;
-
-    /// Replace the deeply-nested focus, producing a new source.
-    pub fn set(&amp;self, s: S, y: Y) -&gt; T;
-}
-
-impl&lt;S: Clone, T, X, Y&gt; ComposedLens&lt;S, T, X, Y&gt; {
-    /// Modify the deeply-nested focus by applying a function. Requires `S: Clone`.
-    pub fn over(&amp;self, s: S, f: impl FnOnce(X) -&gt; Y) -&gt; T;
-
-    /// Chain another lens to focus even deeper.
-    /// All type parameters must be `'static`.
-    pub fn then&lt;U, V&gt;(self, inner: Lens&lt;X, Y, U, V&gt;) -&gt; ComposedLens&lt;S, T, U, V&gt;
-    where
-        S: 'static, T: 'static, X: 'static, Y: 'static,
-        U: 'static, V: 'static;
-}
-<span class="boring">}</span></code></pre>
-<h4 id="no-transform-on-composedlens"><a class="header" href="#no-transform-on-composedlens">No <code>transform</code> on ComposedLens</a></h4>
-<p><code>ComposedLens</code> does <strong>not</strong> provide a <code>transform</code> method. For profunctor-level composition, use nested <code>Lens::transform</code> calls on the original lenses instead:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Instead of composed_lens.transform::&lt;P&gt;(pab), write:
-let result = outer.transform::&lt;P&gt;(inner.transform::&lt;P&gt;(pab));
-<span class="boring">}</span></code></pre>
-<p>This avoids the need for <code>Rc</code>/<code>Arc</code> to share closures at the profunctor level and preserves the clean semantics of the profunctor encoding.</p>
-<h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Lens, SimpleLens};
-
-#[derive(Debug, Clone, PartialEq)]
-struct Company {
-    name: String,
-    ceo: Person,
-}
-
-let ceo_lens: SimpleLens&lt;Company, Person&gt; = Lens::new(
-    |c: &amp;Company| c.ceo.clone(),
-    |c, ceo| Company { ceo, ..c },
-);
-
-let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
-    |p: &amp;Person| p.age,
-    |p, age| Person { age, ..p },
-);
-
-// Compose: Company -&gt; ceo -&gt; age
-let ceo_age = ceo_lens.then(age_lens);
-
-let acme = Company {
-    name: "Acme".into(),
-    ceo: Person { name: "Alice".into(), age: 30 },
-};
-
-assert_eq!(ceo_age.get(&amp;acme), 30);
-
-let updated = ceo_age.set(acme.clone(), 31);
-assert_eq!(updated.ceo.age, 31);
-
-let updated = ceo_age.over(acme, |age| age + 1);
-assert_eq!(updated.ceo.age, 31);
-<span class="boring">}</span></code></pre>
+<p>レンズは <code>.then()</code> で合成し、深く入れ子になったフィールドに到達できます。<code>over</code> メソッドは焦点の値に 関数を適用します。<code>transform</code> メソッドは <a href="profunctor-family.html">プロ関手</a> 抽象化 (<code>FnP</code>) を使い、再利用可能な <code>S -&gt; S</code> 更新関数を生成します。</p>
 <h3 id="prism"><a class="header" href="#prism">Prism</a></h3>
-<p>A first-class pattern matcher for focusing on one variant of a sum type.</p>
-<h4 id="struct-definition-3"><a class="header" href="#struct-definition-3">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// A prism focuses on one variant of a sum type.
-///
-/// `S` -- source type, `T` -- modified source type,
-/// `A` -- focus type (the variant's inner value), `B` -- replacement type.
-///
-/// Where a Lens uses Strong to decompose products, a Prism uses Choice
-/// to decompose coproducts.
-pub struct Prism&lt;S, T, A, B&gt; {
-    /// Attempt to match. `Ok(a)` = matched, `Err(t)` = didn't match (pass-through).
-    match_: fn(S) -&gt; Result&lt;A, T&gt;,
-    /// Construct a `T` from the replacement value.
-    build: fn(B) -&gt; T,
-}
-
-/// A simple (monomorphic) prism where `S == T` and `A == B`.
-pub type SimplePrism&lt;S, A&gt; = Prism&lt;S, S, A, A&gt;;
-<span class="boring">}</span></code></pre>
-<p>A <code>Prism</code> is the dual of a <code>Lens</code>. Where a lens focuses on a field that is always present (product types), a prism focuses on a variant that may or may not be present (sum types). The <code>match_</code> function returns <code>Ok(a)</code> if the variant matches and <code>Err(t)</code> if it does not, allowing the original value to pass through unchanged.</p>
-<h4 id="methods-3"><a class="header" href="#methods-3">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;S, T, A, B&gt; Prism&lt;S, T, A, B&gt; {
-    /// Create a new prism from a match function and a build function.
-    pub fn new(match_: fn(S) -&gt; Result&lt;A, T&gt;, build: fn(B) -&gt; T) -&gt; Self;
-
-    /// Try to extract the focus. Returns `Some(a)` if the variant matches.
-    /// Requires `S: Clone`.
-    pub fn preview(&amp;self, s: &amp;S) -&gt; Option&lt;A&gt;
-    where
-        S: Clone;
-
-    /// Construct a `T` from a replacement value (inject/construct).
-    pub fn review(&amp;self, b: B) -&gt; T;
-
-    /// Replace the focus if the variant matches; otherwise pass through.
-    pub fn set(&amp;self, s: S, b: B) -&gt; T;
-
-    /// Modify the focus if the variant matches; otherwise pass through.
-    pub fn over(&amp;self, s: S, f: impl FnOnce(A) -&gt; B) -&gt; T;
-
-    /// Profunctor encoding: transform a `P&lt;A, B&gt;` into a `P&lt;S, T&gt;`.
-    /// Requires `Choice` profunctor `P`.
-    /// All type parameters must be `'static`.
-    pub fn transform&lt;P: Choice&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
-    where
-        S: 'static, T: 'static, A: 'static, B: 'static;
-
-    // Conversions
-    pub fn to_review(&amp;self) -&gt; Review&lt;T, B&gt;;
-    pub fn to_setter(&amp;self) -&gt; Setter&lt;S, T, A, B&gt;;
-    pub fn to_traversal(&amp;self) -&gt; Traversal&lt;S, T, A, B&gt;; // S: Clone
-    pub fn to_fold(&amp;self) -&gt; Fold&lt;S, A&gt;;                  // S: Clone
-}
-<span class="boring">}</span></code></pre>
-<h4 id="how-transform-works-choice"><a class="header" href="#how-transform-works-choice">How <code>transform</code> works (Choice)</a></h4>
-<p>The <code>transform</code> method connects a concrete prism to the profunctor hierarchy through the <a href="profunctor-family.html"><code>Choice</code></a> trait. Given any <code>Choice</code> profunctor <code>P</code> and a value <code>pab: P&lt;A, B&gt;</code>, it produces <code>P&lt;S, T&gt;</code> by:</p>
-<ol>
-<li><code>P::right(pab)</code> lifts to <code>P&lt;Result&lt;T, A&gt;, Result&lt;T, B&gt;&gt;</code></li>
-<li><code>P::dimap</code> pre-composes with <code>match_</code> (swapping <code>Ok</code>/<code>Err</code> arms) and post-composes with <code>build</code> (reassembling)</li>
-</ol>
-<p>The arm-swapping (<code>Ok</code> to <code>Err</code>, <code>Err</code> to <code>Ok</code> in pre-composition) is necessary because <code>Choice::right</code> acts on the <code>Err</code> branch of <code>Result</code>.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub fn transform&lt;P: Choice&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;
-where
-    S: 'static, T: 'static, A: 'static, B: 'static,
-{
-    let match_ = self.match_;
-    let build = self.build;
-    let right_pab = P::right::&lt;A, B, T&gt;(pab);
-    P::dimap(
-        move |s: S| match match_(s) {
-            Ok(a) =&gt; Err(a),  // focus found -- Err arm for Choice::right
-            Err(t) =&gt; Ok(t),  // no match -- Ok arm passes through
-        },
-        move |result: Result&lt;T, B&gt;| match result {
-            Ok(t) =&gt; t,          // passed through unchanged
-            Err(b) =&gt; build(b),  // transformed, rebuild
-        },
-        right_pab,
-    )
-}
-<span class="boring">}</span></code></pre>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p>A well-behaved prism must satisfy two laws:</p>
-<p>PreviewReview</p>
-<p>If a preview succeeds, reviewing the result reconstructs the original:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>if let Some(a) = prism.preview(&amp;s) {
-    assert_eq!(prism.review(a), s);
-}
-<span class="boring">}</span></code></pre>
-<p>ReviewPreview</p>
-<p>Previewing a value built with review always succeeds and returns the original value:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>assert_eq!(prism.preview(&amp;prism.review(b)), Some(b));
-<span class="boring">}</span></code></pre>
-<h4 id="example-3"><a class="header" href="#example-3">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Prism, SimplePrism};
-
-#[derive(Debug, Clone, PartialEq)]
-enum Shape {
-    Circle(f64),
-    Rectangle(f64, f64),
-}
-
-let circle: SimplePrism&lt;Shape, f64&gt; = Prism::new(
-    |s| match s {
-        Shape::Circle(r) =&gt; Ok(r),
-        Shape::Rectangle(w, h) =&gt; Err(Shape::Rectangle(w, h)),
-    },
-    Shape::Circle,
-);
-
-// preview -- extract if the variant matches
-assert_eq!(circle.preview(&amp;Shape::Circle(5.0)), Some(5.0));
-assert_eq!(circle.preview(&amp;Shape::Rectangle(3.0, 4.0)), None);
-
-// review -- construct the variant
-assert_eq!(circle.review(10.0), Shape::Circle(10.0));
-
-// set -- replace the focus if matched
-assert_eq!(circle.set(Shape::Circle(5.0), 10.0), Shape::Circle(10.0));
-assert_eq!(
-    circle.set(Shape::Rectangle(3.0, 4.0), 10.0),
-    Shape::Rectangle(3.0, 4.0),
-);
-
-// over -- modify the focus if matched
-assert_eq!(
-    circle.over(Shape::Circle(5.0), |r| r * 2.0),
-    Shape::Circle(10.0),
-);
-<span class="boring">}</span></code></pre>
-<h4 id="profunctor-usage-with-fnp-1"><a class="header" href="#profunctor-usage-with-fnp-1">Profunctor usage with FnP</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Prism, SimplePrism};
-use karpal_profunctor::FnP;
-
-let circle: SimplePrism&lt;Shape, f64&gt; = Prism::new(
-    |s| match s {
-        Shape::Circle(r) =&gt; Ok(r),
-        Shape::Rectangle(w, h) =&gt; Err(Shape::Rectangle(w, h)),
-    },
-    Shape::Circle,
-);
-
-let double: Box&lt;dyn Fn(f64) -&gt; f64&gt; = Box::new(|r| r * 2.0);
-let transform_fn = circle.transform::&lt;FnP&gt;(double);
-
-// Matching variant is transformed
-assert_eq!(transform_fn(Shape::Circle(5.0)), Shape::Circle(10.0));
-
-// Non-matching variant passes through unchanged
-assert_eq!(
-    transform_fn(Shape::Rectangle(3.0, 4.0)),
-    Shape::Rectangle(3.0, 4.0),
-);
-<span class="boring">}</span></code></pre>
-<h3 id="getter"><a class="header" href="#getter">Getter</a></h3>
-<p>A read-only optic that extracts a single value from a source.</p>
-<h4 id="struct-definition-4"><a class="header" href="#struct-definition-4">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct Getter&lt;S, A&gt; {
-    get: fn(&amp;S) -&gt; A,
-}
-
-/// Composed variant (from .then() or conversions).
-pub struct ComposedGetter&lt;S, A&gt; {
-    get: Box&lt;dyn Fn(&amp;S) -&gt; A&gt;,
-}
-<span class="boring">}</span></code></pre>
-<p>A <code>Getter</code> is the read-only component of a <code>Lens</code>. It can extract a focus but cannot modify it. Getters are typically obtained via <code>Lens::to_getter()</code> or <code>Iso::to_getter()</code>.</p>
-<h4 id="methods-4"><a class="header" href="#methods-4">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;S, A&gt; Getter&lt;S, A&gt; {
-    pub fn new(get: fn(&amp;S) -&gt; A) -&gt; Self;
-    pub fn get(&amp;self, s: &amp;S) -&gt; A;
-    pub fn then&lt;B&gt;(self, inner: Getter&lt;A, B&gt;) -&gt; ComposedGetter&lt;S, B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<h4 id="example-4"><a class="header" href="#example-4">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Lens, SimpleLens};
-
-let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
-    |p: &amp;Person| p.age,
-    |p, age| Person { age, ..p },
-);
-
-let getter = age_lens.to_getter();
-assert_eq!(getter.get(&amp;alice), 30);
-<span class="boring">}</span></code></pre>
-<h3 id="review"><a class="header" href="#review">Review</a></h3>
-<p>A write-only optic that constructs a target from a value.</p>
-<h4 id="struct-definition-5"><a class="header" href="#struct-definition-5">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct Review&lt;T, B&gt; {
-    build: fn(B) -&gt; T,
-}
-<span class="boring">}</span></code></pre>
-<p>A <code>Review</code> is the construction component of a <code>Prism</code> or <code>Iso</code>. It can build a target but cannot inspect one. At the profunctor level, <code>Review</code> corresponds to <code>TaggedF</code>, which is <code>Choice</code> but deliberately not <code>Strong</code> – this enforces the write-only constraint at the type level.</p>
-<h4 id="methods-5"><a class="header" href="#methods-5">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;T, B&gt; Review&lt;T, B&gt; {
-    pub fn new(build: fn(B) -&gt; T) -&gt; Self;
-    pub fn review(&amp;self, b: B) -&gt; T;
-}
-<span class="boring">}</span></code></pre>
-<h4 id="example-5"><a class="header" href="#example-5">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Prism, SimplePrism};
-
-let circle: SimplePrism&lt;Shape, f64&gt; = Prism::new(/* ... */);
-
-let review = circle.to_review();
-assert_eq!(review.review(5.0), Shape::Circle(5.0));
-<span class="boring">}</span></code></pre>
-<h3 id="setter"><a class="header" href="#setter">Setter</a></h3>
-<p>A modify-only optic that can transform foci but not read them independently.</p>
-<h4 id="struct-definition-6"><a class="header" href="#struct-definition-6">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct Setter&lt;S, T, A, B&gt; {
-    modify: Box&lt;dyn Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T&gt;,
-}
-
-pub type SimpleSetter&lt;S, A&gt; = Setter&lt;S, S, A, A&gt;;
-<span class="boring">}</span></code></pre>
-<p>A <code>Setter</code> always uses boxed closures since it is typically derived from composition or conversion (e.g. <code>Lens::to_setter()</code> or <code>Prism::to_setter()</code>). The <code>modify</code> closure takes the source and a transformation function, and returns the modified source.</p>
-<h4 id="methods-6"><a class="header" href="#methods-6">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;S, T, A, B&gt; Setter&lt;S, T, A, B&gt; {
-    pub fn new(modify: impl Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T + 'static) -&gt; Self;
-    pub fn over(&amp;self, s: S, f: impl Fn(A) -&gt; B) -&gt; T;
-    pub fn set(&amp;self, s: S, b: B) -&gt; T where B: Clone;
-}
-<span class="boring">}</span></code></pre>
-<h4 id="laws-3"><a class="header" href="#laws-3">Laws</a></h4>
-<p>Identity</p>
-<p>Modifying with identity changes nothing:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>setter.over(s, |x| x) == s
-<span class="boring">}</span></code></pre>
-<h4 id="example-6"><a class="header" href="#example-6">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Lens, SimpleLens};
-
-let age_lens: SimpleLens&lt;Person, u32&gt; = Lens::new(
-    |p: &amp;Person| p.age,
-    |p, age| Person { age, ..p },
-);
-
-let setter = age_lens.to_setter();
-let updated = setter.over(alice, |age| age + 1);
-assert_eq!(updated.age, 31);
-
-let updated = setter.set(alice, 99);
-assert_eq!(updated.age, 99);
-<span class="boring">}</span></code></pre>
+<p>直和型の単一バリアントに焦点を当てます。<code>preview</code> でバリアントを抽出 (マッチしなければ <code>None</code>)、<code>review</code> でバリアントを構築、<code>over</code> でバリアントを変更します (マッチしなければ通過)。これが <a href="profunctor-family.html">プロ関手</a> の <code>Choice</code> クラスによって駆動されます。</p>
+<p>法則: <code>preview(review(b)) == Some(b)</code> と <code>review(preview(s))</code> が元のバリアントを復元 (マッチすれば)。</p>
 <h3 id="traversal"><a class="header" href="#traversal">Traversal</a></h3>
-<p>A multi-focus optic that can get and modify zero or more foci.</p>
-<h4 id="struct-definition-7"><a class="header" href="#struct-definition-7">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct Traversal&lt;S, T, A, B&gt; {
-    get_all: Rc&lt;dyn Fn(&amp;S) -&gt; Vec&lt;A&gt;&gt;,
-    modify_all: Rc&lt;dyn Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T&gt;,
-}
-
-pub type SimpleTraversal&lt;S, A&gt; = Traversal&lt;S, S, A, A&gt;;
-
-/// Composed variant (from .then()).
-pub struct ComposedTraversal&lt;S, T, A, B&gt; {
-    get_all: Box&lt;dyn Fn(&amp;S) -&gt; Vec&lt;A&gt;&gt;,
-    modify_all: Box&lt;dyn Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T&gt;,
-}
-<span class="boring">}</span></code></pre>
-<p>A <code>Traversal</code> generalizes both <code>Lens</code> (exactly one focus) and <code>Prism</code> (zero or one focus) to zero or more foci. It stores <code>Rc&lt;dyn Fn&gt;</code> closures to allow sharing between <code>get_all</code>, <code>modify_all</code>, and the <code>transform</code> method.</p>
-<h4 id="methods-7"><a class="header" href="#methods-7">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;S, T, A, B&gt; Traversal&lt;S, T, A, B&gt; {
-    pub fn new(
-        get_all: impl Fn(&amp;S) -&gt; Vec&lt;A&gt; + 'static,
-        modify_all: impl Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T + 'static,
-    ) -&gt; Self;
-
-    pub fn get_all(&amp;self, s: &amp;S) -&gt; Vec&lt;A&gt;;
-    pub fn over(&amp;self, s: S, f: impl Fn(A) -&gt; B) -&gt; T;
-    pub fn set(&amp;self, s: S, b: B) -&gt; T where B: Clone;
-
-    /// Profunctor encoding via Traversing::wander.
-    pub fn transform&lt;P: Traversing&gt;(&amp;self, pab: P::P&lt;A, B&gt;) -&gt; P::P&lt;S, T&gt;;
-
-    pub fn to_fold(&amp;self) -&gt; Fold&lt;S, A&gt;;
-    pub fn then&lt;X, Y&gt;(self, inner: Traversal&lt;A, B, X, Y&gt;) -&gt; ComposedTraversal&lt;S, T, X, Y&gt;;
-}
-<span class="boring">}</span></code></pre>
-<h4 id="how-transform-works-traversing"><a class="header" href="#how-transform-works-traversing">How <code>transform</code> works (Traversing)</a></h4>
-<p>The <code>transform</code> method connects a traversal to the profunctor hierarchy through <a href="profunctor-family.html#traversing"><code>Traversing</code></a>. It calls <code>P::wander(get_all, modify_all, pab)</code> – each profunctor instance decides how to interpret the traversal:</p>
-<ul>
-<li><code>FnP</code> uses <code>modify_all</code> to apply the function to every focus</li>
-<li><code>ForgetF&lt;R: Monoid&gt;</code> uses <code>get_all</code> to extract every focus, maps each through the profunctor, and combines results with <code>Monoid</code></li>
-</ul>
-<h4 id="laws-4"><a class="header" href="#laws-4">Laws</a></h4>
-<p>Identity</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>trav.over(s, |x| x) == s
-<span class="boring">}</span></code></pre>
-<p>Composition</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>trav.over(trav.over(s, f), g) == trav.over(s, |x| g(f(x)))
-<span class="boring">}</span></code></pre>
-<h4 id="example-7"><a class="header" href="#example-7">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Traversal, SimpleTraversal};
-use karpal_profunctor::{FnP, ForgetF};
-
-// Traverse all elements of a Vec
-let each: SimpleTraversal&lt;Vec&lt;i32&gt;, i32&gt; = Traversal::new(
-    |v: &amp;Vec&lt;i32&gt;| v.clone(),
-    |v: Vec&lt;i32&gt;, f: &amp;dyn Fn(i32) -&gt; i32| v.into_iter().map(f).collect(),
-);
-
-assert_eq!(each.get_all(&amp;vec![1, 2, 3]), vec![1, 2, 3]);
-assert_eq!(each.over(vec![1, 2, 3], |x| x * 10), vec![10, 20, 30]);
-assert_eq!(each.set(vec![1, 2, 3], 0), vec![0, 0, 0]);
-
-// Profunctor usage: FnP applies function to all elements
-let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
-let f = each.transform::&lt;FnP&gt;(double);
-assert_eq!(f(vec![1, 2, 3]), vec![2, 4, 6]);
-
-// Profunctor usage: ForgetF&lt;String&gt; concatenates results
-let to_str: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|x| x.to_string());
-let g = each.transform::&lt;ForgetF&lt;String&gt;&gt;(to_str);
-assert_eq!(g(vec![1, 2, 3]), "123");
-<span class="boring">}</span></code></pre>
+<p>0 個以上の焦点に焦点を当てます。<code>over</code> は各焦点に 関数を適用します。リストの全要素や入れ子構造の全フィールドにアクセスできます。<a href="profunctor-family.html">プロ関手</a> の <code>Traversing</code> クラスによって駆動されます。</p>
+<h3 id="getter"><a class="header" href="#getter">Getter</a></h3>
+<p>読み取り専用の焦点 (ちょうど 1 つ)。<code>get</code> はありますが <code>set</code> はありません。Lens から <code>to_getter()</code> で変換できます。</p>
+<h3 id="review"><a class="header" href="#review">Review</a></h3>
+<p>構築専用の焦点。<code>review</code> はありますが <code>get</code> はありません。Iso や Prism から変換できます。</p>
+<h3 id="setter"><a class="header" href="#setter">Setter</a></h3>
+<p>変更専用の焦点。<code>over</code>/<code>set</code> はありますが <code>get</code> はありません。Lens や Traversal から変換できます。</p>
 <h3 id="fold"><a class="header" href="#fold">Fold</a></h3>
-<p>A read-only multi-focus optic with powerful aggregation methods.</p>
-<h4 id="struct-definition-8"><a class="header" href="#struct-definition-8">Struct definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct Fold&lt;S, A&gt; {
-    fold_fn: Box&lt;dyn Fn(&amp;S) -&gt; Vec&lt;A&gt;&gt;,
-}
-
-/// Composed variant (from .then()).
-pub struct ComposedFold&lt;S, A&gt; {
-    fold_fn: Box&lt;dyn Fn(&amp;S) -&gt; Vec&lt;A&gt;&gt;,
-}
-<span class="boring">}</span></code></pre>
-<p>A <code>Fold</code> is the read-only counterpart of a <code>Traversal</code>. It extracts zero or more foci from a source, with convenience methods for aggregation via <code>Monoid</code>. Folds are typically obtained from <code>Lens::to_fold()</code>, <code>Prism::to_fold()</code>, or <code>Traversal::to_fold()</code>.</p>
-<h4 id="methods-8"><a class="header" href="#methods-8">Methods</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>impl&lt;S, A&gt; Fold&lt;S, A&gt; {
-    pub fn new(fold_fn: impl Fn(&amp;S) -&gt; Vec&lt;A&gt; + 'static) -&gt; Self;
-    pub fn get_all(&amp;self, s: &amp;S) -&gt; Vec&lt;A&gt;;
-    pub fn fold_map&lt;R: Monoid&gt;(&amp;self, s: &amp;S, f: impl Fn(A) -&gt; R) -&gt; R;
-    pub fn any(&amp;self, s: &amp;S, f: impl Fn(&amp;A) -&gt; bool) -&gt; bool;
-    pub fn all(&amp;self, s: &amp;S, f: impl Fn(&amp;A) -&gt; bool) -&gt; bool;
-    pub fn find(&amp;self, s: &amp;S, f: impl Fn(&amp;A) -&gt; bool) -&gt; Option&lt;A&gt;;
-    pub fn length(&amp;self, s: &amp;S) -&gt; usize;
-    pub fn then&lt;B&gt;(self, inner: Fold&lt;A, B&gt;) -&gt; ComposedFold&lt;S, B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p>The <code>fold_map</code> method maps each focus to a <code>Monoid</code> value and combines them. This is the core aggregation operation – <code>any</code>, <code>all</code>, <code>find</code>, and <code>length</code> are convenience wrappers.</p>
-<h4 id="example-8"><a class="header" href="#example-8">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::Fold;
-
-let fold = Fold::new(|v: &amp;Vec&lt;i32&gt;| v.clone());
-
-assert_eq!(fold.get_all(&amp;vec![1, 2, 3]), vec![1, 2, 3]);
-
-// fold_map: sum all elements (i32 Monoid is additive)
-let sum: i32 = fold.fold_map(&amp;vec![1, 2, 3], |x| x);
-assert_eq!(sum, 6);
-
-// fold_map: concatenate string representations
-let s: String = fold.fold_map(&amp;vec![1, 2, 3], |x| x.to_string());
-assert_eq!(s, "123");
-
-// Predicate queries
-assert!(fold.any(&amp;vec![1, 2, 3], |x| *x &gt; 2));
-assert!(fold.all(&amp;vec![1, 2, 3], |x| *x &gt; 0));
-assert_eq!(fold.find(&amp;vec![1, 2, 3], |x| *x &gt; 1), Some(2));
-assert_eq!(fold.length(&amp;vec![1, 2, 3]), 3);
-<span class="boring">}</span></code></pre>
-<h2 id="optic-conversions"><a class="header" href="#optic-conversions">Optic Conversions</a></h2>
-<p>Optics form a subtyping hierarchy. A stronger optic can always be used where a weaker one is expected. Karpal provides explicit <code>to_*</code> methods for these conversions:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>  Iso
-  / \
-Lens  Prism
- |  \  / |
- | Traversal
- |    |    |
- | +--+---+
- | |      |
-Getter  Setter  Review
-   \    |
-    \   |
-     Fold
-<span class="boring">}</span></code></pre>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>From</th><th>Available conversions</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Iso</code></td><td><code>to_lens</code>, <code>to_getter</code>, <code>to_review</code>, <code>to_setter</code>, <code>to_traversal</code>, <code>to_fold</code></td></tr>
-<tr><td><code>Lens</code></td><td><code>to_getter</code>, <code>to_setter</code>, <code>to_traversal</code>, <code>to_fold</code></td></tr>
-<tr><td><code>Prism</code></td><td><code>to_review</code>, <code>to_setter</code>, <code>to_traversal</code>, <code>to_fold</code></td></tr>
-<tr><td><code>Traversal</code></td><td><code>to_fold</code></td></tr>
-</tbody>
-</table>
-</div>
-<p>Note: <code>Iso::to_lens()</code> returns a <code>ComposedLens</code> (not <code>Lens</code>) because the conversion captures the iso’s <code>backward</code> function in a closure, which cannot be represented as a bare <code>fn</code> pointer.</p>
-<h2 id="composing-lenses-with-then"><a class="header" href="#composing-lenses-with-then">Composing Lenses with <code>.then()</code></a></h2>
-<p>Lenses compose naturally via the <code>.then()</code> method. Each call to <code>then</code> produces a <code>ComposedLens</code> that focuses one level deeper. You can chain as many lenses as needed for deep access into nested structures.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_optics::{Lens, SimpleLens};
-
-#[derive(Debug, Clone, PartialEq)]
-struct Address {
-    street: String,
-    city: String,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct Employee {
-    name: String,
-    addr: Address,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct Org {
-    title: String,
-    lead: Employee,
-}
-
-let lead_lens: SimpleLens&lt;Org, Employee&gt; = Lens::new(
-    |o: &amp;Org| o.lead.clone(),
-    |o, lead| Org { lead, ..o },
-);
-
-let addr_lens: SimpleLens&lt;Employee, Address&gt; = Lens::new(
-    |e: &amp;Employee| e.addr.clone(),
-    |e, addr| Employee { addr, ..e },
-);
-
-let city_lens: SimpleLens&lt;Address, String&gt; = Lens::new(
-    |a: &amp;Address| a.city.clone(),
-    |a, city| Address { city, ..a },
-);
-
-// Three-deep composition: Org -&gt; lead -&gt; addr -&gt; city
-let org_city = lead_lens.then(addr_lens).then(city_lens);
-
-let org = Org {
-    title: "R&amp;D".into(),
-    lead: Employee {
-        name: "Alice".into(),
-        addr: Address {
-            street: "123 Main St".into(),
-            city: "Springfield".into(),
-        },
-    },
-};
-
-// Read a deeply nested field
-assert_eq!(org_city.get(&amp;org), "Springfield");
-
-// Update a deeply nested field
-let updated = org_city.set(org.clone(), "Shelbyville".into());
-assert_eq!(updated.lead.addr.city, "Shelbyville");
-assert_eq!(updated.lead.addr.street, "123 Main St");
-
-// Modify a deeply nested field with a function
-let updated = org_city.over(org, |c| c.to_uppercase());
-assert_eq!(updated.lead.addr.city, "SPRINGFIELD");
-<span class="boring">}</span></code></pre>
-<p>For profunctor-level composition (where you need <code>transform</code>), nest the original lens transforms instead of using the composed lens:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_profunctor::FnP;
-
-let ceo_lens: SimpleLens&lt;Company, Person&gt; = /* ... */;
-let age_lens: SimpleLens&lt;Person, u32&gt; = /* ... */;
-
-let increment: Box&lt;dyn Fn(u32) -&gt; u32&gt; = Box::new(|age| age + 1);
-
-// Nested transform: equivalent to composed_lens.over(company, |age| age + 1)
-let transform_fn = ceo_lens.transform::&lt;FnP&gt;(age_lens.transform::&lt;FnP&gt;(increment));
-<span class="boring">}</span></code></pre>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>読み取り専用で 0 個以上の焦点。<code>fold_map</code> で <a href="semigroup-monoid.html">Monoid</a> に結果を集約します。Getter と Traversal の読み取り専用の一般化です。</p>
+<h2 id="オプティクスの合成"><a class="header" href="#オプティクスの合成">オプティクスの合成</a></h2>
+<p>オプティクスは合成可能です: <code>Lens . Lens = Lens</code>、<code>Lens . Prism = Traversal</code> など。合成結果は両方の制約の「最大」になります。Karpal は <code>ComposedLens</code>、<code>ComposedGetter</code>、<code>ComposedTraversal</code>、<code>ComposedFold</code> 型でこれを表現します。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

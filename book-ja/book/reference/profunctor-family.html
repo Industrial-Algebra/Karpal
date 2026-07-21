@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
+            window.path_to_searchindex_js = "../searchindex-b3e124b9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,16 +178,16 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="profunctor-family"><a class="header" href="#profunctor-family">Profunctor Family</a></h1>
-<p>Profunctors: contravariant in the first argument, covariant in the second.</p>
-<p>The profunctor family lives in the <code>karpal-profunctor</code> crate and provides the abstract machinery behind Karpal’s <a href="optics.html">profunctor optics</a>. Where a <code>Functor</code> transforms values inside a single type parameter, a <code>Profunctor</code> transforms values flowing through a two-parameter type – think of it as a pipe with an input end and an output end. You can pre-process the input (contravariantly) and post-process the output (covariantly) without opening the pipe.</p>
-<h2 id="hierarchy"><a class="header" href="#hierarchy">Hierarchy</a></h2>
-<p>The profunctor hierarchy branches into subclasses, each enabling a different family of optics:</p>
+                        <h1 id="プロ関手ファミリー"><a class="header" href="#プロ関手ファミリー">プロ関手ファミリー</a></h1>
+<p>プロ関手: 第一引数について反変、第二引数について共変。</p>
+<p>プロ関手ファミリーは <code>karpal-profunctor</code> クレートにあり、Karpal の <a href="optics.html">プロ関手オプティクス</a> の背後にある抽象機構を提供します。<code>Functor</code> が単一の型パラメータ内の値を変換するのに対し、<code>Profunctor</code> は二パラメータ型を流れる値を変換します — 入力端と出力端を持つパイプと考えてください。パイプを開くことなく、入力を (反変に) 前処理し、出力を (共変に) 後処理できます。</p>
+<h2 id="階層"><a class="header" href="#階層">階層</a></h2>
+<p>プロ関手階層はサブクラスに分岐し、それぞれが異なるオプティクスファミリーを可能にします:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>HKT2
   |
-Profunctor          -- dimap, lmap, rmap            (Iso)
+Profunctor          -- dimap、lmap、rmap            (Iso)
   |         \
 Strong     Choice                                   (Lens / Prism)
   |           |
@@ -196,25 +196,25 @@ Strong     Choice                                   (Lens / Prism)
     Traversing      -- wander                       (Traversal)
 <span class="boring">}</span></code></pre>
 <ul>
-<li><strong>Profunctor</strong> – the base trait. Provides <code>dimap</code> for simultaneous pre- and post-processing. Powers <a href="optics.html#iso">Iso</a>.</li>
-<li><strong>Strong</strong> – lifts a profunctor through product types (tuples). Powers <a href="optics.html#lens">Lens</a>.</li>
-<li><strong>Choice</strong> – lifts a profunctor through sum types (<code>Result</code>). Powers <a href="optics.html#prism">Prism</a>.</li>
-<li><strong>Traversing</strong> – extends Strong + Choice to handle multiple foci. Powers <a href="optics.html#traversal">Traversal</a>.</li>
+<li><strong>Profunctor</strong> – 基本トレイト。同時の前処理と後処理のための <code>dimap</code> を提供。<a href="optics.html#iso">Iso</a> を駆動。</li>
+<li><strong>Strong</strong> – 直積型 (タプル) を通じてプロ関手を持ち上げ。<a href="optics.html#lens">Lens</a> を駆動。</li>
+<li><strong>Choice</strong> – 直和型 (<code>Result</code>) を通じてプロ関手を持ち上げ。<a href="optics.html#prism">Prism</a> を駆動。</li>
+<li><strong>Traversing</strong> – 複数の焦点を扱うため Strong + Choice を拡張。<a href="optics.html#traversal">Traversal</a> を駆動。</li>
 </ul>
-<p>All three traits require the <code>HKT2</code> encoding from <code>karpal-core</code>:</p>
+<p>三つのトレイトすべてが <code>karpal-core</code> の <code>HKT2</code> エンコーディングを必要とします:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub trait HKT2 {
     type P&lt;A, B&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>A type implementing <code>HKT2</code> is a two-parameter type constructor. Given types <code>A</code> and <code>B</code>, it produces a concrete type <code>P&lt;A, B&gt;</code>.</p>
+<p><code>HKT2</code> を実装する型は二パラメータ型コンストラクタです。型 <code>A</code> と <code>B</code> を与えられると、具体的な型 <code>P&lt;A, B&gt;</code> を生成します。</p>
 <h3 id="profunctor"><a class="header" href="#profunctor">Profunctor</a></h3>
-<p>A type that is contravariant in its first argument and covariant in its second.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>第一引数について反変、第二引数について共変な型。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// A profunctor is contravariant in its first argument and covariant in its second.
+</span>/// プロ関手は第一引数について反変、第二引数について共変である。
 pub trait Profunctor: HKT2 {
     fn dimap&lt;A: 'static, B: 'static, C, D&gt;(
         f: impl Fn(C) -&gt; A + 'static,
@@ -233,426 +233,76 @@ pub trait Profunctor: HKT2 {
     ) -&gt; Self::P&lt;A, D&gt; { ... }
 }
 <span class="boring">}</span></code></pre>
-<p><code>dimap</code> is the fundamental operation. It takes a function <code>f: C -&gt; A</code> that pre-processes the input (contravariant – note the reversed direction) and a function <code>g: B -&gt; D</code> that post-processes the output (covariant), then adapts the profunctor <code>P&lt;A, B&gt;</code> into <code>P&lt;C, D&gt;</code>.</p>
-<p>The convenience methods <code>lmap</code> and <code>rmap</code> have default implementations in terms of <code>dimap</code>:</p>
+<p><code>dimap</code> は基本演算です。入力を前処理する関数 <code>f: C -&gt; A</code> (反変 — 逆方向に注意) と出力を後処理する関数 <code>g: B -&gt; D</code> (共変) を取り、プロ関手 <code>P&lt;A, B&gt;</code> を <code>P&lt;C, D&gt;</code> に適応させます。</p>
+<p>便利メソッド <code>lmap</code> と <code>rmap</code> は <code>dimap</code> に基づくデフォルト実装を持ちます:</p>
 <ul>
-<li><code>lmap(f, pab)</code> – pre-process the input only. Equivalent to <code>dimap(f, |b| b, pab)</code>.</li>
-<li><code>rmap(g, pab)</code> – post-process the output only. Equivalent to <code>dimap(|a| a, g, pab)</code>.</li>
+<li><code>lmap(f, pab)</code> – 入力だけ前処理。<code>dimap(f, |b| b, pab)</code> と等価。</li>
+<li><code>rmap(g, pab)</code> – 出力だけ後処理。<code>dimap(|a| a, g, pab)</code> と等価。</li>
 </ul>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Identity</p>
-<p>Dimapping with identity functions on both sides changes nothing:</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>単位律</p>
+<p>両側で恒等関数で dimap しても何も変わりません:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>P::dimap(|a| a, |b| b, pab) == pab
 <span class="boring">}</span></code></pre>
-<p>Composition</p>
-<p>Dimapping with composed functions is the same as dimapping twice:</p>
+<p>合成律</p>
+<p>合成された関数で dimap するのは二回 dimap するのと同じです:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>P::dimap(|a| f(g(a)), |b| h(i(b)), pab)
     == P::dimap(g, h, P::dimap(f, i, pab))
 <span class="boring">}</span></code></pre>
-<p>Note the order reversal on the contravariant (left) side: <code>f</code> then <code>g</code> becomes <code>|a| f(g(a))</code>, because contravariance reverses composition.</p>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<p>反変 (左) 側での順序の逆転に注意: 反変性が合成を逆転させるため、<code>f</code> のあと <code>g</code> は <code>|a| f(g(a))</code> になります。</p>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Marker type</th><th><code>P&lt;A, B&gt;</code> resolves to</th><th>Feature gate</th></tr>
+<tr><th>マーカー型</th><th><code>P&lt;A, B&gt;</code> の解決結果</th><th>フィーチャーゲート</th></tr>
 </thead>
 <tbody>
 <tr><td><code>FnP</code></td><td><code>Box&lt;dyn Fn(A) -&gt; B&gt;</code></td><td><code>alloc</code></td></tr>
-<tr><td><code>ForgetF&lt;R&gt;</code></td><td><code>Box&lt;dyn Fn(A) -&gt; R&gt;</code> (B is phantom)</td><td><code>alloc</code></td></tr>
-<tr><td><code>TaggedF</code></td><td><code>B</code> (A is phantom)</td><td>none (<code>no_std</code>)</td></tr>
+<tr><td><code>ForgetF&lt;R&gt;</code></td><td><code>Box&lt;dyn Fn(A) -&gt; R&gt;</code> (B はファントム)</td><td><code>alloc</code></td></tr>
+<tr><td><code>TaggedF</code></td><td><code>B</code> (A はファントム)</td><td>なし (<code>no_std</code>)</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="examples"><a class="header" href="#examples">Examples</a></h4>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_profunctor::{Profunctor, FnP};
 
-// A simple doubling function as a profunctor value
+// プロ関手値としての単純な二倍関数
 let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
 
-// dimap: parse a string to i32 on the input side,
-//        format the i32 result to a string on the output side
+// dimap: 入力側で文字列を i32 にパースし、
+//        出力側で i32 結果を文字列にフォーマット
 let f = FnP::dimap(
-    |s: &amp;str| s.len() as i32,  // contravariant: &amp;str -&gt; i32
-    |n: i32| n.to_string(),     // covariant: i32 -&gt; String
+    |s: &amp;str| s.len() as i32,  // 反変: &amp;str -&gt; i32
+    |n: i32| n.to_string(),     // 共変: i32 -&gt; String
     double,
 );
-assert_eq!(f("hello"), "10"); // len("hello") = 5, doubled = 10
+assert_eq!(f("hello"), "10"); // len("hello") = 5、二倍 = 10
 
-// lmap: only pre-process the input
+// lmap: 入力だけ前処理
 let negate: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| -x);
 let neg_len = FnP::lmap(|s: &amp;str| s.len() as i32, negate);
 assert_eq!(neg_len("hi"), -2);
 
-// rmap: only post-process the output
+// rmap: 出力だけ後処理
 let add_one: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x + 1);
 let as_string = FnP::rmap(|n: i32| format!("result: {}", n), add_one);
 assert_eq!(as_string(9), "result: 10");
 <span class="boring">}</span></code></pre>
 <h3 id="strong"><a class="header" href="#strong">Strong</a></h3>
-<p>A profunctor that can be lifted through product types (tuples).</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub trait Strong: Profunctor {
-    fn first&lt;A, B, C&gt;(pab: Self::P&lt;A, B&gt;) -&gt; Self::P&lt;(A, C), (B, C)&gt;
-    where
-        A: 'static,
-        B: 'static,
-        C: 'static;
-
-    fn second&lt;A, B, C&gt;(pab: Self::P&lt;A, B&gt;) -&gt; Self::P&lt;(C, A), (C, B)&gt;
-    where
-        A: 'static,
-        B: 'static,
-        C: 'static;
-}
-<span class="boring">}</span></code></pre>
-<p><code>first</code> takes a profunctor <code>P&lt;A, B&gt;</code> and lifts it to operate on the first component of a tuple, passing the second component <code>C</code> through unchanged. <code>second</code> does the mirror image – it operates on the second component and passes the first through.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>First-Dimap Coherence</p>
-<p>Lifting through <code>first</code> and then dimapping with tuple projections is consistent:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::lmap(|(a, _)| a, P::first(pab))
-    == P::rmap(|b| (b, ()), pab)  // up to isomorphism with unit
-<span class="boring">}</span></code></pre>
-<p>First-First Coherence</p>
-<p>Nesting <code>first</code> twice is equivalent to <code>first</code> once with a tuple reassociation:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::first(P::first(pab))
-    == P::dimap(
-        |((a, c1), c2)| (a, (c1, c2)),  // reassociate in
-        |(b, (c1, c2))| ((b, c1), c2),  // reassociate out
-        P::first(pab),
-    )
-<span class="boring">}</span></code></pre>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Marker type</th><th>Behavior of <code>first</code></th><th>Feature gate</th></tr>
-</thead>
-<tbody>
-<tr><td><code>FnP</code></td><td>`</td><td>(a, c)</td></tr>
-<tr><td><code>ForgetF&lt;R&gt;</code></td><td>`</td><td>(a, _)</td></tr>
-</tbody>
-</table>
-</div>
-<p><code>TaggedF</code> is deliberately <strong>not</strong> <code>Strong</code>. This enforces at the type level that write-only optics (like <a href="optics.html#review">Review</a>) cannot be used for reading – <code>Strong</code> requires producing a <code>(B, C)</code> from a <code>B</code>, but <code>TaggedF</code> has no way to produce the <code>C</code>.</p>
-<h4 id="connection-to-lens"><a class="header" href="#connection-to-lens">Connection to Lens</a></h4>
-<p>A <a href="optics.html">Lens</a> is defined as a function that works for <em>all</em> profunctors that are <code>Strong</code>. The lens <code>transform</code> method takes a <code>P&lt;A, B&gt;</code> and returns a <code>P&lt;S, T&gt;</code> by using <code>Strong::first</code> (or <code>second</code>) together with <code>Profunctor::dimap</code> to focus on a part of a structure:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Conceptually, a lens from S to A (with update types T and B) is:
-//   for all P: Strong, P&lt;A, B&gt; -&gt; P&lt;S, T&gt;
-//
-// Implemented as:
-//   dimap(getter_and_context, setter, first(pab))
-//
-// where:
-//   getter_and_context: S -&gt; (A, Context)
-//   setter: (B, Context) -&gt; T
-<span class="boring">}</span></code></pre>
-<p><code>Strong::first</code> lifts the profunctor to work on a tuple <code>(A, Context)</code>, and <code>dimap</code> adapts the outer structure <code>S</code>/<code>T</code> to and from that tuple. This is how profunctor optics achieve composability – lens composition is just function composition of these transforms.</p>
-<h4 id="examples-1"><a class="header" href="#examples-1">Examples</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_profunctor::{Strong, FnP};
-
-let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
-
-// first: apply to the first element of a tuple
-let f = FnP::first::&lt;i32, i32, &amp;str&gt;(double);
-assert_eq!(f((5, "hi")), (10, "hi"));
-
-// second: apply to the second element of a tuple
-let triple: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 3);
-let g = FnP::second::&lt;i32, i32, &amp;str&gt;(triple);
-assert_eq!(g(("hi", 5)), ("hi", 15));
-<span class="boring">}</span></code></pre>
+<p>直積型 (タプル) を通じて持ち上げられるプロ関手。<code>first</code> と <code>second</code> 演算を提供し、プロ関手をペアの一方の成分に適用してもう一方をそのまま通過させます。これが <a href="optics.html#lens">Lens</a> を駆動します — レンズは「積の一部に焦点を当てる」Strong プロ関手です。</p>
 <h3 id="choice"><a class="header" href="#choice">Choice</a></h3>
-<p>A profunctor that can be lifted through sum types (<code>Result</code>).</p>
-<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub trait Choice: Profunctor {
-    fn left&lt;A, B, C&gt;(pab: Self::P&lt;A, B&gt;) -&gt; Self::P&lt;Result&lt;A, C&gt;, Result&lt;B, C&gt;&gt;
-    where
-        A: 'static,
-        B: 'static,
-        C: 'static;
-
-    fn right&lt;A, B, C&gt;(pab: Self::P&lt;A, B&gt;) -&gt; Self::P&lt;Result&lt;C, A&gt;, Result&lt;C, B&gt;&gt;
-    where
-        A: 'static,
-        B: 'static,
-        C: 'static;
-}
-<span class="boring">}</span></code></pre>
-<p>Karpal uses <code>Result&lt;L, R&gt;</code> as the sum type rather than a custom <code>Either</code> – this is idiomatic Rust and avoids an unnecessary new type. <code>left</code> lifts a profunctor to operate on the <code>Ok</code> branch of a <code>Result</code>, passing the <code>Err</code> branch through unchanged. <code>right</code> does the mirror image, operating on the <code>Err</code> branch.</p>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p>Left-Dimap Coherence</p>
-<p>Lifting through <code>left</code> and then extracting the <code>Ok</code> branch is consistent:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::lmap(|a| Ok(a), P::left(pab))
-    == P::rmap(|b| Ok(b), pab)
-<span class="boring">}</span></code></pre>
-<p>Left-Left Coherence</p>
-<p>Nesting <code>left</code> twice is equivalent to <code>left</code> once with a <code>Result</code> reassociation:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>P::left(P::left(pab))
-    == P::dimap(
-        |r| match r {                       // reassociate in
-            Ok(Ok(a))  =&gt; Ok(a),
-            Ok(Err(c)) =&gt; Err(Ok(c)),
-            Err(d)     =&gt; Err(Err(d)),
-        },
-        |r| match r {                       // reassociate out
-            Ok(b)      =&gt; Ok(Ok(b)),
-            Err(Ok(c)) =&gt; Ok(Err(c)),
-            Err(Err(d)) =&gt; Err(d),
-        },
-        P::left(pab),
-    )
-<span class="boring">}</span></code></pre>
-<h4 id="instances-2"><a class="header" href="#instances-2">Instances</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Marker type</th><th>Behavior of <code>left</code></th><th>Feature gate</th></tr>
-</thead>
-<tbody>
-<tr><td><code>FnP</code></td><td>`</td><td>r</td></tr>
-<tr><td><code>ForgetF&lt;R: Monoid&gt;</code></td><td>`</td><td>r</td></tr>
-<tr><td><code>TaggedF</code></td><td><code>Ok(pab)</code> – wraps the value in <code>Ok</code></td><td>none (<code>no_std</code>)</td></tr>
-</tbody>
-</table>
-</div>
-<p><code>ForgetF</code>’s <code>Choice</code> impl requires <code>R: Monoid</code> because the miss case needs a default value (<code>R::empty()</code>). Its <code>Strong</code> impl has no such restriction – products always have the focus available.</p>
-<h4 id="connection-to-prism"><a class="header" href="#connection-to-prism">Connection to Prism</a></h4>
-<p>A <a href="optics.html">Prism</a> is defined as a function that works for <em>all</em> profunctors that are <code>Choice</code>. The prism <code>transform</code> method takes a <code>P&lt;A, B&gt;</code> and returns a <code>P&lt;S, T&gt;</code> by using <code>Choice::right</code> together with <code>Profunctor::dimap</code> to focus on one variant of a sum type:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Conceptually, a prism from S to A (with update types T and B) is:
-//   for all P: Choice, P&lt;A, B&gt; -&gt; P&lt;S, T&gt;
-//
-// Implemented as:
-//   dimap(match_, merge, right(pab))
-//
-// where:
-//   match_: S -&gt; Result&lt;T, A&gt;   (try to extract A, or return T unchanged)
-//   merge:  Result&lt;T, B&gt; -&gt; T   (re-inject the modified value)
-<span class="boring">}</span></code></pre>
-<p>When the <code>match_</code> function successfully extracts an <code>A</code>, the profunctor processes it into a <code>B</code>; otherwise the original <code>T</code> passes through untouched. <code>Choice::right</code> ensures that only the matched branch is transformed. This is the dual of how <code>Strong</code> powers lenses: lenses focus through products, prisms focus through sums.</p>
-<h4 id="examples-2"><a class="header" href="#examples-2">Examples</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_profunctor::{Choice, FnP};
-
-let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
-
-// left: apply to the Ok branch
-let f = FnP::left::&lt;i32, i32, &amp;str&gt;(double);
-assert_eq!(f(Ok(5)), Ok(10));
-assert_eq!(f(Err("nope")), Err("nope"));
-
-// right: apply to the Err branch
-let triple: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 3);
-let g = FnP::right::&lt;i32, i32, &amp;str&gt;(triple);
-assert_eq!(g(Err(5)), Err(15));
-assert_eq!(g(Ok("yep")), Ok("yep"));
-<span class="boring">}</span></code></pre>
-<h3 id="fnp-function-profunctor"><a class="header" href="#fnp-function-profunctor">FnP (Function Profunctor)</a></h3>
-<p>Marker type whose <code>P&lt;A, B&gt;</code> is <code>Box&lt;dyn Fn(A) -&gt; B&gt;</code> – the canonical profunctor instance.</p>
-<h4 id="definition"><a class="header" href="#definition">Definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct FnP;
-
-impl HKT2 for FnP {
-    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; B&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>FnP</code> is a zero-sized marker type. It has no fields and no runtime cost – it exists solely to carry the <code>HKT2</code> type-level association between the marker and the concrete type <code>Box&lt;dyn Fn(A) -&gt; B&gt;</code>.</p>
-<p>This is the function arrow profunctor (sometimes written <code>(-&gt;)</code> in Haskell). It is the most natural profunctor: a function from <code>A</code> to <code>B</code> can be pre-composed with a function <code>C -&gt; A</code> (contravariant input) and post-composed with a function <code>B -&gt; D</code> (covariant output) to yield a function <code>C -&gt; D</code>.</p>
-<h4 id="feature-gate"><a class="header" href="#feature-gate">Feature gate</a></h4>
-<p><code>FnP</code> requires the <code>alloc</code> feature because <code>Box&lt;dyn Fn&gt;</code> requires heap allocation. It is not available in <code>no_std</code> environments without an allocator. The <code>Profunctor</code>, <code>Strong</code>, and <code>Choice</code> traits themselves are <code>no_std</code>-compatible – only the <code>FnP</code> instance needs <code>alloc</code>.</p>
-<h4 id="implemented-traits"><a class="header" href="#implemented-traits">Implemented traits</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait</th><th>Method</th><th>Implementation</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Profunctor</code></td><td><code>dimap(f, g, pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Strong</code></td><td><code>first(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Strong</code></td><td><code>second(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Choice</code></td><td><code>left(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Choice</code></td><td><code>right(pab)</code></td><td>`Box::new(move</td></tr>
-<tr><td><code>Traversing</code></td><td><code>wander(get_all, modify_all, pab)</code></td><td>`Box::new(move</td></tr>
-</tbody>
-</table>
-</div>
-<h4 id="role-in-optics"><a class="header" href="#role-in-optics">Role in optics</a></h4>
-<p><code>FnP</code> is the profunctor that optics use at the value level. When you call <code>lens.set()</code> or <code>lens.over()</code>, Karpal internally constructs a <code>Box&lt;dyn Fn(A) -&gt; B&gt;</code> and passes it through the lens’s <code>transform</code> method, which threads it through <code>Strong::first</code> and <code>Profunctor::dimap</code>. The result is a <code>Box&lt;dyn Fn(S) -&gt; T&gt;</code> that performs the focused update on the whole structure. The same mechanism applies to prisms via <code>Choice</code>.</p>
-<p>Because all the profunctor operations compose (they are just function wrapping), lens composition and prism composition are both achieved by chaining <code>transform</code> calls – no special composition machinery is needed.</p>
-<h4 id="example-building-a-pipeline-with-dimap"><a class="header" href="#example-building-a-pipeline-with-dimap">Example: building a pipeline with dimap</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_profunctor::{Profunctor, FnP};
-
-// Start with a base function: parse a number and add 1
-let inc: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x + 1);
-
-// Adapt it: input is a string (parse it), output is a string (format it)
-let pipeline = FnP::dimap(
-    |s: &amp;str| s.parse::&lt;i32&gt;().unwrap_or(0),
-    |n: i32| format!("result = {}", n),
-    inc,
-);
-
-assert_eq!(pipeline("41"), "result = 42");
-assert_eq!(pipeline("not a number"), "result = 1");
-<span class="boring">}</span></code></pre>
+<p>直和型 (<code>Result</code>) を通じて持ち上げられるプロ関手。<code>left</code> と <code>right</code> 演算を提供し、プロ関手を <code>Result</code> の一方のバリアントに適用します。これが <a href="optics.html#prism">Prism</a> を駆動します — プリズムは「和の一つのバリアントに焦点を当てる」Choice プロ関手です。</p>
 <h3 id="traversing"><a class="header" href="#traversing">Traversing</a></h3>
-<p>A profunctor that can operate over multiple foci simultaneously.</p>
-<h4 id="signature-3"><a class="header" href="#signature-3">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub trait Traversing: Strong + Choice {
-    fn wander&lt;S, T, A, B&gt;(
-        get_all: impl Fn(&amp;S) -&gt; Vec&lt;A&gt; + 'static,
-        modify_all: impl Fn(S, &amp;dyn Fn(A) -&gt; B) -&gt; T + 'static,
-        pab: Self::P&lt;A, B&gt;,
-    ) -&gt; Self::P&lt;S, T&gt;
-    where
-        S: 'static, T: 'static, A: 'static, B: 'static;
-}
-<span class="boring">}</span></code></pre>
-<p><code>Traversing</code> extends <code>Strong + Choice</code> with the ability to handle multiple foci. The <code>wander</code> method takes <strong>two</strong> functions instead of a single polymorphic traversal function, because Rust lacks rank-2 types:</p>
-<ul>
-<li><code>get_all</code> – extracts all foci (used by read-only profunctors like <code>ForgetF</code>)</li>
-<li><code>modify_all</code> – applies a function to every focus in-place (used by read-write profunctors like <code>FnP</code>)</li>
-</ul>
-<h4 id="instances-3"><a class="header" href="#instances-3">Instances</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Marker type</th><th>Strategy</th><th>Feature gate</th></tr>
-</thead>
-<tbody>
-<tr><td><code>FnP</code></td><td>Uses <code>modify_all</code>, ignores <code>get_all</code></td><td><code>alloc</code></td></tr>
-<tr><td><code>ForgetF&lt;R: Monoid&gt;</code></td><td>Uses <code>get_all</code>, maps each through <code>pab</code>, combines with <code>Monoid</code></td><td><code>alloc</code></td></tr>
-</tbody>
-</table>
-</div>
-<h4 id="connection-to-traversal"><a class="header" href="#connection-to-traversal">Connection to Traversal</a></h4>
-<p>A <a href="optics.html#traversal">Traversal</a> is defined as a function that works for <em>all</em> profunctors that are <code>Traversing</code>. The traversal’s <code>transform</code> method calls <code>P::wander(get_all, modify_all, pab)</code> – each profunctor instance decides how to interpret the traversal.</p>
-<h4 id="example"><a class="header" href="#example">Example</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_profunctor::{Traversing, FnP, ForgetF};
-
-// wander with FnP: modify each element
-let double: Box&lt;dyn Fn(i32) -&gt; i32&gt; = Box::new(|x| x * 2);
-let f = FnP::wander(
-    |v: &amp;Vec&lt;i32&gt;| v.clone(),
-    |v: Vec&lt;i32&gt;, f: &amp;dyn Fn(i32) -&gt; i32| v.into_iter().map(f).collect(),
-    double,
-);
-assert_eq!(f(vec![1, 2, 3]), vec![2, 4, 6]);
-
-// wander with ForgetF: accumulate with Monoid
-let to_str: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|x| x.to_string());
-let g = &lt;ForgetF&lt;String&gt; as Traversing&gt;::wander(
-    |v: &amp;Vec&lt;i32&gt;| v.clone(),
-    |v: Vec&lt;i32&gt;, f: &amp;dyn Fn(i32) -&gt; String| { let _ = v; let _ = f; String::new() },
-    to_str,
-);
-assert_eq!(g(vec![1, 2, 3]), "123"); // String Monoid concatenates
-<span class="boring">}</span></code></pre>
-<h3 id="forgetfr-forget-profunctor"><a class="header" href="#forgetfr-forget-profunctor">ForgetF&lt;R&gt; (Forget Profunctor)</a></h3>
-<p>Marker type whose <code>P&lt;A, B&gt;</code> is <code>Box&lt;dyn Fn(A) -&gt; R&gt;</code> – a read-only profunctor that extracts a summary value.</p>
-<h4 id="definition-1"><a class="header" href="#definition-1">Definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct ForgetF&lt;R&gt;(PhantomData&lt;R&gt;);
-
-impl&lt;R: 'static&gt; HKT2 for ForgetF&lt;R&gt; {
-    type P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; R&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p><code>ForgetF&lt;R&gt;</code> “forgets” the output type <code>B</code> entirely – the second type parameter is phantom. A <code>ForgetF&lt;R&gt;::P&lt;A, B&gt;</code> is just a function from <code>A</code> to <code>R</code>, regardless of what <code>B</code> is. This makes it ideal for read-only operations that extract or summarize data.</p>
-<h4 id="implemented-traits-1"><a class="header" href="#implemented-traits-1">Implemented traits</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait</th><th>Constraint on <code>R</code></th><th>Behavior</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Profunctor</code></td><td><code>'static</code></td><td>`dimap(f, _g, pab) =</td></tr>
-<tr><td><code>Strong</code></td><td><code>'static</code></td><td>`first(pab) =</td></tr>
-<tr><td><code>Choice</code></td><td><code>Monoid</code></td><td>`left(pab) =</td></tr>
-<tr><td><code>Traversing</code></td><td><code>Monoid</code></td><td>Maps each focus through <code>pab</code>, combines results via <code>Semigroup::combine</code></td></tr>
-</tbody>
-</table>
-</div>
-<h4 id="feature-gate-1"><a class="header" href="#feature-gate-1">Feature gate</a></h4>
-<p>Requires <code>alloc</code> (uses <code>Box&lt;dyn Fn&gt;</code> and <code>Vec</code>).</p>
-<h4 id="role-in-optics-1"><a class="header" href="#role-in-optics-1">Role in optics</a></h4>
-<p><code>ForgetF</code> is the profunctor behind read-only optics. When you use a <a href="optics.html#traversal">Traversal</a> with <code>ForgetF&lt;R&gt;</code>, you get a function <code>S -&gt; R</code> that extracts and combines data from all foci using a <code>Monoid</code>. This is how <a href="optics.html#fold">Fold</a>’s <code>fold_map</code> works conceptually.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_profunctor::ForgetF;
-
-// ForgetF ignores the B parameter completely
-let extract: Box&lt;dyn Fn(i32) -&gt; String&gt; = Box::new(|x| format!("got {x}"));
-
-// B can be anything -- it's never used
-let _: &lt;ForgetF&lt;String&gt; as HKT2&gt;::P&lt;i32, Vec&lt;u8&gt;&gt; = extract;
-<span class="boring">}</span></code></pre>
-<h3 id="taggedf-tagged-profunctor"><a class="header" href="#taggedf-tagged-profunctor">TaggedF (Tagged Profunctor)</a></h3>
-<p>Marker type whose <code>P&lt;A, B&gt;</code> is just <code>B</code> – a write-only profunctor for construction.</p>
-<h4 id="definition-2"><a class="header" href="#definition-2">Definition</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub struct TaggedF;
-
-impl HKT2 for TaggedF {
-    type P&lt;A, B&gt; = B;
-}
-<span class="boring">}</span></code></pre>
-<p><code>TaggedF</code> “forgets” the input type <code>A</code> entirely – the first type parameter is phantom. A <code>TaggedF::P&lt;A, B&gt;</code> is just <code>B</code>, regardless of what <code>A</code> is. This makes it ideal for construction-only operations.</p>
-<h4 id="implemented-traits-2"><a class="header" href="#implemented-traits-2">Implemented traits</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Trait</th><th>Behavior</th></tr>
-</thead>
-<tbody>
-<tr><td><code>Profunctor</code></td><td><code>dimap(_f, g, b) = g(b)</code> – <code>f</code> is ignored</td></tr>
-<tr><td><code>Choice</code></td><td><code>left(b) = Ok(b)</code>, <code>right(b) = Err(b)</code></td></tr>
-</tbody>
-</table>
-</div>
-<p><code>TaggedF</code> is deliberately <strong>not</strong> <code>Strong</code> and <strong>not</strong> <code>Traversing</code>. This is a deliberate design decision: <code>Strong::first</code> would need to produce a <code>(B, C)</code> from just a <code>B</code>, which is impossible without access to <code>C</code>. By not implementing <code>Strong</code>, the type system enforces that write-only optics like <a href="optics.html#review">Review</a> cannot be used for reading.</p>
-<h4 id="feature-gate-2"><a class="header" href="#feature-gate-2">Feature gate</a></h4>
-<p>None – <code>TaggedF</code> is <code>no_std</code>-compatible with no allocator requirement.</p>
-<h4 id="role-in-optics-2"><a class="header" href="#role-in-optics-2">Role in optics</a></h4>
-<p><code>TaggedF</code> is the profunctor behind write-only optics. A <a href="optics.html#review">Review</a> conceptually transforms a <code>TaggedF::P&lt;A, B&gt;</code> (which is just <code>B</code>) into a <code>TaggedF::P&lt;S, T&gt;</code> (which is just <code>T</code>) – construction from a value.</p>
-<h2 id="why-static-bounds"><a class="header" href="#why-static-bounds">Why <code>'static</code> bounds?</a></h2>
-<p>You will notice that the type parameters on <code>dimap</code>, <code>first</code>, <code>left</code>, and so on require <code>'static</code> bounds. This is a consequence of <code>FnP</code>’s implementation: <code>Box&lt;dyn Fn(A) -&gt; B&gt;</code> requires that the captured closures (and the types they close over) are <code>'static</code>. Without this bound, the compiler cannot guarantee that the boxed closures outlive the scope in which they were created.</p>
-<p>In practice, this means profunctor operations work with owned types and <code>'static</code> references, but not with short-lived borrows. This is the same trade-off that <code>Box&lt;dyn Fn&gt;</code> imposes anywhere in Rust – the profunctor abstraction does not add any additional restrictions beyond what the underlying representation requires.</p>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>複数の焦点を扱うため Strong + Choice を拡張します。<code>wander</code> 演算は <code>Traversable</code> を通じてプロ関手を持ち上げ、0 個以上の焦点を持つ <a href="optics.html#traversal">Traversal</a> オプティクスを可能にします。</p>
+<h3 id="fnp--関数プロ関手"><a class="header" href="#fnp--関数プロ関手">FnP — 関数プロ関手</a></h3>
+<p><code>FnP</code> は最も重要な具象実装です: <code>P&lt;A, B&gt; = Box&lt;dyn Fn(A) -&gt; B&gt;</code>。すべてのオプティクス変換 (<code>Lens::transform</code>、<code>Prism::transform</code>) は <code>FnP</code> を使って再利用可能な <code>S -&gt; S</code> 更新関数を生成します。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 

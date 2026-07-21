@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5c5d8d8.js";
+            window.path_to_searchindex_js = "../searchindex-b3e124b9.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-94c6eba9.js"></script>
@@ -178,37 +178,37 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="contravariant-family"><a class="header" href="#contravariant-family">Contravariant Family</a></h1>
-<p>Contravariant functors and their combinators: the duals of the covariant hierarchy.</p>
-<p>Where a covariant <code>Functor</code> consumes a function <code>A -&gt; B</code> to transform <code>F&lt;A&gt;</code> into <code>F&lt;B&gt;</code>, a <code>Contravariant</code> functor consumes a function going the <em>other way</em> – <code>B -&gt; A</code> – to transform <code>F&lt;A&gt;</code> into <code>F&lt;B&gt;</code>. The canonical example is a predicate: if you have a predicate on integers and a function that extracts an integer from a string, you can build a predicate on strings.</p>
-<p>The contravariant family splits into two branches that mirror the covariant hierarchy:</p>
+                        <h1 id="反変関手ファミリー"><a class="header" href="#反変関手ファミリー">反変関手ファミリー</a></h1>
+<p>反変関手とそのコンビネータ: 共変階層の双対。</p>
+<p>共変 <code>Functor</code> が <code>F&lt;A&gt;</code> を <code>F&lt;B&gt;</code> に変換するために <code>A -&gt; B</code> を消費するのに対し、<code>Contravariant</code> 関手は <em>逆方向</em> への関数 — <code>B -&gt; A</code> — を消費して <code>F&lt;A&gt;</code> を <code>F&lt;B&gt;</code> に変換します。標準的な例は述語です: 整数の述語と文字列から整数を取り出す関数があれば、文字列の述語を構築できます。</p>
+<p>反変ファミリーは共変階層を反映する二つの枝に分かれます:</p>
 <ul>
-<li><strong>Product side:</strong> <code>Contravariant</code> → <code>Divide</code> → <code>Divisible</code></li>
-<li><strong>Sum side:</strong> <code>Contravariant</code> → <code>Decide</code> → <code>Conclude</code></li>
+<li><strong>直積側:</strong> <code>Contravariant</code> → <code>Divide</code> → <code>Divisible</code></li>
+<li><strong>直和側:</strong> <code>Contravariant</code> → <code>Decide</code> → <code>Conclude</code></li>
 </ul>
-<p>All contravariant types in Karpal are <strong>alloc-gated</strong> – they require the <code>std</code> or <code>alloc</code> feature because they use <code>Box&lt;dyn Fn&gt;</code> internally.</p>
-<h2 id="duality-with-the-covariant-hierarchy"><a class="header" href="#duality-with-the-covariant-hierarchy">Duality with the Covariant Hierarchy</a></h2>
-<p>Each contravariant trait is the dual of a corresponding covariant trait. The relationship is systematic: where the covariant side <em>produces</em> values, the contravariant side <em>consumes</em> them.</p>
+<p>Karpal のすべての反変型は <strong>alloc ゲート</strong> です — 内部で <code>Box&lt;dyn Fn&gt;</code> を使うため <code>std</code> または <code>alloc</code> フィーチャーが必要です。</p>
+<h2 id="共変階層との双対性"><a class="header" href="#共変階層との双対性">共変階層との双対性</a></h2>
+<p>各反変トレイトは対応する共変トレイトの双対です。関係は体系的です: 共変側が値を <em>生成</em> するところで、反変側は値を <em>消費</em> します。</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Contravariant</th><th>Covariant dual</th><th>Role</th></tr>
+<tr><th>反変</th><th>共変の双対</th><th>役割</th></tr>
 </thead>
 <tbody>
-<tr><td><code>Contravariant</code></td><td><code>Functor</code></td><td>Adapt input type via a function</td></tr>
-<tr><td><code>Divide</code></td><td><code>Apply</code></td><td>Split input into parts, handle each independently</td></tr>
-<tr><td><code>Divisible</code></td><td><code>Applicative</code></td><td>Identity for splitting (accepts anything)</td></tr>
-<tr><td><code>Decide</code></td><td><code>Alt</code></td><td>Route input to one of two handlers</td></tr>
-<tr><td><code>Conclude</code></td><td><code>Plus</code></td><td>Identity for routing (uninhabited input)</td></tr>
+<tr><td><code>Contravariant</code></td><td><code>Functor</code></td><td>関数経由で入力型を適応</td></tr>
+<tr><td><code>Divide</code></td><td><code>Apply</code></td><td>入力を部分に分割、各々を独立に扱う</td></tr>
+<tr><td><code>Divisible</code></td><td><code>Applicative</code></td><td>分割の単位元 (任意のものを受け入れる)</td></tr>
+<tr><td><code>Decide</code></td><td><code>Alt</code></td><td>入力を二つのハンドラのいずれかに経路付け</td></tr>
+<tr><td><code>Conclude</code></td><td><code>Plus</code></td><td>経路付けの単位元 (非居住入力)</td></tr>
 </tbody>
 </table>
 </div>
 <h3 id="contravariant"><a class="header" href="#contravariant">Contravariant</a></h3>
-<p>A functor that maps over inputs rather than outputs.</p>
-<h4 id="signature"><a class="header" href="#signature">Signature</a></h4>
+<p>出力ではなく入力でマップする関手。</p>
+<h4 id="シグネチャ"><a class="header" href="#シグネチャ">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Contravariant functor: lifts a function `B -&gt; A` into `F&lt;A&gt; -&gt; F&lt;B&gt;`.
+</span>/// 反変関手: 関数 `B -&gt; A` を `F&lt;A&gt; -&gt; F&lt;B&gt;` に持ち上げる。
 pub trait Contravariant: HKT {
     fn contramap&lt;A: 'static, B&gt;(
         fa: Self::Of&lt;A&gt;,
@@ -216,54 +216,54 @@ pub trait Contravariant: HKT {
     ) -&gt; Self::Of&lt;B&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>Given a value of type <code>F&lt;A&gt;</code> and a function <code>B -&gt; A</code>, <code>contramap</code> produces a value of type <code>F&lt;B&gt;</code>. The function goes in the <em>opposite</em> direction compared to <code>Functor::fmap</code>. The <code>'static</code> bounds are required because <code>PredicateF</code> stores the function inside a <code>Box&lt;dyn Fn&gt;</code>.</p>
-<h4 id="laws"><a class="header" href="#laws">Laws</a></h4>
-<p>Identity</p>
-<p>Contramapping the identity function changes nothing:</p>
+<p>型 <code>F&lt;A&gt;</code> の値と関数 <code>B -&gt; A</code> を与えられると、<code>contramap</code> は型 <code>F&lt;B&gt;</code> の値を生成します。関数は <code>Functor::fmap</code> と比べて <em>逆</em> 方向へ進みます。<code>PredicateF</code> が関数を <code>Box&lt;dyn Fn&gt;</code> の内側に格納するため、<code>'static</code> 境界が必要です。</p>
+<h4 id="法則"><a class="header" href="#法則">法則</a></h4>
+<p>単位律</p>
+<p>恒等関数で contramap しても何も変わりません:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>Contravariant::contramap(fa, |x| x) == fa
 <span class="boring">}</span></code></pre>
-<p>Composition</p>
-<p>Contramapping a composed function is the same as contramapping each function in sequence (note the reversed order):</p>
+<p>合成律</p>
+<p>合成された関数で contramap するのは、各関数を順に contramap するのと同じです (順序が逆になることに注意):</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>contramap(f . g, fa) == contramap(g, contramap(f, fa))
 <span class="boring">}</span></code></pre>
-<h4 id="instances"><a class="header" href="#instances">Instances</a></h4>
+<h4 id="実装"><a class="header" href="#実装">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th><code>Of&lt;T&gt;</code></th><th>Behavior</th><th>Feature gate</th></tr>
+<tr><th>型コンストラクタ</th><th><code>Of&lt;T&gt;</code></th><th>振る舞い</th><th>フィーチャーゲート</th></tr>
 </thead>
 <tbody>
-<tr><td><code>PredicateF</code></td><td><code>Box&lt;dyn Fn(T) -&gt; bool&gt;</code></td><td>Pre-composes the adaptation function before the predicate</td><td><code>std</code> or <code>alloc</code></td></tr>
+<tr><td><code>PredicateF</code></td><td><code>Box&lt;dyn Fn(T) -&gt; bool&gt;</code></td><td>述語の前に適応関数を事前合成</td><td><code>std</code> または <code>alloc</code></td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="examples"><a class="header" href="#examples">Examples</a></h4>
+<h4 id="例"><a class="header" href="#例">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::contravariant::{Contravariant, PredicateF};
 
-// A predicate on integers
+// 整数の述語
 let is_positive: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x &gt; 0);
 
-// Adapt it to work on strings by extracting the length
+// 長さを取り出して文字列で動作するように適応
 let str_len_positive = PredicateF::contramap(is_positive, |s: &amp;str| s.len() as i32);
 
-assert!(str_len_positive("hello"));  // len 5 &gt; 0
-assert!(!str_len_positive(""));      // len 0, not &gt; 0
+assert!(str_len_positive("hello"));  // 長さ 5 &gt; 0
+assert!(!str_len_positive(""));      // 長さ 0、&gt; 0 ではない
 <span class="boring">}</span></code></pre>
 <h3 id="divide"><a class="header" href="#divide">Divide</a></h3>
-<p>The contravariant analogue of Apply – split an input into parts and handle each independently.</p>
-<h4 id="signature-1"><a class="header" href="#signature-1">Signature</a></h4>
+<p>Apply の反変類似物 — 入力を部分に分割し各々を独立に扱う。</p>
+<h4 id="シグネチャ-1"><a class="header" href="#シグネチャ-1">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Divide: the contravariant analogue of Apply.
+</span>/// Divide: Apply の反変類似物。
 ///
-/// Given a way to split `C` into `(A, B)`, and contravariant functors over
-/// `A` and `B`, produce a contravariant functor over `C`.
+/// `C` を `(A, B)` に分割する方法と、`A` と `B` 上の反変関手を与えられ、
+/// `C` 上の反変関手を生成する。
 pub trait Divide: Contravariant {
     fn divide&lt;A: 'static, B: 'static, C: 'static&gt;(
         f: impl Fn(C) -&gt; (A, B) + 'static,
@@ -272,28 +272,28 @@ pub trait Divide: Contravariant {
     ) -&gt; Self::Of&lt;C&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>Where <code>Apply</code> combines two containers of <em>outputs</em>, <code>Divide</code> combines two consumers of <em>inputs</em>. The splitting function <code>f</code> decomposes the input <code>C</code> into a pair <code>(A, B)</code>, then each part is handled by its respective consumer.</p>
-<p>For <code>PredicateF</code>, <code>divide</code> produces a predicate that splits the input and returns <code>true</code> only if <strong>both</strong> sub-predicates accept their respective parts.</p>
-<h4 id="laws-1"><a class="header" href="#laws-1">Laws</a></h4>
-<p>Associativity</p>
-<p>Nesting <code>divide</code> on the left or right produces equivalent results, as long as the splitting functions decompose the input consistently:</p>
+<p><code>Apply</code> が <em>出力</em> の二つのコンテナを結合するところで、<code>Divide</code> は <em>入力</em> の二つの消費者を結合します。分割関数 <code>f</code> は入力 <code>C</code> をペア <code>(A, B)</code> に分解し、各部分がそれぞれの消費者で扱われます。</p>
+<p><code>PredicateF</code> の場合、<code>divide</code> は入力を分割し、<strong>両方の</strong> 副述語がそれぞれの部分を受け入れる場合にのみ <code>true</code> を返す述語を生成します。</p>
+<h4 id="法則-1"><a class="header" href="#法則-1">法則</a></h4>
+<p>結合律</p>
+<p>分割関数が一貫して入力を分解する限り、左または右に <code>divide</code> を入れ子にしても同等の結果になります:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>divide(f, divide(g, a, b), c) == divide(h, a, divide(i, b, c))
 <span class="boring">}</span></code></pre>
-<p>Where <code>f</code>, <code>g</code>, <code>h</code>, and <code>i</code> are appropriate splitting functions that distribute the components equivalently.</p>
-<h4 id="instances-1"><a class="header" href="#instances-1">Instances</a></h4>
+<p>ここで <code>f</code>、<code>g</code>、<code>h</code>、<code>i</code> は成分を等価に分配する適切な分割関数です。</p>
+<h4 id="実装-1"><a class="header" href="#実装-1">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Behavior of <code>divide</code></th><th>Feature gate</th></tr>
+<tr><th>型コンストラクタ</th><th><code>divide</code> の振る舞い</th><th>フィーチャーゲート</th></tr>
 </thead>
 <tbody>
-<tr><td><code>PredicateF</code></td><td>Splits the input, then returns <code>fa(a) &amp;&amp; fb(b)</code></td><td><code>std</code> or <code>alloc</code></td></tr>
+<tr><td><code>PredicateF</code></td><td>入力を分割し、<code>fa(a) &amp;&amp; fb(b)</code> を返す</td><td><code>std</code> または <code>alloc</code></td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="examples-1"><a class="header" href="#examples-1">Examples</a></h4>
+<h4 id="例-1"><a class="header" href="#例-1">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::contravariant::PredicateF;
@@ -302,59 +302,59 @@ use karpal_core::divide::Divide;
 let is_positive: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x &gt; 0);
 let is_even: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x % 2 == 0);
 
-// Split a tuple into its components, check both predicates
+// タプルを成分に分割し、両方の述語をチェック
 let both: Box&lt;dyn Fn((i32, i32)) -&gt; bool&gt; =
     PredicateF::divide(|pair: (i32, i32)| pair, is_positive, is_even);
 
-assert!(both((3, 4)));   // 3 &gt; 0 AND 4 is even
-assert!(!both((-1, 4))); // -1 is not &gt; 0
-assert!(!both((3, 3)));  // 3 is not even
+assert!(both((3, 4)));   // 3 &gt; 0 かつ 4 は偶数
+assert!(!both((-1, 4))); // -1 は &gt; 0 ではない
+assert!(!both((3, 3)));  // 3 は偶数ではない
 <span class="boring">}</span></code></pre>
 <h3 id="divisible"><a class="header" href="#divisible">Divisible</a></h3>
-<p>The contravariant analogue of Applicative – adds an identity element for Divide.</p>
-<h4 id="signature-2"><a class="header" href="#signature-2">Signature</a></h4>
+<p>Applicative の反変類似物 — Divide の単位元を追加。</p>
+<h4 id="シグネチャ-2"><a class="header" href="#シグネチャ-2">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Divisible: the contravariant analogue of Applicative.
+</span>/// Divisible: Applicative の反変類似物。
 ///
-/// Adds a `conquer` operation (the identity for `divide`), analogous to `pure`.
+/// `divide` の単位元 (pure に類似) となる `conquer` 演算を追加。
 pub trait Divisible: Divide {
     fn conquer&lt;A: 'static&gt;() -&gt; Self::Of&lt;A&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>The <code>conquer</code> method produces a consumer that accepts any input and always succeeds. It is the identity element for <code>divide</code> – dividing against a <code>conquer()</code> value has no effect on the result.</p>
-<p>For <code>PredicateF</code>, <code>conquer</code> returns a predicate that is always <code>true</code>.</p>
-<h4 id="laws-2"><a class="header" href="#laws-2">Laws</a></h4>
-<p>Left Identity</p>
-<p>Dividing with <code>conquer()</code> on the left is equivalent to contramapping the second projection:</p>
+<p><code>conquer</code> メソッドは任意の入力を受け入れ常に成功する消費者を生成します。これは <code>divide</code> の単位元です — <code>conquer()</code> 値で divide しても結果に影響しません。</p>
+<p><code>PredicateF</code> の場合、<code>conquer</code> は常に <code>true</code> である述語を返します。</p>
+<h4 id="法則-2"><a class="header" href="#法則-2">法則</a></h4>
+<p>左単位律</p>
+<p>左に <code>conquer()</code> で divide するのは第二射影の contramap と等価です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>divide(f, conquer(), fa) == contramap(snd . f, fa)
 <span class="boring">}</span></code></pre>
-<p>Right Identity</p>
-<p>Dividing with <code>conquer()</code> on the right is equivalent to contramapping the first projection:</p>
+<p>右単位律</p>
+<p>右に <code>conquer()</code> で divide するのは第一射影の contramap と等価です:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>divide(f, fa, conquer()) == contramap(fst . f, fa)
 <span class="boring">}</span></code></pre>
-<h4 id="instances-2"><a class="header" href="#instances-2">Instances</a></h4>
+<h4 id="実装-2"><a class="header" href="#実装-2">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Behavior of <code>conquer</code></th><th>Feature gate</th></tr>
+<tr><th>型コンストラクタ</th><th><code>conquer</code> の振る舞い</th><th>フィーチャーゲート</th></tr>
 </thead>
 <tbody>
-<tr><td><code>PredicateF</code></td><td>Returns `Box::new(</td><td>_</td></tr>
+<tr><td><code>PredicateF</code></td><td>`Box::new(</td><td>_</td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="examples-2"><a class="header" href="#examples-2">Examples</a></h4>
+<h4 id="例-2"><a class="header" href="#例-2">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::contravariant::PredicateF;
 use karpal_core::divisible::Divisible;
 
-// conquer() produces a predicate that accepts everything
+// conquer() はすべてを受け入れる述語を生成
 let p: Box&lt;dyn Fn(i32) -&gt; bool&gt; = PredicateF::conquer();
 assert!(p(42));
 assert!(p(-1));
@@ -366,25 +366,25 @@ assert!(p(0));
 use karpal_core::divide::Divide;
 use karpal_core::divisible::Divisible;
 
-// Left identity: divide with conquer() on the left has no effect
+// 左単位律: 左に conquer() で divide しても影響しない
 let fa: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|a| a &gt; 0);
 let result = PredicateF::divide(
     |a: i32| ((), a),
     PredicateF::conquer::&lt;()&gt;(),
     fa,
 );
-assert!(result(5));   // equivalent to the original predicate
+assert!(result(5));   // 元の述語と等価
 assert!(!result(-3));
 <span class="boring">}</span></code></pre>
 <h3 id="decide"><a class="header" href="#decide">Decide</a></h3>
-<p>The contravariant analogue of Alt – route an input to one of two handlers.</p>
-<h4 id="signature-3"><a class="header" href="#signature-3">Signature</a></h4>
+<p>Alt の反変類似物 — 入力を二つのハンドラのいずれかに経路付け。</p>
+<h4 id="シグネチャ-3"><a class="header" href="#シグネチャ-3">シグネチャ</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>/// Decide: the contravariant analogue of Alt.
+</span>/// Decide: Alt の反変類似物。
 ///
-/// Given a way to split `C` into either `A` or `B`, and contravariant
-/// functors over `A` and `B`, produce a contravariant functor over `C`.
+/// `C` を `A` か `B` のいずれかに分割する方法と、`A` と `B` 上の反変
+/// 関手を与えられ、`C` 上の反変関手を生成する。
 pub trait Decide: Contravariant {
     fn choose&lt;A: 'static, B: 'static, C: 'static&gt;(
         f: impl Fn(C) -&gt; Result&lt;A, B&gt; + 'static,
@@ -393,28 +393,28 @@ pub trait Decide: Contravariant {
     ) -&gt; Self::Of&lt;C&gt;;
 }
 <span class="boring">}</span></code></pre>
-<p>Where <code>Divide</code> handles the product case (split into <em>both</em> parts), <code>Decide</code> handles the sum case (route to <em>one</em> handler). The classification function <code>f</code> returns <code>Result&lt;A, B&gt;</code>, which serves as Karpal’s encoding of <code>Either</code>: <code>Ok(a)</code> routes to <code>fa</code>, and <code>Err(b)</code> routes to <code>fb</code>.</p>
-<p>For <code>PredicateF</code>, <code>choose</code> classifies the input and delegates to whichever predicate matches.</p>
-<h4 id="laws-3"><a class="header" href="#laws-3">Laws</a></h4>
-<p>Associativity</p>
-<p>Nesting <code>choose</code> on the left or right produces equivalent results, as long as the routing functions classify consistently:</p>
+<p><code>Divide</code> が直積ケース (両方の部分に分割) を扱うところで、<code>Decide</code> は直和ケース (<em>一方</em> のハンドラに経路付け) を扱います。分類関数 <code>f</code> は <code>Result&lt;A, B&gt;</code> を返し、これは Karpal の <code>Either</code> エンコーディングとして機能します: <code>Ok(a)</code> は <code>fa</code> へ、<code>Err(b)</code> は <code>fb</code> へ経路付けします。</p>
+<p><code>PredicateF</code> の場合、<code>choose</code> は入力を分類し、一致する述語に委譲します。</p>
+<h4 id="法則-3"><a class="header" href="#法則-3">法則</a></h4>
+<p>結合律</p>
+<p>経路付け関数が一貫して分類する限り、左または右に <code>choose</code> を入れ子にしても同等の結果になります:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>choose(f, choose(g, a, b), c) == choose(h, a, choose(i, b, c))
 <span class="boring">}</span></code></pre>
-<p>Where <code>f</code>, <code>g</code>, <code>h</code>, and <code>i</code> are appropriate routing functions that distribute the cases equivalently.</p>
-<h4 id="instances-3"><a class="header" href="#instances-3">Instances</a></h4>
+<p>ここで <code>f</code>、<code>g</code>、<code>h</code>、<code>i</code> はケースを等価に分配する適切な経路付け関数です。</p>
+<h4 id="実装-3"><a class="header" href="#実装-3">実装</a></h4>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Type constructor</th><th>Behavior of <code>choose</code></th><th>Feature gate</th></tr>
+<tr><th>型コンストラクタ</th><th><code>choose</code> の振る舞い</th><th>フィーチャーゲート</th></tr>
 </thead>
 <tbody>
-<tr><td><code>PredicateF</code></td><td>Classifies input via <code>f</code>, then applies <code>fa</code> on <code>Ok</code> or <code>fb</code> on <code>Err</code></td><td><code>std</code> or <code>alloc</code></td></tr>
+<tr><td><code>PredicateF</code></td><td><code>f</code> で入力を分類し、<code>Ok</code> で <code>fa</code>、<code>Err</code> で <code>fb</code> を適用</td><td><code>std</code> または <code>alloc</code></td></tr>
 </tbody>
 </table>
 </div>
-<h4 id="examples-3"><a class="header" href="#examples-3">Examples</a></h4>
+<h4 id="例-3"><a class="header" href="#例-3">例</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use karpal_core::contravariant::PredicateF;
@@ -423,7 +423,7 @@ use karpal_core::decide::Decide;
 let is_positive: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|x| x &gt; 0);
 let is_short: Box&lt;dyn Fn(String) -&gt; bool&gt; = Box::new(|s| s.len() &lt; 5);
 
-// Classify input: integers go to Ok, strings go to Err
+// 入力を分類: 整数は Ok、文字列は Err
 let classifier = PredicateF::choose(
     |input: Result&lt;i32, String&gt;| input,
     is_positive,
@@ -431,114 +431,15 @@ let classifier = PredicateF::choose(
 );
 
 assert!(classifier(Ok(5)));                          // 5 &gt; 0
-assert!(!classifier(Ok(-1)));                        // -1 not &gt; 0
-assert!(classifier(Err("hi".to_string())));          // len 2 &lt; 5
-assert!(!classifier(Err("hello world".to_string()))); // len 11, not &lt; 5
+assert!(!classifier(Ok(-1)));                        // -1 は &gt; 0 ではない
+assert!(classifier(Err("hi".to_string())));          // 長さ 2 &lt; 5
+assert!(!classifier(Err("hello world".to_string()))); // 長さ 11、&lt; 5 ではない
 <span class="boring">}</span></code></pre>
 <h3 id="conclude"><a class="header" href="#conclude">Conclude</a></h3>
-<p>The contravariant analogue of Plus – the identity element for Decide.</p>
-<h4 id="signature-4"><a class="header" href="#signature-4">Signature</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// Conclude: the contravariant analogue of Plus.
-///
-/// Adds a `conclude` operation (the identity for `choose`).
-/// `conclude` takes a function `A -&gt; Infallible`, witnessing that `A` is
-/// uninhabited -- so the resulting predicate is vacuously true.
-pub trait Conclude: Decide {
-    fn conclude&lt;A: 'static&gt;(
-        f: impl Fn(A) -&gt; core::convert::Infallible + 'static,
-    ) -&gt; Self::Of&lt;A&gt;;
-}
-<span class="boring">}</span></code></pre>
-<p>The <code>conclude</code> method takes a function from <code>A</code> to <code>Infallible</code>. If such a function exists, it witnesses that <code>A</code> is uninhabited – no value of type <code>A</code> can ever be constructed. The resulting consumer is vacuously valid: it will never be called with a real input.</p>
-<p>Rust uses <code>core::convert::Infallible</code> as its bottom type (the equivalent of Haskell’s <code>Void</code>). For inhabited types, the function body typically uses <code>unreachable!()</code> since it can never actually execute in well-typed code.</p>
-<p>For <code>PredicateF</code>, <code>conclude</code> returns a predicate that is always <code>true</code>.</p>
-<h4 id="laws-4"><a class="header" href="#laws-4">Laws</a></h4>
-<p>Left Identity</p>
-<p>Choosing with <code>conclude(absurd)</code> on the left is equivalent to contramapping the right projection:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>choose(f, conclude(absurd), fa) == contramap(from_right . f, fa)
-<span class="boring">}</span></code></pre>
-<p>Right Identity</p>
-<p>Choosing with <code>conclude(absurd)</code> on the right is equivalent to contramapping the left projection:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>choose(f, fa, conclude(absurd)) == contramap(from_left . f, fa)
-<span class="boring">}</span></code></pre>
-<h4 id="instances-4"><a class="header" href="#instances-4">Instances</a></h4>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Type constructor</th><th>Behavior of <code>conclude</code></th><th>Feature gate</th></tr>
-</thead>
-<tbody>
-<tr><td><code>PredicateF</code></td><td>Returns `Box::new(</td><td>_</td></tr>
-</tbody>
-</table>
-</div>
-<h4 id="examples-4"><a class="header" href="#examples-4">Examples</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_core::contravariant::PredicateF;
-use karpal_core::conclude::Conclude;
-
-// conclude with an unreachable function -- the predicate is vacuously true
-let p: Box&lt;dyn Fn(i32) -&gt; bool&gt; = PredicateF::conclude(|_: i32| unreachable!());
-assert!(p(42));
-assert!(p(-1));
-<span class="boring">}</span></code></pre>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_core::contravariant::PredicateF;
-use karpal_core::decide::Decide;
-use karpal_core::conclude::Conclude;
-
-// Right identity: choosing with conclude on the right has no effect
-let fa: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|a| a &gt; 0);
-let result = PredicateF::choose(
-    |a: i32| -&gt; Result&lt;i32, core::convert::Infallible&gt; { Ok(a) },
-    fa,
-    PredicateF::conclude(|i: core::convert::Infallible| -&gt; core::convert::Infallible { i }),
-);
-assert!(result(5));   // equivalent to the original predicate
-assert!(!result(-3));
-<span class="boring">}</span></code></pre>
-<h2 id="combining-both-branches"><a class="header" href="#combining-both-branches">Combining Both Branches</a></h2>
-<p>In practice, <code>Divide</code> and <code>Decide</code> complement each other. <code>Divide</code> handles product types (structs, tuples) by splitting into fields, while <code>Decide</code> handles sum types (enums) by routing to the matching variant. Together they let you build validators and predicates for complex data structures compositionally:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use karpal_core::contravariant::{Contravariant, PredicateF};
-use karpal_core::divide::Divide;
-use karpal_core::decide::Decide;
-
-// Field-level predicates
-let name_valid: Box&lt;dyn Fn(String) -&gt; bool&gt; = Box::new(|s| !s.is_empty());
-let age_valid: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|a| a &gt;= 0 &amp;&amp; a &lt;= 150);
-
-// Combine with Divide: validate a (name, age) pair
-let person_valid: Box&lt;dyn Fn((String, i32)) -&gt; bool&gt; =
-    PredicateF::divide(|p: (String, i32)| p, name_valid, age_valid);
-
-assert!(person_valid(("Alice".to_string(), 30)));
-assert!(!person_valid(("".to_string(), 30)));       // empty name
-assert!(!person_valid(("Alice".to_string(), -1)));   // negative age
-
-// Sum-type routing with Decide: handle either a string or an integer
-let str_check: Box&lt;dyn Fn(String) -&gt; bool&gt; = Box::new(|s| s.len() &lt; 10);
-let int_check: Box&lt;dyn Fn(i32) -&gt; bool&gt; = Box::new(|n| n &gt; 0);
-
-let either_check = PredicateF::choose(
-    |input: Result&lt;String, i32&gt;| input,
-    str_check,
-    int_check,
-);
-
-assert!(either_check(Ok("short".to_string())));
-assert!(!either_check(Err(-5)));
-<span class="boring">}</span></code></pre>
-<p>Karpal is licensed under Apache-2.0 + CLA. <a href="https://github.com/Industrial-Algebra/Karpal">View on GitHub</a>.</p>
+<p>Plus の反変類似物 — Decide の単位元。</p>
+<p><code>Conclude</code> は <code>Plus</code> の反変双対です。これは <code>Decide</code> のための単位元 (<code>conquer</code> が <code>Divide</code> のための単位元であるのと同様) を提供します。居住されていない入力 (決して生じないケース) を処理します。</p>
+<p><code>PredicateF</code> の場合、これは常に <code>false</code> を返す述語を生成します — この分岐には決して到達しません。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
 
                     </main>
 
