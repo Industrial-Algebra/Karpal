@@ -1,16 +1,16 @@
-# Foldable & Traversable
+# Foldable と Traversable
 
-Summarize and sequence container contents.
+コンテナの内容を要約し、逐次化します。
 
 ## Foldable
 
 
 ### Foldable
 
-A structure that can be folded to a summary value.
+要約値に畳み込める構造。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Foldable: HKT {
@@ -22,35 +22,35 @@ pub trait Foldable: HKT {
 }
 ```
 
-`fold_right` is the required method. It processes elements right-to-left, threading an accumulator through each step. `fold_map` is provided as a default: it maps each element into a `Monoid` and combines them.
+`fold_right` が必須メソッドです。要素を右から左へ処理し、各ステップでアキュムレータを受け渡します。`fold_map` はデフォルトとして提供されます: 各要素を `Monoid` にマップして組み合わせます。
 
-#### Laws
+#### 法則
 
 
-fold_map consistency
+fold_map の一貫性
 
 `fold_map(fa, f) == fold_right(fa, M::empty(), |a, acc| f(a).combine(acc))`
 
 
-Any override of the default `fold_map` must agree with the right fold formulation above.
+デフォルトの `fold_map` をオーバーライドする場合、上記の右畳みみ定式と一致しなければなりません。
 
-#### Instances
+#### 実装
 
-| Type constructor | Notes                                                                 |
+| 型コンストラクタ | 備考                                                                 |
 |------------------|-----------------------------------------------------------------------|
-| `OptionF`        | Folds over the contained value, if any; returns `init` for `None`.    |
-| `ResultF<E>`     | Folds over the `Ok` value; returns `init` for `Err`.                  |
-| `VecF`           | Right-folds by reversing and iterating. Requires `alloc`.             |
-| `IdentityF`      | Trivially applies `f` to the single contained value.                  |
-| `NonEmptyVecF`   | Right-folds the tail, then applies `f` to the head. Requires `alloc`. |
+| `OptionF`        | 含まれる値があれば畳み込み; `None` なら `init` を返す。    |
+| `ResultF<E>`     | `Ok` 値を畳み込み; `Err` なら `init` を返す。                  |
+| `VecF`           | 反転して反復することで右畳み込み。`alloc` が必要。             |
+| `IdentityF`      | 単一の含まれる値に自明に `f` を適用。                  |
+| `NonEmptyVecF`   | 末尾を右畳み込みし、先頭に `f` を適用。`alloc` が必要。 |
 
-#### Example: summing with fold_map
+#### 例: fold_map で合計
 
 ``` rust
 use karpal_std::prelude::*;
 
-// fold_map maps each element into a Monoid and combines them.
-// For i32, the Monoid instance uses addition with identity 0.
+// fold_map は各要素を Monoid にマップして組み合わせる。
+// i32 の場合、Monoid 実装は加算を単位元 0 と共に使う。
 
 let sum = VecF::fold_map(vec![1, 2, 3], |a: i32| a);
 assert_eq!(sum, 6); // 1 + 2 + 3
@@ -59,16 +59,16 @@ let sum = OptionF::fold_map(Some(42), |a: i32| a);
 assert_eq!(sum, 42);
 
 let sum = OptionF::fold_map(None::<i32>, |a: i32| a);
-assert_eq!(sum, 0); // Monoid::empty() for i32
+assert_eq!(sum, 0); // i32 の Monoid::empty()
 ```
 
-#### Example: fold_right
+#### 例: fold_right
 
 ``` rust
 use karpal_std::prelude::*;
 
-// fold_right processes elements right-to-left.
-// With subtraction, the associativity matters:
+// fold_right は要素を右から左へ処理する。
+// 減算では結合性が重要:
 // fold_right([1, 2, 3], 0, |a, b| a - b)
 //   = 1 - (2 - (3 - 0))
 //   = 1 - (2 - 3)
@@ -84,10 +84,10 @@ assert_eq!(result, 2);
 
 ### Traversable
 
-A Functor + Foldable that can be traversed with an effectful function.
+エフェクト付き関数で走査できる Functor + Foldable。
 
 
-#### Signature
+#### シグネチャ
 
 ``` rust
 pub trait Traversable: Functor + Foldable {
@@ -99,56 +99,56 @@ pub trait Traversable: Functor + Foldable {
 }
 ```
 
-`traverse` applies an effectful function `f` to every element in the structure, collecting the results inside the effect `G`. If any application of `f` produces a "failure" (e.g. `None` for `OptionF`), the entire traversal short-circuits.
+`traverse` は構造内のすべての要素にエフェクト付き関数 `f` を適用し、結果をエフェクト `G` の内側に集めます。`f` の適用が一つでも「失敗」(`OptionF` の `None` など) を生成すると、走査全体が短絡します。
 
-#### Laws
+#### 法則
 
 
-Identity
+単位律
 
 `traverse::<IdentityF, _, _, _>(fa, pure) == pure(fa)`
 
 
-Composition
+合成律
 
 `traverse::<Compose<F, G>, _, _, _>(fa, |a| Compose(F::fmap(f(a), g)))`  
 `== Compose(F::fmap(traverse::<F, _, _, _>(fa, f), |fb| traverse::<G, _, _, _>(fb, g)))`
 
 
-Naturality
+自然律
 
 `t(traverse::<F, _, _, _>(fa, f)) == traverse::<G, _, _, _>(fa, |a| t(f(a)))`  
-for any applicative natural transformation `t: F ~> G`
+任意のアプリカティブ自然変換 `t: F ~> G` について
 
 
-Karpal verifies the Identity law with property-based tests using `OptionF` as the effect.
+Karpal はエフェクトとして `OptionF` を使ったプロパティベーステストで単位律を検証します。
 
-#### Instances
+#### 実装
 
-| Type constructor | Notes                                                                                                      |
+| 型コンストラクタ | 備考                                                                                                      |
 |------------------|------------------------------------------------------------------------------------------------------------|
-| `OptionF`        | Traverses the inner value if `Some`; returns `G::pure(None)` for `None`.                                   |
-| `ResultF<E>`     | Traverses the `Ok` value; returns `G::pure(Err(e))` for `Err`. Requires `E: Clone`.                        |
-| `VecF`           | Traverses each element left-to-right, accumulating via `Applicative::ap`. Requires `alloc` and `B: Clone`. |
+| `OptionF`        | `Some` なら内側の値を走査; `None` なら `G::pure(None)` を返す。                                   |
+| `ResultF<E>`     | `Ok` 値を走査; `Err` なら `G::pure(Err(e))` を返す。`E: Clone` が必要。                        |
+| `VecF`           | 各要素を左から右へ走査し、`Applicative::ap` で蓄積。`alloc` と `B: Clone` が必要。 |
 
-#### Example: traverse with Option
+#### 例: Option での traverse
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Parse a list of strings into integers, failing if any parse fails.
+// 文字列のリストを整数にパースし、いずれかが失敗すれば全体が失敗。
 fn parse(s: &str) -> Option<i32> {
     s.parse().ok()
 }
 
-// All elements parse successfully:
+// すべての要素がパース成功:
 let result = VecF::traverse::<OptionF, _, _, _>(
     vec!["1", "2", "3"],
     parse,
 );
 assert_eq!(result, Some(vec![1, 2, 3]));
 
-// One element fails, so the whole traversal returns None:
+// 一つの要素が失敗するので、走査全体が None を返す:
 let result = VecF::traverse::<OptionF, _, _, _>(
     vec!["1", "oops", "3"],
     parse,
@@ -156,26 +156,26 @@ let result = VecF::traverse::<OptionF, _, _, _>(
 assert_eq!(result, None);
 ```
 
-#### Example: traverse over Option
+#### 例: Option 上の traverse
 
 ``` rust
 use karpal_std::prelude::*;
 
-// Traverse an Option with an effectful function:
+// エフェクト付き関数で Option を走査:
 let result = OptionF::traverse::<OptionF, _, _, _>(
     Some(3),
     |x| Some(x * 2),
 );
 assert_eq!(result, Some(Some(6)));
 
-// If the inner effect fails:
+// 内側のエフェクトが失敗する場合:
 let result = OptionF::traverse::<OptionF, _, _, _>(
     Some(3),
     |_x| None::<i32>,
 );
 assert_eq!(result, None);
 
-// Traversing None always succeeds:
+// None の走査は常に成功:
 let result = OptionF::traverse::<OptionF, i32, i32, _>(
     None,
     |x| Some(x * 2),
@@ -184,6 +184,4 @@ assert_eq!(result, Some(None));
 ```
 
 
-Karpal is licensed under Apache-2.0 + CLA. [View on GitHub](https://github.com/Industrial-Algebra/Karpal).
-
-
+Karpal は Apache-2.0 + CLA でライセンスされています。[GitHub で見る](https://github.com/Industrial-Algebra/Karpal)。
