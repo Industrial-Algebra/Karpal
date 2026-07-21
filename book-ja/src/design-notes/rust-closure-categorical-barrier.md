@@ -1,249 +1,189 @@
-# Rust Closure Traits as a Category-Theoretic Barrier
+# 圏論的障壁としての Rust クロージャトレイト
 
-**Status:** Design rationale — open problem  
-**Date:** 2026-07-01  
-**Related:** Issues [#95](https://github.com/Industrial-Algebra/Karpal/issues/95), [#98](https://github.com/Industrial-Algebra/Karpal/issues/98)  
-**Investigations:** [FreeAp fold_map](./freeap-fold-map-exploration.md), [ReaderTF/StateTF ApplicativeSt](#98)
+**状態:** 設計理論 — 未解決問題  
+**日付:** 2026-07-01  
+**関連:** イシュー [#95](https://github.com/Industrial-Algebra/Karpal/issues/95)、[#98](https://github.com/Industrial-Algebra/Karpal/issues/98)  
+**調査:** [FreeAp fold_map](./freeap-fold-map-exploration.md)、[ReaderTF/StateTF ApplicativeSt](#98)
 
-## Summary
+## 要旨
 
-Rust's closure trait hierarchy (`FnOnce` → `FnMut` → `Fn`) encodes a
-semantic distinction that has no counterpart in category theory: *how many
-times a computation may be invoked*. Most categorical constructs are defined
-in a lazy setting (Haskell, or mathematical Set) where a value `A → B` can
-be consumed repeatedly without cost. Rust's strict-call-by-value semantics,
-combined with ownership, make this distinction a **first-class type-system
-barrier** that blocks several natural category-theoretic encodings.
+Rust のクロージャトレイト階層 (`FnOnce` → `FnMut` → `Fn`) は、圏論に対応物のない意味的区別をエンコードします: *計算が何回呼び出されうるか*。ほとんどの圏論的構成要素は遅延設定 (Haskell や数学的 Set) で定義され、そこでは値 `A → B` はコストなく繰り返し消費できます。Rust の正格 Call-by-value 意味論と所有権の組み合わせが、この区別をいくつかの自然な圏論的エンコーディングをブロックする **第一級の型システム障壁** にします。
 
-This document identifies the precise mechanism, catalogues the blocked
-constructions, and outlines what future language features might provide
-an escape hatch.
+この文書は正確なメカニズムを特定し、ブロックされた構成をカタログ化し、将来の言語機能がどのような脱出口を提供しうるかを概説します。
 
-## The Mechanism
+## メカニズム
 
-### FnOnce vs Fn: The Ownership Barrier
+### FnOnce 対 Fn: 所有権の障壁
 
-In category theory, a function `f: A → B` is a value. It can be applied
-zero, one, or many times. The notion of "how many times" does not exist.
+圏論において、関数 `f: A → B` は値です。ゼロ回、一回、あるいは何度も適用できます。「何回」という概念は存在しません。
 
-In Rust, a closure literal `|x| body` is classified by how its captured
-environment is used:
+Rust において、クロージャリテラル `|x| body` は捕獲した環境がどう使われるかによって分類されます:
 
-| Trait | Captures by | Callable | Signature |
+| トレイト | 捕獲方法 | 呼び出し可能 | シグネチャ |
 |-------|------------|----------|-----------|
-| `FnOnce` | Value (consuming) | Once | `call_once(self, args)` |
-| `FnMut` | Mutable reference | Many | `call_mut(&mut self, args)` |
-| `Fn` | Immutable reference | Many | `call(&self, args)` |
+| `FnOnce` | 値 (消費) | 一回 | `call_once(self, args)` |
+| `FnMut` | 可変参照 | 複数回 | `call_mut(&mut self, args)` |
+| `Fn` | 不変参照 | 複数回 | `call(&self, args)` |
 
-The key friction: when a closure captures an owned value `a: A` by move,
-it is `FnOnce` — the value is consumed on invocation and cannot be
-reproduced. For the closure to be `Fn`, `a` must be `Clone`, so that
-`a.clone()` can produce a fresh value on each invocation.
+重要な摩擦: クロージャが所有する値 `a: A` を move で捕獲する場合、それは `FnOnce` です — 値は呼び出し時に消費され、再現できません。クロージャが `Fn` になるには、`a` は `Clone` でなければならず、各呼び出しで `a.clone()` が新しい値を生成できる必要があります。
 
-This means:
+つまり:
 
 ```
-move |x| consume(a, x)  ⟹  FnOnce  (captures a by move, consumes it)
-move |x| a.clone()      ⟹  Fn      (captures a by move, clones it)
+move |x| consume(a, x)  ⟹  FnOnce  (a を move で捕獲、消費する)
+move |x| a.clone()      ⟹  Fn      (a を move で捕獲、複製する)
 ```
 
-### Why This Matters Categorically
+### なぜこれが圏論的に重要か
 
-Many category-theoretic constructions involve *producing a value of type
-`G::Of<A>`* inside a context where the value may need to be produced
-multiple times. In Haskell (lazy), producing a value has no cost — it's
-a thunk. In Rust (strict), producing a value consumes its ingredients,
-and reproducing it requires either cloning or sharing via `Rc`/`Arc`.
+多くの圏論的構成は、値が複数回生成される必要がある文脈で *`G::Of<A>` 型の値を生成する* ことを伴います。Haskell (遅延) では、値の生成にコストはありません — サンクです。Rust (正格) では、値の生成はその材料を消費し、再現には複製か `Rc`/`Arc` 経由の共有が必要です。
 
-## Constructions Blocked
+## ブロックされた構成
 
-### 1. FreeAp `fold_map`: Natural Transformations Through Existentials
+### 1. FreeAp `fold_map`: 存在型を通じた自然変換
 
-The canonical signature:
+標準的なシグネチャ:
 
 ```haskell
 foldMap :: Applicative g => (forall x. f x -> g x) -> FreeAp f a -> g a
 ```
 
-Rust cannot express this because:
-1. `(forall x. f x -> g x)` is a **rank-2 polymorphic** natural transformation
-2. The intermediate type `B` in `Ap (f b) (...)` is **existentially quantified**
-3. Dispatching a rank-2 function through an existential type requires
-   monomorphization — which `dyn Trait` cannot provide
-4. Even if monomorphization worked, the natural transformation must be
-   callable *at every node in the tree* (multiple invocations), but each
-   invocation consumes the effect value — making it `FnOnce` when the
-   recursive walk needs `Fn`
+Rust ではこれを表現できません。なぜなら:
+1. `(forall x. f x -> g x)` は **ランク 2 多相的** な自然変換
+2. `Ap (f b) (...)` の中間型 `B` は **存在量化** されている
+3. ランク 2 関数を存在型を通じてディスパッチするには単相化が必要 — `dyn Trait` はそれを提供できない
+4. 単相化が機能しても、自然変換は *ツリーのすべてのノードで* 呼び出し可能 (複数回の呼び出し) でなければならないが、各呼び出しはエフェクト値を消費する — 再帰的ウォークが `Fn` を必要とするときに `FnOnce` になってしまう
 
-**Categorical gap:** `foldMap` works in Haskell because:
-- `forall x` is first-class (System F)
-- Existential types are first-class
-- Lazy evaluation makes the number of invocations irrelevant
+**圏論的ギャップ:** Haskell で `foldMap` が機能するのは:
+- `forall x` が第一級 (System F)
+- 存在型が第一級
+- 遅延評価により呼び出し回数が無関係
 
-Rust lacks all three. The four alternative encodings we explored (generic
-node trait, Church encoding, recursive monomorphic, list-based) each fail
-for different sub-reasons of the same fundamental barrier.
+Rust はこの三つすべてを欠いています。我々が探った四つの代替エンコーディング (汎用ノードトレイト、チャーチエンコーディング、再帰的単相、リストベース) はそれぞれ、同じ根本的障壁の異なる副理由で失敗します。
 
-### 2. ReaderTF/StateTF `ApplicativeSt`: Pure in a Closure Context
+### 2. ReaderTF/StateTF `ApplicativeSt`: クロージャ文脈での pure
 
-The problem:
+問題:
 
 ```rust
 // ReaderTF::Of<A> = Box<dyn Fn(E) -> M::Of<A>>
 
 impl ApplicativeSt for ReaderTF<E, M> {
     fn pure_st<A: 'static>(a: A) -> Box<dyn Fn(E) -> M::Of<A>> {
-        // We must produce M::Of<A> on EVERY invocation of the closure.
-        // But M::pure_st(a) consumes a. After the first call, a is gone.
+        // クロージャの毎回の呼び出しで M::Of<A> を生成しなければならない。
+        // しかし M::pure_st(a) は a を消費する。最初の呼び出し後、a はなくなっている。
         //
-        // Without A: Clone, the closure can only be FnOnce.
+        // A: Clone がなければ、クロージャは FnOnce にしかなれない。
     }
 }
 ```
 
-**Categorical gap:** In category theory, `pure: a → Reader e a` is a
-natural transformation. The resulting `Reader e a` is a value. Applying
-it to different environments is free — it's just function application.
-In Rust, the "result" IS the function (a `Box<dyn Fn>`), and every
-invocation must produce a *fresh* `M::Of<A>`. Since `pure` consumes `a`,
-only the first invocation succeeds.
+**圏論的ギャップ:** 圏論では、`pure: a → Reader e a` は自然変換です。結果の `Reader e a` は値です。異なる環境に適用するのは自由です — 単なる関数適用です。Rust では、「結果」自体が関数 (`Box<dyn Fn>`) であり、毎回の呼び出しで *新しい* `M::Of<A>` を生成しなければなりません。`pure` は `a` を消費するため、最初の呼び出ししか成功しません。
 
-The same applies to `StateTF`: `pure(a)(s) = M::pure_st((s, a))` consumes
-`a`, making the closure `FnOnce`.
+同じことが `StateTF` にも当てはまります: `pure(a)(s) = M::pure_st((s, a))` は `a` を消費し、クロージャを `FnOnce` にします。
 
-### 3. Other Latent Issues
+### 3. その他の潜在的な問題
 
-The same pattern would appear in:
+同じパターンが以下にも現れるでしょう:
 
-- **ContT (continuation monad transformer):** `pure_st(a) = |k| k(a)` —
-  `a` must be cloneable for `k` to be called multiple times with the same
-  continuation
-- **Any free construction with generic interpreters:** The interpreter
-  must be applied at every node, consuming contextual data each time
-- **Cofree comonad with function-valued tails:** Similar closure capture
-  issues when extracting repeatedly
+- **ContT (継続モナド変換子):** `pure_st(a) = |k| k(a)` — `k` を同じ継続で複数回呼び出すには `a` が複製可能でなければならない
+- **汎用インタプリタを持つ任意の自由構成:** インタプリタはすべてのノードで適用され、毎回文脈データを消費する
+- **関数値の末尾を持つ Cofree コモナド:** 繰り返し抽出時の同様のクロージャ捕獲の問題
 
-## The Common Thread
+## 共通の糸
 
-All these failures share a structural property:
+これらすべての失敗は構造的性質を共有します:
 
 ```
-Categorical context:     "produce G<A> once, return it"
-Rust representation:     "return a Fn closure that produces G<A> on each call"
-Conflict:                Fn requires reproducibility, but production consumes.
+圏論的文脈:     "G<A> を一度生成し、それを返す"
+Rust の表現:     "各呼び出しで G<A> を生成する Fn クロージャを返す"
+衝突:                Fn は再現性を要求するが、生成は消費する。
 ```
 
-This maps onto the categorical coalgebra/algebra distinction:
-- **Coalgebraically:** `A → G<A>` (produce once, observe/consume)
-- **Algebraically:** `(E → G<A>)` (produce on demand, potentially many times)
+これは圏論的余代数/代数の区別にマップします:
+- **余代数的:** `A → G<A>` (一度生成、観察/消費)
+- **代数的:** `(E → G<A>)` (要求に応じて生成、潜在的に複数回)
 
-Rust can express the coalgebraic version (`FnOnce`), but not the algebraic
-version (`Fn`) without `Clone`. Most category-theoretic constructs
-implicitly assume algebraic access (values can be observed repeatedly).
+Rust は余代数的バージョン (`FnOnce`) を表現できますが、`Clone` なしでは代数的バージョン (`Fn`) を表現できません。ほとんどの圏論的構成要素は代数的アクセス (値は繰り返し観察できる) を暗黙に仮定します。
 
-## Why This Is Not Fixable in Current Rust
+## なぜ現在の Rust で修正できないか
 
-The Rust project has explored several avenues that would help, but none
-are close to stabilization:
+Rust プロジェクトは役立ついくつかの道を探りましたが、安定化に近いものはありません:
 
-| Feature | Status | Would it help? |
+| 機能 | 状態 | 役立つか? |
 |---------|--------|---------------|
-| `impl for<X> Fn(X) -> Y` (rank-N closures) | Not proposed | Would help FreeAp, but not Fn/FnOnce |
-| Existential types (`exists X. ...`) | Not in roadmap | Would help FreeAp |
-| `FnOnce` → `Fn` upcast (with Clone) | Not in trait system | Would bridge some cases |
-| Lazy evaluation / thunks | Rejected | Would solve the root cause |
-| `for<'a>` in trait objects (lifetime-bounded dyn) | Partially available via GATs | Already used in ContravariantLt (#93) |
+| `impl for<X> Fn(X) -> Y` (ランク N クロージャ) | 提案されていない | FreeAp に役立つが、Fn/FnOnce には无关 |
+| 存在型 (`exists X. ...`) | ロードマップにない | FreeAp に役立つ |
+| `FnOnce` → `Fn` アップキャスト (Clone 付き) | トレイトシステムにない | 一部のケースを橋渡しできる |
+| 遅延評価 / サンク | 却下 | 根本原因を解決する |
+| トレイトオブジェクトの `for<'a>` (ライフタイム境界付き dyn) | GAT 経由で部分的に利用可能 | 既に ContravariantLt (#93) で使用 |
 
-## Escape Hatches We Explored and Used
+## 探り使用した脱出口
 
-1. **Lifetime-parameterized GATs** (`type Of<'a, T>`): Used for
-   ContravariantLt (#93). Solves the `'static` constraint but not
-   the `Fn`/`FnOnce` issue.
+1. **ライフタイムパラメータ化 GAT** (`type Of<'a, T>`): ContravariantLt (#93) で使用。`'static` 制約を解決するが、`Fn`/`FnOnce` の問題は解決しない。
 
-2. **Blanket impls** (`impl<F: Functor> FunctorSt for F`): Used for
-   the St hierarchy (#97). Bridges parallel typeclass families but
-   doesn't solve the underlying representation problem.
+2. **ブランケット実装** (`impl<F: Functor> FunctorSt for F`): St 階層 (#97) で使用。並行する型クラスファミリーを橋渡しするが、根本的な表現問題は解決しない。
 
-3. **Standalone functions with stronger bounds:** Used for
-   `reader_t_pure`/`state_t_pure` (#98). The functions require
-   `Clone` because they clone on each invocation. The trait
-   doesn't require it because of the ripple effects (#98
-   investigation). This is a pragmatic compromise.
+3. **より強い境界を持つスタンドアロン関数:** `reader_t_pure`/`state_t_pure` (#98) で使用。関数は毎回の呼び出しで複製するため `Clone` を要求する。波及効果 (#98 の調査) のためトレイトはそれを要求しない。これは実用的な妥協。
 
-4. **Iterative convergence instead of knot-tying:** Used for
-   `loop_fixpoint` (#94). Replaces Haskell's lazy `loop` with
-   an iterative fixpoint that terminates when the feedback
-   stabilizes.
+4. **結び目作りの代わりの反復収束:** `loop_fixpoint` (#94) で使用。Haskell の遅延 `loop` を、フィードバックが安定したときに終了する反復フィックスポイントで置き換える。
 
-5. **Honest removal:** `OptionF` as Comonad (#92) and `CokleisliF<OptionF>`
-   (#92). Removed instances that mathematically cannot exist because
-   totality is violated.
+5. **正直な削除:** Comonad としての `OptionF` (#92) と `CokleisliF<OptionF>` (#92)。完全性が侵害されるため数学的に存在できない実装を削除。
 
-## If an Alternative Encoding Emerges
+## 代替エンコーディングが現れた場合
 
-The document exists so that when Rust's type system evolves — whether
-through HKT, rank-N closures, first-class existentials, or a `for<X>`
-quantifier — we can revisit these constructions. The specific things to
-watch for:
+この文書は、Rust の型システムが — HKT、ランク N クロージャ、第一級存在型、`for<X>` 量指定子のいずれによって — 進化したときに、これらの構成を再検討できるように存在します。注目すべき具体的なもの:
 
-### Future Feature: `for<X>` Quantified Closures
+### 将来の機能: `for<X>` 量化クロージャ
 
 ```rust
-// Hypothetical: rank-N closure through trait objects
+// 仮想的: トレイトオブジェクトを通じたランク N クロージャ
 trait NatTrans<F: HKT, G: HKT> {
     fn transform<X>(fx: F::Of<X>) -> G::Of<X>
-    where for<X>  // NOTE: hypothetical syntax
+    where for<X>  // 注意: 仮想的な構文
 }
 
-// Then fold_map could be:
+// すると fold_map は:
 impl<F: HKT, A> FreeAp<F, A> {
     fn fold_map<G: Applicative>(
         self,
-        nt: &dyn for<X> Fn(F::Of<X>) -> G::Of<X>,  // hypothetical
+        nt: &dyn for<X> Fn(F::Of<X>) -> G::Of<X>,  // 仮想的
     ) -> G::Of<A>
 }
 ```
 
-This would require Rust to support rank-N closures through `dyn` — a
-significant extension to the trait system.
+これには `dyn` を通じたランク N クロージャのサポートが必要です — トレイトシステムへの重要な拡張。
 
-### Future Feature: First-Class Existentials
+### 将来の機能: 第一級存在型
 
 ```rust
-// Hypothetical: existential type
+// 仮想的: 存在型
 enum FreeAp<F: HKT, A> {
     Pure(A),
-    Ap(exists B. F::Of<B>, FreeAp<F, B -> A>),  // hypothetical
+    Ap(exists B. F::Of<B>, FreeAp<F, B -> A>),  // 仮想的
 }
 ```
 
-This would allow the existential type `B` to be recovered at pattern-match
-time, enabling monomorphization of `fold_map`.
+これによりパターンマッチ時に存在型 `B` を復元でき、`fold_map` の単相化が可能になります。
 
-### Future Feature: Lazy/Thunk Evaluation
+### 将来の機能: 遅延/サンク評価
 
 ```rust
-// Hypothetical: GAT-based lazy value
+// 仮想的: GAT ベースの遅延値
 trait Lazy {
-    type Of<'a, T> = ???;  // some thunk-like representation
+    type Of<'a, T> = ???;  // サンク的な表現
 }
 ```
 
-If Rust gained lazy evaluation primitives, the `Fn`/`FnOnce` distinction
-would become irrelevant for many categorical constructs — producing a
-value would not consume it, and `pure` would be `Fn` by default.
+Rust が遅延評価プリミティブを得れば、多くの圏論的構成において `Fn`/`FnOnce` の区別は無関係になります — 値の生成がそれを消費せず、`pure` はデフォルトで `Fn` になるでしょう。
 
-## Relationship to Other Karpal Design Documents
+## 他の Karpal 設計文書との関係
 
-- [FreeAp fold_map exploration](./freeap-fold-map-exploration.md) —
-  detailed investigation of four alternative encodings
-- [Contravariant lifetime bounds](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/contravariant-lifetime-bounds.md) —
-  the `'static`/`Box<dyn Fn>` limitation and lifetime-aware GAT workaround
+- [FreeAp fold_map の探求](./freeap-fold-map-exploration.md) — 四つの代替エンコーディングの詳細な調査
+- [反変ライフタイム境界](https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/contravariant-lifetime-bounds.md) — `'static`/`Box<dyn Fn>` の制限とライフタイム認識 GAT の回避策
 
-## References
+## 参考文献
 
-- Rust closure trait hierarchy: [`FnOnce`](https://doc.rust-lang.org/std/ops/trait.FnOnce.html),
-  [`FnMut`](https://doc.rust-lang.org/std/ops/trait.FnMut.html),
-  [`Fn`](https://doc.rust-lang.org/std/ops/trait.Fn.html)
-- GAT stabilization: [RFC 1598](https://rust-lang.github.io/rfcs/1598-generic_associated_types.html)
-- `for<>` lifetime syntax: [Reference](https://doc.rust-lang.org/reference/trait-bounds.html#higher-ranked-trait-bounds)
+- Rust クロージャトレイト階層: [`FnOnce`](https://doc.rust-lang.org/std/ops/trait.FnOnce.html)、[`FnMut`](https://doc.rust-lang.org/std/ops/trait.FnMut.html)、[`Fn`](https://doc.rust-lang.org/std/ops/trait.Fn.html)
+- GAT 安定化: [RFC 1598](https://rust-lang.github.io/rfcs/1598-generic_associated_types.html)
+- `for<>` ライフタイム構文: [リファレンス](https://doc.rust-lang.org/reference/trait-bounds.html#higher-ranked-trait-bounds)
