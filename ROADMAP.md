@@ -544,7 +544,7 @@ full agent-first discovery runtime with three layers — **Discover**, **Plan**,
 and **Experiment** — reaching parity with `amari-discovery`.
 
 The existing `karpal-index` binary is a Cargo dependency of the IA-MCP server
-and is published on crates.io at 0.7.0. The expansion migrates it to the
+and is published on crates.io at 0.8.0. The expansion migrates it to the
 `karpal-discovery` package owning a `karpal` command, retiring the placeholder
 `karpal-index` name. A compatibility re-export keeps existing invocations
 working during the transition.
@@ -677,7 +677,7 @@ human/JSON/NDJSON parity; optional AI contract; interactive shell; hardening.
 yet); GPU/Borsalino probes (Phase 18); cross-tool federation (post-1.0);
 project mutation or patch application; arbitrary code/shell execution.
 
-**Migration**: `karpal-index` is currently published at 0.7.0 and is an
+**Migration**: `karpal-index` is currently published at 0.8.0 and is an
 IA-MCP dependency. The `karpal-discovery` package must preserve the existing
 JSON contract as a compatibility mode during the transition, then deprecate.
 

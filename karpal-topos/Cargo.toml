@@ -8,10 +8,10 @@ homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
 readme = "README.md"
-description = "Topos-theoretic constructions: presheaves, sieves, and the Yoneda lemma for the Industrial Algebra ecosystem"
+description = "Topos-theoretic constructions: small categories, presheaves, sieves, the subobject classifier, Grothendieck topologies, and sheaves for the Industrial Algebra ecosystem"
 
 [dependencies]
-karpal-core = { version = "0.7.0", path = "../karpal-core", default-features = false }
+karpal-core = { version = "0.8.0", path = "../karpal-core", default-features = false }
 
 [features]
 default = ["std"]
