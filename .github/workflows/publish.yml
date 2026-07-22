@@ -25,6 +25,14 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
+      - name: Publish karpal-topos (NEW in 0.8.0)
+        run: cargo publish -p karpal-topos
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
       - name: Publish karpal-algebra (already published, skip if exists)
         continue-on-error: true
         run: cargo publish -p karpal-algebra

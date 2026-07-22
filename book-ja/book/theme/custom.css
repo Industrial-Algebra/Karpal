@@ -1,0 +1,96 @@
+/* Karpal mdBook theme — IA Navy variant */
+
+.navy {
+    --bg: #0a0a0f;
+    --fg: #e0e0e8;
+    --sidebar-bg: #0e0e16;
+    --sidebar-fg: #a0a0b0;
+    --sidebar-active: #00cccc;
+    --sidebar-non-existant: #404050;
+    --content-bg: #0a0a0f;
+    --header-fg: #00cccc;
+    --links: #00cccc;
+    --inline-code-color: #00cccc;
+    --code-bg: #0e0e16;
+    --border-color: #1a1a25;
+    --table-header-bg: #0e0e16;
+    --table-alternate-row-bg: #0c0c14;
+    --quote-border: #00cccc;
+    --icons-hover: #00cccc;
+    --search-bar-bg: #0e0e16;
+    --searchresults-header-fg: #00cccc;
+    --search-mark-bg: rgba(0, 204, 204, 0.2);
+    --searchresults-title-fg: #e0e0e8;
+    --theme-hover: #00cccc;
+}
+
+/* Typography */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+code, pre, .code-header {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: var(--header-fg);
+    text-shadow: 0 0 20px rgba(0, 204, 204, 0.15);
+}
+
+/* Code blocks */
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+/* Tables */
+table {
+    border-collapse: collapse;
+}
+
+table td, table th {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+}
+
+table th {
+    color: var(--header-fg);
+    background: var(--table-header-bg);
+}
+
+table tr:nth-child(even) {
+    background: var(--table-alternate-row-bg);
+}
+
+/* Links */
+a {
+    color: var(--links);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #00ffff;
+}
+
+/* Blockquotes */
+blockquote {
+    border-left: 3px solid var(--quote-border);
+    margin-left: 0;
+    padding-left: 16px;
+    color: var(--sidebar-fg);
+}
+
+/* Sidebar */
+.sidebar {
+    border-right: 1px solid var(--border-color);
+}
+
+/* Search */
+#searchbar {
+    background: var(--search-bar-bg);
+    border: 1px solid var(--border-color);
+}

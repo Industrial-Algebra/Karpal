@@ -1,0 +1,22 @@
+[package]
+name = "karpal-topos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Topos-theoretic constructions: small categories, presheaves, sieves, the subobject classifier, Grothendieck topologies, and sheaves for the Industrial Algebra ecosystem"
+
+[dependencies]
+karpal-core = { version = "0.8.0", path = "../karpal-core", default-features = false }
+
+[features]
+default = ["std"]
+std = ["alloc", "karpal-core/std"]
+alloc = ["karpal-core/alloc"]
+
+[dev-dependencies]
+proptest = "1"

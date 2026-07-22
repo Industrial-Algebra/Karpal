@@ -49,12 +49,12 @@ mod tests {
 
     #[test]
     fn cat_associator_exists() {
-        let _a = Cat::associator::<i32, &str, bool, f64>();
+        Cat::associator::<i32, &str, bool, f64>();
     }
 
     #[test]
     fn cat_unit_existence() {
-        let _l = Cat::left_unitor::<i32, &str>();
-        let _r = Cat::right_unitor::<i32, &str>();
+        Cat::left_unitor::<i32, &str>();
+        Cat::right_unitor::<i32, &str>();
     }
 }

@@ -63,3 +63,9 @@ jobs:
 
       - name: no_std check (karpal-diagram)
         run: cargo build --no-default-features -p karpal-diagram
+
+      - name: no_std check (karpal-topos)
+        run: cargo build --no-default-features -p karpal-topos
+
+      - name: alloc-only no_std check (karpal-topos)
+        run: cargo build --no-default-features -p karpal-topos --features alloc

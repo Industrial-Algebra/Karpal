@@ -48,7 +48,7 @@ checksum = "06e03bbe82507ade43f9d75442b922e1dc571b7c1588f8ec761f399f1c4ba4cf"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -263,7 +263,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "karpal-algebra"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -271,7 +271,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-arrow"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -279,14 +279,14 @@ dependencies = [
 
 [[package]]
 name = "karpal-core"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "proptest",
 ]
 
 [[package]]
 name = "karpal-diagram"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-arrow",
  "karpal-proof",
@@ -296,7 +296,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-effect"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -304,7 +304,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-free"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -312,7 +312,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-higher"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "karpal-proof",
@@ -321,19 +321,19 @@ dependencies = [
 
 [[package]]
 name = "karpal-index"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "proc-macro2",
  "quote",
  "serde",
  "serde_json",
- "syn",
+ "syn 3.0.2",
  "walkdir",
 ]
 
 [[package]]
 name = "karpal-optics"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "karpal-profunctor",
@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-profunctor"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -350,7 +350,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-proof"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-algebra",
  "karpal-core",
@@ -360,16 +360,16 @@ dependencies = [
 
 [[package]]
 name = "karpal-proof-derive"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 3.0.2",
 ]
 
 [[package]]
 name = "karpal-recursion"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-core",
  "karpal-free",
@@ -378,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-schubert-types"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "amari-enumerative",
  "karpal-algebra",
@@ -389,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-std"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-algebra",
  "karpal-arrow",
@@ -407,8 +407,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "karpal-topos"
+version = "0.8.0"
+dependencies = [
+ "karpal-core",
+ "proptest",
+]
+
+[[package]]
 name = "karpal-verify"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "amari-flynn",
  "karpal-proof",
@@ -417,12 +425,12 @@ dependencies = [
 
 [[package]]
 name = "karpal-verify-derive"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "karpal-verify",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -529,14 +537,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
 dependencies = [
  "proc-macro2",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.106"
+version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
+checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
 ]
@@ -568,9 +576,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.46"
+version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368"
+checksum = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
 dependencies = [
  "proc-macro2",
 ]
@@ -706,9 +714,9 @@ checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
 
 [[package]]
 name = "serde"
-version = "1.0.228"
+version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
 dependencies = [
  "serde_core",
  "serde_derive",
@@ -716,29 +724,29 @@ dependencies = [
 
 [[package]]
 name = "serde_core"
-version = "1.0.228"
+version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+checksum = "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.228"
+version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
+checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 3.0.2",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.150"
+version = "1.0.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
+checksum = "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
 dependencies = [
  "itoa",
  "memchr",
@@ -755,9 +763,20 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "syn"
-version = "2.0.118"
+version = "2.0.119"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b9ae57f904213ebb649ce6895b8a66c66f0203b9319718f69a5612a065b1422"
+checksum = "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a207d6d6a2b7fc470b80443726053f18a2481b7e1eee970597051596567987a3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -794,7 +813,7 @@ checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -946,7 +965,7 @@ dependencies = [
  "heck",
  "indexmap",
  "prettyplease",
- "syn",
+ "syn 2.0.119",
  "wasm-metadata",
  "wit-bindgen-core",
  "wit-component",
@@ -962,7 +981,7 @@ dependencies = [
  "prettyplease",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
  "wit-bindgen-core",
  "wit-bindgen-rust",
 ]
@@ -1021,7 +1040,7 @@ checksum = "70e3cd084b1788766f53af483dd21f93881ff30d7320490ec3ef7526d203bad4"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]

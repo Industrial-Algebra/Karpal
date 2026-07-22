@@ -438,7 +438,7 @@ Extensions E and F are the most immediately meaningful:
   `[O_λ] · [O_μ] = q + q²` — the *two* solutions are distinguished by a
   deformation parameter, which maps to distinct coercion paths at the type level.
 
-### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (sub-phase A complete in 0.7.0)
+### Phase 16 — `karpal-topos`: Topos-Theoretic Constructions (complete ✅)
 
 **Crate**: `karpal-topos` (new)
 
@@ -465,9 +465,9 @@ infrastructure that Phase 14 and structured emptiness ultimately rest on.
 | Sub-phase | Description | Dependencies |
 |-----------|-------------|--------------|
 | **A — Heyting algebras & internal logic** | `HeytingAlgebra` extending `BoundedLattice`, internal implication `→`, negation `¬`, propositional connectives | karpal-algebra (BoundedLattice) |
-| **B — Presheaves & sieves** | `Presheaf<C>`, `Sieve<C>`, Yoneda embedding (connecting to karpal-free's Yoneda), representable presheaves | karpal-core (Functor, NaturalTransformation), karpal-free (Yoneda) |
-| **C — Subobject classifier & finite limits** | `SubobjectClassifier`, `Pullback`, `Equalizer`, characteristic morphism construction | Sub-phase A, Sub-phase B |
-| **D — Grothendieck topologies & sheaves** | `GrothendieckTopology`, `Sheaf`, sheafification adjunction (connecting to karpal-core adjunctions), Lawvere-Tierney topologies | Sub-phase C, karpal-core (Adjunction) |
+| **B — Presheaves & sieves** ✅ | `Presheaf<C>`, `Sieve<C>`, Yoneda embedding (connecting to karpal-free's Yoneda), representable presheaves. Implemented in `karpal-topos` (Phase 16B) | karpal-core (Functor, NaturalTransformation), karpal-free (Yoneda) |
+| **C — Subobject classifier & finite limits** ✅ | `SubobjectClassifier`, `Pullback`, `Equalizer`, characteristic morphism construction. Implemented in `karpal-topos` (Phase 16C) | Sub-phase A, Sub-phase B |
+| **D — Grothendieck topologies & sheaves** ✅ | `GrothendieckTopology`, `Sheaf`, sheafification adjunction (connecting to karpal-core adjunctions), Lawvere-Tierney topologies. Implemented in `karpal-topos` (Phase 16D) | Sub-phase C, karpal-core (Adjunction) |
 
 **Connections to existing phases**:
 - **Phase 8 (Abstract Algebra)**: `BoundedLattice` → `HeytingAlgebra` is a direct extension; the structured emptiness lattice `Ω = { Denied, Granted(0), Granted(n), Granted(∞) }` becomes a concrete subobject classifier
@@ -531,6 +531,155 @@ certificates, and trust-boundary crossing points.
 See integration documents:
 - [Schubert verification integration](../../Schubert/docs/verification-integration.md)
 - [Borsalino verification integration](../../Borsalino/docs/verification-integration.md)
+
+### Phase 19 — `karpal-discovery`: Agent-First Discovery Runtime (pre-1.0)
+
+**Package**: `karpal-discovery` (expands the existing `karpal-index`)
+**Installed binary**: `karpal`
+**Reference design**: [amari-discovery 0.24.0](https://github.com/Industrial-Algebra/Amari/blob/develop/docs/plans/2026-07-09-amari-discovery-design.md) — protocol parity is the goal
+
+`karpal-index` today is a 2-file source scanner with four commands (`search`,
+`detail`, `crates`, `hierarchy`) and `--json` output. Phase 19 expands it into a
+full agent-first discovery runtime with three layers — **Discover**, **Plan**,
+and **Experiment** — reaching parity with `amari-discovery`.
+
+The existing `karpal-index` binary is a Cargo dependency of the IA-MCP server
+and is published on crates.io at 0.8.0. The expansion migrates it to the
+`karpal-discovery` package owning a `karpal` command, retiring the placeholder
+`karpal-index` name. A compatibility re-export keeps existing invocations
+working during the transition.
+
+#### The dogfooding angle
+
+Where `amari-discovery` dogfoods Amari's holographic recall, tropical ranking,
+and network graphs, `karpal-discovery` dogfoods Karpal's own category-theoretic
+structures — which is a stronger story, because the library's subject *is* the
+planner's substrate:
+
+| Planner stage | Amari substrate | Karpal substrate |
+|---------------|-----------------|------------------|
+| Candidate recall | Holographic vector similarity | `NaturalTransformation` + Yoneda embedding (`karpal-free`) |
+| Capability graph | `GeometricNetwork` shortest paths | `Category` / `Arrow` composition graph (`karpal-core`, `karpal-arrow`) |
+| Multi-objective ranking | Tropical min-plus / `ParetoFront` | `Semigroup`/`Monoid` score aggregation; `BoundedLattice` for Pareto order (`karpal-algebra`) |
+| Plan normalization | `amari-rewrite` TRS | Plan steps as `Free` monad; normalization as catamorphism (`karpal-free`, `karpal-recursion`) |
+| Plan witnesses | Statistical contracts | `Proven<P, T>` proof-carrying steps (`karpal-proof`) |
+| Probe validation | Monte Carlo law bounds | Algebraic law checks + coherence proofs (`karpal-proof`, `karpal-verify`) |
+
+This is not decorative. If Karpal's own typeclasses cannot power its discovery
+planner, they cannot credibly power anyone else's.
+
+#### Probe domains
+
+Karpal probes are bounded, typed, read-only executions that dogfood the
+library's own abstractions. Each declares a versioned schema, resource
+ceilings, determinism behavior, and provenance — exactly as in amari-discovery.
+
+| Probe | Dogfoods | What it demonstrates |
+|-------|----------|----------------------|
+| Functor law check | `karpal-proof` | Identity + composition hold for a user-supplied instance |
+| Monad law check | `karpal-proof` | Left/right identity + associativity |
+| Coherence proof | `karpal-diagram` + `karpal-verify` | Pentagon / triangle / hexagon witnesses |
+| Schubert intersection | `karpal-schubert-types` | `IntersectionKind` for two classes in Gr(k,n) |
+| Recursion scheme eval | `karpal-recursion` | cata / ana / hylo on a sample functor |
+| Optic round-trip | `karpal-optics` | Lens / Prism laws on sample data |
+| Arrow pipeline | `karpal-arrow` | Sample arrow composition with `loop_fixpoint` |
+| Verification dry-run | `karpal-verify` | SMT obligation export + local schema check |
+
+GPU / Borsalino probes are deferred (they belong to Phase 18's ecosystem work).
+
+#### Versioned protocol
+
+A versioned, serializable protocol (`karpal.discovery/v1`) with typed
+request/response envelopes, provenance (tool/catalog/project/input hashes,
+deterministic seed), and stable exit codes. Human, `--json`, and `--ndjson`
+outputs all derive from the same typed response objects. This mirrors
+amari-discovery's protocol exactly so that a future federation layer can treat
+both tools uniformly.
+
+Core types: `Capabilities`, `ProjectSnapshot`, `GoalSpec`, `CapabilityRecord`,
+`Evidence`, `Recommendation`, `CandidatePlan`, `PlanStep`, `ProbeDescriptor`,
+`ProbeRequest`, `ProbeResult`, `DiscoveryError`, `DiscoveryOutcome`.
+
+Stable capability IDs: `karpal:<crate>:<module>:<capability>`.
+
+#### Dynamic capabilities
+
+`karpal capabilities` reports what the *installed* binary can do in the current
+environment — not merely what exists in the source. Each capability has three
+states that must never be conflated: **known** (in the catalog), **available**
+(compatible with the inspected project), **executable** (has a compiled probe
+adapter). Includes tool/protocol/catalog versions, output modes, resource
+ceilings, host/target info, feature gates, optional AI-adapter state, and a
+stable exit-code map.
+
+#### Hybrid catalog
+
+A **generated structural index** (CI-generated from every workspace package
+except `karpal-discovery` itself: crates, features, dependency graph, public
+items, signatures, trait relationships, examples, cfg gates, macros) plus
+**curated semantic overlays** (mathematical concept names, problem shapes,
+assumptions, composition relationships, alternatives, maturity tiers, cost
+hints, recommended probes). Generated data is checked in so a crates.io
+install needs no source checkout. CI rejects overlays referencing missing
+symbols and enforces deterministic catalog hashing.
+
+#### Project inspection
+
+Read-only, bounded inspection. Karpal consumers are Rust/Cargo-only in scope
+(unlike Amari's Rust + JS/TS story), simplifying the inspector surface:
+
+Collect: Cargo metadata and resolved dependencies; enabled and available
+Karpal features; imported/used Karpal symbols; source module and domain
+vocabulary; examples, tests, benchmarks; README/design intent; current Karpal
+versions; platform constraints (`no_std`, WASM, GPU). The `ProjectSnapshot`
+records extracted signals, source locations, hashes, and confidence — not
+opaque prose.
+
+#### Optional AI adapter
+
+A provider-neutral adapter trait may translate natural-language goals into
+typed `GoalSpec` input and summarize evidence-backed recommendations. It may
+*not* introduce uncatalogued capabilities, alter deterministic scores, execute
+probes, bypass limits, or hide uncertainty. v0.8 ships the contract only — no
+concrete external-process transport. The tool is fully useful offline.
+
+#### Sub-phases
+
+| Sub-phase | Description | Dependencies |
+|-----------|-------------|--------------|
+| **A — Protocol & capabilities** | Versioned protocol, provenance, `DiscoveryError`, dynamic `capabilities` command, human/JSON/NDJSON renderers, stable exit codes | — |
+| **B — Hybrid catalog** | Structural catalog generator (syn-based, extending current `indexer.rs`), curated semantic overlays, validation, deterministic hashing, CI drift enforcement | A |
+| **C — Discovery commands** | Progressive `discover search/detail/graph/example` over the catalog (supersedes current search/detail/crates/hierarchy) | B |
+| **D — Project inspection** | Bounded read-only Cargo/Rust inspector, `ProjectSnapshot`, `inspect` command, no-mutation guarantees | A |
+| **E — Category-theoretic planner** | Yoneda-based candidate recall, capability-graph expansion, lattice/Pareto ranking, `Free`-monad plan normalization, `recommend` + `plan` commands | B, C, D |
+| **F — Probe registry & algebraic probes** | Typed `ProbeRegistry`, cooperative + process isolation, representative law/coherence/intersection/recursion/optic/arrow/verify probes, `probe list/describe/run` commands | B, E |
+| **G — Agent contract & shell** | Schema command, NDJSON across all command families, agent-contract golden tests, interactive `shell`, optional AI-adapter validation contract | C, E, F |
+| **H — Hardening & packaging** | Traversal/parser/provenance hardening, output-contract golden tests, token/latency budgets, `karpal-index` → `karpal-discovery` migration, publish-order verification | All prior |
+
+#### Connections to existing phases
+
+- **Phase 11 (karpal-proof)**: Plan steps carry `Proven<P, T>` witnesses; law-check probes dogfood the proof system.
+- **Phase 12 (karpal-verify)**: Verification dry-run probe exports obligations without crossing the trust boundary.
+- **Phase 13 (karpal-diagram)**: Coherence-probe checks pentagon/triangle/hexagon witnesses; capability graph composes via `Tensor`/`Category`.
+- **Phase 14 (karpal-schubert-types)**: Intersection probe computes `IntersectionKind`; structured emptiness surfaces in recommendations (e.g., "this type pair has a geometric zero intersection").
+- **Phase 15 (karpal-higher)**: Capability graph is a category enriched over the recommendation lattice — a concrete `EnrichedCategory` instance.
+- **Phase 16 (karpal-topos)**: The recommendation lattice Ω *is* the subobject classifier; goal satisfaction is characteristic-morphism evaluation in a topos.
+- **Phase 17 (karpal-e2e)**: The discovery probes and catalog-integrity tests feed directly into the end-to-end release-readiness gates.
+- **Phase 18 (ecosystem)**: karpal-discovery is the reference implementation for a versioned discovery protocol that amari-discovery, Schubert, and future IA tools can federate through.
+
+#### Scope notes
+
+**In scope**: full discover/plan/experiment layers; hybrid catalog; Rust/Cargo
+inspection; category-theoretic planner; algebraic probes; versioned protocol;
+human/JSON/NDJSON parity; optional AI contract; interactive shell; hardening.
+
+**Out of scope (deferred)**: JS/TypeScript inspection (no karpal-wasm exists
+yet); GPU/Borsalino probes (Phase 18); cross-tool federation (post-1.0);
+project mutation or patch application; arbitrary code/shell execution.
+
+**Migration**: `karpal-index` is currently published at 0.8.0 and is an
+IA-MCP dependency. The `karpal-discovery` package must preserve the existing
+JSON contract as a compatibility mode during the transition, then deprecate.
 
 ---
 
@@ -638,6 +787,7 @@ correctly through chains of operations.
 | **14 — Enriched categories** | Categories enriched over enumeration lattices; composition via LR-style rules |
 | **15 — Schubert types** | Concrete realization: types as Schubert classes, type checking as intersection computation, `IntersectionKind` as the structured emptiness lattice |
 | **16 — Topos** | Subobject classifier *is* the structured emptiness lattice; Schubert intersection *is* pullback; sheafification gives "local-to-global" composition of structured truth values |
+| **19 — Discovery** | Recommendations carry `IntersectionKind`-valued confidence; capability graph is enriched over the emptiness lattice; goal satisfaction is characteristic-morphism evaluation |
 
 ---
 
@@ -662,6 +812,7 @@ karpal/
 ├── karpal-schubert-types/ # Phase 14: Schubert intersection type system (experimental)
 ├── karpal-topos/          # Phase 16: Topos theory, subobject classifiers, sheaves
 ├── karpal-e2e/            # Phase 17: End-to-end validation, CI/release readiness
+├── karpal-discovery/      # Phase 19: Agent-first discovery runtime (expands karpal-index)
 └── karpal-verify-gpu/     # Phase 18 extension: GPU compute obligations (optional)
 ```
 
@@ -892,4 +1043,5 @@ abstract.
 
 ## License
 
-AGPL-3.0-or-later
+Apache-2.0 (with CLA; see `CONTRIBUTING.md`). Relicensed from AGPL-3.0-or-later
+at v0.6.0 — earlier AGPL releases remain permanently on crates.io.

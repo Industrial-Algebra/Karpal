@@ -5,7 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0] — Unreleased
+## [0.8.0] — Unreleased
+
+### Added
+
+- **Phase 16B: Presheaves & Sieves** — new `karpal-topos` crate with `SmallCategory` trait (objects as phantom types, morphisms as data), `ChainCat<N>` (finite poset category), `DiscreteCat`, `Presheaf<C>` (contravariant functors `C^op → Set`), `Representable<c>` (the hom-presheaf), `FiniteSieve` (precomposition-closed families), and the Yoneda lemma as a computable bijection (`yoneda_apply`/`yoneda_extract`). 25 tests.
+- **Phase 16C: Subobject Classifier & Finite Limits** — `Omega` presheaf (Ω(i) = sieves on i = chain Heyting lattice of `TruthValue` ranks), `Terminal` presheaf, `truth_at` map, `pullback_fiber`/`equalizer_fiber` (pointwise limits), `characteristic_at` (the χ morphism). 14 new tests.
+- **Phase 16D: Grothendieck Topologies & Sheaves** — `GrothendieckTopology` trait with `TrivialTopology`/`DenseTopology` (axiom-verified), `LawvereTierneyTopology` closure operators (`j: Ω → Ω`), `is_separated_at`/`is_sheaf_at` sheaf condition, sheafification adjunction interface. 17 new tests. **Phase 16 complete** — the full topos stack.
+- **Japanese mdBook localization** — all 47 pages translated to Japanese (`book-ja/`), deployed at `/book-ja/` subpath. Full coverage including the new Topos Theory reference page.
+- **Topos Theory reference page** — comprehensive documentation of the `karpal-topos` crate added to both English and Japanese mdBooks (the headline feature of 0.8.0).
+
+### Changed
+
+- **Dependency updates** — `syn` 2.x → 3.0 (major), `serde` 1.0.219, `serde_json` 1.0.140, `proc-macro2` 1.0.101, `quote` 1.0.40 (dependabot).
+- **karpal-higher clippy cleanup** — resolved 7 `--all-targets` clippy warnings in test code (unused imports, unit-value let bindings).
+
+### Design Documents
+
+- [Phase 16B: Presheaves & Sieves](docs/plans/2026-07-19-phase-16b-presheaves.md)
+- [Phase 16C: Subobject Classifier & Finite Limits](docs/plans/2026-07-20-phase-16c-classifier.md)
+- [Phase 16D: Grothendieck Topologies & Sheaves](docs/plans/2026-07-20-phase-16d-sheaves.md)
+
+## [0.7.0] — 2026-07-05
 
 ### Added
 
