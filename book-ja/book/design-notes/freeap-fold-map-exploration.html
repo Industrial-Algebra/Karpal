@@ -1,0 +1,415 @@
+<!DOCTYPE HTML>
+<html lang="ja" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>FreeAp fold_map: Rust で不可能な理由 - Karpal</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Rust のための代数構造と圏論">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../book/theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-8d7532d3.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-732289fc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Karpal</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/Industrial-Algebra/Karpal" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="freeap-fold_map-なぜ-rust-では不可能か-そして代わりに何ができるか"><a class="header" href="#freeap-fold_map-なぜ-rust-では不可能か-そして代わりに何ができるか">FreeAp <code>fold_map</code>: なぜ Rust では不可能か (そして代わりに何ができるか)</a></h1>
+<p><strong>状態:</strong> 設計理論 — 完結した調査
+<strong>日付:</strong> 2026-07-01
+<strong>イシュー:</strong> <a href="https://github.com/Industrial-Algebra/Karpal/issues/95">#95</a>
+<strong>発見:</strong> Proserpina ドキュメント批評 (バッチ 4)</p>
+<h2 id="背景"><a class="header" href="#背景">背景</a></h2>
+<p>自由アプリカティブ (<code>FreeAp</code>) は圏論と関数型プログラミングにおける標準的な構成です。Haskell ではそのシグネチャは:</p>
+<pre><code class="language-haskell">data FreeAp f a
+  = Pure a
+  | forall b. Ap (f b) (FreeAp f (b -&gt; a))
+
+foldMap :: Applicative g =&gt; (forall x. f x -&gt; g x) -&gt; FreeAp f a -&gt; g a
+</code></pre>
+<p><code>Ap</code> コンストラクタの <code>forall b</code> は <strong>存在型</strong> です — 各ノードは独自の中間型 <code>b</code> を隠します。<code>foldMap</code> の <code>forall x</code> は <strong>ランク 2 全称</strong> です — 自然変換は <em>すべての</em> 型で機能しなければなりません。</p>
+<p>この二つの量指定子は一緒になって、Haskell (完全な System F 多相を持つ) では表現しやすいが、この調査が示すように <strong>現在の Rust では根本的に表現不可能</strong> な緊張を作り出します。</p>
+<h2 id="問題"><a class="header" href="#問題">問題</a></h2>
+<p>Karpal の <code>FreeAp</code> は存在 <code>dyn</code> トレイトを持つ GAT ベース HKT エンコーディングを使います:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait FreeApNode&lt;F: HKT + 'static, A: 'static&gt; {
+    fn retract_node(self: Box&lt;Self&gt;) -&gt; F::Of&lt;A&gt;
+    where
+        F: Applicative;
+    fn count_effects(&amp;self) -&gt; usize;
+}
+
+pub enum FreeAp&lt;F: HKT + 'static, A: 'static&gt; {
+    Pure(A),
+    Ap(Box&lt;dyn FreeApNode&lt;F, A&gt;&gt;),
+}
+<span class="boring">}</span></code></pre>
+<p>各 <code>Ap</code> ノードは中間型 <code>B</code> を <code>dyn FreeApNode&lt;F, A&gt;</code> の背後で消去します。これは <code>retract</code> (F 自身に解釈) には機能します。<code>F::ap</code> と <code>F::pure</code> がトレイトレベルで利用可能だからです。</p>
+<p>しかし <code>fold_map</code> は <code>B</code> が消去された状態で <code>nt.transform::&lt;B&gt;()</code> を呼ぶ必要があります。Rust は <code>dyn</code> トレイトオブジェクトを通じて汎用関数を単相化できません。<strong>汎用メソッドと <code>dyn</code> ディスパッチは Rust の型システムで相互排他です。</strong></p>
+<h2 id="探ったアプローチ"><a class="header" href="#探ったアプローチ">探ったアプローチ</a></h2>
+<h3 id="アプローチ-1-ノードトレイトの汎用メソッド"><a class="header" href="#アプローチ-1-ノードトレイトの汎用メソッド">アプローチ 1: ノードトレイトの汎用メソッド</a></h3>
+<p><strong>アイデア:</strong> <code>fold_map</code> を <code>FreeApNode</code> の汎用メソッドとして追加。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait FreeApNode&lt;F: HKT + 'static, A: 'static&gt; {
+    fn fold_map&lt;G: Applicative, NT: NatTrans&lt;F, G&gt;&gt;(&amp;self, nt: &amp;NT) -&gt; G::Of&lt;A&gt;;
+}
+
+trait NatTrans&lt;F: HKT, G: HKT&gt; {
+    fn transform&lt;B&gt;(fb: F::Of&lt;B&gt;) -&gt; G::Of&lt;B&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p><strong>結果: ❌ コンパイル不可。</strong></p>
+<p><code>fold_map&lt;G, NT&gt;</code> は汎用メソッドです。汎用メソッドはトレイトを <strong>非 dyn 互換</strong> にします (<code>dyn FreeApNode</code> がコンパイル不可)。<code>dyn</code> がなければ中間型を消去できず、異種混合ツリーを構築できません。</p>
+<p>これが循環の罠です:</p>
+<ul>
+<li><code>B</code> を消去するには <code>dyn</code> が必要。</li>
+<li><code>nt&lt;B&gt;</code> をディスパッチするには単相化が必要。</li>
+<li><code>dyn</code> と汎用メソッドは相互排他。</li>
+</ul>
+<h3 id="アプローチ-2-消去されたインタプリタによるチャーチエンコーディング"><a class="header" href="#アプローチ-2-消去されたインタプリタによるチャーチエンコーディング">アプローチ 2: 消去されたインタプリタによるチャーチエンコーディング</a></h3>
+<p><strong>アイデア:</strong> <code>FreeAp</code> をそれ自身の fold として表現 — インタプリタを取り結果を生成するクロージャ。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait ErasedInterp&lt;F&gt; {
+    fn pure_erased(&amp;self, val: Box&lt;dyn Any&gt;) -&gt; Box&lt;dyn Any&gt;;
+    fn ap_erased(&amp;self, ff: Box&lt;dyn Any&gt;, fa: Box&lt;dyn Any&gt;) -&gt; Box&lt;dyn Any&gt;;
+    fn lift_erased(&amp;self, fb: Box&lt;dyn Any&gt;) -&gt; Box&lt;dyn Any&gt;;
+}
+
+pub struct FreeApC&lt;F: 'static, A: 'static&gt; {
+    run: Box&lt;dyn FnOnce(&amp;dyn ErasedInterp&lt;F&gt;) -&gt; Box&lt;dyn Any&gt;&gt;,
+}
+<span class="boring">}</span></code></pre>
+<p><strong>結果: ❌ コンパイル不可。</strong></p>
+<p>インタプリタの <code>pure_erased</code> は <code>Box&lt;dyn Any&gt;</code> を受け取り <code>G::Of&lt;A&gt;</code> を構築しなければなりません。しかし <code>A</code> は実行時に消去されており — インタプリタには <code>G::pure</code> を呼ぶために <code>Box&lt;dyn Any&gt;</code> から具体的な型を復元する方法がありません。</p>
+<p>同様に、<code>ap_erased</code> は二つの消去されたボックスを受け取るが、アプリカティブ適用を行うための関数/引数の型を決定できません。</p>
+<p><strong>根本原因:</strong> <code>Box&lt;dyn Any&gt;</code> はインタプリタが正しく型付けされた結果を構築するのに必要な型を消去します。型消去は型構築と互換性がありません。</p>
+<h3 id="アプローチ-3-再帰的単相エンコーディング"><a class="header" href="#アプローチ-3-再帰的単相エンコーディング">アプローチ 3: 再帰的単相エンコーディング</a></h3>
+<p><strong>アイデア:</strong> すべてのエフェクトを同じ型 <code>X</code> に制約し、存在型の必要性を回避。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub enum FreeApMono&lt;F: HKT + 'static, X: 'static, A: 'static&gt; {
+    Pure(A),
+    Ap {
+        effect: F::Of&lt;X&gt;,
+        kont: Box&lt;FreeApMono&lt;F, X, Box&lt;dyn Fn(X) -&gt; A&gt;&gt;&gt;,
+    },
+}
+<span class="boring">}</span></code></pre>
+<p><strong>結果: ❌ コンパイル不可 — 無限型再帰。</strong></p>
+<p><code>Ap</code> バリアントは <code>FreeApMono&lt;F, X, Box&lt;dyn Fn(X) -&gt; A&gt;&gt;</code> を格納し、型チェッカレベルで無限型連鎖を作ります:</p>
+<pre><code>FreeApMono&lt;F, X, A&gt;
+  contains FreeApMono&lt;F, X, Box&lt;dyn Fn(X) -&gt; A&gt;&gt;
+    contains FreeApMono&lt;F, X, Box&lt;dyn Fn(X) -&gt; Box&lt;dyn Fn(X) -&gt; A&gt;&gt;&gt;
+      contains FreeApMono&lt;F, X, Box&lt;dyn Fn(X) -&gt; Box&lt;dyn Fn(X) -&gt; Box&lt;dyn Fn(X) -&gt; A&gt;&gt;&gt;&gt;
+        contains ... (無限)
+</code></pre>
+<p>コンパイラエラー:</p>
+<pre><code>error[E0320]: overflow while adding drop-check rules for `FreeApMono&lt;F, X, A&gt;`
+  = note: overflowed on `FreeApMono&lt;F, X, Box&lt;dyn Fn(X) -&gt; Box&lt;dyn Fn(X) -&gt; Box&lt;...&gt;&gt;&gt;&gt;`
+</code></pre>
+<p>再帰的アプリカティブ構造 (<code>Ap(F&lt;B&gt;, FreeAp&lt;F, B-&gt;A&gt;)</code>) は存在型で <strong>必ず</strong> 砕かなければなりません。存在型 (<code>fold_map</code> をブロックする) なし、あるいは無限型なしで、再帰的アプリカティブツリーを表現する方法はありません。</p>
+<h3 id="アプローチ-4-非再帰的リストベースエンコーディング"><a class="header" href="#アプローチ-4-非再帰的リストベースエンコーディング">アプローチ 4: 非再帰的リストベースエンコーディング</a></h3>
+<p><strong>アイデア:</strong> エフェクトを <code>Vec&lt;F::Of&lt;X&gt;&gt;</code> に平坦化し、純粋関数で結合。アプリカティブは (モナドと異なり) 独立したエフェクトを持つため、単相の場合これは意味的に妥当です。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct FreeApSeq&lt;F: HKT + 'static, X: 'static, A: 'static&gt; {
+    effects: Vec&lt;F::Of&lt;X&gt;&gt;,
+    combine: Box&lt;dyn Fn(&amp;[X]) -&gt; A&gt;,
+}
+<span class="boring">}</span></code></pre>
+<p><code>fold_map</code> は: (1) 各エフェクトに NT を適用、(2) <code>Applicative</code> 経由で <code>G</code> エフェクトを逐次化、(3) 結果に <code>combine</code> をマップ。</p>
+<p><strong>結果: ⚠️ 理論的には妥当だが、所有権摩擦にヒット。</strong></p>
+<p><code>sequence</code> 演算 (<code>Vec&lt;G::Of&lt;X&gt;&gt;</code> を <code>G::Of&lt;Vec&lt;X&gt;&gt;</code> に変える) は <code>G::ap</code> を通じてアキュムレータを受け渡す必要があります。アキュムレータクロージャは <code>Vec&lt;X&gt;</code> を move で捕獲し <code>FnOnce</code> になります — しかし <code>G::ap</code> は <code>Box&lt;dyn Fn&gt;</code> を必要とし、複数回呼び出し可能でなければなりません。</p>
+<p>これは <code>Rc&lt;RefCell&lt;Vec&lt;X&gt;&gt;&gt;</code> で回避できますが、ランタイムオーバーヘッドと複雑さを導入し、Karpal のゼロコスト原則に違反します。</p>
+<p><strong>追加のトレードオフ:</strong></p>
+<ul>
+<li>単相エフェクトのみサポート (すべて <code>F::Of&lt;X&gt;</code>)</li>
+<li>アプリカティブ合成構造を失う (ツリーではなくフラットなリスト)</li>
+<li><code>combine: Fn(&amp;[X]) -&gt; A</code> インターフェースが不格好 (カリー化ではなく位置指定)</li>
+</ul>
+<h2 id="根本的障壁"><a class="header" href="#根本的障壁">根本的障壁</a></h2>
+<p>四つのアプローチすべてが同じ根本理由で失敗します:</p>
+<blockquote>
+<p><strong>Rust の型システムは、存在型 (<code>forall b. ...</code>) を通じてディスパッチされるランク N 多相 (<code>forall x. f x -&gt; g x</code>) を表現できない。</strong></p>
+</blockquote>
+<p>型理論の用語で:</p>
+<ul>
+<li><code>fold_map</code> は <code>forall x</code> の <strong>否定出現</strong> を必要とする (自然変換が <code>x</code> について多相でなければならない)</li>
+<li><code>Ap</code> コンストラクタは <code>exists b</code> の <strong>肯定出現</strong> を必要とする (中間型が隠されている)</li>
+<li>Rust のトレイトシステムはランク N 型も第一級存在型もサポートしない — 両方とも <code>dyn</code> で近似されるが、<code>dyn</code> は単相的 (非汎用) メソッドを必要とする</li>
+</ul>
+<p>これはバグでも見落しでもありません。2026 年現在の Rust の型システムの根本的な性質です。この制限は Rust のすべての GAT ベース HKT エンコーディングで共有されます。</p>
+<h2 id="現在のエンコーディングが提供するもの"><a class="header" href="#現在のエンコーディングが提供するもの">現在のエンコーディングが提供するもの</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>能力</th><th>状態</th></tr>
+</thead>
+<tbody>
+<tr><td><code>retract()</code> — F 自身に解釈</td><td>✅ 動作</td></tr>
+<tr><td><code>count_effects()</code> — エフェクトツリーの静的解析</td><td>✅ 動作</td></tr>
+<tr><td><code>fmap()</code> — 結果上の関手マップ</td><td>✅ 動作</td></tr>
+<tr><td><code>ap()</code> — アプリカティブ合成</td><td>✅ 動作</td></tr>
+<tr><td><code>fold_map()</code> — NT 経由で任意の G に解釈</td><td>❌ 不可能 (根本的)</td></tr>
+<tr><td>異種エフェクト型</td><td>✅ サポート</td></tr>
+<tr><td>アプリカティブ法則検証</td><td>✅ 4 つの proptest 法則</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="推奨事項"><a class="header" href="#推奨事項">推奨事項</a></h2>
+<ol>
+<li>
+<p><strong>現在のエンコーディングは正しい。</strong> Rust の型システムで可能な最大の能力セットを提供します。</p>
+</li>
+<li>
+<p><strong>ドキュメントは既に制限を説明し</strong> 回避策を提供しています: <code>fold_map nt ≡ retract . hoist nt</code>。</p>
+</li>
+<li>
+<p><strong><code>fold_map</code> が本当に必要な単相ユースケース</strong> では、ユーザーは <code>Vec&lt;F::Of&lt;X&gt;&gt;</code> を構築し対象の <code>Applicative</code> で直接逐次化できます。これはアプリケーションコードで単純です:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let effects: Vec&lt;F::Of&lt;X&gt;&gt; = vec![...];
+let g_effects: Vec&lt;G::Of&lt;X&gt;&gt; = effects.into_iter().map(nt).collect();
+let sequenced = G::sequence(g_effects);  // G: Traversable の場合
+let result = G::fmap(sequenced, combine);
+<span class="boring">}</span></code></pre>
+</li>
+<li>
+<p><strong><code>FreeApSeq</code> 型</strong> (アプローチ 4) は、需要が生じれば別クレートやモジュールとして追加できます。それは一般性とゼロコスト保証を犠牲にして単相ケースの <code>fold_map</code> を提供するでしょう。</p>
+</li>
+</ol>
+<h2 id="より広い意義"><a class="header" href="#より広い意義">より広い意義</a></h2>
+<p>この調査は Karpal を超えて関連します。自由構成で圏論的抽象化をエンコードしようとする任意の Rust ライブラリは同じ壁にヒットするでしょう。ここの知見は以下に適用されます:</p>
+<ul>
+<li>汎用インタプリタを持つ自由モナド</li>
+<li>多相 fold を持つチャーチエンコーディングされたデータ型</li>
+<li>存在型を通じたランク N 多相を必要とする任意の構成</li>
+</ul>
+<p>この制限の文書化は、より広い Rust 圏論エコシステムの参考として機能します。</p>
+<h2 id="参考文献"><a class="header" href="#参考文献">参考文献</a></h2>
+<ul>
+<li><a href="https://github.com/Industrial-Algebra/Karpal/issues/95">イシュー #95</a> — 元の報告</li>
+<li><a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/reviews/batch4-algebra-review.md">Proserpina 批評レポート</a> — バッチ 4、所見 B6</li>
+<li><code>karpal-free/src/free_ap.rs</code> — 実装</li>
+<li>Haskell <code>Control.Applicative.Free</code> — <code>foldMap</code> を表現できる参照実装</li>
+<li><a href="./rust-closure-categorical-barrier.html">圏論的障壁としての Rust クロージャトレイト</a> — <code>Fn</code>/<code>FnOnce</code> 摩擦の横断的分析</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../design-notes/rust-closure-categorical-barrier.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../design-notes/rust-closure-categorical-barrier.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

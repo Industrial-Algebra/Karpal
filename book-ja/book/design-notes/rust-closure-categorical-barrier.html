@@ -1,0 +1,405 @@
+<!DOCTYPE HTML>
+<html lang="ja" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>圏論的障壁としての Rust クロージャトレイト - Karpal</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Rust のための代数構造と圏論">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../book/theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-8d7532d3.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-732289fc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Karpal</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/Industrial-Algebra/Karpal" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="圏論的障壁としての-rust-クロージャトレイト"><a class="header" href="#圏論的障壁としての-rust-クロージャトレイト">圏論的障壁としての Rust クロージャトレイト</a></h1>
+<p><strong>状態:</strong> 設計理論 — 未解決問題<br><strong>日付:</strong> 2026-07-01<br><strong>関連:</strong> イシュー <a href="https://github.com/Industrial-Algebra/Karpal/issues/95">#95</a>、<a href="https://github.com/Industrial-Algebra/Karpal/issues/98">#98</a><br><strong>調査:</strong> <a href="./freeap-fold-map-exploration.html">FreeAp fold_map</a>、<a href="#98">ReaderTF/StateTF ApplicativeSt</a></p>
+<h2 id="要旨"><a class="header" href="#要旨">要旨</a></h2>
+<p>Rust のクロージャトレイト階層 (<code>FnOnce</code> → <code>FnMut</code> → <code>Fn</code>) は、圏論に対応物のない意味的区別をエンコードします: <em>計算が何回呼び出されうるか</em>。ほとんどの圏論的構成要素は遅延設定 (Haskell や数学的 Set) で定義され、そこでは値 <code>A → B</code> はコストなく繰り返し消費できます。Rust の正格 Call-by-value 意味論と所有権の組み合わせが、この区別をいくつかの自然な圏論的エンコーディングをブロックする <strong>第一級の型システム障壁</strong> にします。</p>
+<p>この文書は正確なメカニズムを特定し、ブロックされた構成をカタログ化し、将来の言語機能がどのような脱出口を提供しうるかを概説します。</p>
+<h2 id="メカニズム"><a class="header" href="#メカニズム">メカニズム</a></h2>
+<h3 id="fnonce-対-fn-所有権の障壁"><a class="header" href="#fnonce-対-fn-所有権の障壁">FnOnce 対 Fn: 所有権の障壁</a></h3>
+<p>圏論において、関数 <code>f: A → B</code> は値です。ゼロ回、一回、あるいは何度も適用できます。「何回」という概念は存在しません。</p>
+<p>Rust において、クロージャリテラル <code>|x| body</code> は捕獲した環境がどう使われるかによって分類されます:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>トレイト</th><th>捕獲方法</th><th>呼び出し可能</th><th>シグネチャ</th></tr>
+</thead>
+<tbody>
+<tr><td><code>FnOnce</code></td><td>値 (消費)</td><td>一回</td><td><code>call_once(self, args)</code></td></tr>
+<tr><td><code>FnMut</code></td><td>可変参照</td><td>複数回</td><td><code>call_mut(&amp;mut self, args)</code></td></tr>
+<tr><td><code>Fn</code></td><td>不変参照</td><td>複数回</td><td><code>call(&amp;self, args)</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>重要な摩擦: クロージャが所有する値 <code>a: A</code> を move で捕獲する場合、それは <code>FnOnce</code> です — 値は呼び出し時に消費され、再現できません。クロージャが <code>Fn</code> になるには、<code>a</code> は <code>Clone</code> でなければならず、各呼び出しで <code>a.clone()</code> が新しい値を生成できる必要があります。</p>
+<p>つまり:</p>
+<pre><code>move |x| consume(a, x)  ⟹  FnOnce  (a を move で捕獲、消費する)
+move |x| a.clone()      ⟹  Fn      (a を move で捕獲、複製する)
+</code></pre>
+<h3 id="なぜこれが圏論的に重要か"><a class="header" href="#なぜこれが圏論的に重要か">なぜこれが圏論的に重要か</a></h3>
+<p>多くの圏論的構成は、値が複数回生成される必要がある文脈で <em><code>G::Of&lt;A&gt;</code> 型の値を生成する</em> ことを伴います。Haskell (遅延) では、値の生成にコストはありません — サンクです。Rust (正格) では、値の生成はその材料を消費し、再現には複製か <code>Rc</code>/<code>Arc</code> 経由の共有が必要です。</p>
+<h2 id="ブロックされた構成"><a class="header" href="#ブロックされた構成">ブロックされた構成</a></h2>
+<h3 id="1-freeap-fold_map-存在型を通じた自然変換"><a class="header" href="#1-freeap-fold_map-存在型を通じた自然変換">1. FreeAp <code>fold_map</code>: 存在型を通じた自然変換</a></h3>
+<p>標準的なシグネチャ:</p>
+<pre><code class="language-haskell">foldMap :: Applicative g =&gt; (forall x. f x -&gt; g x) -&gt; FreeAp f a -&gt; g a
+</code></pre>
+<p>Rust ではこれを表現できません。なぜなら:</p>
+<ol>
+<li><code>(forall x. f x -&gt; g x)</code> は <strong>ランク 2 多相的</strong> な自然変換</li>
+<li><code>Ap (f b) (...)</code> の中間型 <code>B</code> は <strong>存在量化</strong> されている</li>
+<li>ランク 2 関数を存在型を通じてディスパッチするには単相化が必要 — <code>dyn Trait</code> はそれを提供できない</li>
+<li>単相化が機能しても、自然変換は <em>ツリーのすべてのノードで</em> 呼び出し可能 (複数回の呼び出し) でなければならないが、各呼び出しはエフェクト値を消費する — 再帰的ウォークが <code>Fn</code> を必要とするときに <code>FnOnce</code> になってしまう</li>
+</ol>
+<p><strong>圏論的ギャップ:</strong> Haskell で <code>foldMap</code> が機能するのは:</p>
+<ul>
+<li><code>forall x</code> が第一級 (System F)</li>
+<li>存在型が第一級</li>
+<li>遅延評価により呼び出し回数が無関係</li>
+</ul>
+<p>Rust はこの三つすべてを欠いています。我々が探った四つの代替エンコーディング (汎用ノードトレイト、チャーチエンコーディング、再帰的単相、リストベース) はそれぞれ、同じ根本的障壁の異なる副理由で失敗します。</p>
+<h3 id="2-readertfstatetf-applicativest-クロージャ文脈での-pure"><a class="header" href="#2-readertfstatetf-applicativest-クロージャ文脈での-pure">2. ReaderTF/StateTF <code>ApplicativeSt</code>: クロージャ文脈での pure</a></h3>
+<p>問題:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ReaderTF::Of&lt;A&gt; = Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt;
+
+impl ApplicativeSt for ReaderTF&lt;E, M&gt; {
+    fn pure_st&lt;A: 'static&gt;(a: A) -&gt; Box&lt;dyn Fn(E) -&gt; M::Of&lt;A&gt;&gt; {
+        // クロージャの毎回の呼び出しで M::Of&lt;A&gt; を生成しなければならない。
+        // しかし M::pure_st(a) は a を消費する。最初の呼び出し後、a はなくなっている。
+        //
+        // A: Clone がなければ、クロージャは FnOnce にしかなれない。
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>圏論的ギャップ:</strong> 圏論では、<code>pure: a → Reader e a</code> は自然変換です。結果の <code>Reader e a</code> は値です。異なる環境に適用するのは自由です — 単なる関数適用です。Rust では、「結果」自体が関数 (<code>Box&lt;dyn Fn&gt;</code>) であり、毎回の呼び出しで <em>新しい</em> <code>M::Of&lt;A&gt;</code> を生成しなければなりません。<code>pure</code> は <code>a</code> を消費するため、最初の呼び出ししか成功しません。</p>
+<p>同じことが <code>StateTF</code> にも当てはまります: <code>pure(a)(s) = M::pure_st((s, a))</code> は <code>a</code> を消費し、クロージャを <code>FnOnce</code> にします。</p>
+<h3 id="3-その他の潜在的な問題"><a class="header" href="#3-その他の潜在的な問題">3. その他の潜在的な問題</a></h3>
+<p>同じパターンが以下にも現れるでしょう:</p>
+<ul>
+<li><strong>ContT (継続モナド変換子):</strong> <code>pure_st(a) = |k| k(a)</code> — <code>k</code> を同じ継続で複数回呼び出すには <code>a</code> が複製可能でなければならない</li>
+<li><strong>汎用インタプリタを持つ任意の自由構成:</strong> インタプリタはすべてのノードで適用され、毎回文脈データを消費する</li>
+<li><strong>関数値の末尾を持つ Cofree コモナド:</strong> 繰り返し抽出時の同様のクロージャ捕獲の問題</li>
+</ul>
+<h2 id="共通の糸"><a class="header" href="#共通の糸">共通の糸</a></h2>
+<p>これらすべての失敗は構造的性質を共有します:</p>
+<pre><code>圏論的文脈:     "G&lt;A&gt; を一度生成し、それを返す"
+Rust の表現:     "各呼び出しで G&lt;A&gt; を生成する Fn クロージャを返す"
+衝突:                Fn は再現性を要求するが、生成は消費する。
+</code></pre>
+<p>これは圏論的余代数/代数の区別にマップします:</p>
+<ul>
+<li><strong>余代数的:</strong> <code>A → G&lt;A&gt;</code> (一度生成、観察/消費)</li>
+<li><strong>代数的:</strong> <code>(E → G&lt;A&gt;)</code> (要求に応じて生成、潜在的に複数回)</li>
+</ul>
+<p>Rust は余代数的バージョン (<code>FnOnce</code>) を表現できますが、<code>Clone</code> なしでは代数的バージョン (<code>Fn</code>) を表現できません。ほとんどの圏論的構成要素は代数的アクセス (値は繰り返し観察できる) を暗黙に仮定します。</p>
+<h2 id="なぜ現在の-rust-で修正できないか"><a class="header" href="#なぜ現在の-rust-で修正できないか">なぜ現在の Rust で修正できないか</a></h2>
+<p>Rust プロジェクトは役立ついくつかの道を探りましたが、安定化に近いものはありません:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>機能</th><th>状態</th><th>役立つか?</th></tr>
+</thead>
+<tbody>
+<tr><td><code>impl for&lt;X&gt; Fn(X) -&gt; Y</code> (ランク N クロージャ)</td><td>提案されていない</td><td>FreeAp に役立つが、Fn/FnOnce には无关</td></tr>
+<tr><td>存在型 (<code>exists X. ...</code>)</td><td>ロードマップにない</td><td>FreeAp に役立つ</td></tr>
+<tr><td><code>FnOnce</code> → <code>Fn</code> アップキャスト (Clone 付き)</td><td>トレイトシステムにない</td><td>一部のケースを橋渡しできる</td></tr>
+<tr><td>遅延評価 / サンク</td><td>却下</td><td>根本原因を解決する</td></tr>
+<tr><td>トレイトオブジェクトの <code>for&lt;'a&gt;</code> (ライフタイム境界付き dyn)</td><td>GAT 経由で部分的に利用可能</td><td>既に ContravariantLt (#93) で使用</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="探り使用した脱出口"><a class="header" href="#探り使用した脱出口">探り使用した脱出口</a></h2>
+<ol>
+<li>
+<p><strong>ライフタイムパラメータ化 GAT</strong> (<code>type Of&lt;'a, T&gt;</code>): ContravariantLt (#93) で使用。<code>'static</code> 制約を解決するが、<code>Fn</code>/<code>FnOnce</code> の問題は解決しない。</p>
+</li>
+<li>
+<p><strong>ブランケット実装</strong> (<code>impl&lt;F: Functor&gt; FunctorSt for F</code>): St 階層 (#97) で使用。並行する型クラスファミリーを橋渡しするが、根本的な表現問題は解決しない。</p>
+</li>
+<li>
+<p><strong>より強い境界を持つスタンドアロン関数:</strong> <code>reader_t_pure</code>/<code>state_t_pure</code> (#98) で使用。関数は毎回の呼び出しで複製するため <code>Clone</code> を要求する。波及効果 (#98 の調査) のためトレイトはそれを要求しない。これは実用的な妥協。</p>
+</li>
+<li>
+<p><strong>結び目作りの代わりの反復収束:</strong> <code>loop_fixpoint</code> (#94) で使用。Haskell の遅延 <code>loop</code> を、フィードバックが安定したときに終了する反復フィックスポイントで置き換える。</p>
+</li>
+<li>
+<p><strong>正直な削除:</strong> Comonad としての <code>OptionF</code> (#92) と <code>CokleisliF&lt;OptionF&gt;</code> (#92)。完全性が侵害されるため数学的に存在できない実装を削除。</p>
+</li>
+</ol>
+<h2 id="代替エンコーディングが現れた場合"><a class="header" href="#代替エンコーディングが現れた場合">代替エンコーディングが現れた場合</a></h2>
+<p>この文書は、Rust の型システムが — HKT、ランク N クロージャ、第一級存在型、<code>for&lt;X&gt;</code> 量指定子のいずれによって — 進化したときに、これらの構成を再検討できるように存在します。注目すべき具体的なもの:</p>
+<h3 id="将来の機能-forx-量化クロージャ"><a class="header" href="#将来の機能-forx-量化クロージャ">将来の機能: <code>for&lt;X&gt;</code> 量化クロージャ</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 仮想的: トレイトオブジェクトを通じたランク N クロージャ
+trait NatTrans&lt;F: HKT, G: HKT&gt; {
+    fn transform&lt;X&gt;(fx: F::Of&lt;X&gt;) -&gt; G::Of&lt;X&gt;
+    where for&lt;X&gt;  // 注意: 仮想的な構文
+}
+
+// すると fold_map は:
+impl&lt;F: HKT, A&gt; FreeAp&lt;F, A&gt; {
+    fn fold_map&lt;G: Applicative&gt;(
+        self,
+        nt: &amp;dyn for&lt;X&gt; Fn(F::Of&lt;X&gt;) -&gt; G::Of&lt;X&gt;,  // 仮想的
+    ) -&gt; G::Of&lt;A&gt;
+}
+<span class="boring">}</span></code></pre>
+<p>これには <code>dyn</code> を通じたランク N クロージャのサポートが必要です — トレイトシステムへの重要な拡張。</p>
+<h3 id="将来の機能-第一級存在型"><a class="header" href="#将来の機能-第一級存在型">将来の機能: 第一級存在型</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 仮想的: 存在型
+enum FreeAp&lt;F: HKT, A&gt; {
+    Pure(A),
+    Ap(exists B. F::Of&lt;B&gt;, FreeAp&lt;F, B -&gt; A&gt;),  // 仮想的
+}
+<span class="boring">}</span></code></pre>
+<p>これによりパターンマッチ時に存在型 <code>B</code> を復元でき、<code>fold_map</code> の単相化が可能になります。</p>
+<h3 id="将来の機能-遅延サンク評価"><a class="header" href="#将来の機能-遅延サンク評価">将来の機能: 遅延/サンク評価</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 仮想的: GAT ベースの遅延値
+trait Lazy {
+    type Of&lt;'a, T&gt; = ???;  // サンク的な表現
+}
+<span class="boring">}</span></code></pre>
+<p>Rust が遅延評価プリミティブを得れば、多くの圏論的構成において <code>Fn</code>/<code>FnOnce</code> の区別は無関係になります — 値の生成がそれを消費せず、<code>pure</code> はデフォルトで <code>Fn</code> になるでしょう。</p>
+<h2 id="他の-karpal-設計文書との関係"><a class="header" href="#他の-karpal-設計文書との関係">他の Karpal 設計文書との関係</a></h2>
+<ul>
+<li><a href="./freeap-fold-map-exploration.html">FreeAp fold_map の探求</a> — 四つの代替エンコーディングの詳細な調査</li>
+<li><a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/contravariant-lifetime-bounds.md">反変ライフタイム境界</a> — <code>'static</code>/<code>Box&lt;dyn Fn&gt;</code> の制限とライフタイム認識 GAT の回避策</li>
+</ul>
+<h2 id="参考文献"><a class="header" href="#参考文献">参考文献</a></h2>
+<ul>
+<li>Rust クロージャトレイト階層: <a href="https://doc.rust-lang.org/std/ops/trait.FnOnce.html"><code>FnOnce</code></a>、<a href="https://doc.rust-lang.org/std/ops/trait.FnMut.html"><code>FnMut</code></a>、<a href="https://doc.rust-lang.org/std/ops/trait.Fn.html"><code>Fn</code></a></li>
+<li>GAT 安定化: <a href="https://rust-lang.github.io/rfcs/1598-generic_associated_types.html">RFC 1598</a></li>
+<li><code>for&lt;&gt;</code> ライフタイム構文: <a href="https://doc.rust-lang.org/reference/trait-bounds.html#higher-ranked-trait-bounds">リファレンス</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../api/overview.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../design-notes/freeap-fold-map-exploration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../api/overview.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../design-notes/freeap-fold-map-exploration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

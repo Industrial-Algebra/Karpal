@@ -1,0 +1,15 @@
+[book]
+title = "Karpal"
+description = "Rust のための代数構造と圏論"
+authors = ["Industrial Algebra"]
+language = "ja"
+src = "src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+additional-css = ["../book/theme/custom.css"]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/Industrial-Algebra/Karpal"

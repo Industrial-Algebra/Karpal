@@ -1,0 +1,435 @@
+<!DOCTYPE HTML>
+<html lang="ja" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>アーキテクチャ (詳細) - Karpal</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Rust のための代数構造と圏論">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-0392ca55.css">
+        <link rel="stylesheet" href="css/chrome-fc474251.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../book/theme/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-8d7532d3.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-732289fc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Karpal</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/Industrial-Algebra/Karpal" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <p><a href="index.html">ホーム</a> &gt; アーキテクチャ</p>
+<h1 id="アーキテクチャ"><a class="header" href="#アーキテクチャ">アーキテクチャ</a></h1>
+<p>このページは Karpal の背後にあるコア設計決定を説明します: Rust で高階型をエンコードする方法、完全なトレイト階層、そしてそれらを Rust の型システム内で機能させる Static Land パターン。</p>
+<h2 id="hkt-エンコーディング"><a class="header" href="#hkt-エンコーディング">HKT エンコーディング</a></h2>
+<h3 id="問題"><a class="header" href="#問題">問題</a></h3>
+<p>Rust にはネイティブの高階型がありません。<code>Option</code> や <code>Vec</code> のような <em>型コンストラクタ</em> について汎用的なトレイトは書けません — <code>Option&lt;i32&gt;</code> のような具体的な型についてのみ書けます。つまり「任意のコンテナ <code>F</code> について、<code>F&lt;A&gt;</code> で動作する <code>fmap</code> をください」と表現する組み込みの方法がありません。</p>
+<h3 id="gat-解決策"><a class="header" href="#gat-解決策">GAT 解決策</a></h3>
+<p>Karpal は型コンストラクタを Generic Associated Type (GAT) を持つトレイトを実装する <strong>マーカー型</strong> としてエンコードします。<code>HKT</code> トレイトは型レベル関数として機能します: 型 <code>T</code> を与えられると <code>Self::Of&lt;T&gt;</code> を生成します。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// GAT による高階型エンコーディング。
+///
+/// `HKT` を実装する型は型レベル関数として機能する:
+/// 型 `T` を与えられると `Self::Of&lt;T&gt;` を生成する。
+pub trait HKT {
+    type Of&lt;T&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>各標準コンテナは <code>Of&lt;T&gt;</code> を実際の型にマップするゼロサイズのマーカー型を持ちます:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// `Option&lt;T&gt;` の型コンストラクタ。
+pub struct OptionF;
+
+impl HKT for OptionF {
+    type Of&lt;T&gt; = Option&lt;T&gt;;
+}
+
+/// `Result&lt;T, E&gt;` の型コンストラクタ (固定エラー型 `E`)。
+pub struct ResultF&lt;E&gt; {
+    _marker: PhantomData&lt;E&gt;,
+}
+
+impl&lt;E&gt; HKT for ResultF&lt;E&gt; {
+    type Of&lt;T&gt; = Result&lt;T, E&gt;;
+}
+
+/// `Vec&lt;T&gt;` の型コンストラクタ (alloc ゲート)。
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub struct VecF;
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+impl HKT for VecF {
+    type Of&lt;T&gt; = Vec&lt;T&gt;;
+}
+<span class="boring">}</span></code></pre>
+<h3 id="二パラメータ-hkt"><a class="header" href="#二パラメータ-hkt">二パラメータ HKT</a></h3>
+<p>二つの型パラメータを持つ型 — バイファンクタとプロ関手 — のため、Karpal は <code>HKT2</code> を提供します:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 二パラメータ型コンストラクタ (バイファンクタ / プロ関手用 HKT)。
+pub trait HKT2 {
+    type P&lt;A, B&gt;;
+}
+
+/// バイファンクタとしての Result (両パラメータが変化)。
+pub struct ResultBF;
+
+impl HKT2 for ResultBF {
+    type P&lt;A, B&gt; = Result&lt;B, A&gt;;
+}
+
+/// バイファンクタとしてのタプル。
+pub struct TupleF;
+
+impl HKT2 for TupleF {
+    type P&lt;A, B&gt; = (A, B);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="トレードオフ"><a class="header" href="#トレードオフ">トレードオフ</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>性質</th><th>詳細</th></tr>
+</thead>
+<tbody>
+<tr><td>実行時コスト</td><td>ゼロ。マーカー型は ZST; すべてのディスパッチはコンパイル時に単相化される。</td></tr>
+<tr><td>依存関係</td><td>なし。エンコーディング自体に外部クレートを使わないピュア Rust。</td></tr>
+<tr><td>ツールチェーン</td><td>nightly Rust が必要 (edition 2024)。GAT は 1.65 から安定だが、Karpal は <code>use&lt;&gt;</code> precise-capture 構文も使う。</td></tr>
+<tr><td>エルゴノミクス</td><td>呼び出しは <code>value.fmap(...)</code> ではなく <code>OptionF::fmap(...)</code> と書く。これが Static Land スタイル (下記参照)。</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="トレイト階層"><a class="header" href="#トレイト階層">トレイト階層</a></h2>
+<p>下の図は <code>karpal-core</code>、<code>karpal-profunctor</code>、<code>karpal-arrow</code> に実装された完全なトレイト階層を示します。矢印はスーパートレイトからサブトレイトへ向きます。破線の枠はブランケット実装 (手動 impl が不要) を示します。</p>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Ym94PSIwIDAgODAwIDc4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHlsZT0ibWF4LXdpZHRoOiA4MDBweDsgd2lkdGg6IDEwMCU7IGhlaWdodDogYXV0bzsgZm9udC1mYW1pbHk6ICYjMzk7SW50ZXImIzM5Oywgc2Fucy1zZXJpZjsiPgogICAgICA8ZGVmcz4KICAgICAgICA8bWFya2VyIGlkPSJhcnJvdyIgdmlld2JveD0iMCAwIDEwIDEwIiByZWZ4PSIxMCIgcmVmeT0iNSIgbWFya2Vyd2lkdGg9IjgiIG1hcmtlcmhlaWdodD0iOCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPgogICAgICAgICAgPHBhdGggZD0iTSAwIDAgTCAxMCA1IEwgMCAxMCB6IiBmaWxsPSJ2YXIoLS10ZXh0LW11dGVkLCAjOGI5NDllKSIgLz4KICAgICAgICA8L21hcmtlcj4KICAgICAgICA8c3R5bGU+CiAgICAgICAgICAubm9kZSB7IGZpbGw6IHZhcigtLWJnLWNhcmQsICMxNjFiMjIpOyBzdHJva2U6IHZhcigtLWJvcmRlciwgIzMwMzYzZCk7IHN0cm9rZS13aWR0aDogMS41OyByeDogNjsgcnk6IDY7IH0KICAgICAgICAgIC5ub2RlLWJsYW5rZXQgeyBmaWxsOiB2YXIoLS1iZy1jYXJkLCAjMTYxYjIyKTsgc3Ryb2tlOiB2YXIoLS1ib3JkZXIsICMzMDM2M2QpOyBzdHJva2Utd2lkdGg6IDEuNTsgc3Ryb2tlLWRhc2hhcnJheTogNSAzOyByeDogNjsgcnk6IDY7IH0KICAgICAgICAgIC5ub2RlLWxhYmVsIHsgZmlsbDogdmFyKC0tdGV4dC1wcmltYXJ5LCAjZTZlZGYzKTsgZm9udC1zaXplOiAxMXB4OyBmb250LXdlaWdodDogNjAwOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyBkb21pbmFudC1iYXNlbGluZTogY2VudHJhbDsgfQogICAgICAgICAgLmVkZ2UgeyBzdHJva2U6IHZhcigtLXRleHQtbXV0ZWQsICM4Yjk0OWUpOyBzdHJva2Utd2lkdGg6IDEuMjsgZmlsbDogbm9uZTsgbWFya2VyLWVuZDogdXJsKCNhcnJvdyk7IH0KICAgICAgICAgIC5zZWN0aW9uLWxhYmVsIHsgZmlsbDogdmFyKC0tdGV4dC1tdXRlZCwgIzhiOTQ5ZSk7IGZvbnQtc2l6ZTogOXB4OyBmb250LXdlaWdodDogNTAwOyB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOyBsZXR0ZXItc3BhY2luZzogMC4wOGVtOyB9CiAgICAgICAgPC9zdHlsZT4KICAgICAgPC9kZWZzPgoKICAgICAgPCEtLSBTZWN0aW9uIGxhYmVscyAtLT4KICAgICAgPHRleHQgeD0iMTYiIHk9IjE4IiBjbGFzcz0ic2VjdGlvbi1sYWJlbCI+Q292YXJpYW50IChGdW5jdG9yIGZhbWlseSk8L3RleHQ+CiAgICAgIDx0ZXh0IHg9IjE2IiB5PSIyOTgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Db21vbmFkIGZhbWlseTwvdGV4dD4KICAgICAgPHRleHQgeD0iNDMwIiB5PSIyOTgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Db250cmF2YXJpYW50IGZhbWlseTwvdGV4dD4KICAgICAgPHRleHQgeD0iMTYiIHk9IjQ0OCIgY2xhc3M9InNlY3Rpb24tbGFiZWwiPkFsZ2VicmFpYzwvdGV4dD4KICAgICAgPHRleHQgeD0iMjUwIiB5PSI0NDgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5Gb2xkYWJsZSAvIFRyYXZlcnNhYmxlPC90ZXh0PgogICAgICA8dGV4dCB4PSIxNiIgeT0iNTQ4IiBjbGFzcz0ic2VjdGlvbi1sYWJlbCI+UHJvZnVuY3RvciBmYW1pbHkgKEhLVDIpPC90ZXh0PgoKICAgICAgPCEtLSA9PT0gQ292YXJpYW50IHJvdyAxOiBGdW5jdG9yIC0+IEFwcGx5IC0+IEFwcGxpY2F0aXZlIC0+IEFsdGVybmF0aXZlIChibGFua2V0KSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iMzAiIHdpZHRoPSI3MiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjUyIiB5PSI0NSI+RnVuY3RvcjwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMjgiIHk9IjMwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNTgiIHk9IjQ1Ij5BcHBseTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyMjgiIHk9IjMwIiB3aWR0aD0iOTAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIyNzMiIHk9IjQ1Ij5BcHBsaWNhdGl2ZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlLWJsYW5rZXQiIHg9IjM1OCIgeT0iMzAiIHdpZHRoPSI5MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjQwMyIgeT0iNDUiPkFsdGVybmF0aXZlPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iODgiIHkxPSI0NSIgeDI9IjEyNiI5Mj0iNDUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxODgiIHkxPSI0NSIgeDI9IjIyNiI5Mj0iNDUiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIzMTgiIHkxPSI0NSIgeDI9IjM1NiI5Mj0iNDUiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IENvdmFyaWFudCByb3cgMjogQ2hhaW4sIFNlbGVjdGl2ZSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMjgiIHk9IjgwIiB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIxNTgiIHk9Ijk1Ij5DaGFpbjwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyMjgiIHk9IjgwIiB3aWR0aD0iOTAiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSIyNzMiIHk9Ijk1Ij5TZWxlY3RpdmU8L3RleHQ+CiAgICAgIAogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjE1OCIgeTE9IjYwIiB4Mj0iMTU4IiB5Mj0iNzgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIyNzMiIHkxPSI2MCIgeDI9IjI3MyI5Mj0iNzgiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IENvdmFyaWFudCByb3cgMzogTW9uYWQgKGJsYW5rZXQpID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUtYmxhbmtldCIgeD0iMTY4IiB5PSIxMzAiIHdpZHRoPSI3MCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjIwMyIgeT0iMTQ1Ij5Nb25hZDwvdGV4dD4KCiAgICAgIDwhLS0gTGluZXMgZnJvbSBBcHBsaWNhdGl2ZSBhbmQgQ2hhaW4gdG8gTW9uYWQgLS0+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjczIiB5MT0iNjAiIHgyPSIyMzAiIHkyPSIxMjgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSIxNTgiIHkxPSIxMTAiIHgyPSIxODUiIHkyPSIxMjgiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEFsdCByb3c6IEZ1bmN0b3IgLT4gQWx0IC0+IFBsdXMgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTI4IiB5PSIxODUiIHdpZHRoPSI0OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE1MiIgeT0iMjAwIj5BbHQ8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMjE2IiB5PSIxODUiIHdpZHRoPSI1MiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI0MiIgeT0iMjAwIj5QbHVzPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIiIHkxPSI2MCIgeDI9IjE0MCI9Mj0iMTgzIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMTc2IiB5MT0iMjAwIiB4Mj0iMjE0IiB5Mj0iMjAwIj48L2xpbmU+CgogICAgICA8IS0tIFBsdXMgLT4gQWx0ZXJuYXRpdmUgLS0+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjY4IiB5MT0iMjAwIiB4Mj0iNDAzIiB5Mj0iNjIiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEZ1bmN0b3JGaWx0ZXIgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTAwIiB5PSIzMCIgd2lkdGg9IjEwNSIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU1MiIgeT0iNDUiPkZ1bmN0b3JGaWx0ZXI8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9Ijg4IiB5MT0iMzgiIHgyPSI0OTgiIHkyPSIzOCI+PC9saW5lPgoKICAgICAgPCEtLSA9PT0gSW52YXJpYW50ID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjY1MCIgeT0iMzAiIHdpZHRoPSI3NiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjY4OCIgeT0iNDUiPkludmFyaWFudDwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iODgiIHkxPSI1MiI9Mj0iNjQ4IiB5Mj0iNTIiPjwvbGluZT4KCiAgICAgIDwhLS0gPT09IEJpZnVuY3RvciAoSEtUMikgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTYwIiB5PSI4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAwIiB5PSI5NSI+QmlmdW5jdG9yPC90ZXh0D4KCiAgICAgIDwhLS0gTmF0dXJhbFRyYW5zZm9ybWF0aW9uIHN0YW5kYWxvbmUgLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NjAiIHk9IjEzMCIgd2lkdGg9IjE0NSIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjYzMiIgeT0iMTQ1Ij5OYXR1cmFsVHJhbnNmb3JtYXRpb248L3RleHQ+CgogICAgICA8IS0tID09PSBDb21vbmFkIGZhbWlseSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxNiIgeT0iMzEwIiB3aWR0aD0iNjgiIGhlaWdodD0iMzAiIC8+CiAgICAgIDx0ZXh0IGNsYXNzPSJub2RlLWxhYmVsIiB4PSI1MCIgeT0iMzI1Ij5FeHRlbmQ8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTI0IiB5PSIzMTAiIHdpZHRoPSI3OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE2MyIgeT0iMzI1Ij5Db21vbmFkPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyNDIiIHk9IjMxMCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMjg3IiB5PSIzMjUiPkNvbW9uYWRFbnY8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMjQyIiB5PSIzNTUiIHdpZHRoPSI5OCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI5MSIgeT0iMzcwiPkNvbW9uYWRTdG9yZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyNDIiIHk9IjQwMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjI5MiIgeT0iNDE1Ij5Db21vbmFkVHJhY2VkPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIiIHkxPSI2MCI9Mj0iNDAiIHkyPSIzMDgiPjwvbGluZT4KICAgICAgPGxpbmUgY2xhc3M9ImVkZ2UiIHgxPSI4NCI9Mj0iMTIyIiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjAyIiB5MT0iMzI1IiB4Mj0iMjQwIiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjAyIiB5MT0iMzMwIiB4Mj0iMjQwIiB5Mj0iMzY1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMjAyIiB5MT0iMzM1IiB4Mj0iMjQwIiB5Mj0iNDA1Ij48L2xpbmU+CgogICAgICA8IS0tID09PSBDb250cmF2YXJpYW50IGZhbWlseSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI0MzAiIHk9IjMxMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjQ4MCIgeT0iMzI1Ij5Db250cmF2YXJpYW50PC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NzAiIHk9IjMxMCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAyIiB5PSIzMjUiPkRpdmlkZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NzQiIHk9IjMxMCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzEwIiB5PSIzMjUiPkRpdmlzaWJsZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI1NzAiIHk9IjM1NSIgd2lkdGg9IjY0IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjAyIiB5PSIzNzAiPkRlY2lkZTwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2NzQiIHk9IjM1NSIgd2lkdGg9Ijc4IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzEzIiB5PSIzNzAiPkNvbmNsdWRlPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTMwIiB5MT0iMzI1IiB4Mj0iNTY4IiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjM0IiB5MT0iMzI1IiB4Mj0iNjcyIiB5Mj0iMzI1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTMwIiB5MT0iMzM1IiB4Mj0iNTY4IiB5Mj0iMzY1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjM0IiB5MT0iMzcwIiB4Mj0iNjcyIiB5Mj0iMzcwIj48L2xpbmU+CgogICAgICA8IS0tID09PSBBbGdlYnJhaWMgPT09IC0tPgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTYiIHk9IjQ2MCIgd2lkdGg9IjgyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNTciIHk9IjQ3NSI+U2VtaWdyb3VwPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIxMzgiIHk9IjQ2MCIgd2lkdGg9IjY4IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMTcyIiB5PSI0NzUiPk1vbm9pZDwvdGV4dD4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iOTgiIHkxPSI0NzUiIHgyPSIxMzYiIHkyPSI0NzUiPjwvbGluZT4KICAgICAgPCEtLSA9PT0gRm9sZGFibGUgLyBUcmF2ZXJzYWJsZSA9PT0gLS0+CiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIyODAiIHk9IjQ2MCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iMzE2IiB5PSI0NzUiPkZvbGRhYmxlPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSIzOTIiIHk9IjQ2MCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNDM3IiB5PSI0NzUiPlRyYXZlcnNhYmxlPC90ZXh0D4KCiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMzUyIiB5MT0iNDc1IiB4Mj0iMzkwIiB5Mj0iNDc1Ij48L2xpbmU+CiAgICAgIDwhLS0gPT09IFByb2Z1bmN0b3IgZmFtaWx5ID09PSAtLT4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjE2IiB5PSI1NjAiIHdpZHRoPSI4NiIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU5IiB5PSI1NzUiPlByb2Z1bmN0b3I8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTQyIiB5PSI1NjAiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE3NCIgeT0iNTc1Ij5TdHJvbmc8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iMTQyIiB5PSI2MDAiIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMCIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjE3NCIgeT0iNjE1Ij5DaG9pY2U8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjEwMiIgeTE9IjU3MCI9Mj0iMTQwIiB5Mj0iNTcwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iMTAyIiB5MT0iNTgwIiB4Mj0iMTQwIiB5Mj0iNjEwIj48L2xpbmU+CgogICAgICA8IS0tID09PSBBcnJvdyBmYW1pbHkgKEhLVDIpID09PSAtLT4KICAgICAgPHRleHQgeD0iMzUwIiB5PSI1NDgiIGNsYXNzPSJzZWN0aW9uLWxhYmVsIj5BcnJvdyBmYW1pbHkgKEhLVDIpPC90ZXh0D4KICAgICAgPHJlY3QgY2xhc3M9Im5vZGUiIHg9IjM1MCIgeT0iNTYwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNDAwIiB5PSI1NzUiPlNlbWlncm91cG9pZDwvdGV4dD4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI0OTAiIHk9IjU2MCIgd2lkdGg9IjcyIiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNTI2IiB5PSI1NzUiPkNhdGVnb3J5PC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI2MDIiIHk9IjU2MCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjMwIiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNjMwIiB5PSI1NzUiPkFycm93PC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI3MDAiIHk9IjU0MCIgd2lkdGg9IjkyIiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzQ2IiB5PSI1NTMiPkFycm93Q2hvaWNlPC90ZXh0D4KCiAgICAgIDxyZWN0IGNsYXNzPSJub2RlIiB4PSI3MDAiIHk9IjU3MCIgd2lkdGg9Ijg2IiBoZWlnaHQ9IjI2IiAvPgogICAgICA8dGV4dCBjbGFzcz0ibm9kZS1sYWJlbCIgeD0iNzQzIiB5PSI1ODMiPkFycm93QXBwbHk8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNzAwIiB5PSI2MDAiIHdpZHRoPSI4NiIgaGVpZ2h0PSIyNiIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9Ijc0MyIgeT0iNjEzIj5BcnJvd0xvb3A8L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNTQwIiB5PSI2MTAiIHdpZHRoPSI4MiIgaGVpZ2h0PSIyNiIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjU4MSIgeT0iNjIzIj5BcnJvd1plcm88L3RleHQ+CgogICAgICA8cmVjdCBjbGFzcz0ibm9kZSIgeD0iNjYwIiB5PSI2NDAiIHdpZHRoPSI4MiIgaGVpZ2h0PSIyNiIgLz4KICAgICAgPHRleHQgY2xhc3M9Im5vZGUtbGFiZWwiIHg9IjcwMSIgeT0iNjUzIj5BcnJvd1BsdXM8L3RleHQ+CgogICAgICA8bGluZSBjbGFzcz0iZWRnZSIgeDE9IjQ1MCI9Mj0iNDg4IiB5Mj0iNTc1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNTYyIiB5MT0iNTc1IiB4Mj0iNjAwIiB5Mj0iNTc1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTY4IiB4Mj0iNjk4IiB5Mj0iNTU1Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTc1IiB4Mj0iNjk4IiB5Mj0iNTgwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjU4IiB5MT0iNTgyIiB4Mj0iNjk4IiB5Mj0iNjEwIj48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjMwIiB5MT0iNTkwIiB4Mj0iNTcwIiB5Mj0iNjA4Ij48L2xpbmU+CiAgICAgIDxsaW5lIGNsYXNzPSJlZGdlIiB4MT0iNjIyIiB5MT0iNjM2IiB4Mj0iNjU4IiB5Mj0iNjQ4Ij48L2xpbmU+CiAgICA8L3N2Zz4=" alt=""></p>
+<p><strong>凡例:</strong> 実線の枠は標準トレイト。<strong>破線の枠</strong> はブランケット実装を示します — <code>Monad</code> は <code>Applicative</code> と <code>Chain</code> の両方を実装する任意の型に自動的に導出され、<code>Alternative</code> は <code>Applicative + Plus</code> に導出されます。</p>
+<h2 id="static-land-パターン"><a class="header" href="#static-land-パターン">Static Land パターン</a></h2>
+<p>Karpal は値のメソッドではなく、<strong>マーカー型上の関連関数</strong> を使います。<code>some_value.fmap(f)</code> を呼ぶ代わりに:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Karpal の Static Land スタイル
+let result = OptionF::fmap(Some(42), |x| x + 1);
+
+// 値のメソッドスタイルではない (Karpal では不可能)
+// let result = Some(42).fmap(|x| x + 1);
+<span class="boring">}</span></code></pre>
+<h3 id="なぜこのアプローチか"><a class="header" href="#なぜこのアプローチか">なぜこのアプローチか?</a></h3>
+<p>Rust の <strong>トレイトコヒーレンス規則</strong> (孤立規則) は、外国のトレイトを外国の型に実装することを防ぎます。<code>Option</code> は <code>std</code> で定義され、<code>Functor</code> は Karpal で定義されるため、<code>impl Functor for Option&lt;T&gt;</code> を直接書けません。</p>
+<p>マーカー型アプローチはこれを完全に回避します。<code>OptionF</code> は <em>Karpal が所有する</em> ため、Karpal は自由に任意のトレイトを実装できます。<code>HKT</code> GAT が <code>Of&lt;T&gt;</code> 関連型を介して実際のコンテナ型へ橋渡しします。</p>
+<h3 id="他のエコシステムとの比較"><a class="header" href="#他のエコシステムとの比較">他のエコシステムとの比較</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>エコシステム</th><th>アプローチ</th><th>トレードオフ</th></tr>
+</thead>
+<tbody>
+<tr><td>Haskell</td><td>HKT サポート付きネイティブ型クラス</td><td>理想的なエルゴノミクス; Rust では利用不可</td></tr>
+<tr><td>Scala</td><td><code>Kind</code> 射影付きの暗黙的 / given インスタンス</td><td>強力だが複雑; JVM ランタイムに依存</td></tr>
+<tr><td>fp-ts (TypeScript)</td><td>Static Land — モジュール名前空間内の関数 (<code>O.map</code>, <code>A.map</code>)</td><td>Karpal の設計に最も近い類似物; 同じエルゴノミックトレードオフ</td></tr>
+<tr><td><strong>Karpal (Rust)</strong></td><td>Static Land — マーカー型上の関連関数</td><td>ゼロコスト、型安全、しかし冗長な呼び出し構文</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="設計決定"><a class="header" href="#設計決定">設計決定</a></h2>
+<h3 id="no_std-ファースト"><a class="header" href="#no_std-ファースト"><code>no_std</code> ファースト</a></h3>
+<p><code>karpal-core</code>、<code>karpal-profunctor</code>、<code>karpal-arrow</code> は <code>std</code> なしでコンパイルされます。ヒープアロケーションを必要とする型 — <code>VecF</code>、<code>NonEmptyVecF</code>、<code>PredicateF</code>、<code>StoreF</code>、<code>TracedF</code> — は <code>alloc</code> または <code>std</code> フィーチャーフラグの背後でゲートされます。これにより Karpal は組み込みや <code>no_std</code> 環境で利用可能です。</p>
+<h3 id="nightly-edition-2024"><a class="header" href="#nightly-edition-2024">nightly edition 2024</a></h3>
+<p>ツールチェーンは <code>rust-toolchain.toml</code> 経由で nightly に固定されます。GAT 自体は Rust 1.65 で安定化しましたが、Karpal は <code>use&lt;&gt;</code> precise-capture 構文 (edition 2024) と <code>no_std</code> ビルドの <code>alloc</code> フィーチャーゲートにも依存します。nightly 固定によりすべての貢献者が同じコンパイラを使います。</p>
+<h3 id="オプティクスの-fn-ポインタ"><a class="header" href="#オプティクスの-fn-ポインタ">オプティクスの <code>fn</code> ポインタ</a></h3>
+<p><code>Lens</code> 構造体はクロージャではなくプレーンな関数ポインタを格納します:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Lens&lt;S, T, A, B&gt; {
+    getter: fn(&amp;S) -&gt; A,
+    setter: fn(S, B) -&gt; T,
+}
+<span class="boring">}</span></code></pre>
+<p>これにより <code>Lens</code> は <code>Copy</code> 可能になり、ライフタイムの複雑さを回避します。<code>Lens::then()</code> で合成されると、結果はクロージャ合成が <code>fn</code> ポインタを生成できないため、代わりに <code>Box&lt;dyn Fn&gt;</code> クロージャを使う <code>ComposedLens</code> になります。</p>
+<h3 id="boxdyn-fn-の-static-境界"><a class="header" href="#boxdyn-fn-の-static-境界"><code>Box&lt;dyn Fn&gt;</code> の <code>'static</code> 境界</a></h3>
+<p>内側の表現が boxed クロージャである型 — <code>PredicateF</code>、<code>FnP</code>、<code>FnA</code>、<code>KleisliF</code>、<code>CokleisliF</code>、<code>StoreF</code>、<code>TracedF</code> — は <code>'static</code> 境界を必要とします。これは Rust の <code>Box&lt;dyn Fn&gt;</code> の固有の制限です。結果として、<code>StoreF</code> と <code>TracedF</code> は汎用 <code>Functor</code> トレイト (シグネチャが <code>'static</code> 境界を持たない) を実装できません; 代わりに <code>Extend</code>/<code>Comonad</code> 実装を通じて独自の <code>fmap</code> を提供します。</p>
+<h3 id="ブランケット実装"><a class="header" href="#ブランケット実装">ブランケット実装</a></h3>
+<p>理論が許すところでは、Karpal はボイラープレートを排除するためにブランケット impl を使います:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Monad: Applicative + Chain で追加メソッドなし (ブランケット impl)。
+pub trait Monad: Applicative + Chain {}
+
+impl&lt;F: Applicative + Chain&gt; Monad for F {}
+<span class="boring">}</span></code></pre>
+<p><code>Applicative</code> と <code>Chain</code> の両方を実装する任意のマーカー型は自動的に <code>Monad</code> になります。同じパターンが <code>Alternative</code> (= <code>Applicative + Plus</code>) に適用されます。実装者は原始演算を提供するだけで済みます; 合成された抽象化は無料で付いてきます。</p>
+<h3 id="プロパティベースの法則テスト"><a class="header" href="#プロパティベースの法則テスト">プロパティベースの法則テスト</a></h3>
+<p>Karpal のすべての代数的トレイトには、要求される代数的同一性が成り立つことを検証する <a href="https://crates.io/crates/proptest">proptest</a> ベースの法則テストがあります。例えば Functor の法則:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>proptest! {
+    #[test]
+    fn option_identity(x in any::&lt;Option&lt;i32&gt;&gt;()) {
+        // 単位律: fmap(id, fa) == fa
+        let result = OptionF::fmap(x.clone(), |a| a);
+        prop_assert_eq!(result, x);
+    }
+
+    #[test]
+    fn option_composition(x in any::&lt;Option&lt;i32&gt;&gt;()) {
+        // 合成律: fmap(g . f, fa) == fmap(g, fmap(f, fa))
+        let f = |a: i32| a.wrapping_add(1);
+        let g = |a: i32| a.wrapping_mul(2);
+        let left = OptionF::fmap(x.clone(), |a| g(f(a)));
+        let right = OptionF::fmap(OptionF::fmap(x, f), g);
+        prop_assert_eq!(left, right);
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>このアプローチは、ユニットテストが見逃す微妙なバグ — <code>Semigroup</code> 実装の結合律違反や <code>Alternative</code> の分配律の失敗など — を捕捉します。</p>
+<h2 id="証明と検証の階層化"><a class="header" href="#証明と検証の階層化">証明と検証の階層化</a></h2>
+<p><code>karpal-proof</code> と <code>karpal-verify</code> は、トレイト階層の上に二つの異なる推論層でこのアーキテクチャを拡張します。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>層</th><th>クレート</th><th>アーキテクチャ上の役割</th></tr>
+</thead>
+<tbody>
+<tr><td>内部証拠</td><td><code>karpal-proof</code></td><td>法則証拠、書き換え、精密化型を Rust API に直接エンコード</td></tr>
+<tr><td>外部検証</td><td><code>karpal-verify</code></td><td>Karpal のオブリゲーションを SMT や Lean にブリッジし、結果とインポートされた証明書を明示的に報告</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="なぜ二つの層か"><a class="header" href="#なぜ二つの層か">なぜ二つの層か?</a></h3>
+<p><code>karpal-proof</code> と <code>karpal-verify</code> は意図的に異なる問題を解決します。前者はローカルチェック、トレイト由来の証拠、監査された仮定の後に Rust コードが構造化された証拠を運べるようにします。後者は、ソルバーの結果がコンパイラチェックされた証拠と同じものだと見せかけずに、Karpal が外部の証明器と対話できるようにします。</p>
+<h3 id="karpal-verify-パイプライン"><a class="header" href="#karpal-verify-パイプライン"><code>karpal-verify</code> パイプライン</a></h3>
+<p>外部検証層はパイプラインとして編成されます:</p>
+<ol>
+<li>目標を <code>Obligation</code> または <code>ObligationBundle</code> としてモデル化する。</li>
+<li>バンドルを SMT-LIB2 スクリプトまたは Lean モジュールにエクスポートする。</li>
+<li>定理の同一性、宣言スパン、インポート、エイリアス、パッケージ/プロジェクトスキャフォールドデータなどの構造化 Lean メタデータを添付する。</li>
+<li>アーティファクトを書き、<code>InvocationPlan</code> 値を構築する。</li>
+<li>それらの計画を <code>VerifierRunner</code> 経由で実行する (望む場合はプロジェクト認識の <code>lake env lean</code> や <code>lake build</code> フローを含む)。</li>
+<li>ソルバーまたは Lean の出力をパースする (Lean 診断と定理認識失敗マッピングを含む)。</li>
+<li>バックエンドごとの明示的な <code>VerificationPolicy</code> を通じて成功を解釈する。</li>
+<li>結果を CI シリアライズに適した <code>VerificationReport</code>、Lean マニフェスト、診断サイドカーに集約する。</li>
+<li>成功した証拠を <code>Proven&lt;P, T&gt;</code> ではなく <code>Certified&lt;B, P, T&gt;</code> としてインポートする。</li>
+</ol>
+<h3 id="信頼境界"><a class="header" href="#信頼境界">信頼境界</a></h3>
+<p>この分離は意図的です。外部証拠は <code>Certified&lt;...&gt;</code> を通じて可視的な境界を越え、明示的な <code>unsafe</code> 変換経由でのみ <code>Proven&lt;...&gt;</code> になります。これによりインポートされた信頼をコードレビューで検索可能に保ち、定理証明器の出力と Rust ネイティブの保証を混同しないようにします。</p>
+<p>API の詳細は <a href="reference/proof-verification.html">証明と検証リファレンス</a> を参照してください。CI 固有の実行/報告指針は <a href="reference/verification-ci.html">検証 CI ワークフロー</a> を、シリアライズされたアーティファクトの互換性は <a href="reference/verification-schemas.html">検証スキーマ</a> を、チュートリアル例は <a href="examples/verification-workflow.html">検証ワークフロー</a> を、<code>karpal-proof</code> と <code>karpal-verify</code> を組み合わせたドメイン境界の例は <a href="examples/verified-domain-api.html">検証済みドメイン API</a> を、インポートされた信頼に焦点を当てた設計メモは <a href="https://github.com/Industrial-Algebra/Karpal/blob/develop/docs/dev/phase-12-trust-model.md">信頼モデル</a> を参照してください。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="design/architecture.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="design/roadmap.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="design/architecture.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="design/roadmap.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-c22b7243.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
