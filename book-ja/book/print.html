@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b3e124b9.js";
+            window.path_to_searchindex_js = "searchindex-8d7532d3.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-94c6eba9.js"></script>
+        <script src="toc-732289fc.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -4483,6 +4483,255 @@ for obl in &amp;report.obligations {
 }
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="トポス理論"><a class="header" href="#トポス理論">トポス理論</a></h1>
+<p><code>karpal-topos</code> クレートは <a href="#構造化された空-structured-emptiness">構造化された空</a> の基盤となる圏論的インフラを実現します: 小圏、前層、篩、部分対象分類子 Ω、有限極限、グロタンディークトポロジー、層、そして米田の補題です。</p>
+<p>これはフェーズ 16 のスタック — Karpal の最も抽象的なレイヤーで、「ゼロには幾何学がある」が形式化されます: 空である理由が空それ自と同じくらい重要であり、トポス理論がその言語を提供します (Ω は篩の束で、層化は局所から大域への貼り合わせです)。</p>
+<h2 id="概要-7"><a class="header" href="#概要-7">概要</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>モジュール</th><th>内容</th><th>フィーチャーゲート</th></tr>
+</thead>
+<tbody>
+<tr><td><code>small_category</code></td><td><code>SmallCategory</code>、<code>ChainCat&lt;N&gt;</code> (有限半順序)、<code>DiscreteCat</code></td><td><code>no_std</code></td></tr>
+<tr><td><code>presheaf</code></td><td><code>Presheaf&lt;C&gt;</code>、<code>ConstantPresheaf</code>、<code>InitialSegmentPresheaf</code></td><td>コア; 前層の値は <code>alloc</code></td></tr>
+<tr><td><code>representable</code></td><td><code>Representable&lt;c&gt;</code> — ホム前層 <code>Hom(-, c)</code></td><td><code>no_std</code></td></tr>
+<tr><td><code>sieve</code></td><td><code>Sieve</code>、<code>FiniteSieve</code> (前合成で閉じた族)</td><td><code>alloc</code></td></tr>
+<tr><td><code>classifier</code></td><td><code>Omega</code> (部分対象分類子)、<code>Terminal</code>、<code>TruthValue</code> 束</td><td><code>no_std</code></td></tr>
+<tr><td><code>limits</code></td><td><code>pullback_fiber</code>、<code>equalizer_fiber</code>、<code>characteristic_at</code></td><td><code>alloc</code></td></tr>
+<tr><td><code>topology</code></td><td><code>GrothendieckTopology</code>、<code>LawvereTierneyTopology</code></td><td><code>no_std</code></td></tr>
+<tr><td><code>sheaf</code></td><td><code>is_separated_at</code>、<code>is_sheaf_at</code>、層化インターフェース</td><td><code>alloc</code></td></tr>
+<tr><td><code>yoneda</code></td><td><code>yoneda_apply</code>、<code>yoneda_extract</code> — 米田の全単射</td><td><code>no_std</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>このクレートは三つの構成でビルドできます: <code>std</code>、<code>no_std + alloc</code>、純粋 <code>no_std</code> (<code>sieve</code>、<code>limits</code>、<code>sheaf</code> モジュールは <code>alloc</code> ゲートされています)。</p>
+<h2 id="小圏"><a class="header" href="#小圏">小圏</a></h2>
+<h3 id="smallcategory"><a class="header" href="#smallcategory">SmallCategory</a></h3>
+<p><strong>対象がファントムマーカー型</strong>で <strong>射がランタイムデータを運ぶ値</strong>である小圏。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait SmallCategory {
+    /// A から B への射の型。
+    type Mor&lt;A, B&gt;;
+
+    /// f: A → B のあとに g: B → C を合成し、g ∘ f: A → C を得る。
+    fn compose&lt;A, B, C&gt;(g: Self::Mor&lt;B, C&gt;, f: Self::Mor&lt;A, B&gt;) -&gt; Self::Mor&lt;A, C&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p><strong>法則:</strong> 結合律 — <code>compose(h, compose(g, f)) == compose(compose(h, g), f)</code>。</p>
+<h4 id="なぜ-karpal_arrowcategory-でないのか"><a class="header" href="#なぜ-karpal_arrowcategory-でないのか">なぜ <code>karpal_arrow::Category</code> でないのか?</a></h4>
+<p><code>karpal_arrow::Category</code> は <em>計算可能な</em> 射に偏っています (<code>compose</code>/<code>id</code> が関数のような値を返す)。前層は、射がしばしば有限データ (単体圏 Δ、半順序圏) であるような任意の小圏上で定義されます。この <code>SmallCategory</code> は意図的に別物です: 射はインデックスデータです。</p>
+<h4 id="恒等は具象圏ごと"><a class="header" href="#恒等は具象圏ごと">恒等は具象圏ごと</a></h4>
+<p>Rust はファントム型パラメータから対象の恒等を抽出できないため、<code>SmallCategory</code> は <code>compose</code> だけを提供します。各具象圏は対象インデックストレイトに束ねられた固有メソッドとして <code>identity</code> を提供します。これは隠さない正直な制限であり、欠落ではありません。</p>
+<h3 id="chaincatn"><a class="header" href="#chaincatn">ChainCat&lt;N&gt;</a></h3>
+<p>有限鎖 <code>0 ≤ 1 ≤ … ≤ N</code> の半順序圏。射 <code>i → j</code> は <code>i ≤ j</code> のときに限り存在します (一意な証人)。これは最も単純な非自明な小圏です。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::{ChainCat, ChainMor, ChainObj, SmallCategory};
+
+// 対象マーカー、それぞれが位置をコンパイル時に公開。
+struct C0; struct C1; struct C2;
+impl ChainObj for C0 { const IDX: usize = 0; }
+impl ChainObj for C1 { const IDX: usize = 1; }
+impl ChainObj for C2 { const IDX: usize = 2; }
+
+// 恒等は固有メソッド:
+let id: ChainMor&lt;C1, C1&gt; = ChainCat::&lt;2&gt;::identity::&lt;C1&gt;();
+
+// 射は始域 ≤ 終域のときに限り存在:
+let f: ChainMor&lt;C0, C2&gt; = ChainCat::&lt;2&gt;::morphism::&lt;C0, C2&gt;().unwrap();
+assert!(ChainCat::&lt;2&gt;::morphism::&lt;C2, C0&gt;().is_none()); // 2 &gt; 0、射なし
+
+// 合成:
+let g: ChainMor&lt;C1, C2&gt; = ChainCat::&lt;2&gt;::morphism::&lt;C1, C2&gt;().unwrap();
+let gf: ChainMor&lt;C0, C2&gt; = ChainCat::&lt;2&gt;::compose(g, f);
+assert_eq!((gf.from(), gf.to()), (0, 2));
+<span class="boring">}</span></code></pre>
+<p><code>DiscreteCat</code> は退化したケースです: 恒等射しか存在しません。</p>
+<h2 id="前層"><a class="header" href="#前層">前層</a></h2>
+<h3 id="presheafc"><a class="header" href="#presheafc">Presheaf&lt;C&gt;</a></h3>
+<p>反変関手 <code>C^op → Set</code>。各対象に集合を割り当て、各射 <code>f: Dom → Cod</code> に制限写像 <code>restrict(f): P(Cod) → P(Dom)</code> を割り当てます。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait Presheaf&lt;C: SmallCategory&gt; {
+    /// 集合 P(Obj): 対象 Obj での前層の値。
+    type At&lt;Obj&gt;;
+
+    /// f: Dom → Cod に沿った制限。P(Cod) → P(Dom) に写す。
+    fn restrict&lt;Dom, Cod&gt;(f: C::Mor&lt;Dom, Cod&gt;, x: Self::At&lt;Cod&gt;) -&gt; Self::At&lt;Dom&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p><strong>法則:</strong></p>
+<ul>
+<li>単位律: <code>restrict(id, x) == x</code></li>
+<li>合成律: <code>restrict(g ∘ f, x) == restrict(f, restrict(g, x))</code></li>
+</ul>
+<p><strong>反変性</strong>に注意してください: <code>f: Dom → Cod</code> に沿った制限は <code>Cod</code> での値を <code>Dom</code> での値に写し、合成の順序が逆転します。</p>
+<h4 id="実装-14"><a class="header" href="#実装-14">実装</a></h4>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>前層</th><th><code>P(i)</code></th><th>制限</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ConstantPresheaf&lt;T&gt;</code></td><td><code>T</code> (どこでも同じ)</td><td>恒等 (<code>x</code> を変更なく返す)</td></tr>
+<tr><td><code>InitialSegmentPresheaf</code></td><td><code>{0, 1, …, i}</code> (<code>SegmentSet</code>)</td><td>最初の <code>Dom::IDX + 1</code> 要素に切り詰め</td></tr>
+<tr><td><code>Representable&lt;c&gt;</code></td><td><code>Hom(i, c)</code> (射)</td><td>前合成: <code>m ↦ m ∘ f</code></td></tr>
+<tr><td><code>Omega</code></td><td><code>TruthValue</code> (篩の階数)</td><td><code>min(rank, Dom::IDX + 1)</code></td></tr>
+<tr><td><code>Terminal</code></td><td><code>()</code></td><td>恒等</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="representablec"><a class="header" href="#representablec">Representable&lt;c&gt;</a></h3>
+<p>ホム前層 <code>Hom_C(-, c)</code>。各対象 <code>d</code> について <code>At&lt;d&gt; = Hom_C(d, c)</code> です。<code>f: Dom → Cod</code> に沿った制限は前合成です: <code>Hom(Cod, c) → Hom(Dom, c)</code> が <code>m</code> を <code>m ∘ f</code> に送ります。これは米田の補題の錨です。</p>
+<h2 id="篩"><a class="header" href="#篩">篩</a></h2>
+<p>対象 <code>c</code> 上の <strong>篩</strong> は <code>c</code> への射の前合成で閉じた族です: <code>f: d → c</code> が篩にあり <code>g: e → d</code> が任意の射のとき、合成 <code>f ∘ g</code> も篩にあります。篩はグロタンディークトポロジーの基盤となる「被覆」の概念です。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::{FiniteSieve, Sieve, ChainCat, ChainObj};
+<span class="boring">struct C0; struct C2; struct C3;
+</span><span class="boring">impl ChainObj for C0 { const IDX: usize = 0; }
+</span><span class="boring">impl ChainObj for C2 { const IDX: usize = 2; }
+</span><span class="boring">impl ChainObj for C3 { const IDX: usize = 3; }
+</span>
+// {2} 単独は閉じていない: 0→2、1→2 との前合成が 0 と 1 を必要とする。
+let unclosed: FiniteSieve&lt;C3&gt; = FiniteSieve::new([2]);
+assert!(!Sieve::&lt;ChainCat&lt;3&gt;, C3&gt;::is_closed(&amp;unclosed));
+
+// close() は下方閉包を強制: {2} が {0, 1, 2} になる。
+let closed = unclosed.close();
+assert!(Sieve::&lt;ChainCat&lt;3&gt;, C3&gt;::is_closed(&amp;closed));
+
+// 最大篩はすべての始域 [0, Cod::IDX] を含む。
+let max: FiniteSieve&lt;C3&gt; = FiniteSieve::maximal();
+<span class="boring">}</span></code></pre>
+<h2 id="部分対象分類子-ω"><a class="header" href="#部分対象分類子-ω">部分対象分類子 Ω</a></h2>
+<p>前層トポス <code>[C^op, Set]</code> において、部分対象分類子 Ω は各対象 <code>c</code> に <strong><code>c</code> 上の篩の集合</strong> を割り当てる前層です。<code>ChainCat&lt;N&gt;</code> 上では、篩は <strong>階数</strong> で表現可能な下方閉部分集合です — 鎖ヘイティング代数です。</p>
+<h3 id="truthvalue"><a class="header" href="#truthvalue">TruthValue</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct TruthValue { pub rank: usize }
+<span class="boring">}</span></code></pre>
+<p>対象 <code>i</code> について、<code>Ω(i)</code> は階数 <code>0..=i+1</code> を含みます:</p>
+<ul>
+<li>階数 <code>0</code> = 空の篩 (<strong>bottom</strong> — 「何も被覆されない」)</li>
+<li>階数 <code>k</code> = 篩 <code>{0, …, k-1}</code></li>
+<li>階数 <code>i+1</code> = 最大篩 (<strong>top</strong> — 「すべてが被覆される」)</li>
+</ul>
+<p>これは <strong>ヘイティング代数</strong> (直観主義論理) を形成し、構造化された空の基礎です:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::TruthValue;
+
+let a = TruthValue { rank: 2 };
+let b = TruthValue { rank: 4 };
+
+a.meet(b);                          // 束の meet (篩の共通部分)
+a.join(b);                          // 束の join (篩の和)
+a.implies_at(b, 4);                 // 対象 4 でのヘイティング含意
+a.neg_at(3);                        // ヘイティング否定: ¬a = a → bottom
+<span class="boring">}</span></code></pre>
+<p>注意: <code>¬¬a ≠ a</code> が一般に成り立ちます — これは古典論理ではなく直観主義論理です。欠落した中間項自体が一種の構造化された空です。</p>
+<h3 id="terminal-と真値写像"><a class="header" href="#terminal-と真値写像">Terminal と真値写像</a></h3>
+<p><code>Terminal</code> は終前層 (すべての対象を <code>()</code> に送る) です。真値写像 <code>true: 1 → Ω</code> は最大篩を選びます:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::truth_at;
+let max_sieve_on_2 = truth_at(2); // TruthValue { rank: 3 }
+<span class="boring">}</span></code></pre>
+<p>部分対象 <code>S ↪ A</code> は、<code>true</code> に沿った引き戻しが <code>S</code> を復元する一意の特性射 <code>χ: A → Ω</code> に対応します。</p>
+<h2 id="有限極限"><a class="header" href="#有限極限">有限極限</a></h2>
+<p>前層トポスの極限は <strong>各点で</strong> 計算されます。自然変換は Rust では第一級の値になれないため (ランク N の壁)、これらは一つの対象での前層の値と射の作用を取る <strong>ファイバー関数</strong> として公開されます:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::{pullback_fiber, equalizer_fiber, characteristic_at};
+
+// 一つの対象での引き戻しファイバー: f(p) == g(q) を満たす対 (p, q)。
+let pb = pullback_fiber(&amp;[1,2,3], &amp;[10,20,30], |p| p % 2, |q| (q/10) % 2);
+
+// 等化子ファイバー: f(p) == g(p) を満たす要素 p。
+let eq = equalizer_fiber(&amp;[1,2,3,4], |p| *p, |p| p + (p % 2));
+
+// 対象 i での特性射 χ: p を部分対象に制限したものが S に留まるような最大の篩の階数。
+let chi = characteristic_at(2, &amp;42, |_p, j| j &lt; 2); // 階数 2
+<span class="boring">}</span></code></pre>
+<p>定義定理: <strong><code>p ∈ S(i)</code> iff <code>χ(p)</code> が <code>i</code> 上の最大篩</strong> — 部分対象は <code>true</code> に沿った χ の引き戻しです。</p>
+<h2 id="グロタンディークトポロジー"><a class="header" href="#グロタンディークトポロジー">グロタンディークトポロジー</a></h2>
+<p><strong>グロタンディークトポロジー</strong> <code>J</code> は各対象に被覆篩の集まりを割り当てます。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait GrothendieckTopology {
+    fn is_covering(i: usize, rank: usize) -&gt; bool;
+}
+<span class="boring">}</span></code></pre>
+<p><strong>法則</strong> (公理チェッカーで検証):</p>
+<ol>
+<li><strong>極大性</strong> — 最大篩 (階数 <code>i+1</code>) は常に被覆。</li>
+<li><strong>安定性</strong> — 階数 <code>r</code> が <code>i</code> を被覆するなら、<code>min(r, j+1)</code> が <code>j</code> を被覆。</li>
+<li><strong>推移性</strong> — 「局所的に被覆する」篩は被覆。</li>
+</ol>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>トポロジー</th><th>何が被覆されるか</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TrivialTopology</code></td><td>最大篩のみ (階数 <code>i+1</code>)</td></tr>
+<tr><td><code>DenseTopology</code></td><td>任意の空でない篩 (階数 ≥ 1)</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="ローヴェルティアニートポロジー"><a class="header" href="#ローヴェルティアニートポロジー">ローヴェル・ティアニートポロジー</a></h3>
+<p>真値上の閉包作用素 <code>j: Ω → Ω</code> としての同値な概念:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait LawvereTierneyTopology {
+    fn j(i: usize, rank: usize) -&gt; usize;
+}
+<span class="boring">}</span></code></pre>
+<p><strong>法則:</strong> <code>j(top) = top</code>、<code>j(j(r)) = j(r)</code> (冪等性)、<code>j(min(r,s)) = min(j(r), j(s))</code> (meet を保存)。グロタンディークとローヴェル・ティアニートポロジーの間に全単射があります; <code>TrivialTopology</code> と <code>DenseTopology</code> は両方を実装します。</p>
+<h2 id="層"><a class="header" href="#層">層</a></h2>
+<p>前層 <code>P</code> はトポロジー <code>J</code> に対して <strong>層</strong> であるとは、すべての被覆篩について、局所断面のすべての両立する族が大域断面に一意に貼り合わせられることです。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::{is_separated_at, is_sheaf_at};
+
+// 分離 (一意な貼り合わせ): 異なる要素は異なる制限プロファイルを持つ。
+let separated = is_separated_at(2, 3, &amp;[1, 2, 3], |x, _k| *x);
+
+// 完全な層条件: すべての両立する族が一意に貼り合わせられる。
+let is_sheaf = is_sheaf_at(
+    2, 1, &amp;[7, 8],
+    |_k| vec![7, 8],
+    |x, _k| *x,
+);
+<span class="boring">}</span></code></pre>
+<h3 id="層化"><a class="header" href="#層化">層化</a></h3>
+<p>層化 <code>a: PSh(C) → Sh(C, J)</code> は包含の左随伴です — 前層を「最良の層近似」に送ります。完全なプラス構成は genuinely 複雑で実装されて <strong>いません</strong>; インターフェースは随伴の形状 (単位/余単位/三角恒等式) と <code>karpal_core::Adjunction</code> との接続を文書化します。これは境界について正直であり、完全であると装ったスタブではありません。</p>
+<h2 id="米田の補題"><a class="header" href="#米田の補題">米田の補題</a></h2>
+<p>任意の前層 <code>P</code> と対象 <code>c</code> について:</p>
+<pre><code class="language-text">Nat(Hom(-, c), P)  ≅  P(c)
+</code></pre>
+<p>Rust は自然変換を第一級の値として表現できません (対象インデックスについてランク N 多相です — <code>FreeAp::fold_map</code> と同じ壁)。そのため全単射はその <strong>計算可能な作用</strong> で公開されます:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use karpal_topos::{yoneda_apply, yoneda_extract};
+
+// 前進: x ∈ P(c) が自然変換を誘導する。
+// f: Dom → Cod を与えられ、yoneda_apply は restrict(f, x) ∈ P(Dom) を計算する。
+let applied = yoneda_apply::&lt;P, C, Dom, Cod&gt;(f, x);
+
+// 逆: c で恒等射上で変換を評価する。
+let x = yoneda_extract::&lt;P, C, Cod, _&gt;(id_c, |f| action(f));
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>yoneda_apply(f, x)</code> = <code>restrict(f, x)</code> — 誘導された変換の成分。</li>
+<li><code>yoneda_extract(id_c, action)</code> = <code>action(id_c)</code> — 生成元を復元。</li>
+</ul>
+<p>ラウンドトリップの恒等式は直接テスト可能です: 適用のあとの抽出は <code>x</code> を復元します。なぜなら前層の単位律により <code>restrict(id, x) == x</code> だからです。</p>
+<p>Karpal は Apache-2.0 + CLA でライセンスされています。<a href="https://github.com/Industrial-Algebra/Karpal">GitHub で見る</a>。</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="高次圏"><a class="header" href="#高次圏">高次圏</a></h1>
 <p>2-圏、豊饒圏、バイ圏、FFunctor/FMonad — <code>karpal-higher</code> (フェーズ 15)。</p>
 <h2 id="twocategory"><a class="header" href="#twocategory">TwoCategory</a></h2>
@@ -4837,7 +5086,7 @@ assert_eq!(certs.len(), 3); // pentagon、triangle、hexagon
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="設定パイプライン"><a class="header" href="#設定パイプライン">設定パイプライン</a></h1>
 <p>Alt、Traversable、Foldable、Monoid を使って複数ソースからアプリケーション設定を読み込む。</p>
-<h2 id="概要-7"><a class="header" href="#概要-7">概要</a></h2>
+<h2 id="概要-8"><a class="header" href="#概要-8">概要</a></h2>
 <p>実際のアプリケーションが単一ソースから設定を読み込むことは稀です。環境変数、設定ファイル、ハードコードされたデフォルトがそれぞれ部分的な情報を提供します。この例は以下を行う設定パイプラインを構築します:</p>
 <ul>
 <li><strong>Alt</strong> を使い、複数の設定ソース (env、ファイル、デフォルト) にまたがるフォールバック連鎖を作る。</li>
@@ -5052,7 +5301,7 @@ let bad = validate_ports(vec!["80", "not_a_port", "8080"]);
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="データ変換"><a class="header" href="#データ変換">データ変換</a></h1>
 <p>ETL パイプライン: Functor、Chain、Lens、Foldable、Monoid を使ってレコードをパースし、フィールドを変換し、統計を集約する。</p>
-<h2 id="概要-8"><a class="header" href="#概要-8">概要</a></h2>
+<h2 id="概要-9"><a class="header" href="#概要-9">概要</a></h2>
 <p>この例は生の文字列レコードを型付きトランザクションに処理し、レンズ経由で変換を適用し、モノイダルな畳み込みで結果を集約する小さな ETL (Extract, Transform, Load) パイプラインを構築します。複数の Karpal 抽象化が現実世界のデータ処理ワークフローに自然に合成される仕方を実演します:</p>
 <ul>
 <li><strong>ドメイン型</strong> — 生の入力レコードと型付き出力構造体、集約用の <code>Semigroup</code> と <code>Monoid</code> を実装する <code>Summary</code> 型。</li>
@@ -5309,7 +5558,7 @@ fn normalize_names(transactions: Vec&lt;Transaction&gt;) -&gt; Vec&lt;Transactio
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="セルラーオートマトン"><a class="header" href="#セルラーオートマトン">セルラーオートマトン</a></h1>
 <p>NonEmptyVec 上の Extend (Comonad) を使った一次元セルラーオートマトン。</p>
-<h2 id="概要-9"><a class="header" href="#概要-9">概要</a></h2>
+<h2 id="概要-10"><a class="header" href="#概要-10">概要</a></h2>
 <p><strong>セルラーオートマトン</strong> は離散ステップで進化するセルのグリッドです。各ステップで、すべてのセルがセルとその近傍を検査する <em>ルール</em> に基づいて値を更新します。関数型プログラミングにおける古典的アプローチは、これを <strong>コモナド</strong> でモデル化することです。</p>
 <p>重要な洞察は、コモナドがセルラーオートマトンパターンに直接対応する二つの演算を提供することです:</p>
 <ul>
@@ -5459,7 +5708,7 @@ fn normalize_names(transactions: Vec&lt;Transaction&gt;) -&gt; Vec&lt;Transactio
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="ドメインモデルのオプティクス"><a class="header" href="#ドメインモデルのオプティクス">ドメインモデルのオプティクス</a></h1>
 <p>Lens 合成、Prism、プロ関手変換を使った e コマースドメインモデル。</p>
-<h2 id="概要-10"><a class="header" href="#概要-10">概要</a></h2>
+<h2 id="概要-11"><a class="header" href="#概要-11">概要</a></h2>
 <p>現実世界のドメインモデルは <strong>直積型</strong> (名前付きフィールドを持つ構造体) と <strong>直和型</strong> (異なるバリアントを持つ列挙型) の両方を含みます。Karpal はそれらを扱うための二つの相補的なオプティクスを提供します:</p>
 <ul>
 <li><strong>Lens</strong> — 直積型内の単一フィールドに焦点を当てます。すべての直積はそのフィールドを持つため、Lens は常に成功します。Lens は <code>.then()</code> で合成し、深く入れ子になったフィールドに到達できます。</li>

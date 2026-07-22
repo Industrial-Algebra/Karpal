@@ -44,6 +44,7 @@
 - [証明と検証](./reference/proof-verification.md)
 - [モノイダル図式](./reference/monoidal-diagrams.md)
 - [シューベルト型](./reference/schubert-types.md)
+- [トポス理論](./reference/topos.md)
 - [高次圏](./reference/higher-categories.md)
 - [検証 CI ワークフロー](./reference/verification-ci.md)
 - [検証スキーマ](./reference/verification-schemas.md)

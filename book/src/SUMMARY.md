@@ -44,6 +44,7 @@
 - [Proof & Verification](./reference/proof-verification.md)
 - [Monoidal Diagrams](./reference/monoidal-diagrams.md)
 - [Schubert Types](./reference/schubert-types.md)
+- [Topos Theory](./reference/topos.md)
 - [Higher Categories](./reference/higher-categories.md)
 - [Verification CI Workflow](./reference/verification-ci.md)
 - [Verification Schemas](./reference/verification-schemas.md)
