@@ -15,4 +15,4 @@ karpal-core = { version = "0.8.0", path = "../karpal-core" }
 karpal-algebra = { version = "0.8.0", path = "../karpal-algebra" }
 karpal-higher = { version = "0.8.0", path = "../karpal-higher" }
 karpal-verify = { version = "0.8.0", path = "../karpal-verify" }
-amari-enumerative = "0.23"
+amari-enumerative = "0.24"
