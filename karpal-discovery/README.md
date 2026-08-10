@@ -5,8 +5,9 @@ of the Karpal discovery vertical.
 
 `karpal-discovery` walks a Karpal workspace checkout with a real `syn` AST
 parser and produces a typed, deterministic, content-hashable catalog of the
-public API surface: workspace crates, their public modules, and their public
-items — traits, free functions, structs, enums, and type aliases. It is the
+public API surface: workspace crates, their public modules, public items
+(traits, free functions, structs, enums, type aliases), and the trait
+implementation graph (queryable via `Catalog::implementors_of`). It is the
 successor to `karpal-index`'s string-scanning indexer.
 
 ## Architecture
@@ -20,10 +21,11 @@ to discovery — and carries **no dependency on the lonis `Block` contract**. Th
 recommendations, plans, probe results), which is gated on Lonis and built in
 later slices.
 
-This slice catalogues **public traits, functions, structs, enums, and type
-aliases** (plus crate metadata and modules). Macros, the full impl-graph,
-curated semantic overlays, project inspection, the category-theoretic planner,
-algebraic probes, and the command surface arrive in later slices.
+This slice catalogues **public traits, functions, structs, enums, type
+aliases, and the trait implementation graph** (plus crate metadata and
+modules). Macros, curated semantic overlays, project inspection, the
+category-theoretic planner, algebraic probes, and the command surface arrive in
+later slices.
 
 ## Status
 

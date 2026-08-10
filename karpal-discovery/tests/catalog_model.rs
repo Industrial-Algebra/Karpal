@@ -16,6 +16,7 @@ fn sample_catalog() -> Catalog {
         description: Some("core".to_string()),
         features: BTreeMap::new(),
         dependencies: BTreeMap::new(),
+        impls: Vec::new(),
         modules: Vec::new(),
         items: Vec::new(),
     };

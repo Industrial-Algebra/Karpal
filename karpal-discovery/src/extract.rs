@@ -18,8 +18,8 @@ use syn::{Attribute, ItemEnum, ItemFn, ItemStruct, ItemTrait, ItemType, TraitIte
 use walkdir::WalkDir;
 
 use crate::catalog::{
-    Catalog, CrateRecord, EnumRecord, FunctionRecord, ItemKind, ItemRecord, MethodRecord,
-    ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
+    Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
+    MethodRecord, ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
 };
 
 /// Extract a structural catalog from a workspace root.
@@ -81,6 +81,7 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
     let crate_root = meta.name.replace('-', "_");
     let mut modules = Vec::new();
     let mut items = Vec::new();
+    let mut impls = Vec::new();
     for source in rust_sources(&src_dir) {
         let module_path = match module_path_for(&src_dir, &source, &crate_root) {
             Some(path) => path,
@@ -99,8 +100,17 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
             docs,
         });
         for item in &file.items {
-            if let Some(record) = extract_item(item, &meta.name, &module_path) {
-                items.push(record);
+            match item {
+                syn::Item::Impl(impl_item) => {
+                    if let Some(implementation) = extract_trait_impl(impl_item) {
+                        impls.push(implementation);
+                    }
+                }
+                other => {
+                    if let Some(record) = extract_item(other, &meta.name, &module_path) {
+                        items.push(record);
+                    }
+                }
             }
         }
     }
@@ -110,12 +120,18 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
             .cmp(&b.name)
             .then_with(|| a.module_path.cmp(&b.module_path))
     });
+    impls.sort_by(|a, b| {
+        a.trait_name
+            .cmp(&b.trait_name)
+            .then_with(|| a.implementor.cmp(&b.implementor))
+    });
     Some(CrateRecord {
         name: meta.name,
         version: meta.version,
         description: meta.description,
         features: meta.features,
         dependencies: meta.dependencies,
+        impls,
         modules,
         items,
     })
@@ -334,6 +350,28 @@ fn extract_type_alias(type_item: &ItemType) -> TypeAliasRecord {
     TypeAliasRecord {
         generics: generics_of(&type_item.generics),
         aliased_type: normalize_tokens(&type_item.ty.to_token_stream().to_string()),
+    }
+}
+
+/// Extract a trait implementation (`impl Trait for Type`) from a parsed
+/// `syn::ItemImpl`. Returns `None` for inherent impls (`impl Type { ... }`),
+/// for which `trait_` is `None`.
+fn extract_trait_impl(impl_item: &syn::ItemImpl) -> Option<ImplRecord> {
+    let (trait_path, _) = impl_item.trait_.as_ref()?;
+    let trait_name = trait_path.segments.last()?.ident.to_string();
+    let implementor = type_name(&impl_item.self_ty)?;
+    Some(ImplRecord {
+        implementor,
+        trait_name,
+    })
+}
+
+/// The leading type name of a `syn::Type`, when it is a plain path type.
+fn type_name(ty: &syn::Type) -> Option<String> {
+    if let syn::Type::Path(type_path) = ty {
+        Some(type_path.path.segments.last()?.ident.to_string())
+    } else {
+        None
     }
 }
 
