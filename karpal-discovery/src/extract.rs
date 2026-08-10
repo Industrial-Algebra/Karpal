@@ -14,11 +14,12 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use quote::ToTokens;
-use syn::{Attribute, ItemTrait, TraitItem};
+use syn::{Attribute, ItemEnum, ItemFn, ItemStruct, ItemTrait, ItemType, TraitItem};
 use walkdir::WalkDir;
 
 use crate::catalog::{
-    Catalog, CrateRecord, ItemKind, ItemRecord, MethodRecord, ModuleRecord, TraitRecord,
+    Catalog, CrateRecord, EnumRecord, FunctionRecord, ItemKind, ItemRecord, MethodRecord,
+    ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
 };
 
 /// Extract a structural catalog from a workspace root.
@@ -98,11 +99,8 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
             docs,
         });
         for item in &file.items {
-            if let syn::Item::Trait(trait_item) = item {
-                if !is_public(&trait_item.vis) {
-                    continue;
-                }
-                items.push(extract_trait(trait_item, &meta.name, &module_path));
+            if let Some(record) = extract_item(item, &meta.name, &module_path) {
+                items.push(record);
             }
         }
     }
@@ -245,9 +243,8 @@ fn module_path_for(src_dir: &Path, file: &Path, crate_root: &str) -> Option<Stri
     }
 }
 
-/// Extract a catalogued trait from a parsed `syn::ItemTrait`.
-fn extract_trait(trait_item: &ItemTrait, crate_name: &str, module_path: &str) -> ItemRecord {
-    let name = trait_item.ident.to_string();
+/// Build the trait payload from a parsed `syn::ItemTrait`.
+fn extract_trait_kind(trait_item: &ItemTrait) -> TraitRecord {
     let supertraits = trait_item
         .supertraits
         .iter()
@@ -261,16 +258,10 @@ fn extract_trait(trait_item: &ItemTrait, crate_name: &str, module_path: &str) ->
             }
         })
         .collect();
-    let generics_raw = trait_item.generics.to_token_stream().to_string();
-    let generics = if generics_raw.trim().is_empty() {
-        None
-    } else {
-        Some(normalize_tokens(&generics_raw))
-    };
     let mut associated_items = Vec::new();
     let mut methods = Vec::new();
-    for trait_item in &trait_item.items {
-        match trait_item {
+    for member in &trait_item.items {
+        match member {
             TraitItem::Const(const_item) => associated_items.push(const_item.ident.to_string()),
             TraitItem::Type(type_item) => associated_items.push(type_item.ident.to_string()),
             TraitItem::Fn(fn_item) => {
@@ -280,24 +271,140 @@ fn extract_trait(trait_item: &ItemTrait, crate_name: &str, module_path: &str) ->
                     is_required: fn_item.default.is_none(),
                 });
             }
-            TraitItem::Macro(_) | TraitItem::Verbatim(_) => {}
             _ => {}
         }
     }
-    let cfg = cfg_gate(&trait_item.attrs);
-    ItemRecord {
+    TraitRecord {
+        supertraits,
+        generics: generics_of(&trait_item.generics),
+        associated_items,
+        methods,
+    }
+}
+
+/// Build the function payload from a parsed `syn::ItemFn`.
+fn extract_function(fn_item: &ItemFn) -> FunctionRecord {
+    FunctionRecord {
+        signature: normalize_tokens(&fn_item.sig.to_token_stream().to_string()),
+        is_async: fn_item.sig.asyncness.is_some(),
+        is_const: fn_item.sig.constness.is_some(),
+        is_unsafe: matches!(fn_item.sig.safety, syn::Safety::Unsafe(_)),
+    }
+}
+
+/// Build the struct payload from a parsed `syn::ItemStruct`.
+fn extract_struct(struct_item: &ItemStruct) -> StructRecord {
+    let fields = match &struct_item.fields {
+        syn::Fields::Named(named) => named
+            .named
+            .iter()
+            .map(|field| {
+                field
+                    .ident
+                    .as_ref()
+                    .map(ToString::to_string)
+                    .unwrap_or_default()
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    StructRecord {
+        generics: generics_of(&struct_item.generics),
+        derives: derives(&struct_item.attrs),
+        fields,
+    }
+}
+
+/// Build the enum payload from a parsed `syn::ItemEnum`.
+fn extract_enum(enum_item: &ItemEnum) -> EnumRecord {
+    let variants = enum_item
+        .variants
+        .iter()
+        .map(|variant| variant.ident.to_string())
+        .collect();
+    EnumRecord {
+        generics: generics_of(&enum_item.generics),
+        derives: derives(&enum_item.attrs),
+        variants,
+    }
+}
+
+/// Build the type-alias payload from a parsed `syn::ItemType`.
+fn extract_type_alias(type_item: &ItemType) -> TypeAliasRecord {
+    TypeAliasRecord {
+        generics: generics_of(&type_item.generics),
+        aliased_type: normalize_tokens(&type_item.ty.to_token_stream().to_string()),
+    }
+}
+
+/// Dispatch one top-level item to its kind-specific payload, returning a
+/// catalogued [`ItemRecord`] for public items and `None` otherwise.
+fn extract_item(item: &syn::Item, crate_name: &str, module_path: &str) -> Option<ItemRecord> {
+    let (name, kind, attrs): (String, ItemKind, &[Attribute]) = match item {
+        syn::Item::Trait(t) if is_public(&t.vis) => (
+            t.ident.to_string(),
+            ItemKind::Trait(extract_trait_kind(t)),
+            &t.attrs,
+        ),
+        syn::Item::Fn(f) if is_public(&f.vis) => (
+            f.sig.ident.to_string(),
+            ItemKind::Function(extract_function(f)),
+            &f.attrs,
+        ),
+        syn::Item::Struct(s) if is_public(&s.vis) => (
+            s.ident.to_string(),
+            ItemKind::Struct(extract_struct(s)),
+            &s.attrs,
+        ),
+        syn::Item::Enum(e) if is_public(&e.vis) => (
+            e.ident.to_string(),
+            ItemKind::Enum(extract_enum(e)),
+            &e.attrs,
+        ),
+        syn::Item::Type(t) if is_public(&t.vis) => (
+            t.ident.to_string(),
+            ItemKind::TypeAlias(extract_type_alias(t)),
+            &t.attrs,
+        ),
+        _ => return None,
+    };
+    Some(ItemRecord {
         name,
         crate_name: crate_name.to_string(),
         module_path: module_path.to_string(),
-        kind: ItemKind::Trait(TraitRecord {
-            supertraits,
-            generics,
-            associated_items,
-            methods,
-        }),
-        docs: extract_doc(&trait_item.attrs),
-        cfg,
-    }
+        kind,
+        docs: extract_doc(attrs),
+        cfg: cfg_gate(attrs),
+    })
+}
+
+/// `#[derive(...)]` trait names on an item, in source order.
+fn derives(attrs: &[Attribute]) -> Vec<String> {
+    attrs
+        .iter()
+        .filter(|attr| attr.path().is_ident("derive"))
+        .filter_map(|attr| attr.meta.require_list().ok())
+        .filter_map(|list| {
+            list.parse_args_with(
+                syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated,
+            )
+            .ok()
+        })
+        .flat_map(|paths| {
+            paths.into_iter().map(|path| {
+                path.segments
+                    .last()
+                    .map(|segment| segment.ident.to_string())
+                    .unwrap_or_else(|| path.to_token_stream().to_string())
+            })
+        })
+        .collect()
+}
+
+/// Normalized generic-parameter string for `syn::Generics`, or `None` if empty.
+fn generics_of(generics: &syn::Generics) -> Option<String> {
+    let normalized = normalize_tokens(&generics.to_token_stream().to_string());
+    (!normalized.is_empty()).then_some(normalized)
 }
 
 /// Whether a `syn::Visibility` denotes a public item.
