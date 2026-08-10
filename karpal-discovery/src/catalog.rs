@@ -106,15 +106,23 @@ pub struct ItemRecord {
 
 /// Kind-specific payload for a catalogued item.
 ///
-/// `Trait` is the only variant in this slice; `Function`, `Type`, and `Macro`
-/// arrive in later slices. The enum is `#[serde(tag = "kind")]` so adding
-/// variants is additive on the wire.
+/// `Trait` plus the core value/type/function kinds added in slice 2;
+/// macros arrive later. The enum is `#[non_exhaustive]` and `#[serde(tag =
+/// "kind")]` so adding variants is additive on the wire.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum ItemKind {
     /// A public trait.
     Trait(TraitRecord),
+    /// A public free function.
+    Function(FunctionRecord),
+    /// A public struct.
+    Struct(StructRecord),
+    /// A public enum.
+    Enum(EnumRecord),
+    /// A public type alias.
+    TypeAlias(TypeAliasRecord),
 }
 
 /// A public trait.
@@ -139,4 +147,48 @@ pub struct MethodRecord {
     pub signature: String,
     /// Whether the method is required (`true`) or has a default body (`false`).
     pub is_required: bool,
+}
+
+/// A public free function.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct FunctionRecord {
+    /// Reconstructed signature string.
+    pub signature: String,
+    /// Whether the function is `async`.
+    pub is_async: bool,
+    /// Whether the function is `const`.
+    pub is_const: bool,
+    /// Whether the function is `unsafe`.
+    pub is_unsafe: bool,
+}
+
+/// A public struct.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct StructRecord {
+    /// Raw generic parameters, if any.
+    pub generics: Option<String>,
+    /// `#[derive(...)]` trait names, in source order.
+    pub derives: Vec<String>,
+    /// Named field identifiers (empty for tuple/unit structs).
+    pub fields: Vec<String>,
+}
+
+/// A public enum.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EnumRecord {
+    /// Raw generic parameters, if any.
+    pub generics: Option<String>,
+    /// `#[derive(...)]` trait names, in source order.
+    pub derives: Vec<String>,
+    /// Variant identifiers, in source order.
+    pub variants: Vec<String>,
+}
+
+/// A public type alias.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TypeAliasRecord {
+    /// Raw generic parameters, if any.
+    pub generics: Option<String>,
+    /// The aliased type, as written.
+    pub aliased_type: String,
 }
