@@ -39,14 +39,14 @@ fn search_round_trips_through_the_extension_seam() {
     assert_eq!(blocks.len(), 1, "one search block");
 
     let payload = blocks[0].payload();
-    assert_eq!(payload.kind_name(), "karpal_search");
+    assert_eq!(payload.kind_name(), "karpal.search");
 
     // The vertical payload crossed the subprocess seam as `Extension`,
     // losslessly — the host never knew `KarpalPayload`, only `BlockKind`.
     let BlockKind::Extension { kind, data } = payload else {
         panic!("expected Extension, got {payload:?}");
     };
-    assert_eq!(kind, "karpal_search");
+    assert_eq!(kind, "karpal.search");
     assert_eq!(data["query"], "Functor");
     let results = data["results"].as_array().expect("results is an array");
     assert!(

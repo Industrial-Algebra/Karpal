@@ -5,28 +5,26 @@
 //!
 //! Behind the `lonis` feature. A [`KarpalPayload`] is carried as the `payload`
 //! of a `Block<KarpalPayload>`; in-process it is fully typed, and at the
-//! subprocess boundary it serializes to `{"kind": <name>, "data": <fields>}`,
+//! subprocess boundary it serializes to `{"kind": "karpal.search", "data": …}`,
 //! which the lonis host parses losslessly into `BlockKind::Extension`.
 //!
-//! ## Requirements surfaced (spike)
+//! This is the first consumer adoption of Lonis's `#[derive(BlockPayload)]`
+//! (ADR-0004). The derive makes the two constraints this crate's subprocess
+//! spike surfaced into compile-time guarantees:
 //!
-//! Two Lonis wire constraints a vertical payload enum must satisfy, which
-//! Lonis should eventually document or offer a derive for:
+//! 1. **Adjacent tagging** (`{"kind", "data"}`) — the derive generates the
+//!    adjacently-tagged serde impls; an internally-tagged payload can no longer
+//!    silently fail at the seam.
+//! 2. **Serde tag == `kind_name()`** — both come from one declaration
+//!    (`#[lonis_payload(namespace = "karpal")]`), so `karpal.search` cannot
+//!    diverge between the wire and in-process.
 //!
-//! 1. **Adjacent tagging.** The enum must serialize as `{"kind": …, "data": …}`
-//!    to match `BlockKind`'s wire form — hence `#[serde(tag = "kind",
-//!    content = "data")]` below. Internally-tagged (`#[serde(tag = "kind")]`)
-//!    payloads would *not* round-trip through `BlockKind::Extension`.
-//! 2. **Serde tag == `kind_name()`.** The host sees the serde `kind` tag (it
-//!    becomes the `Extension.kind` string), *not* `BlockPayload::kind_name()`.
-//!    They must agree, and the kind should be namespaced (`karpal_search`) to
-//!    avoid collisions across verticals.
+//! The custom multi-line `render_human` (a query echo plus one line per result)
+//! is preserved via the derive's `render_fn` hook — see `render_search`.
 
 #![cfg(feature = "lonis")]
 
 use serde::{Deserialize, Serialize};
-
-use lonis_schema::BlockPayload;
 
 use crate::ItemKind;
 
@@ -65,11 +63,15 @@ impl ItemSummary {
 }
 
 /// The typed payload a karpal-discovery tool emits through the Lonis contract.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "kind", content = "data")]
+///
+/// Derived via [`lonis_schema::BlockPayload`] — the serde wire tag,
+/// `kind_name()`, and `schema_id()` all come from one declaration, so the
+/// in-process kind and the host-visible `Extension.kind` (`karpal.search`)
+/// cannot diverge. `render_human` delegates to `render_search`.
+#[derive(Debug, Clone, lonis_schema::BlockPayload)]
+#[lonis_payload(namespace = "karpal", render_fn = "render_search")]
 pub enum KarpalPayload {
     /// `karpal search <query>` — public items whose name matches.
-    #[serde(rename = "karpal_search")]
     Search {
         /// The query as received.
         query: String,
@@ -78,29 +80,21 @@ pub enum KarpalPayload {
     },
 }
 
-impl BlockPayload for KarpalPayload {
-    fn kind_name(&self) -> &str {
-        match self {
-            Self::Search { .. } => "karpal_search",
-        }
-    }
-
-    fn schema_id(&self) -> String {
-        format!("lonis.block/{}/v1", self.kind_name())
-    }
-
-    fn render_human(&self) -> String {
-        match self {
-            Self::Search { query, results } => {
-                let mut out = format!("karpal search \"{query}\": {} match(es)\n", results.len());
-                for item in results {
-                    out.push_str(&format!(
-                        "  {} ({}) — {}\n",
-                        item.name, item.kind, item.module_path
-                    ));
-                }
-                out
+/// Custom human render for [`KarpalPayload`]: a query echo plus one line per
+/// result. Hooked in via `render_fn = "render_search"` so the derive's wire
+/// safety is kept without forcing the default `<kind>: <Debug>` render.
+#[must_use]
+fn render_search(payload: &KarpalPayload) -> String {
+    match payload {
+        KarpalPayload::Search { query, results } => {
+            let mut out = format!("karpal search \"{query}\": {} match(es)\n", results.len());
+            for item in results {
+                out.push_str(&format!(
+                    "  {} ({}) — {}\n",
+                    item.name, item.kind, item.module_path
+                ));
             }
+            out
         }
     }
 }

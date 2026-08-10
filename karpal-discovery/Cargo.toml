@@ -11,10 +11,11 @@ readme = "README.md"
 description = "Structural catalog generator for the Karpal workspace (Lonis discovery vertical)"
 
 [features]
-# `lonis` enables the typed Lonis output layer (Block<KarpalPayload>), the
-# `karpal` wire-protocol binary, and SubprocessTool-hosted integration. It is
-# a spike: the lonis crates are unpublished (0.0.1), so this feature — and the
-# binary — are NOT publishable to crates.io until lonis-schema ships there.
+# `lonis` enables the typed Lonis output layer (Block<KarpalPayload> via
+# #[derive(BlockPayload)]), the `karpal` wire-protocol binary, and
+# SubprocessTool-hosted integration. The lonis crates are unpublished (0.0.1),
+# so this feature — and the binary — are NOT publishable to crates.io until
+# lonis-schema ships there.
 default = []
 lonis = ["dep:lonis-schema", "dep:lonis-core"]
 
@@ -32,12 +33,14 @@ toml = "0.8"
 walkdir = "2"
 sha2 = "0.10"
 hex = "0.4"
-# Lonis integration (spike): git deps pinned to Lonis develop HEAD. Cross-repo
-# pre-publication deps must be git (not path) — relative path deps break across
-# worktree locations and aren't portable. Bump the rev as Lonis progresses; the
-# `lonis` feature is unpublishable until lonis-schema reaches crates.io.
-lonis-schema = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "3f3ffdc07a9d5b135a1922bd8637288249c27542", optional = true }
-lonis-core = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "3f3ffdc07a9d5b135a1922bd8637288249c27542", optional = true }
+# Lonis integration: git deps pinned to a Lonis rev. Cross-repo pre-publication
+# deps must be git (not path) — relative path deps break across worktree
+# locations and aren't portable. Pinned to the ADR-0004 `feature/block-payload-
+# derive` tip (#[derive(BlockPayload)] + render_fn); bump to Lonis `develop`
+# HEAD once PR #6 lands there. The `lonis` feature is unpublishable until
+# lonis-schema reaches crates.io.
+lonis-schema = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "e77f6122d576dbe5a1ee341aaf5ae44626dfe05d", optional = true, features = ["derive"] }
+lonis-core = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "e77f6122d576dbe5a1ee341aaf5ae44626dfe05d", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
