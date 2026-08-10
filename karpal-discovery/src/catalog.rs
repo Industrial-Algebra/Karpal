@@ -47,6 +47,22 @@ impl Catalog {
             .find(|item| item.name == name)
     }
 
+    /// Every type that implements `trait_name`, across all crates, sorted and
+    /// de-duplicated. Powers the discovery query "implementors of X".
+    #[must_use]
+    pub fn implementors_of(&self, trait_name: &str) -> Vec<String> {
+        let mut names: Vec<String> = self
+            .crates
+            .values()
+            .flat_map(|record| &record.impls)
+            .filter(|implementation| implementation.trait_name == trait_name)
+            .map(|implementation| implementation.implementor.clone())
+            .collect();
+        names.sort();
+        names.dedup();
+        names
+    }
+
     /// Canonical SHA-256 content hash of the catalog's JSON serialization.
     ///
     /// Because every collection is ordered, identical catalogs produce
@@ -72,10 +88,21 @@ pub struct CrateRecord {
     pub features: BTreeMap<String, Vec<String>>,
     /// Workspace/crate dependencies (name → version requirement or path).
     pub dependencies: BTreeMap<String, String>,
+    /// Trait implementations found in this crate (`impl Trait for Type`).
+    pub impls: Vec<ImplRecord>,
     /// Public modules reachable from the crate root.
     pub modules: Vec<ModuleRecord>,
     /// Public top-level items declared in this crate.
     pub items: Vec<ItemRecord>,
+}
+
+/// One trait implementation (`impl Trait for Type`).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ImplRecord {
+    /// The implementing type's name (leading segment).
+    pub implementor: String,
+    /// The implemented trait's name (last path segment).
+    pub trait_name: String,
 }
 
 /// A public module path within a crate.

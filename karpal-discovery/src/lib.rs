@@ -10,9 +10,9 @@
 //! AST parser and produces a typed, deterministic, content-hashable
 //! [`Catalog`] of the public API surface: workspace crates, their public
 //! modules, and their public items — traits, free functions, structs, enums,
-//! and type aliases. Later slices add macros, the full impl-graph, curated
-//! semantic overlays, and project inspection; the category-theoretic planner,
-//! algebraic probes, and command surface arrive with Lonis [`Block`]
+//! type aliases, and the trait implementation graph. Later slices add macros,
+//! curated semantic overlays, and project inspection; the category-theoretic
+//! planner, algebraic probes, and command surface arrive with Lonis [`Block`]
 //! integration.
 //!
 //! ## Architecture note
@@ -38,6 +38,6 @@ pub mod catalog;
 pub mod extract;
 
 pub use catalog::{
-    Catalog, CrateRecord, EnumRecord, FunctionRecord, ItemKind, ItemRecord, MethodRecord,
-    ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
+    Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
+    MethodRecord, ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
 };
