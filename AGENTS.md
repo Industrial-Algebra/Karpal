@@ -89,12 +89,14 @@ If `develop` moved while your PR was open, rebase and force-push your own branch
 ```sh
 git fetch origin
 git rebase origin/develop
-git push --force-with-lease   # Karpal is single-remote (GitHub only); this works cleanly
+git push --force             # own branch, deliberate rebase
 ```
 
-(Karpal has a single `origin` on GitHub — no Forgejo mirror — so
-`--force-with-lease` is reliable. Sibling repos with a dual-push remote need
-plain `--force` for rebased own branches.)
+Karpal uses a **dual-push `origin`** (GitHub + the Forgejo mirror on
+king-ghidorah — see *Forgejo mirror* below). With two pushurls,
+`--force-with-lease` fails across the mirrors ("stale info"). Use plain
+`--force` for rebased own branches. Plain pushes (new branches, merge commits)
+hit both mirrors fine; only rewritten history needs `--force`.
 
 ### Releasing
 
@@ -188,6 +190,32 @@ cargo build --no-default-features -p karpal-core -p karpal-profunctor -p karpal-
   `.gitignore`d; Netlify regenerates them on every deploy.
 - Netlify auto-deploys on pushes to `main` (production branch). Docs fixes can
   ship via an untagged hotfix to `main` (see Hotfixes) without a crate release.
+
+## Forgejo mirror (dual-push)
+
+Karpal is mirrored from GitHub (primary) to the private **Forgejo** server on
+`king-ghidorah.tail0311a1.ts.net` (Tailscale) for redundancy. `origin` has two
+pushurls — GitHub (SSH) and Forgejo (HTTPS) — so **every `git push origin` hits
+both**. A separate `king-ghidorah` remote exists for explicit mirror pushes.
+
+```sh
+git remote -v
+# origin  git@github.com:Industrial-Algebra/Karpal.git          (fetch)
+# origin  git@github.com:Industrial-Algebra/Karpal.git          (push)   <- GitHub
+# origin  https://king-ghidorah.../Karpal.git                   (push)   <- Forgejo
+```
+
+- **Auth:** HTTPS + a personal access token (account `lucien`), stored in
+  `~/.git-credentials` per machine. **SSH key auth does not work** through this
+  Forgejo — do not pursue it. See the `ia-forgejo-mirror` skill for the recipe.
+- **Rebasing:** with two pushurls, `--force-with-lease` fails ("stale info"
+  across the mirrors). Use plain `--force` for rebased own branches; plain pushes
+  (new branches, merge commits) hit both mirrors fine.
+- **Machine-local:** the credential store and pushurl wiring live on each
+  machine — they are not in the repo and don't replicate via clone. Repeat the
+  setup on each client machine (per the skill).
+- **Missing repo = HTTP 403:** if a Forgejo push fails with `403`, the repo
+  doesn't exist yet — create it via the API, then push.
 
 ## Optional enforcement — pre-push hook
 
