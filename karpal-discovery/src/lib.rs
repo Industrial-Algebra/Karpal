@@ -36,6 +36,8 @@
 
 pub mod catalog;
 pub mod extract;
+#[cfg(feature = "lonis")]
+pub mod payload;
 
 pub use catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
