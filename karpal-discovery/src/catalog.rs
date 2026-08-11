@@ -133,9 +133,10 @@ pub struct ItemRecord {
 
 /// Kind-specific payload for a catalogued item.
 ///
-/// `Trait` plus the core value/type/function kinds added in slice 2;
-/// macros arrive later. The enum is `#[non_exhaustive]` and `#[serde(tag =
-/// "kind")]` so adding variants is additive on the wire.
+/// `Trait`, the core value/type/function kinds (slice 2), and macros
+/// (slice 4): declarative `macro_rules!` plus the three procedural flavors.
+/// The enum is `#[non_exhaustive]` and `#[serde(tag = "kind")]` so adding
+/// variants is additive on the wire.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[non_exhaustive]
@@ -150,6 +151,8 @@ pub enum ItemKind {
     Enum(EnumRecord),
     /// A public type alias.
     TypeAlias(TypeAliasRecord),
+    /// A macro definition (declarative or procedural).
+    Macro(MacroRecord),
 }
 
 /// A public trait.
@@ -218,4 +221,32 @@ pub struct TypeAliasRecord {
     pub generics: Option<String>,
     /// The aliased type, as written.
     pub aliased_type: String,
+}
+
+/// The flavor of a macro definition.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MacroFlavor {
+    /// `macro_rules! name { … }` — declarative.
+    #[default]
+    Declarative,
+    /// `#[proc_macro] pub fn name` — function-like procedural.
+    Function,
+    /// `#[proc_macro_attribute] pub fn name` — attribute procedural.
+    Attribute,
+    /// `#[proc_macro_derive(Trait, …)] pub fn name` — derive procedural.
+    Derive,
+}
+
+/// A macro definition (declarative or procedural).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct MacroRecord {
+    /// The macro flavor.
+    pub flavor: MacroFlavor,
+    /// For [`MacroFlavor::Derive`], the trait name being derived (from
+    /// `#[proc_macro_derive(Trait, …)]`); `None` for other flavors.
+    pub derives: Option<String>,
+    /// Helper attributes declared by a derive macro
+    /// (`#[proc_macro_derive(Trait, attributes(a, b))]`), in source order.
+    pub helper_attributes: Vec<String>,
 }

@@ -41,5 +41,6 @@ pub mod payload;
 
 pub use catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
-    MethodRecord, ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
+    MacroFlavor, MacroRecord, MethodRecord, ModuleRecord, StructRecord, TraitRecord,
+    TypeAliasRecord,
 };

@@ -52,6 +52,7 @@ impl ItemSummary {
             ItemKind::Struct(_) => "struct",
             ItemKind::Enum(_) => "enum",
             ItemKind::TypeAlias(_) => "type_alias",
+            ItemKind::Macro(_) => "macro",
         };
         Self {
             name: name.to_string(),

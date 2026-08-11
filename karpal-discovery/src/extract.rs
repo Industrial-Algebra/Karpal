@@ -6,9 +6,10 @@
 //!
 //! Slice 1 catalogues **public traits** (plus crate metadata and modules). A
 //! real `syn` parse replaces `karpal-index`'s string scanning, preserving
-//! generic bounds, supertraits, associated items, and method shape. Functions,
-//! types, and macros arrive in later slices; the `visit`-style top-level walk
-//! here is the pattern they will extend.
+//! generic bounds, supertraits, associated items, and method shape. Slice 2
+//! added functions/structs/enums/type-aliases; slice 4 adds macros
+//! (declarative `macro_rules!` plus the three procedural flavors). The
+//! `visit`-style top-level walk here is the pattern each slice extends.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -19,7 +20,8 @@ use walkdir::WalkDir;
 
 use crate::catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
-    MethodRecord, ModuleRecord, StructRecord, TraitRecord, TypeAliasRecord,
+    MacroFlavor, MacroRecord, MethodRecord, ModuleRecord, StructRecord, TraitRecord,
+    TypeAliasRecord,
 };
 
 /// Extract a structural catalog from a workspace root.
@@ -384,11 +386,14 @@ fn extract_item(item: &syn::Item, crate_name: &str, module_path: &str) -> Option
             ItemKind::Trait(extract_trait_kind(t)),
             &t.attrs,
         ),
-        syn::Item::Fn(f) if is_public(&f.vis) => (
-            f.sig.ident.to_string(),
-            ItemKind::Function(extract_function(f)),
-            &f.attrs,
-        ),
+        syn::Item::Fn(f) if is_public(&f.vis) => {
+            let name = f.sig.ident.to_string();
+            let kind = match proc_macro_record(&f.attrs) {
+                Some(record) => ItemKind::Macro(record),
+                None => ItemKind::Function(extract_function(f)),
+            };
+            (name, kind, &f.attrs)
+        }
         syn::Item::Struct(s) if is_public(&s.vis) => (
             s.ident.to_string(),
             ItemKind::Struct(extract_struct(s)),
@@ -403,6 +408,18 @@ fn extract_item(item: &syn::Item, crate_name: &str, module_path: &str) -> Option
             t.ident.to_string(),
             ItemKind::TypeAlias(extract_type_alias(t)),
             &t.attrs,
+        ),
+        // Declarative `macro_rules!`: catalogued when `#[macro_export]`
+        // (syn's `ItemMacro` carries no visibility — `#[macro_export]` is the
+        // public-surface signal). Macro-call statements carry no ident and
+        // are skipped by the guard.
+        syn::Item::Macro(m) if m.ident.is_some() && has_macro_export(&m.attrs) => (
+            m.ident
+                .as_ref()
+                .expect("guarded non-empty ident")
+                .to_string(),
+            ItemKind::Macro(MacroRecord::default()),
+            &m.attrs,
         ),
         _ => return None,
     };
@@ -448,6 +465,75 @@ fn generics_of(generics: &syn::Generics) -> Option<String> {
 /// Whether a `syn::Visibility` denotes a public item.
 fn is_public(vis: &syn::Visibility) -> bool {
     matches!(vis, syn::Visibility::Public(_))
+}
+
+/// Detect a procedural-macro attribute and return the matching record, or
+/// `None` for an ordinary function.
+fn proc_macro_record(attrs: &[Attribute]) -> Option<MacroRecord> {
+    for attr in attrs {
+        let path = attr.path();
+        if path.is_ident("proc_macro") {
+            return Some(MacroRecord {
+                flavor: MacroFlavor::Function,
+                ..MacroRecord::default()
+            });
+        }
+        if path.is_ident("proc_macro_attribute") {
+            return Some(MacroRecord {
+                flavor: MacroFlavor::Attribute,
+                ..MacroRecord::default()
+            });
+        }
+        if path.is_ident("proc_macro_derive") {
+            let (derives, helper_attributes) = parse_proc_macro_derive(attr);
+            return Some(MacroRecord {
+                flavor: MacroFlavor::Derive,
+                derives,
+                helper_attributes,
+            });
+        }
+    }
+    None
+}
+
+/// Parse `#[proc_macro_derive(Trait, attributes(h1, h2))]` into the derived
+/// trait name and any helper attributes. A malformed attribute yields
+/// `(None, [])` rather than panicking — it is simply skipped.
+fn parse_proc_macro_derive(attr: &Attribute) -> (Option<String>, Vec<String>) {
+    let parsed = attr.parse_args_with(|input: syn::parse::ParseStream<'_>| {
+        // First positional argument: the derive trait path.
+        let derives = input
+            .parse::<syn::Path>()
+            .ok()
+            .and_then(|path| path.segments.last().map(|seg| seg.ident.to_string()));
+        let mut helper_attributes = Vec::new();
+        // Remaining `, key(...)` options — only `attributes(...)` is standard.
+        while input.parse::<syn::Token![,]>().is_ok() {
+            let Ok(ident) = input.parse::<syn::Ident>() else {
+                break;
+            };
+            if ident == "attributes" {
+                let content;
+                syn::parenthesized!(content in input);
+                if let Ok(list) =
+                    syn::punctuated::Punctuated::<syn::Ident, syn::Token![,]>::parse_terminated(
+                        &content,
+                    )
+                {
+                    helper_attributes.extend(list.into_iter().map(|ident| ident.to_string()));
+                }
+            }
+        }
+        Ok::<_, syn::Error>((derives, helper_attributes))
+    });
+    parsed.unwrap_or((None, Vec::new()))
+}
+
+/// Whether an item carries `#[macro_export]`.
+fn has_macro_export(attrs: &[Attribute]) -> bool {
+    attrs
+        .iter()
+        .any(|attr| attr.path().is_ident("macro_export"))
 }
 
 /// Collect `#[doc = "..."]` attribute lines into a single doc string.
