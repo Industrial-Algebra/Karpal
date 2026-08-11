@@ -33,14 +33,14 @@ toml = "0.8"
 walkdir = "2"
 sha2 = "0.10"
 hex = "0.4"
-# Lonis integration: git deps pinned to a Lonis rev. Cross-repo pre-publication
-# deps must be git (not path) — relative path deps break across worktree
-# locations and aren't portable. Pinned to the ADR-0004 `feature/block-payload-
-# derive` tip (#[derive(BlockPayload)] + render_fn); bump to Lonis `develop`
-# HEAD once PR #6 lands there. The `lonis` feature is unpublishable until
-# lonis-schema reaches crates.io.
-lonis-schema = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "e77f6122d576dbe5a1ee341aaf5ae44626dfe05d", optional = true, features = ["derive"] }
-lonis-core = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "e77f6122d576dbe5a1ee341aaf5ae44626dfe05d", optional = true }
+# Lonis integration: git deps pinned to Lonis `develop` HEAD. Cross-repo
+# pre-publication deps must be git (not path) — relative path deps break across
+# worktree locations and aren't portable. This rev carries #[derive(BlockPayload)]
+# + render_fn (ADR-0004, Lonis PR #6) and curated JSON Schema emission
+# (ADR-0005, Lonis PR #8). Bump as Lonis `develop` advances; the `lonis` feature
+# is unpublishable until lonis-schema reaches crates.io.
+lonis-schema = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "4aa23a66f784041d9c48d8e46f57c829026984bf", optional = true, features = ["derive"] }
+lonis-core = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "4aa23a66f784041d9c48d8e46f57c829026984bf", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
