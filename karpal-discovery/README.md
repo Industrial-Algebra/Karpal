@@ -1,14 +1,19 @@
 # karpal-discovery
 
-Structural catalog generator for the Karpal workspace — the domain foundation
-of the Karpal discovery vertical.
+Structural catalog generator and project inspector for the Karpal workspace —
+the domain foundation of the Karpal discovery vertical.
 
 `karpal-discovery` walks a Karpal workspace checkout with a real `syn` AST
 parser and produces a typed, deterministic, content-hashable catalog of the
 public API surface: workspace crates, their public modules, public items
 (traits, free functions, structs, enums, type aliases, macros), and the trait
-implementation graph (queryable via `Catalog::implementors_of`). It is the
-successor to `karpal-index`'s string-scanning indexer.
+implementation graph (queryable via `Catalog::implementors_of`). A companion
+**project inspector** (`inspect_workspace`) parses `Cargo.toml` manifests
+with a real TOML parser and produces a `ProjectSnapshot` — workspace meta,
+per-crate package metadata, dependencies (with registry/path/git/workspace
+source discrimination), feature flags, and explicit targets. Both are
+read-only and carry no dependency on the lonis `Block` contract; together they
+supersede `karpal-index`'s string-scanning indexer.
 
 ## Architecture
 
@@ -23,9 +28,12 @@ later slices.
 
 This slice catalogues **public traits, functions, structs, enums, type
 aliases, macros (declarative `macro_rules!` + the three procedural flavors),
-and the trait implementation graph** (plus crate metadata and modules).
-Curated semantic overlays, project inspection, the category-theoretic planner,
-algebraic probes, and the command surface arrive in later slices.
+and the trait implementation graph** (plus crate metadata and modules), and
+adds the **project inspector** (`inspect_workspace` → `ProjectSnapshot`:
+workspace meta, package metadata, dependencies with source discrimination,
+features, explicit targets — read-only, no `cargo` spawn). Curated semantic
+overlays, the category-theoretic planner, algebraic probes, and the command
+surface arrive in later slices.
 
 ## Status
 
