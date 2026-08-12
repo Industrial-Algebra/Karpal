@@ -10,10 +10,12 @@
 //! AST parser and produces a typed, deterministic, content-hashable
 //! [`Catalog`] of the public API surface: workspace crates, their public
 //! modules, and their public items — traits, free functions, structs, enums,
-//! type aliases, and the trait implementation graph. Later slices add macros,
-//! curated semantic overlays, and project inspection; the category-theoretic
-//! planner, algebraic probes, and command surface arrive with Lonis [`Block`]
-//! integration.
+//! type aliases, and the trait implementation graph. A companion project
+//! inspector ([`inspect_workspace`]) parses `Cargo.toml` manifests into a
+//! [`ProjectSnapshot`] (workspace meta, package metadata, dependencies with
+//! source discrimination, features, explicit targets). Curated semantic
+//! overlays remain the next slice; the category-theoretic planner, algebraic
+//! probes, and command surface arrive with Lonis [`Block`] integration.
 //!
 //! ## Architecture note
 //!
@@ -36,6 +38,7 @@
 
 pub mod catalog;
 pub mod extract;
+pub mod inspect;
 #[cfg(feature = "lonis")]
 pub mod payload;
 
@@ -43,4 +46,8 @@ pub use catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
     MacroFlavor, MacroRecord, MethodRecord, ModuleRecord, StructRecord, TraitRecord,
     TypeAliasRecord,
+};
+pub use inspect::{
+    CrateSnapshot, DepKind, DepSource, LibTarget, NamedTarget, PackageMeta, ProjectSnapshot,
+    TargetsRecord, WorkspaceMeta, inspect_workspace,
 };
