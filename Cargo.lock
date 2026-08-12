@@ -31,9 +31,9 @@ dependencies = [
 
 [[package]]
 name = "amari-flynn"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80608c19fa458dfa8e7bd0e14e218f10ed18a70bc444c5aec00ef22309054bb9"
+checksum = "b876c80e0f59882c2023223fc9f6e955640cfef38c4f6252b810d1190e3511e7"
 dependencies = [
  "amari-flynn-macros",
  "rand 0.10.1",
@@ -42,9 +42,9 @@ dependencies = [
 
 [[package]]
 name = "amari-flynn-macros"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee1c7d154484bd621b4b9106d1fc12a9c5f5b560b79dbac66505d92d6f5e383b"
+checksum = "2cf51ad6af8902e80f887869fa84a39a10672eeff3025c13bbf00f2cf8263823"
 dependencies = [
  "proc-macro2",
  "quote",
