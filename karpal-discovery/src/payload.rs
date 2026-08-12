@@ -38,7 +38,8 @@ pub struct ItemSummary {
     /// Fully-qualified module path.
     pub module_path: String,
     /// Item kind (`"trait"` / `"function"` / `"struct"` / `"enum"` /
-    /// `"type_alias"`).
+    /// `"type_alias"` / `"macro"`). This string flows into
+    /// `KarpalPayload::Search.results[].kind` — it is the value set's spec.
     pub kind: String,
 }
 
@@ -52,6 +53,7 @@ impl ItemSummary {
             ItemKind::Struct(_) => "struct",
             ItemKind::Enum(_) => "enum",
             ItemKind::TypeAlias(_) => "type_alias",
+            ItemKind::Macro(_) => "macro",
         };
         Self {
             name: name.to_string(),
