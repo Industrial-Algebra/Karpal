@@ -543,7 +543,7 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 [[package]]
 name = "lonis-core"
 version = "0.0.1"
-source = "git+https://github.com/Industrial-Algebra/Lonis.git?rev=e77f6122d576dbe5a1ee341aaf5ae44626dfe05d#e77f6122d576dbe5a1ee341aaf5ae44626dfe05d"
+source = "git+https://github.com/Industrial-Algebra/Lonis.git?rev=4aa23a66f784041d9c48d8e46f57c829026984bf#4aa23a66f784041d9c48d8e46f57c829026984bf"
 dependencies = [
  "lonis-schema",
  "serde_json",
@@ -552,7 +552,7 @@ dependencies = [
 [[package]]
 name = "lonis-derive"
 version = "0.0.1"
-source = "git+https://github.com/Industrial-Algebra/Lonis.git?rev=e77f6122d576dbe5a1ee341aaf5ae44626dfe05d#e77f6122d576dbe5a1ee341aaf5ae44626dfe05d"
+source = "git+https://github.com/Industrial-Algebra/Lonis.git?rev=4aa23a66f784041d9c48d8e46f57c829026984bf#4aa23a66f784041d9c48d8e46f57c829026984bf"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -562,7 +562,7 @@ dependencies = [
 [[package]]
 name = "lonis-schema"
 version = "0.0.1"
-source = "git+https://github.com/Industrial-Algebra/Lonis.git?rev=e77f6122d576dbe5a1ee341aaf5ae44626dfe05d#e77f6122d576dbe5a1ee341aaf5ae44626dfe05d"
+source = "git+https://github.com/Industrial-Algebra/Lonis.git?rev=4aa23a66f784041d9c48d8e46f57c829026984bf#4aa23a66f784041d9c48d8e46f57c829026984bf"
 dependencies = [
  "lonis-derive",
  "serde",
