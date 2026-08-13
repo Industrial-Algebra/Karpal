@@ -177,7 +177,7 @@ fn auto_flags_disable_bin_and_example_discovery_but_not_tests() {
 
 fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+        .join("..")
         .canonicalize()
         .expect("workspace root resolves")
 }

@@ -13,7 +13,7 @@ use karpal_discovery::{ItemKind, extract::extract_workspace};
 fn workspace_root() -> std::path::PathBuf {
     // `karpal-discovery/` lives directly under the workspace root.
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+        .join("..")
         .canonicalize()
         .expect("workspace root resolves")
 }

@@ -217,7 +217,7 @@ fn content_hash_is_stable_and_nonempty() {
 
 fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+        .join("..")
         .canonicalize()
         .expect("workspace root resolves")
 }

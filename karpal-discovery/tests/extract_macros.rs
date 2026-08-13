@@ -134,7 +134,7 @@ fn plain_function_is_still_function_not_macro() {
 
 fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+        .join("..")
         .canonicalize()
         .expect("workspace root resolves")
 }

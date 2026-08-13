@@ -21,7 +21,7 @@ fn karpal_bin() -> PathBuf {
 /// The Karpal workspace root (two levels up from this crate).
 fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+        .join("..")
         .canonicalize()
         .expect("workspace root resolves")
 }
