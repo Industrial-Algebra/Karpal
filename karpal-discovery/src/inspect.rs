@@ -22,7 +22,7 @@
 //! (auto-detected) targets, and imported-symbol analysis arrive in later
 //! slices.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -180,10 +180,13 @@ pub struct TargetsRecord {
 pub struct LibTarget {
     /// The library name (defaults to the package name with `-` → `_`).
     pub name: String,
-    /// The source path, if declared.
+    /// The source path, if declared (or `src/lib.rs` when auto-discovered).
     pub path: Option<String>,
     /// Explicit `crate-type` values, if declared.
     pub crate_types: Option<Vec<String>>,
+    /// `true` when inferred from `src/lib.rs` by convention rather than
+    /// declared explicitly via `[lib]`.
+    pub auto_discovered: bool,
 }
 
 /// A named target (`[[bin]]` / `[[example]]` / `[[test]]` / `[[bench]]`).
@@ -191,8 +194,11 @@ pub struct LibTarget {
 pub struct NamedTarget {
     /// The target name.
     pub name: String,
-    /// The source path, if declared.
+    /// The source path, if declared or conventionally inferred.
     pub path: Option<String>,
+    /// `true` when inferred from the filesystem layout by convention (e.g.
+    /// `src/bin/<name>.rs`) rather than declared explicitly.
+    pub auto_discovered: bool,
 }
 
 /// Extract a read-only project snapshot from a workspace root.
@@ -229,7 +235,17 @@ pub fn inspect_workspace(root: &Path) -> ProjectSnapshot {
                 .map(parse_workspace);
         }
         if let Some(pkg) = manifest.get("package").and_then(toml::Value::as_table) {
-            let snapshot = parse_crate(&manifest, pkg);
+            let crate_dir = entry
+                .path()
+                .parent()
+                .expect("a Cargo.toml always has a parent directory");
+            let mut snapshot = parse_crate(&manifest, pkg);
+            discover_auto_targets(
+                &mut snapshot.targets,
+                pkg,
+                &snapshot.package.name,
+                crate_dir,
+            );
             crates.insert(snapshot.package.name.clone(), snapshot);
         }
     }
@@ -429,6 +445,7 @@ fn parse_lib(t: &toml::Table) -> LibTarget {
             .get("crate-type")
             .map(string_array_value)
             .filter(|v| !v.is_empty()),
+        auto_discovered: false,
     }
 }
 
@@ -448,7 +465,134 @@ fn named_target(value: &toml::Value) -> Option<NamedTarget> {
             .get("path")
             .and_then(toml::Value::as_str)
             .map(String::from),
+        auto_discovered: false,
     })
+}
+
+/// Infer conventional (auto-detected) targets from the crate's filesystem
+/// layout and merge them into `targets`, deduplicated against the explicit
+/// targets already recorded. Mirrors Cargo's auto-discovery rules: `src/lib.rs`
+/// → lib; `src/main.rs` + `src/bin/*` → bins; `examples/*`, `tests/*`,
+/// `benches/*` → their kinds. The `autobins`/`autoexamples`/`autotests`/
+/// `autobenches` `[package]` flags (default true) gate each kind.
+fn discover_auto_targets(
+    targets: &mut TargetsRecord,
+    pkg: &toml::Table,
+    package_name: &str,
+    crate_dir: &Path,
+) {
+    // Lib: conventionally inferred from `src/lib.rs` when no `[lib]` exists.
+    if targets.lib.is_none() && crate_dir.join("src/lib.rs").is_file() {
+        targets.lib = Some(LibTarget {
+            name: cargo_name(package_name),
+            path: Some("src/lib.rs".to_string()),
+            crate_types: None,
+            auto_discovered: true,
+        });
+    }
+
+    if auto_flag(pkg, "autobins") {
+        let explicit = explicit_paths(&targets.bins, "src/bin");
+        // `src/main.rs` → a bin named after the package (unless an explicit
+        // bin already claims that path).
+        if crate_dir.join("src/main.rs").is_file() && !explicit.contains("src/main.rs") {
+            targets.bins.push(NamedTarget {
+                name: cargo_name(package_name),
+                path: Some("src/main.rs".to_string()),
+                auto_discovered: true,
+            });
+        }
+        discover_dir_targets(crate_dir, "src/bin", &explicit, &mut targets.bins);
+    }
+    if auto_flag(pkg, "autoexamples") {
+        let explicit = explicit_paths(&targets.examples, "examples");
+        discover_dir_targets(crate_dir, "examples", &explicit, &mut targets.examples);
+    }
+    if auto_flag(pkg, "autotests") {
+        let explicit = explicit_paths(&targets.integration_tests, "tests");
+        discover_dir_targets(
+            crate_dir,
+            "tests",
+            &explicit,
+            &mut targets.integration_tests,
+        );
+    }
+    if auto_flag(pkg, "autobenches") {
+        let explicit = explicit_paths(&targets.benches, "benches");
+        discover_dir_targets(crate_dir, "benches", &explicit, &mut targets.benches);
+    }
+
+    // Restore determinism: `read_dir` order is platform-dependent.
+    for vec in [
+        &mut targets.bins,
+        &mut targets.examples,
+        &mut targets.integration_tests,
+        &mut targets.benches,
+    ] {
+        vec.sort_by(|a, b| a.name.cmp(&b.name));
+    }
+}
+
+/// Translate a package name to a Cargo target name (`-` → `_`).
+fn cargo_name(package_name: &str) -> String {
+    package_name.replace('-', "_")
+}
+
+/// Read an `auto*` `[package]` flag, defaulting to `true` (auto-discovery on).
+fn auto_flag(pkg: &toml::Table, key: &str) -> bool {
+    pkg.get(key).and_then(toml::Value::as_bool).unwrap_or(true)
+}
+
+/// Effective source paths of explicit named targets, for dedup: the declared
+/// path, or the conventional default `<subdir>/<name>.rs` for a name-only
+/// declaration.
+fn explicit_paths(explicit: &[NamedTarget], subdir: &str) -> BTreeSet<String> {
+    explicit
+        .iter()
+        .map(|t| match &t.path {
+            Some(p) => p.clone(),
+            None => format!("{subdir}/{}.rs", t.name),
+        })
+        .collect()
+}
+
+/// Scan `<crate_dir>/<subdir>` for conventional targets — `<name>.rs` files
+/// and `<name>/main.rs` subdirectories — appending any not already claimed by
+/// an explicit target path.
+fn discover_dir_targets(
+    crate_dir: &Path,
+    subdir: &str,
+    explicit: &BTreeSet<String>,
+    out: &mut Vec<NamedTarget>,
+) {
+    let Ok(entries) = std::fs::read_dir(crate_dir.join(subdir)) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let Some(file_name) = entry.file_name().to_str().map(String::from) else {
+            continue;
+        };
+        if let Some(name) = file_name.strip_suffix(".rs") {
+            let rel_path = format!("{subdir}/{file_name}");
+            if !explicit.contains(&rel_path) {
+                out.push(NamedTarget {
+                    name: name.to_string(),
+                    path: Some(rel_path),
+                    auto_discovered: true,
+                });
+            }
+        } else if entry.path().join("main.rs").is_file() {
+            // `<subdir>/<name>/main.rs` form.
+            let rel_path = format!("{subdir}/{file_name}/main.rs");
+            if !explicit.contains(&rel_path) {
+                out.push(NamedTarget {
+                    name: file_name,
+                    path: Some(rel_path),
+                    auto_discovered: true,
+                });
+            }
+        }
+    }
 }
 
 fn string_array(table: &toml::Table, key: &str) -> Vec<String> {
