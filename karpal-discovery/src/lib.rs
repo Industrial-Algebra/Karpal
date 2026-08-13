@@ -13,7 +13,9 @@
 //! type aliases, and the trait implementation graph. A companion project
 //! inspector ([`inspect_workspace`]) parses `Cargo.toml` manifests into a
 //! [`ProjectSnapshot`] (workspace meta, package metadata, dependencies with
-//! source discrimination, features, explicit targets). Curated semantic
+//! source discrimination, features, targets (explicit plus conventionally
+//! auto-discovered), inferred platform constraints (the no_std linkage mode),
+//! and resolved dependencies from `Cargo.lock`. Curated semantic
 //! overlays remain the next slice; the category-theoretic planner, algebraic
 //! probes, and command surface arrive with Lonis [`Block`] integration.
 //!
@@ -48,6 +50,7 @@ pub use catalog::{
     TypeAliasRecord,
 };
 pub use inspect::{
-    CrateSnapshot, DepKind, DepSource, LibTarget, NamedTarget, PackageMeta, ProjectSnapshot,
-    TargetsRecord, WorkspaceMeta, inspect_workspace,
+    CrateSnapshot, DepKind, DepSource, LibTarget, LockfileSnapshot, NamedTarget, PackageMeta,
+    PlatformConstraints, ProjectSnapshot, ResolvedPackage, StdMode, TargetsRecord, WorkspaceMeta,
+    inspect_workspace,
 };

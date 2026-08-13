@@ -22,11 +22,13 @@
 //! (auto-detected) targets, and imported-symbol analysis arrive in later
 //! slices.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
+use quote::ToTokens;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use syn::AttrStyle;
 use walkdir::WalkDir;
 
 /// A read-only snapshot of a Cargo project/workspace.
@@ -36,9 +38,32 @@ pub struct ProjectSnapshot {
     pub workspace: Option<WorkspaceMeta>,
     /// Per-crate snapshots, keyed by package name (deterministic order).
     pub crates: BTreeMap<String, CrateSnapshot>,
-    /// SHA-256 over the canonical `(workspace, crates)` serialization. Stable
-    /// across runs over identical inputs — the drift-detection primitive.
+    /// The resolved `Cargo.lock` (workspace root), if present.
+    pub lock: Option<LockfileSnapshot>,
+    /// SHA-256 over the canonical `(workspace, crates, lock)` serialization.
+    /// Stable across runs over identical inputs — the drift-detection
+    /// primitive.
     pub content_hash: String,
+}
+
+/// The workspace `Cargo.lock`, resolved to per-package versions.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LockfileSnapshot {
+    /// The lockfile format version (3 or 4).
+    pub version: u32,
+    /// Resolved packages, keyed by name. If multiple versions of a package
+    /// are resolved, one is retained (rare for the discovery use case).
+    pub packages: BTreeMap<String, ResolvedPackage>,
+}
+
+/// One resolved package from `Cargo.lock`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResolvedPackage {
+    /// The resolved (exact) version.
+    pub version: String,
+    /// The package source: a `registry+…` URL, a `git+…` URL, or `None` for a
+    /// path / workspace member.
+    pub source: Option<String>,
 }
 
 impl ProjectSnapshot {
@@ -77,9 +102,34 @@ pub struct CrateSnapshot {
     pub dependencies: BTreeMap<String, DepRecord>,
     /// The `[features]` table: feature name → the entries it enables.
     pub features: BTreeMap<String, Vec<String>>,
-    /// Explicit targets (`[lib]`, `[[bin]]`, `[[example]]`, `[[test]]`,
-    /// `[[bench]]`). Conventional auto-targets are not inferred here.
+    /// Targets (`[lib]`, `[[bin]]`, `[[example]]`, `[[test]]`, `[[bench]]`),
+    /// including conventionally auto-discovered ones.
     pub targets: TargetsRecord,
+    /// Inferred platform constraints (the `std` linkage mode).
+    pub platform: PlatformConstraints,
+}
+
+/// The crate's `std` linkage mode — the key platform-availability signal for
+/// the discovery vertical (a `no_std` project cannot use a std-only karpal
+/// crate, and vice versa).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StdMode {
+    /// Links `std` (no `#![no_std]`, or no readable crate root).
+    #[default]
+    Std,
+    /// `#![no_std]` unconditionally.
+    NoStd,
+    /// `#![cfg_attr(cond, no_std)]` — `no_std` under a condition (typically a
+    /// feature gate, e.g. `not(feature = "std")`).
+    ConditionalNoStd,
+}
+
+/// Platform constraints inferred from the crate root.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PlatformConstraints {
+    /// The `std` linkage mode.
+    pub std_mode: StdMode,
 }
 
 /// The `[package]` table of a crate manifest.
@@ -180,10 +230,13 @@ pub struct TargetsRecord {
 pub struct LibTarget {
     /// The library name (defaults to the package name with `-` → `_`).
     pub name: String,
-    /// The source path, if declared.
+    /// The source path, if declared (or `src/lib.rs` when auto-discovered).
     pub path: Option<String>,
     /// Explicit `crate-type` values, if declared.
     pub crate_types: Option<Vec<String>>,
+    /// `true` when inferred from `src/lib.rs` by convention rather than
+    /// declared explicitly via `[lib]`.
+    pub auto_discovered: bool,
 }
 
 /// A named target (`[[bin]]` / `[[example]]` / `[[test]]` / `[[bench]]`).
@@ -191,8 +244,11 @@ pub struct LibTarget {
 pub struct NamedTarget {
     /// The target name.
     pub name: String,
-    /// The source path, if declared.
+    /// The source path, if declared or conventionally inferred.
     pub path: Option<String>,
+    /// `true` when inferred from the filesystem layout by convention (e.g.
+    /// `src/bin/<name>.rs`) rather than declared explicitly.
+    pub auto_discovered: bool,
 }
 
 /// Extract a read-only project snapshot from a workspace root.
@@ -229,15 +285,28 @@ pub fn inspect_workspace(root: &Path) -> ProjectSnapshot {
                 .map(parse_workspace);
         }
         if let Some(pkg) = manifest.get("package").and_then(toml::Value::as_table) {
-            let snapshot = parse_crate(&manifest, pkg);
+            let crate_dir = entry
+                .path()
+                .parent()
+                .expect("a Cargo.toml always has a parent directory");
+            let mut snapshot = parse_crate(&manifest, pkg);
+            discover_auto_targets(
+                &mut snapshot.targets,
+                pkg,
+                &snapshot.package.name,
+                crate_dir,
+            );
+            snapshot.platform = detect_platform(crate_dir, &snapshot.targets);
             crates.insert(snapshot.package.name.clone(), snapshot);
         }
     }
 
-    let content_hash = compute_hash(&workspace, &crates);
+    let lock = parse_lockfile(root);
+    let content_hash = compute_hash(&workspace, &crates, &lock);
     ProjectSnapshot {
         workspace,
         crates,
+        lock,
         content_hash,
     }
 }
@@ -325,6 +394,7 @@ fn parse_crate(manifest: &toml::Table, pkg: &toml::Table) -> CrateSnapshot {
         dependencies,
         features,
         targets,
+        platform: PlatformConstraints::default(),
     }
 }
 
@@ -429,6 +499,7 @@ fn parse_lib(t: &toml::Table) -> LibTarget {
             .get("crate-type")
             .map(string_array_value)
             .filter(|v| !v.is_empty()),
+        auto_discovered: false,
     }
 }
 
@@ -448,7 +519,134 @@ fn named_target(value: &toml::Value) -> Option<NamedTarget> {
             .get("path")
             .and_then(toml::Value::as_str)
             .map(String::from),
+        auto_discovered: false,
     })
+}
+
+/// Infer conventional (auto-detected) targets from the crate's filesystem
+/// layout and merge them into `targets`, deduplicated against the explicit
+/// targets already recorded. Mirrors Cargo's auto-discovery rules: `src/lib.rs`
+/// → lib; `src/main.rs` + `src/bin/*` → bins; `examples/*`, `tests/*`,
+/// `benches/*` → their kinds. The `autobins`/`autoexamples`/`autotests`/
+/// `autobenches` `[package]` flags (default true) gate each kind.
+fn discover_auto_targets(
+    targets: &mut TargetsRecord,
+    pkg: &toml::Table,
+    package_name: &str,
+    crate_dir: &Path,
+) {
+    // Lib: conventionally inferred from `src/lib.rs` when no `[lib]` exists.
+    if targets.lib.is_none() && crate_dir.join("src/lib.rs").is_file() {
+        targets.lib = Some(LibTarget {
+            name: cargo_name(package_name),
+            path: Some("src/lib.rs".to_string()),
+            crate_types: None,
+            auto_discovered: true,
+        });
+    }
+
+    if auto_flag(pkg, "autobins") {
+        let explicit = explicit_paths(&targets.bins, "src/bin");
+        // `src/main.rs` → a bin named after the package (unless an explicit
+        // bin already claims that path).
+        if crate_dir.join("src/main.rs").is_file() && !explicit.contains("src/main.rs") {
+            targets.bins.push(NamedTarget {
+                name: cargo_name(package_name),
+                path: Some("src/main.rs".to_string()),
+                auto_discovered: true,
+            });
+        }
+        discover_dir_targets(crate_dir, "src/bin", &explicit, &mut targets.bins);
+    }
+    if auto_flag(pkg, "autoexamples") {
+        let explicit = explicit_paths(&targets.examples, "examples");
+        discover_dir_targets(crate_dir, "examples", &explicit, &mut targets.examples);
+    }
+    if auto_flag(pkg, "autotests") {
+        let explicit = explicit_paths(&targets.integration_tests, "tests");
+        discover_dir_targets(
+            crate_dir,
+            "tests",
+            &explicit,
+            &mut targets.integration_tests,
+        );
+    }
+    if auto_flag(pkg, "autobenches") {
+        let explicit = explicit_paths(&targets.benches, "benches");
+        discover_dir_targets(crate_dir, "benches", &explicit, &mut targets.benches);
+    }
+
+    // Restore determinism: `read_dir` order is platform-dependent.
+    for vec in [
+        &mut targets.bins,
+        &mut targets.examples,
+        &mut targets.integration_tests,
+        &mut targets.benches,
+    ] {
+        vec.sort_by(|a, b| a.name.cmp(&b.name));
+    }
+}
+
+/// Translate a package name to a Cargo target name (`-` → `_`).
+fn cargo_name(package_name: &str) -> String {
+    package_name.replace('-', "_")
+}
+
+/// Read an `auto*` `[package]` flag, defaulting to `true` (auto-discovery on).
+fn auto_flag(pkg: &toml::Table, key: &str) -> bool {
+    pkg.get(key).and_then(toml::Value::as_bool).unwrap_or(true)
+}
+
+/// Effective source paths of explicit named targets, for dedup: the declared
+/// path, or the conventional default `<subdir>/<name>.rs` for a name-only
+/// declaration.
+fn explicit_paths(explicit: &[NamedTarget], subdir: &str) -> BTreeSet<String> {
+    explicit
+        .iter()
+        .map(|t| match &t.path {
+            Some(p) => p.clone(),
+            None => format!("{subdir}/{}.rs", t.name),
+        })
+        .collect()
+}
+
+/// Scan `<crate_dir>/<subdir>` for conventional targets — `<name>.rs` files
+/// and `<name>/main.rs` subdirectories — appending any not already claimed by
+/// an explicit target path.
+fn discover_dir_targets(
+    crate_dir: &Path,
+    subdir: &str,
+    explicit: &BTreeSet<String>,
+    out: &mut Vec<NamedTarget>,
+) {
+    let Ok(entries) = std::fs::read_dir(crate_dir.join(subdir)) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let Some(file_name) = entry.file_name().to_str().map(String::from) else {
+            continue;
+        };
+        if let Some(name) = file_name.strip_suffix(".rs") {
+            let rel_path = format!("{subdir}/{file_name}");
+            if !explicit.contains(&rel_path) {
+                out.push(NamedTarget {
+                    name: name.to_string(),
+                    path: Some(rel_path),
+                    auto_discovered: true,
+                });
+            }
+        } else if entry.path().join("main.rs").is_file() {
+            // `<subdir>/<name>/main.rs` form.
+            let rel_path = format!("{subdir}/{file_name}/main.rs");
+            if !explicit.contains(&rel_path) {
+                out.push(NamedTarget {
+                    name: file_name,
+                    path: Some(rel_path),
+                    auto_discovered: true,
+                });
+            }
+        }
+    }
 }
 
 fn string_array(table: &toml::Table, key: &str) -> Vec<String> {
@@ -473,10 +671,103 @@ fn string_array_value(value: &toml::Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// Parse the workspace `Cargo.lock` (at `root`) into resolved package
+/// versions. Returns `None` when the file is absent, unreadable, or
+/// unparseable.
+fn parse_lockfile(root: &Path) -> Option<LockfileSnapshot> {
+    let Ok(text) = std::fs::read_to_string(root.join("Cargo.lock")) else {
+        return None;
+    };
+    let Ok(table): Result<toml::Table, _> = toml::from_str(&text) else {
+        return None;
+    };
+    let version = table
+        .get("version")
+        .and_then(toml::Value::as_integer)
+        .and_then(|v| u32::try_from(v).ok())
+        .unwrap_or(0);
+    let mut packages = BTreeMap::new();
+    if let Some(arr) = table.get("package").and_then(toml::Value::as_array) {
+        for entry in arr {
+            let Some(t) = entry.as_table() else { continue };
+            let Some(name) = t.get("name").and_then(toml::Value::as_str) else {
+                continue;
+            };
+            let Some(version) = t.get("version").and_then(toml::Value::as_str) else {
+                continue;
+            };
+            let source = t
+                .get("source")
+                .and_then(toml::Value::as_str)
+                .map(String::from);
+            packages.insert(
+                name.to_string(),
+                ResolvedPackage {
+                    version: version.to_string(),
+                    source,
+                },
+            );
+        }
+    }
+    Some(LockfileSnapshot { version, packages })
+}
+
+/// Infer platform constraints from the crate-root source.
+fn detect_platform(crate_dir: &Path, targets: &TargetsRecord) -> PlatformConstraints {
+    PlatformConstraints {
+        std_mode: detect_std_mode(crate_dir, targets),
+    }
+}
+
+/// Resolve the crate-root source path (the lib root, else `src/main.rs` for a
+/// bin-only crate), relative to the crate directory.
+fn crate_root_rel(targets: &TargetsRecord, crate_dir: &Path) -> Option<String> {
+    if let Some(lib) = &targets.lib {
+        return Some(lib.path.clone().unwrap_or_else(|| "src/lib.rs".to_string()));
+    }
+    if crate_dir.join("src/main.rs").is_file() {
+        return Some("src/main.rs".to_string());
+    }
+    None
+}
+
+/// Detect the `std` linkage mode by parsing the crate root for inner
+/// `#![no_std]` / `#![cfg_attr(…, no_std)]` attributes. Defaults to
+/// [`StdMode::Std`] when there is no readable or parseable crate root.
+fn detect_std_mode(crate_dir: &Path, targets: &TargetsRecord) -> StdMode {
+    let Some(root_rel) = crate_root_rel(targets, crate_dir) else {
+        return StdMode::Std;
+    };
+    let Ok(text) = std::fs::read_to_string(crate_dir.join(&root_rel)) else {
+        return StdMode::Std;
+    };
+    let Ok(file) = syn::parse_file(&text) else {
+        return StdMode::Std;
+    };
+    for attr in &file.attrs {
+        if !matches!(attr.style, AttrStyle::Inner(_)) {
+            continue;
+        }
+        if attr.path().is_ident("no_std") {
+            return StdMode::NoStd;
+        }
+        // `cfg_attr(cond, no_std)` — render the attribute and look for the
+        // `no_std` target among its arguments.
+        if attr.path().is_ident("cfg_attr")
+            && attr.meta.to_token_stream().to_string().contains("no_std")
+        {
+            return StdMode::ConditionalNoStd;
+        }
+    }
+    StdMode::Std
+}
+
 fn compute_hash(
     workspace: &Option<WorkspaceMeta>,
     crates: &BTreeMap<String, CrateSnapshot>,
+    lock: &Option<LockfileSnapshot>,
 ) -> String {
-    let bytes = serde_json::to_vec(&(workspace, crates)).expect("snapshot fragment serializes");
+    let bytes =
+        serde_json::to_vec(&(workspace, crates, lock)).expect("snapshot fragment serializes");
     hex::encode(Sha256::digest(&bytes))
 }
