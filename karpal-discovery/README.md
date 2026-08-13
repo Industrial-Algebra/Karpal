@@ -11,8 +11,10 @@ implementation graph (queryable via `Catalog::implementors_of`). A companion
 **project inspector** (`inspect_workspace`) parses `Cargo.toml` manifests
 with a real TOML parser and produces a `ProjectSnapshot` — workspace meta,
 per-crate package metadata, dependencies (with registry/path/git/workspace
-source discrimination), feature flags, and targets (explicit plus
-conventionally auto-discovered bins/examples/tests/benches). Both are
+source discrimination), feature flags, targets (explicit plus
+conventionally auto-discovered bins/examples/tests/benches), inferred
+platform constraints (the `no_std` linkage mode), and resolved dependencies
+from `Cargo.lock`. Both are
 read-only and carry no dependency on the lonis `Block` contract; together they
 supersede `karpal-index`'s string-scanning indexer.
 
@@ -32,7 +34,9 @@ aliases, macros (declarative `macro_rules!` + the three procedural flavors),
 and the trait implementation graph** (plus crate metadata and modules), and
 adds the **project inspector** (`inspect_workspace` → `ProjectSnapshot`:
 workspace meta, package metadata, dependencies with source discrimination,
-features, explicit + conventionally auto-discovered targets — read-only,
+features, explicit + conventionally auto-discovered targets, inferred
+platform constraints (no_std mode), and resolved deps from `Cargo.lock` —
+read-only,
 no `cargo` spawn). Curated semantic
 overlays, the category-theoretic planner, algebraic probes, and the command
 surface arrive in later slices.
