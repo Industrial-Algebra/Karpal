@@ -13,7 +13,8 @@
 //! type aliases, and the trait implementation graph. A companion project
 //! inspector ([`inspect_workspace`]) parses `Cargo.toml` manifests into a
 //! [`ProjectSnapshot`] (workspace meta, package metadata, dependencies with
-//! source discrimination, features, explicit targets). Curated semantic
+//! source discrimination, features, and targets (explicit plus
+//! conventionally auto-discovered). Curated semantic
 //! overlays remain the next slice; the category-theoretic planner, algebraic
 //! probes, and command surface arrive with Lonis [`Block`] integration.
 //!
