@@ -15,8 +15,10 @@
 //! [`ProjectSnapshot`] (workspace meta, package metadata, dependencies with
 //! source discrimination, features, targets (explicit plus conventionally
 //! auto-discovered), inferred platform constraints (the no_std linkage mode),
-//! and resolved dependencies from `Cargo.lock`. Curated semantic
-//! overlays remain the next slice; the category-theoretic planner, algebraic
+//! and resolved dependencies from `Cargo.lock`. A curated concept overlay
+//! ([`load_concept_overlay`]) layers mathematical concept names and
+//! relationships over the catalog (embedded, validated against it). Later
+//! slices expand the overlay and add the category-theoretic planner, algebraic
 //! probes, and command surface arrive with Lonis [`Block`] integration.
 //!
 //! ## Architecture note
@@ -41,6 +43,7 @@
 pub mod catalog;
 pub mod extract;
 pub mod inspect;
+pub mod overlay;
 #[cfg(feature = "lonis")]
 pub mod payload;
 
@@ -53,4 +56,8 @@ pub use inspect::{
     CrateSnapshot, DepKind, DepSource, LibTarget, LockfileSnapshot, NamedTarget, PackageMeta,
     PlatformConstraints, ProjectSnapshot, ResolvedPackage, StdMode, TargetsRecord, WorkspaceMeta,
     inspect_workspace,
+};
+pub use overlay::{
+    ConceptOverlay, ConceptRecord, ConceptRelation, CostHint, OverlayDrift, RelationKind,
+    StabilityTier, load_concept_overlay,
 };

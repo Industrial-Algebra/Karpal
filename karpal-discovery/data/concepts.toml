@@ -1,0 +1,130 @@
+# Curated concept overlay for the Karpal workspace (Phase 19-B).
+#
+# This is hand-curated semantic metadata layered over the generated structural
+# catalog (19-A). Every `symbol_ref` must resolve to a real catalog item
+# (`<crate>::<item>`); `overlay::ConceptOverlay::validate` enforces this and is
+# run against the live workspace in CI as a drift gate.
+#
+# `catalog_version` records the Karpal release the overlay was curated against.
+# The seed covers the foundational algebraic hierarchy; later slices expand
+# coverage (problem shapes, probes, cost refinement).
+
+catalog_version = "0.8.0"
+
+# ---------------------------------------------------------------------------
+# Concepts
+# ---------------------------------------------------------------------------
+
+[[concepts]]
+id = "functor"
+name = "Functor"
+summary = "A structure-preserving map between categories; in Rust, a context whose contained values can be transformed via `map`."
+aliases = ["mappable", "mapping"]
+math_concepts = ["functor", "endofunctor"]
+symbol_refs = ["karpal-core::Functor"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "apply"
+name = "Apply"
+summary = "A compositional functor: independent effects combine via `ap` without a `pure`."
+aliases = ["ap"]
+math_concepts = ["applicative functor", "apply", "monoidal functor"]
+symbol_refs = ["karpal-core::Apply"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "applicative"
+name = "Applicative"
+summary = "An applicative functor: a functorial context plus `pure` and `ap`, combining independent effects."
+aliases = ["applicative functor"]
+math_concepts = ["applicative functor", "lax monoidal functor"]
+symbol_refs = ["karpal-core::Applicative"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "chain"
+name = "Chain"
+summary = "Sequential effect composition via `bind`/`and_then`, without `pure`."
+aliases = ["bind", "flat_map"]
+math_concepts = ["monad", "kleisli extension"]
+symbol_refs = ["karpal-core::Chain"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "monad"
+name = "Monad"
+summary = "An effectful context supporting sequential composition (`bind`/`and_then`) and lifting (`pure`)."
+aliases = ["bind", "flat_map"]
+math_concepts = ["monad", "monad (category theory)"]
+symbol_refs = ["karpal-core::Monad"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "semigroup"
+name = "Semigroup"
+summary = "A set equipped with an associative binary operation."
+aliases = []
+math_concepts = ["semigroup", "associativity"]
+symbol_refs = ["karpal-core::Semigroup"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "monoid"
+name = "Monoid"
+summary = "A semigroup with an identity element."
+aliases = []
+math_concepts = ["monoid", "semigroup"]
+symbol_refs = ["karpal-core::Monoid"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "natural-transformation"
+name = "NaturalTransformation"
+summary = "A family of component maps between two functors that commutes with the functor action."
+aliases = ["nat"]
+math_concepts = ["natural transformation"]
+symbol_refs = ["karpal-core::NaturalTransformation"]
+stability = "stable"
+cost = "free"
+
+# ---------------------------------------------------------------------------
+# Directed relationships (endpoints reference concept `id`s)
+# ---------------------------------------------------------------------------
+
+[[relations]]
+from = "apply"
+to = "functor"
+kind = "generalizes"
+
+[[relations]]
+from = "applicative"
+to = "apply"
+kind = "generalizes"
+
+[[relations]]
+from = "chain"
+to = "apply"
+kind = "generalizes"
+
+[[relations]]
+from = "monad"
+to = "applicative"
+kind = "generalizes"
+
+[[relations]]
+from = "monad"
+to = "chain"
+kind = "generalizes"
+
+[[relations]]
+from = "monoid"
+to = "semigroup"
+kind = "generalizes"
