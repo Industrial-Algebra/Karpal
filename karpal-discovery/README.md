@@ -16,7 +16,10 @@ conventionally auto-discovered bins/examples/tests/benches), inferred
 platform constraints (the `no_std` linkage mode), and resolved dependencies
 from `Cargo.lock`. Both are
 read-only and carry no dependency on the lonis `Block` contract; together they
-supersede `karpal-index`'s string-scanning indexer.
+supersede `karpal-index`'s string-scanning indexer. A curated **concept
+overlay** (`load_concept_overlay`) layers mathematical concept names,
+aliases, and directed relationships over the catalog — embedded in the crate
+and validated against it, so a reference to a missing symbol fails loudly.
 
 ## Architecture
 
@@ -37,9 +40,11 @@ workspace meta, package metadata, dependencies with source discrimination,
 features, explicit + conventionally auto-discovered targets, inferred
 platform constraints (no_std mode), and resolved deps from `Cargo.lock` —
 read-only,
-no `cargo` spawn). Curated semantic
-overlays, the category-theoretic planner, algebraic probes, and the command
-surface arrive in later slices.
+no `cargo` spawn), and adds a **curated concept overlay** (`ConceptOverlay`:
+math concept names, aliases, directed relationships, stability/cost tiers —
+embedded via `include_str!` and validated against the catalog). Later slices
+expand the overlay (problem shapes, recommended probes, cost refinement) and
+add the category-theoretic planner, algebraic probes, and the command surface.
 
 ## Status
 
