@@ -40,11 +40,12 @@ workspace meta, package metadata, dependencies with source discrimination,
 features, explicit + conventionally auto-discovered targets, inferred
 platform constraints (no_std mode), and resolved deps from `Cargo.lock` —
 read-only,
-no `cargo` spawn), and adds a **curated concept overlay** (`ConceptOverlay`:
-math concept names, aliases, directed relationships, stability/cost tiers —
-embedded via `include_str!` and validated against the catalog). Later slices
-expand the overlay (problem shapes, recommended probes, cost refinement) and
-add the category-theoretic planner, algebraic probes, and the command surface.
+no `cargo` spawn), and adds a **curated concept overlay** (`ConceptOverlay`: 83 concepts across
+every crate — math concept names, aliases, problem shapes, directed
+relationships (`generalizes`/`composes_with`/`alternative_to`/`dual_of`),
+stability/cost tiers — embedded via `include_str!` and validated against the
+catalog). Later slices add recommended probes and cost refinement, plus the
+category-theoretic planner, algebraic probes, and the command surface.
 
 ## Status
 

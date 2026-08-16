@@ -18,9 +18,11 @@
 //! renamed or removed symbol fails loudly instead of silently describing a
 //! structure that no longer exists.
 //!
-//! Slice 1 establishes the model, the embedded loader, and the validator with a
-//! seed of the foundational algebraic hierarchy; later slices expand coverage
-//! (problem shapes, recommended probes, cost refinement).
+//! Slice 1 established the model, the embedded loader, and the validator;
+//! slice 2 expanded curation to the workspace's mathematically significant
+//! public API (83 concepts across every crate, with problem shapes and
+//! `generalizes`/`composes_with`/`alternative_to`/`dual_of` relations).
+//! Later slices add recommended probes and cost refinement.
 
 use std::collections::BTreeSet;
 
@@ -61,6 +63,10 @@ pub struct ConceptRecord {
     /// Mathematical / software concepts associated with this idea.
     #[serde(default)]
     pub math_concepts: Vec<String>,
+    /// Problem shapes this concept answers — phrased the way a user or agent
+    /// would state the problem (e.g. "sequence dependent effectful steps").
+    #[serde(default)]
+    pub problem_shapes: Vec<String>,
     /// Referenced structural items, `<crate>::<item>` (must resolve in the
     /// catalog).
     pub symbol_refs: Vec<String>,
@@ -118,6 +124,9 @@ pub enum RelationKind {
     ComposesWith,
     /// The source is an alternative to the target for a given problem shape.
     AlternativeTo,
+    /// The source is the categorical dual of the target (e.g. `comonad` is
+    /// the dual of `monad`).
+    DualOf,
 }
 
 /// A drift finding from [`ConceptOverlay::validate`] — an overlay reference
@@ -141,6 +150,17 @@ pub enum OverlayDrift {
         /// The (now-dangling) relationship kind.
         kind: RelationKind,
     },
+    /// A concept carries no `symbol_refs` at all — it floats free of the
+    /// structural catalog.
+    Unanchored {
+        /// The unanchored concept `id`.
+        concept: String,
+    },
+    /// Two concepts share an `id`, making relation endpoints ambiguous.
+    DuplicateId {
+        /// The duplicated `id`.
+        id: String,
+    },
 }
 
 impl ConceptOverlay {
@@ -151,9 +171,20 @@ impl ConceptOverlay {
     /// overlays referencing missing symbols" gate.
     pub fn validate(&self, catalog: &Catalog) -> Result<(), Vec<OverlayDrift>> {
         let mut drift = Vec::new();
+        let mut seen_ids = BTreeSet::new();
         let known_ids: BTreeSet<&str> = self.concepts.iter().map(|c| c.id.as_str()).collect();
 
         for concept in &self.concepts {
+            if !seen_ids.insert(concept.id.as_str()) {
+                drift.push(OverlayDrift::DuplicateId {
+                    id: concept.id.clone(),
+                });
+            }
+            if concept.symbol_refs.is_empty() {
+                drift.push(OverlayDrift::Unanchored {
+                    concept: concept.id.clone(),
+                });
+            }
             for symbol_ref in &concept.symbol_refs {
                 if !symbol_resolves(catalog, symbol_ref) {
                     drift.push(OverlayDrift::MissingSymbol {
