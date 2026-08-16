@@ -50,6 +50,7 @@ fn one_concept(id: &str, symbol_ref: &str) -> ConceptRecord {
         summary: "fixture".to_string(),
         aliases: Vec::new(),
         math_concepts: Vec::new(),
+        problem_shapes: Vec::new(),
         symbol_refs: vec![symbol_ref.to_string()],
         stability: StabilityTier::Stable,
         cost: CostHint::Free,
@@ -132,6 +133,48 @@ fn dangling_relation_endpoint_is_drift() {
             .iter()
             .any(|d| matches!(d, OverlayDrift::DanglingRelation { .. })),
         "expected a DanglingRelation drift, got {drift:?}"
+    );
+}
+
+#[test]
+fn unanchored_concept_is_drift() {
+    // A concept with no symbol_refs floats free of the structural catalog —
+    // meaningless for discovery even though nothing dangles.
+    let (_dir, catalog) = catalog_with("demo", &[]);
+    let mut record = one_concept("ghost", "demo::Ghost");
+    record.symbol_refs = Vec::new();
+    let overlay = ConceptOverlay {
+        catalog_version: "0.1.0".to_string(),
+        concepts: vec![record],
+        relations: Vec::new(),
+    };
+    let drift = overlay.validate(&catalog).expect_err("should drift");
+    assert!(
+        drift
+            .iter()
+            .any(|d| matches!(d, OverlayDrift::Unanchored { concept } if concept == "ghost")),
+        "expected an Unanchored drift, got {drift:?}"
+    );
+}
+
+#[test]
+fn duplicate_concept_id_is_drift() {
+    // Duplicate ids make relation endpoints ambiguous.
+    let (_dir, catalog) = catalog_with("demo", &["Functor"]);
+    let overlay = ConceptOverlay {
+        catalog_version: "0.1.0".to_string(),
+        concepts: vec![
+            one_concept("functor", "demo::Functor"),
+            one_concept("functor", "demo::Functor"),
+        ],
+        relations: Vec::new(),
+    };
+    let drift = overlay.validate(&catalog).expect_err("should drift");
+    assert!(
+        drift
+            .iter()
+            .any(|d| matches!(d, OverlayDrift::DuplicateId { id } if id == "functor")),
+        "expected a DuplicateId drift, got {drift:?}"
     );
 }
 
