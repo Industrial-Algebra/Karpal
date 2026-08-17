@@ -63,6 +63,33 @@ fn search_round_trips_through_the_extension_seam() {
 }
 
 #[test]
+fn search_block_validates_against_the_curated_envelope_schema() {
+    // The spike-validation gate queued since the SubprocessTool spike: the
+    // wire block the `karpal` binary emits must satisfy Lonis 0.1.0's
+    // curated `block-v1.json` envelope schema (ADR-0005). A `karpal.search`
+    // block crosses as `Extension`, so this also proves the seam branch of
+    // the oneOf composes with a real JSON Schema engine.
+    let tool = SubprocessTool::new(ToolId::new("karpal:search").unwrap(), karpal_bin())
+        .with_args(vec!["search".to_string()]);
+    let input = serde_json::json!({
+        "workspace": workspace_root(),
+        "query": "Functor",
+    });
+    let blocks = tool.invoke(input).expect("karpal search succeeds");
+    let wire = serde_json::to_value(&blocks[0]).expect("serialize");
+
+    let envelope = lonis_schema::block::schemas::block_schema(
+        lonis_schema::block::schemas::BlockSchemaKind::Block,
+    )
+    .expect("embedded envelope schema loads");
+    let validator =
+        jsonschema::validator_for(&envelope.document).expect("envelope schema compiles");
+    validator
+        .validate(&wire)
+        .expect("the karpal.search wire block satisfies block-v1.json");
+}
+
+#[test]
 fn invalid_input_propagates_a_structured_tool_error() {
     let tool = SubprocessTool::new(ToolId::new("karpal:search").unwrap(), karpal_bin())
         .with_args(vec!["search".to_string()]);

@@ -33,6 +33,8 @@ license = \"Apache-2.0\"
 serde = { version = \"1.0\", features = [\"derive\"] }
 crate-b = { path = \"../crate-b\", default-features = false }
 optional-dep = { version = \"2.0\", optional = true }
+pinned = { git = \"https://example.com/industrial-algebra/pinned.git\", rev = \"deadbeef9\" }
+branchy = { git = \"https://example.com/foo/branchy.git\", branch = \"dev\" }
 
 [dev-dependencies]
 tempfile = \"3\"
@@ -234,23 +236,52 @@ fn karpal_workspace_is_virtual() {
 }
 
 #[test]
-fn karpal_discovery_git_deps_are_classified() {
+fn karpal_discovery_lonis_deps_are_registry() {
     let snapshot = inspect_workspace(&workspace_root());
     let deps = &crate_of(&snapshot, "karpal-discovery").dependencies;
-    // lonis-schema is a git dep pinned to a rev — the pre-publication pattern.
+    // Since Lonis 0.1.0 the lonis deps are crates.io registry deps (the
+    // pre-0.1.0 git-pin era is preserved by the `git_source_is_classified`
+    // fixture test).
     let lonis = deps.get("lonis-schema").expect("lonis-schema dep");
     assert!(lonis.optional);
     assert!(lonis.features.iter().any(|f| f == "derive"));
     match &lonis.source {
-        DepSource::Git { url, rev, .. } => {
-            assert!(url.contains("Industrial-Algebra/Lonis"));
-            assert!(rev.as_ref().is_some_and(|r| r.starts_with("4aa23a6")));
-        }
-        other => panic!("lonis-schema source is {other:?}, expected Git"),
+        DepSource::Registry { version_req } => assert_eq!(version_req, "0.1"),
+        other => panic!("lonis-schema source is {other:?}, expected Registry"),
     }
-    // A registry dep for contrast.
+    let core = deps.get("lonis-core").expect("lonis-core dep");
+    assert!(core.optional);
+    assert!(matches!(core.source, DepSource::Registry { .. }));
+    // A plain registry dep for contrast.
     let syn = deps.get("syn").expect("syn dep");
     assert!(matches!(syn.source, DepSource::Registry { .. }));
+}
+
+#[test]
+fn git_source_is_classified() {
+    // The inspector is a read-only TOML parse (no cargo spawn, no
+    // resolution), so synthetic git deps classify without a real repo.
+    let (_dir, snapshot) = fixture_snapshot();
+    let deps = &crate_of(&snapshot, "crate-a").dependencies;
+    let pinned = deps.get("pinned").expect("rev-pinned git dep");
+    match &pinned.source {
+        DepSource::Git { url, rev, .. } => {
+            assert_eq!(url, "https://example.com/industrial-algebra/pinned.git");
+            assert_eq!(rev.as_deref(), Some("deadbeef9"));
+        }
+        other => panic!("pinned source is {other:?}, expected Git"),
+    }
+    let branchy = deps.get("branchy").expect("branch git dep");
+    match &branchy.source {
+        DepSource::Git {
+            url, rev, branch, ..
+        } => {
+            assert_eq!(url, "https://example.com/foo/branchy.git");
+            assert_eq!(rev, &None);
+            assert_eq!(branch.as_deref(), Some("dev"));
+        }
+        other => panic!("branchy source is {other:?}, expected Git"),
+    }
 }
 
 #[test]
