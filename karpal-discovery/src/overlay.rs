@@ -164,6 +164,15 @@ pub enum OverlayDrift {
 }
 
 impl ConceptOverlay {
+    /// The concept anchored to a qualified symbol ref, if any. Mirrors the
+    /// [`ConceptRecord::symbol_refs`] format (`<crate>::<item>`).
+    #[must_use]
+    pub fn concept_for_symbol(&self, symbol_ref: &str) -> Option<&ConceptRecord> {
+        self.concepts
+            .iter()
+            .find(|c| c.symbol_refs.iter().any(|s| s == symbol_ref))
+    }
+
     /// Validate the overlay against a structural catalog: every `symbol_ref`
     /// must resolve to a catalog item, and every relation endpoint must be a
     /// known concept `id`. Returns `Ok(())` if the overlay is consistent, or

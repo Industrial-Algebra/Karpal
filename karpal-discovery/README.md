@@ -44,8 +44,12 @@ no `cargo` spawn), and adds a **curated concept overlay** (`ConceptOverlay`: 83 
 every crate — math concept names, aliases, problem shapes, directed
 relationships (`generalizes`/`composes_with`/`alternative_to`/`dual_of`),
 stability/cost tiers — embedded via `include_str!` and validated against the
-catalog). Later slices add recommended probes and cost refinement, plus the
-category-theoretic planner, algebraic probes, and the command surface.
+catalog), plus **imported-symbol analysis** (`analyze_imports` →
+`ImportsReport`: resolved symbols with per-file counts, unresolved
+catalog-crate imports as a drift signal, globs by path — joined against the
+overlay to answer "which concepts does this project actually use?"). Later
+slices add recommended probes and cost refinement, plus the category-theoretic
+planner, algebraic probes, and the command surface.
 
 ## Status
 
