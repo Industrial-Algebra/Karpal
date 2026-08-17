@@ -13,9 +13,8 @@ description = "Structural catalog generator for the Karpal workspace (Lonis disc
 [features]
 # `lonis` enables the typed Lonis output layer (Block<KarpalPayload> via
 # #[derive(BlockPayload)]), the `karpal` wire-protocol binary, and
-# SubprocessTool-hosted integration. The lonis crates are unpublished (0.0.1),
-# so this feature — and the binary — are NOT publishable to crates.io until
-# lonis-schema ships there.
+# SubprocessTool-hosted integration. Since Lonis 0.1.0 these are crates.io
+# registry deps, so this feature — and the binary — are publishable.
 default = []
 lonis = ["dep:lonis-schema", "dep:lonis-core"]
 
@@ -33,14 +32,15 @@ toml = "1.1"
 walkdir = "2"
 sha2 = "0.11"
 hex = "0.4"
-# Lonis integration: git deps pinned to Lonis `develop` HEAD. Cross-repo
-# pre-publication deps must be git (not path) — relative path deps break across
-# worktree locations and aren't portable. This rev carries #[derive(BlockPayload)]
-# + render_fn (ADR-0004, Lonis PR #6) and curated JSON Schema emission
-# (ADR-0005, Lonis PR #8). Bump as Lonis `develop` advances; the `lonis` feature
-# is unpublishable until lonis-schema reaches crates.io.
-lonis-schema = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "4aa23a66f784041d9c48d8e46f57c829026984bf", optional = true, features = ["derive"] }
-lonis-core = { git = "https://github.com/Industrial-Algebra/Lonis.git", rev = "4aa23a66f784041d9c48d8e46f57c829026984bf", optional = true }
+# Lonis integration: registry deps since Lonis 0.1.0 (crates.io), replacing
+# the pre-publication git pin at rev 4aa23a6. `lonis-schema` carries
+# #[derive(BlockPayload)] + render_fn (ADR-0004) and curated JSON Schema
+# emission (ADR-0005, including the Extension seam from Lonis #11).
+lonis-schema = { version = "0.1", optional = true, features = ["derive"] }
+lonis-core = { version = "0.1", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
+# Envelope-schema validation tests (gated on the `lonis` feature via the
+# test file; the engine itself is cheap to compile for the default suite).
+jsonschema = { version = "0.32", default-features = false }
