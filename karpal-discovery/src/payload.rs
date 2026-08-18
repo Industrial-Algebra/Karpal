@@ -102,6 +102,34 @@ fn stability_str(tier: crate::overlay::StabilityTier) -> &'static str {
     }
 }
 
+/// One ranked entry in a `karpal.recommend` payload.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RankedEntry {
+    /// The concept id.
+    pub concept_id: String,
+    /// Display name.
+    pub name: String,
+    /// Stability tier string.
+    pub stability: String,
+    /// Match-strength evidence sum.
+    pub relevance: u32,
+    /// Quality weight sum.
+    pub weight: u32,
+    /// Why this concept was recalled.
+    pub evidence: Vec<String>,
+}
+
+/// One plan step in a `karpal.plan` payload.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlanStepWire {
+    /// The action (`"orient"` / `"explore"` / `"verify"`).
+    pub action: String,
+    /// What it targets.
+    pub target: String,
+    /// Why the step is here.
+    pub note: String,
+}
+
 /// The typed payload a karpal-discovery tool emits through the Lonis contract.
 ///
 /// Derived via [`lonis_schema::BlockPayload`] — the serde wire tag,
@@ -136,6 +164,21 @@ pub enum KarpalPayload {
         query: String,
         /// Matching concepts.
         results: Vec<ConceptSummary>,
+    },
+    /// `karpal.recommend` — Pareto-ranked concepts recalled for a goal.
+    Recommend {
+        /// The goal as received.
+        goal: String,
+        /// Ranked entries.
+        entries: Vec<RankedEntry>,
+    },
+    /// `karpal.plan` — a candidate plan (orient / explore / verify) for a
+    /// goal, derived from a fresh recommendation.
+    Plan {
+        /// The goal as received.
+        goal: String,
+        /// The sequenced steps.
+        steps: Vec<PlanStepWire>,
     },
     /// `karpal imports` — which catalog symbols (and hence which concepts)
     /// a workspace actually consumes.
@@ -196,6 +239,32 @@ fn render_search(payload: &KarpalPayload) -> String {
                 out.push_str(&format!(
                     "  {} [{}] — {}\n",
                     concept.id, concept.stability, concept.summary
+                ));
+            }
+            out
+        }
+        KarpalPayload::Recommend { goal, entries } => {
+            let mut out = format!(
+                "karpal recommend \"{goal}\": {} candidate(s)\n",
+                entries.len()
+            );
+            for entry in entries {
+                out.push_str(&format!(
+                    "  {} [{}] relevance={} — {}\n",
+                    entry.concept_id,
+                    entry.stability,
+                    entry.relevance,
+                    entry.evidence.join("; ")
+                ));
+            }
+            out
+        }
+        KarpalPayload::Plan { goal, steps } => {
+            let mut out = format!("karpal plan \"{goal}\": {} step(s)\n", steps.len());
+            for step in steps {
+                out.push_str(&format!(
+                    "  {} {} — {}\n",
+                    step.action, step.target, step.note
                 ));
             }
             out

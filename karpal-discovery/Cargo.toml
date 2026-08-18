@@ -24,6 +24,12 @@ path = "src/main.rs"
 required-features = ["lonis"]
 
 [dependencies]
+# Planner substrate (Phase 19-F): score aggregation via karpal-core's
+# Semigroup/Monoid, Pareto ranking via karpal-algebra's BoundedLattice, plan
+# construction via karpal-free's Free monad — the library dogfoods itself.
+karpal-core = { version = "0.8.0", path = "../karpal-core" }
+karpal-algebra = { version = "0.8.0", path = "../karpal-algebra" }
+karpal-free = { version = "0.8.0", path = "../karpal-free" }
 syn = { version = "3", features = ["full", "visit", "extra-traits", "parsing"] }
 quote = "1"
 serde = { version = "1", features = ["derive"] }

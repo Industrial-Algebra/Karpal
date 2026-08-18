@@ -50,6 +50,8 @@ fn manifest_is_discoverable() {
     assert!(manifest.tools.contains(&"karpal.detail".to_string()));
     assert!(manifest.tools.contains(&"karpal.concepts".to_string()));
     assert!(manifest.tools.contains(&"karpal.imports".to_string()));
+    assert!(manifest.tools.contains(&"karpal.recommend".to_string()));
+    assert!(manifest.tools.contains(&"karpal.plan".to_string()));
 }
 
 #[test]
@@ -61,8 +63,8 @@ fn tools_list_carries_descriptions() {
     );
     assert_eq!(
         tools.len(),
-        4,
-        "search, detail, concepts, imports: {tools:?}"
+        6,
+        "search, detail, concepts, imports, recommend, plan: {tools:?}"
     );
 }
 
@@ -195,6 +197,47 @@ fn imports_analyzes_the_real_workspace() {
         Some(0),
         "karpal's own imports should resolve"
     );
+}
+
+#[test]
+fn recommend_ranks_concepts_through_the_call_surface() {
+    let blocks = call(
+        "karpal.recommend",
+        serde_json::json!({ "goal": "sequence dependent effectful steps" }),
+    )
+    .expect("recommend via call");
+    let BlockKind::Extension { kind, data } = payload_of(&blocks[0]) else {
+        panic!("expected Extension payload");
+    };
+    assert_eq!(kind, "karpal.recommend");
+    let entries = data["entries"].as_array().expect("entries array");
+    // the problem shape recalls monad — and it ranks first (exact problem
+    // shape evidence + Pareto dominance)
+    assert_eq!(
+        entries.first().and_then(|e| e["concept_id"].as_str()),
+        Some("monad"),
+        "{entries:?}"
+    );
+    // relation-graph neighbors are recalled with relation evidence
+    let monad = &entries[0];
+    assert!(monad["relevance"].as_u64().unwrap() > 0);
+}
+
+#[test]
+fn plan_orients_explores_and_verifies_through_the_call_surface() {
+    let blocks =
+        call("karpal.plan", serde_json::json!({ "goal": "monad" })).expect("plan via call");
+    let BlockKind::Extension { kind, data } = payload_of(&blocks[0]) else {
+        panic!("expected Extension payload");
+    };
+    assert_eq!(kind, "karpal.plan");
+    let steps = data["steps"].as_array().expect("steps array");
+    assert_eq!(steps[0]["action"], "orient");
+    assert_eq!(steps[0]["target"], "monad");
+    assert_eq!(steps.last().unwrap()["action"], "verify");
+    let explores: Vec<_> = steps.iter().filter(|s| s["action"] == "explore").collect();
+    assert!(!explores.is_empty() && explores.len() <= 3);
+    assert!(explores.iter().any(|s| s["target"] == "monad"));
 }
 
 #[test]

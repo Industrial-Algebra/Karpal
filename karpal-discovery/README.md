@@ -50,10 +50,13 @@ catalog-crate imports as a drift signal, globs by path — joined against the
 overlay to answer "which concepts does this project actually use?"). The
 `karpal` binary is a conforming Lonis `SubprocessProvider` (ADR-0006:
 `--mode json manifest` / `tools list` / `tools describe` / `call`) hosting
-four tools — `karpal.search`, `karpal.detail` (item + overlay + impl graph),
+six tools — `karpal.search`, `karpal.detail` (item + overlay + impl graph),
 `karpal.concepts` (overlay browse), `karpal.imports` (imported-symbol
-analysis). Later slices add the category-theoretic planner, algebraic probes,
-and hardening.
+analysis), `karpal.recommend` + `karpal.plan` (the category-theoretic
+planner, which dogfoods Karpal's own typeclasses: `Semigroup`/`Monoid` score
+aggregation, `BoundedLattice` Pareto ranking, and `Free`-monad plan
+construction with catamorphic normalization). Later slices add algebraic
+probes and hardening.
 
 ## Status
 
