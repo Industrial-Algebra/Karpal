@@ -13,7 +13,8 @@
 
 - [Installation](./guide/installation.md)
 - [Feature Flags](./guide/feature-flags.md)
-- [Type Discovery with karpal-index](./guide/karpal-index.md)
+- [Discovery with karpal](./guide/karpal-discovery.md)
+- [Type Discovery with karpal-index (legacy)](./guide/karpal-index.md)
 
 # Architecture
 
@@ -45,6 +46,7 @@
 - [Monoidal Diagrams](./reference/monoidal-diagrams.md)
 - [Schubert Types](./reference/schubert-types.md)
 - [Topos Theory](./reference/topos.md)
+- [Discovery Runtime](./reference/discovery.md)
 - [Higher Categories](./reference/higher-categories.md)
 - [Verification CI Workflow](./reference/verification-ci.md)
 - [Verification Schemas](./reference/verification-schemas.md)

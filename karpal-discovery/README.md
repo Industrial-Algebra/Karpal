@@ -1,73 +1,130 @@
 # karpal-discovery
 
-Structural catalog generator and project inspector for the Karpal workspace —
-the domain foundation of the Karpal discovery vertical.
+Agent-first discovery runtime for the Karpal workspace — the second Lonis
+vertical. A typed structural catalog, a curated mathematical overlay, project
+inspection, imported-symbol analysis, a category-theoretic planner, and
+algebraic probes, exposed through the `karpal` binary: a conforming
+[Lonis](https://github.com/Industrial-Algebra/Lonis) `SubprocessProvider`
+with nine tools.
 
-`karpal-discovery` walks a Karpal workspace checkout with a real `syn` AST
-parser and produces a typed, deterministic, content-hashable catalog of the
-public API surface: workspace crates, their public modules, public items
-(traits, free functions, structs, enums, type aliases, macros), and the trait
-implementation graph (queryable via `Catalog::implementors_of`). A companion
-**project inspector** (`inspect_workspace`) parses `Cargo.toml` manifests
-with a real TOML parser and produces a `ProjectSnapshot` — workspace meta,
-per-crate package metadata, dependencies (with registry/path/git/workspace
-source discrimination), feature flags, targets (explicit plus
-conventionally auto-discovered bins/examples/tests/benches), inferred
-platform constraints (the `no_std` linkage mode), and resolved dependencies
-from `Cargo.lock`. Both are
-read-only and carry no dependency on the lonis `Block` contract; together they
-supersede `karpal-index`'s string-scanning indexer. A curated **concept
-overlay** (`load_concept_overlay`) layers mathematical concept names,
-aliases, and directed relationships over the catalog — embedded in the crate
-and validated against it, so a reference to a missing symbol fails loudly.
+Where `karpal-index` string-scans source files, this crate parses real `syn`
+ASTs and answers questions at the level agents ask them: ask
+`karpal.recommend` for *"sequence dependent effectful steps"* and it recalls
+`monad` — ranked, with evidence.
+
+## Install
+
+```sh
+# The binary (Lonis provider surface + CLI):
+cargo install --path karpal-discovery --features lonis --bin karpal
+
+# The library (lonis-free):
+cargo add karpal-discovery
+```
+
+This is a `std`-only crate (it walks the filesystem), so unlike the rest of
+Karpal it does not target `no_std`.
+
+## Library quickstart
+
+```rust
+use karpal_discovery::{extract_workspace, load_concept_overlay, analyze_imports, recommend};
+
+// Structural catalog: crates, modules, public items, re-exports, impl graph.
+let catalog = extract_workspace(std::path::Path::new("."));
+
+// Curated overlay: 83 concepts, problem shapes, relationships.
+let overlay = load_concept_overlay();
+overlay.validate(&catalog).expect("no drift"); // the CI drift gate
+
+// What does this project use? (resolved imports → concepts)
+let report = analyze_imports(std::path::Path::new("."), &catalog);
+for concept in report.concepts_used(&overlay) {
+    println!("in use: {}", concept.id);
+}
+
+// Ask for the problem, get ranked concepts.
+let rec = recommend("sequence dependent effectful steps", &overlay);
+```
+
+Also: `inspect_workspace` → `ProjectSnapshot` (Cargo metadata, dependency
+source discrimination, features, targets, platform constraints, resolved
+deps — read-only, no `cargo` spawn) and `probe_catalog()`/`run_probe()`
+(algebraic probes).
+
+## The `karpal` binary
+
+A conforming Lonis `SubprocessProvider` (ADR-0006 v0):
+`karpal --mode json manifest | tools list | tools describe | call` —
+JSON on stdin, blocks on stdout, structured `ToolError` on stderr. In-process
+hosts use `lonis_core::SubprocessProvider`. Every tool is deterministic,
+read-only, low-cost.
+
+| Tool | Answers |
+|---|---|
+| `karpal.search` | which public items match a name? |
+| `karpal.detail` | one item: docs, implementors, anchored concepts |
+| `karpal.concepts` | browse curated concepts (ids, aliases, problem shapes) |
+| `karpal.imports` | which symbols (and concepts) does a workspace use? |
+| `karpal.recommend` | recall + Pareto-rank concepts for a goal |
+| `karpal.plan` | orient / explore (top-3) / verify plan for a goal |
+| `karpal.probe_list` | the registered probes |
+| `karpal.probe_describe` | what one probe demonstrates and dogfoods |
+| `karpal.probe_run` | run one probe, report each check |
+
+Legacy invocations keep working: `karpal --index-compat search|detail|crates|hierarchy [--json]`
+emits `karpal-index`'s JSON shapes over the new catalog.
 
 ## Architecture
 
-This crate is the **second Lonis vertical** (`amari-discovery` is the reference
-implementation; [Lonis](https://github.com/Industrial-Algebra/Lonis) is the
-horizontal harness carrying the general `Block` contract per the Anima Ecosystem
-Doctrine §2.7). The catalog produced here is intermediate domain data — input
-to discovery — and carries **no dependency on the lonis `Block` contract**. The
-`Block` wrapping applies only at the *output* layer (search results,
-recommendations, plans, probe results), which is gated on Lonis and built in
-later slices.
+The analysis substrate is **lonis-independent**; only the output layer (`Block`
+wrapping and the binary) is gated on the optional `lonis` feature — crates.io
+registry deps since Lonis 0.1.0, so the crate and binary are publishable.
 
-This slice catalogues **public traits, functions, structs, enums, type
-aliases, macros (declarative `macro_rules!` + the three procedural flavors),
-and the trait implementation graph** (plus crate metadata and modules), and
-adds the **project inspector** (`inspect_workspace` → `ProjectSnapshot`:
-workspace meta, package metadata, dependencies with source discrimination,
-features, explicit + conventionally auto-discovered targets, inferred
-platform constraints (no_std mode), and resolved deps from `Cargo.lock` —
-read-only,
-no `cargo` spawn), and adds a **curated concept overlay** (`ConceptOverlay`: 83 concepts across
-every crate — math concept names, aliases, problem shapes, directed
-relationships (`generalizes`/`composes_with`/`alternative_to`/`dual_of`),
-stability/cost tiers — embedded via `include_str!` and validated against the
-catalog), plus **imported-symbol analysis** (`analyze_imports` →
-`ImportsReport`: resolved symbols with per-file counts, unresolved
-catalog-crate imports as a drift signal, globs by path — joined against the
-overlay to answer "which concepts does this project actually use?"). The
-`karpal` binary is a conforming Lonis `SubprocessProvider` (ADR-0006:
-`--mode json manifest` / `tools list` / `tools describe` / `call`) hosting
-six tools — `karpal.search`, `karpal.detail` (item + overlay + impl graph),
-`karpal.concepts` (overlay browse), `karpal.imports` (imported-symbol
-analysis), `karpal.recommend` + `karpal.plan` (the category-theoretic
-planner, which dogfoods Karpal's own typeclasses: `Semigroup`/`Monoid` score
-aggregation, `BoundedLattice` Pareto ranking, and `Free`-monad plan
-construction with catamorphic normalization), and the probe tools
-`karpal.probe_list` / `karpal.probe_describe` / `karpal.probe_run` (five
-algebraic probes dogfooding `karpal-proof`, `karpal-schubert-types`,
-`karpal-recursion`, and `karpal-diagram`). Hardening: output-contract
-golden tests pin the wire surface, `karpal --index-compat` speaks the
-legacy `karpal-index` JSON shapes over the new catalog, and a publish-order
-drift gate keeps `publish.yml` covering every workspace member.
+- **Catalog (19-A)** — `extract_workspace` → `Catalog`: deterministic,
+  content-hashable; public items of every kind (macros under their importable
+  names — the derive name, never the proc-macro fn name), `pub use` re-exports
+  with renames, and the trait implementation graph.
+- **Overlay (19-B)** — `load_concept_overlay` → `ConceptOverlay`: 83 curated
+  concepts (problem shapes, `generalizes`/`composes_with`/`alternative_to`/
+  `dual_of` relations, stability/cost tiers), embedded via `include_str!` and
+  validated against the catalog — references to missing symbols are drift, and
+  CI rejects them.
+- **Inspector (19-C)** — `inspect_workspace` → `ProjectSnapshot`: read-only
+  Cargo metadata (no `cargo` spawn).
+- **Imports** — `analyze_imports` → `ImportsReport`: `use`-statement resolution
+  (leaf-tolerant, re-export-aware); unresolved catalog-crate imports are the
+  drift signal. Pointing it at Karpal itself surfaced and fixed three catalog
+  gaps.
+- **Planner (19-F)** — `recommend` + `plan`: **dogfoods Karpal's own
+  typeclasses at runtime** — `karpal-core` `Semigroup`/`Monoid` score
+  aggregation, `karpal-algebra` `BoundedLattice` Pareto ranking (strict
+  dominance *is* lattice join), `karpal-free` `Free`-monad plan construction
+  with catamorphic normalization.
+- **Probes (19-G)** — five bounded, read-only, deterministic probes running
+  real library code: functor/monad laws (`karpal-core`), law checkers
+  (`karpal-proof`), Schubert intersections — the structured-emptiness thesis
+  live (`karpal-schubert-types`), recursion-scheme agreement
+  (`karpal-recursion`), coherence witnesses (`karpal-diagram`).
+- **Hardening (19-H)** — output-contract golden tests pin the wire surface
+  (regeneration is deliberate: `KARPAL_UPDATE_GOLDENS=1`); the `--index-compat`
+  migration mode; a publish-order drift gate over `publish.yml`.
+
+Honesty note: the topos crate's Yoneda machinery is type-level; the runtime
+capability category is the overlay's relation graph. A deeper Yoneda recall
+story is deferred until `karpal-topos` is battle-tested (1.0 candidate).
+
+## Documentation
+
+The mdBook covers the runtime in both languages: [Discovery with
+`karpal`](../book/src/guide/karpal-discovery.md) (guide) and [Discovery
+Runtime](../book/src/reference/discovery.md) (reference), each with a Japanese
+counterpart.
 
 ## Status
 
-Worked example / domain prep. Not yet published; the published discovery binary
-remains `karpal-index` (0.8.0). This is a `std`-only crate (it walks the
-filesystem), so unlike the rest of Karpal it does not target `no_std`.
+Debuts in 0.9.0. `karpal-index` remains published for compatibility;
+deprecation follows consumer migration.
 
 ## License
 

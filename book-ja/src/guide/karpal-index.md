@@ -1,5 +1,7 @@
 # karpal-index による型の発見
 
+> **後継が利用可能:** `karpal-discovery` (フェーズ 19) の `karpal` バイナリが `karpal-index` を継承します — `karpal --index-compat` で同じコマンドが使えるほか、カタログ検索、概念閲覧、プランナー、プローブが加わります。[karpal によるディスカバリ](./karpal-discovery.md) を参照してください。`karpal-index` は互換性のため公開を続けます。
+
 `karpal-index` は、AI エージェント (および人間) が段階的なドリルダウンを通じて Karpal の型と操作を発見できる CLI バイナリです。
 
 ## コマンド
