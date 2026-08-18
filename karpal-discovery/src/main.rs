@@ -27,7 +27,9 @@ use std::path::Path;
 use serde::Deserialize;
 use serde_json::Value;
 
-use karpal_discovery::payload::{ConceptSummary, ItemSummary, KarpalPayload};
+use karpal_discovery::payload::{
+    ConceptSummary, ItemSummary, KarpalPayload, PlanStepWire, RankedEntry,
+};
 use lonis_schema::{Attribution, Block, ToolError};
 
 /// One entry in the static tool registry — the single source of truth for
@@ -45,7 +47,7 @@ struct ToolSpec {
 
 /// The tool surface this binary hosts. All tools are read-only and
 /// deterministic (bounded only by the inspected workspace).
-const TOOLS: [ToolSpec; 4] = [
+const TOOLS: [ToolSpec; 6] = [
     ToolSpec {
         name: "karpal.search",
         description: "Search public items (traits, functions, types, macros) across a workspace catalog.",
@@ -63,6 +65,18 @@ const TOOLS: [ToolSpec; 4] = [
         description: "Browse curated mathematical concepts (names, aliases, problem shapes) from the embedded overlay.",
         input_schema: "karpal.concepts.input/v1",
         output_schema: "karpal.concepts.output/v1",
+    },
+    ToolSpec {
+        name: "karpal.recommend",
+        description: "Recall and Pareto-rank curated concepts for a goal (matches + relation-graph neighbors).",
+        input_schema: "karpal.recommend.input/v1",
+        output_schema: "karpal.recommend.output/v1",
+    },
+    ToolSpec {
+        name: "karpal.plan",
+        description: "Plan a goal: orient, explore the top-ranked concepts, verify (built as a Free monad, normalized).",
+        input_schema: "karpal.plan.input/v1",
+        output_schema: "karpal.plan.output/v1",
     },
     ToolSpec {
         name: "karpal.imports",
@@ -115,6 +129,8 @@ fn route(name: &str, input: Value) {
         "karpal.search" | "search" => run_search(input),
         "karpal.detail" | "detail" => run_detail(input),
         "karpal.concepts" | "concepts" => run_concepts(input),
+        "karpal.recommend" | "recommend" => run_recommend(input),
+        "karpal.plan" | "plan" => run_plan(input),
         "karpal.imports" | "imports" => run_imports(input),
         other => fail(
             "unknown_tool",
@@ -219,6 +235,79 @@ struct ConceptsInput {
     /// problem shapes (case-insensitive; empty matches everything).
     #[serde(default)]
     query: String,
+}
+
+/// Input for the `recommend` operation.
+#[derive(Deserialize)]
+struct RecommendInput {
+    /// The goal (matched against ids, names, aliases, math concepts, and
+    /// problem shapes; the relation graph expands the neighborhood).
+    goal: String,
+}
+
+/// Input for the `plan` operation.
+#[derive(Deserialize)]
+struct PlanInput {
+    /// The goal the plan orients around.
+    goal: String,
+}
+
+fn run_recommend(input: Value) {
+    let parsed: RecommendInput = match serde_json::from_value(input) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            fail(
+                "invalid_input",
+                &format!("expected `{{\"goal\": …}}`: {error}"),
+                4,
+            );
+        }
+    };
+    let overlay = karpal_discovery::load_concept_overlay();
+    let recommendation = karpal_discovery::recommend(&parsed.goal, &overlay);
+    emit(KarpalPayload::Recommend {
+        goal: parsed.goal,
+        entries: recommendation
+            .entries
+            .iter()
+            .map(|e| RankedEntry {
+                concept_id: e.concept_id.clone(),
+                name: e.name.clone(),
+                stability: e.stability.clone(),
+                relevance: e.score.relevance,
+                weight: e.score.weight,
+                evidence: e.evidence.clone(),
+            })
+            .collect(),
+    });
+}
+
+fn run_plan(input: Value) {
+    let parsed: PlanInput = match serde_json::from_value(input) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            fail(
+                "invalid_input",
+                &format!("expected `{{\"goal\": …}}`: {error}"),
+                4,
+            );
+        }
+    };
+    let overlay = karpal_discovery::load_concept_overlay();
+    let recommendation = karpal_discovery::recommend(&parsed.goal, &overlay);
+    let plan = karpal_discovery::plan(&parsed.goal, &recommendation);
+    emit(KarpalPayload::Plan {
+        goal: parsed.goal,
+        steps: plan
+            .steps
+            .iter()
+            .map(|s| PlanStepWire {
+                action: s.action.as_str().to_string(),
+                target: s.target.clone(),
+                note: s.note.clone(),
+            })
+            .collect(),
+    });
 }
 
 /// Input for the `imports` operation.

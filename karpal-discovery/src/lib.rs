@@ -23,8 +23,12 @@
 //! which curated concepts, via [`ImportsReport::concepts_used`]) a project
 //! actually consumes. With the `lonis` feature, the `karpal` binary is a
 //! conforming `SubprocessProvider` hosting `karpal.search` / `karpal.detail`
-//! / `karpal.concepts` / `karpal.imports`. Later slices add the
-//! category-theoretic planner, algebraic probes, and hardening.
+//! / `karpal.concepts` / `karpal.imports` / `karpal.recommend` /
+//! `karpal.plan`. The category-theoretic planner ([`recommend`] + [`plan`])
+//! dogfoods Karpal's own typeclasses: `karpal-core` `Semigroup`/`Monoid`
+//! score aggregation, `karpal-algebra` `BoundedLattice` Pareto ranking, and
+//! `karpal-free` `Free`-monad plan construction with catamorphic
+//! normalization. Later slices add algebraic probes and hardening.
 //!
 //! ## Architecture note
 //!
@@ -52,6 +56,7 @@ pub mod inspect;
 pub mod overlay;
 #[cfg(feature = "lonis")]
 pub mod payload;
+pub mod planner;
 
 pub use catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
@@ -67,4 +72,8 @@ pub use inspect::{
 pub use overlay::{
     ConceptOverlay, ConceptRecord, ConceptRelation, CostHint, OverlayDrift, RelationKind,
     StabilityTier, load_concept_overlay,
+};
+pub use planner::{
+    CandidatePlan, PlanStep, PlanStepF, RankedConcept, Recommendation, Score, StepAction,
+    build_plan, plan, recommend,
 };

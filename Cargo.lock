@@ -668,6 +668,9 @@ version = "0.8.0"
 dependencies = [
  "hex",
  "jsonschema",
+ "karpal-algebra",
+ "karpal-core",
+ "karpal-free",
  "lonis-core",
  "lonis-schema",
  "quote",

@@ -129,6 +129,19 @@ pub enum RelationKind {
     DualOf,
 }
 
+impl RelationKind {
+    /// The stable wire string.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Generalizes => "generalizes",
+            Self::ComposesWith => "composes_with",
+            Self::AlternativeTo => "alternative_to",
+            Self::DualOf => "dual_of",
+        }
+    }
+}
+
 /// A drift finding from [`ConceptOverlay::validate`] — an overlay reference
 /// that does not resolve against the structural catalog.
 #[derive(Debug, Clone, PartialEq, Eq)]
