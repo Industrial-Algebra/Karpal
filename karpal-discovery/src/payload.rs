@@ -130,6 +130,17 @@ pub struct PlanStepWire {
     pub note: String,
 }
 
+/// One probe entry in a `karpal.probe.list` payload.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProbeInfo {
+    /// Stable probe id.
+    pub id: String,
+    /// Short description.
+    pub description: String,
+    /// Crates whose abstractions the probe exercises.
+    pub dogfoods: Vec<String>,
+}
+
 /// The typed payload a karpal-discovery tool emits through the Lonis contract.
 ///
 /// Derived via [`lonis_schema::BlockPayload`] — the serde wire tag,
@@ -179,6 +190,24 @@ pub enum KarpalPayload {
         goal: String,
         /// The sequenced steps.
         steps: Vec<PlanStepWire>,
+    },
+    /// `karpal.probe.list` — the registered probes.
+    ProbeList {
+        /// One entry per registered probe.
+        probes: Vec<ProbeInfo>,
+    },
+    /// `karpal.probe.run` — one probe's outcome.
+    ProbeRun {
+        /// The probe id.
+        id: String,
+        /// `"passed"` / `"failed"`.
+        status: String,
+        /// One-line result.
+        summary: String,
+        /// What was demonstrated, one entry per check.
+        details: Vec<String>,
+        /// Crates dogfooded.
+        dogfoods: Vec<String>,
     },
     /// `karpal imports` — which catalog symbols (and hence which concepts)
     /// a workspace actually consumes.
@@ -267,6 +296,32 @@ fn render_search(payload: &KarpalPayload) -> String {
                     step.action, step.target, step.note
                 ));
             }
+            out
+        }
+        KarpalPayload::ProbeList { probes } => {
+            let mut out = format!("karpal probes: {} registered\n", probes.len());
+            for probe in probes {
+                out.push_str(&format!(
+                    "  {} [{}] — {}\n",
+                    probe.id,
+                    probe.dogfoods.join(", "),
+                    probe.description
+                ));
+            }
+            out
+        }
+        KarpalPayload::ProbeRun {
+            id,
+            status,
+            summary,
+            details,
+            dogfoods,
+        } => {
+            let mut out = format!("probe {id}: {status} — {summary}\n");
+            for detail in details {
+                out.push_str(&format!("  ✓ {detail}\n"));
+            }
+            out.push_str(&format!("  dogfoods: {}\n", dogfoods.join(", ")));
             out
         }
         KarpalPayload::Imports {

@@ -52,6 +52,8 @@ fn manifest_is_discoverable() {
     assert!(manifest.tools.contains(&"karpal.imports".to_string()));
     assert!(manifest.tools.contains(&"karpal.recommend".to_string()));
     assert!(manifest.tools.contains(&"karpal.plan".to_string()));
+    assert!(manifest.tools.contains(&"karpal.probe_list".to_string()));
+    assert!(manifest.tools.contains(&"karpal.probe_run".to_string()));
 }
 
 #[test]
@@ -63,8 +65,8 @@ fn tools_list_carries_descriptions() {
     );
     assert_eq!(
         tools.len(),
-        6,
-        "search, detail, concepts, imports, recommend, plan: {tools:?}"
+        9,
+        "search, detail, concepts, imports, recommend, plan, probe list/describe/run: {tools:?}"
     );
 }
 
@@ -238,6 +240,70 @@ fn plan_orients_explores_and_verifies_through_the_call_surface() {
     let explores: Vec<_> = steps.iter().filter(|s| s["action"] == "explore").collect();
     assert!(!explores.is_empty() && explores.len() <= 3);
     assert!(explores.iter().any(|s| s["target"] == "monad"));
+}
+
+#[test]
+fn probe_list_and_run_work_through_the_call_surface() {
+    let blocks = call("karpal.probe_list", serde_json::json!({})).expect("probe list");
+    let BlockKind::Extension { kind, data } = payload_of(&blocks[0]) else {
+        panic!("expected Extension payload");
+    };
+    assert_eq!(kind, "karpal.probe_list");
+    let probes = data["probes"].as_array().expect("probes array");
+    assert!(probes.len() >= 5, "{probes:?}");
+    assert!(
+        probes
+            .iter()
+            .all(|p| p["dogfoods"].as_array().is_some_and(|d| !d.is_empty()))
+    );
+
+    // describe one
+    let blocks = call(
+        "karpal.probe_describe",
+        serde_json::json!({ "id": "schubert-intersection" }),
+    )
+    .expect("probe describe");
+    let BlockKind::Extension { kind: _, data } = payload_of(&blocks[0]) else {
+        panic!("expected Extension payload");
+    };
+    assert_eq!(data["probes"][0]["id"], "schubert-intersection");
+    assert!(
+        data["probes"][0]["dogfoods"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|d| d == "karpal-schubert-types")
+    );
+
+    // run one: the structured-emptiness probe passes
+    let blocks = call(
+        "karpal.probe_run",
+        serde_json::json!({ "id": "schubert-intersection" }),
+    )
+    .expect("probe run");
+    let BlockKind::Extension { kind, data } = payload_of(&blocks[0]) else {
+        panic!("expected Extension payload");
+    };
+    assert_eq!(kind, "karpal.probe_run");
+    assert_eq!(data["status"], "passed");
+    let details = data["details"].as_array().expect("details");
+    let joined = details
+        .iter()
+        .filter_map(|d| d.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(
+        joined.contains("StructuralZero") && joined.contains("Positive"),
+        "{joined}"
+    );
+}
+
+#[test]
+fn unknown_probe_run_is_a_structured_error() {
+    let error =
+        call("karpal.probe_run", serde_json::json!({ "id": "bogus" })).expect_err("bogus probe");
+    let ToolError { kind, .. } = &error;
+    assert_eq!(kind, "unknown_probe");
 }
 
 #[test]

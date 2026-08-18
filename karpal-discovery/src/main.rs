@@ -28,7 +28,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use karpal_discovery::payload::{
-    ConceptSummary, ItemSummary, KarpalPayload, PlanStepWire, RankedEntry,
+    ConceptSummary, ItemSummary, KarpalPayload, PlanStepWire, ProbeInfo, RankedEntry,
 };
 use lonis_schema::{Attribution, Block, ToolError};
 
@@ -47,7 +47,7 @@ struct ToolSpec {
 
 /// The tool surface this binary hosts. All tools are read-only and
 /// deterministic (bounded only by the inspected workspace).
-const TOOLS: [ToolSpec; 6] = [
+const TOOLS: [ToolSpec; 9] = [
     ToolSpec {
         name: "karpal.search",
         description: "Search public items (traits, functions, types, macros) across a workspace catalog.",
@@ -77,6 +77,24 @@ const TOOLS: [ToolSpec; 6] = [
         description: "Plan a goal: orient, explore the top-ranked concepts, verify (built as a Free monad, normalized).",
         input_schema: "karpal.plan.input/v1",
         output_schema: "karpal.plan.output/v1",
+    },
+    ToolSpec {
+        name: "karpal.probe_list",
+        description: "List the registered algebraic probes (bounded, read-only, deterministic dogfood executions).",
+        input_schema: "karpal.probe_list.input/v1",
+        output_schema: "karpal.probe_list.output/v1",
+    },
+    ToolSpec {
+        name: "karpal.probe_describe",
+        description: "Describe one probe: what it demonstrates and which crates it dogfoods.",
+        input_schema: "karpal.probe_describe.input/v1",
+        output_schema: "karpal.probe_describe.output/v1",
+    },
+    ToolSpec {
+        name: "karpal.probe_run",
+        description: "Run one probe by id and report its checks (deterministic, in-process).",
+        input_schema: "karpal.probe_run.input/v1",
+        output_schema: "karpal.probe_run.output/v1",
     },
     ToolSpec {
         name: "karpal.imports",
@@ -130,6 +148,9 @@ fn route(name: &str, input: Value) {
         "karpal.detail" | "detail" => run_detail(input),
         "karpal.concepts" | "concepts" => run_concepts(input),
         "karpal.recommend" | "recommend" => run_recommend(input),
+        "karpal.probe_list" | "probes" => run_probe_list(),
+        "karpal.probe_describe" => run_probe_describe(input),
+        "karpal.probe_run" => run_probe_run(input),
         "karpal.plan" | "plan" => run_plan(input),
         "karpal.imports" | "imports" => run_imports(input),
         other => fail(
@@ -307,6 +328,86 @@ fn run_plan(input: Value) {
                 note: s.note.clone(),
             })
             .collect(),
+    });
+}
+
+fn run_probe_list() {
+    let probes: Vec<ProbeInfo> = karpal_discovery::probe_catalog()
+        .iter()
+        .map(|p| ProbeInfo {
+            id: p.id.to_string(),
+            description: p.description.to_string(),
+            dogfoods: p.dogfoods.iter().map(|d| d.to_string()).collect(),
+        })
+        .collect();
+    emit(KarpalPayload::ProbeList { probes });
+}
+
+/// Input for `karpal.probe_describe` / `karpal.probe_run`.
+#[derive(Deserialize)]
+struct ProbeInput {
+    /// The probe id.
+    id: String,
+}
+
+fn run_probe_describe(input: Value) {
+    let parsed: ProbeInput = match serde_json::from_value(input) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            fail(
+                "invalid_input",
+                &format!("expected `{{\"id\": …}}`: {error}"),
+                4,
+            );
+        }
+    };
+    let Some(descriptor) = karpal_discovery::probe_catalog()
+        .iter()
+        .find(|p| p.id == parsed.id)
+    else {
+        fail(
+            "unknown_probe",
+            &format!("unknown probe `{}` (see `karpal.probe_list`)", parsed.id),
+            2,
+        );
+    };
+    emit(KarpalPayload::ProbeList {
+        probes: vec![ProbeInfo {
+            id: descriptor.id.to_string(),
+            description: descriptor.description.to_string(),
+            dogfoods: descriptor.dogfoods.iter().map(|d| d.to_string()).collect(),
+        }],
+    });
+}
+
+fn run_probe_run(input: Value) {
+    let parsed: ProbeInput = match serde_json::from_value(input) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            fail(
+                "invalid_input",
+                &format!("expected `{{\"id\": …}}`: {error}"),
+                4,
+            );
+        }
+    };
+    let Some(outcome) = karpal_discovery::run_probe(&parsed.id) else {
+        fail(
+            "unknown_probe",
+            &format!("unknown probe `{}` (see `karpal.probe_list`)", parsed.id),
+            2,
+        );
+    };
+    let status = match outcome.status {
+        karpal_discovery::ProbeStatus::Passed => "passed",
+        karpal_discovery::ProbeStatus::Failed => "failed",
+    };
+    emit(KarpalPayload::ProbeRun {
+        id: outcome.id,
+        status: status.to_string(),
+        summary: outcome.summary,
+        details: outcome.details,
+        dogfoods: outcome.dogfoods,
     });
 }
 

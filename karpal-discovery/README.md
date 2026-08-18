@@ -55,8 +55,11 @@ six tools — `karpal.search`, `karpal.detail` (item + overlay + impl graph),
 analysis), `karpal.recommend` + `karpal.plan` (the category-theoretic
 planner, which dogfoods Karpal's own typeclasses: `Semigroup`/`Monoid` score
 aggregation, `BoundedLattice` Pareto ranking, and `Free`-monad plan
-construction with catamorphic normalization). Later slices add algebraic
-probes and hardening.
+construction with catamorphic normalization), and the probe tools
+`karpal.probe_list` / `karpal.probe_describe` / `karpal.probe_run` (five
+algebraic probes dogfooding `karpal-proof`, `karpal-schubert-types`,
+`karpal-recursion`, and `karpal-diagram`). The remaining slice is
+hardening.
 
 ## Status
 
