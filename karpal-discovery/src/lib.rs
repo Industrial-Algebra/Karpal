@@ -21,8 +21,10 @@
 //! Imported-symbol analysis ([`analyze_imports`]) then resolves a target
 //! project's `use` statements against the catalog — which symbols (and hence
 //! which curated concepts, via [`ImportsReport::concepts_used`]) a project
-//! actually consumes. Later slices add the category-theoretic planner,
-//! algebraic probes, and the command surface with Lonis [`Block`] integration.
+//! actually consumes. With the `lonis` feature, the `karpal` binary is a
+//! conforming `SubprocessProvider` hosting `karpal.search` / `karpal.detail`
+//! / `karpal.concepts` / `karpal.imports`. Later slices add the
+//! category-theoretic planner, algebraic probes, and hardening.
 //!
 //! ## Architecture note
 //!

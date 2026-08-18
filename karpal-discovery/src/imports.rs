@@ -57,8 +57,11 @@ pub struct ResolvedImport {
     /// The name bound locally (the bare item name if any import used it,
     /// otherwise the lexicographically first alias).
     pub local_name: String,
-    /// The catalog item kind.
-    pub kind: ItemKind,
+    /// The catalog item kind, when the item lives in the cataloged
+    /// workspace. `None` when the symbol resolves through a re-export whose
+    /// origin is an external crate (e.g. a cross-repo dependency) — the
+    /// re-export site is then the catalog-visible anchor.
+    pub kind: Option<ItemKind>,
     /// Distinct files importing the item.
     pub files: usize,
     /// Total import occurrences (aliases included).
@@ -242,25 +245,39 @@ pub fn analyze_imports(root: &Path, catalog: &Catalog) -> ImportsReport {
             continue;
         }
 
-        let Some(record) = catalog
+        // Direct item hit, then re-export resolution (intra-crate rename or
+        // cross-crate re-export), then external re-export (an origin crate
+        // outside the cataloged workspace — resolved at the re-export site).
+        let (symbol_ref, kind) = match catalog
             .crates
             .get(*package)
             .and_then(|c| c.items.iter().find(|item| item.name == local))
-        else {
-            unresolved
-                .entry(leaf.segments.join("::"))
-                .or_insert(AggUnresolved {
-                    local_name: alias,
-                    files: BTreeSet::new(),
-                })
-                .files
-                .insert(file.clone());
-            continue;
+        {
+            Some(record) => (
+                format!("{}::{}", record.crate_name, record.name),
+                Some(record.kind.clone()),
+            ),
+            None => match resolve_via_reexport(catalog, package, &local) {
+                Some(Resolution::InCatalog(record)) => (
+                    format!("{}::{}", record.crate_name, record.name),
+                    Some(record.kind.clone()),
+                ),
+                Some(Resolution::ExternalReexport) => (format!("{}::{}", package, local), None),
+                None => {
+                    unresolved
+                        .entry(leaf.segments.join("::"))
+                        .or_insert(AggUnresolved {
+                            local_name: alias,
+                            files: BTreeSet::new(),
+                        })
+                        .files
+                        .insert(file.clone());
+                    continue;
+                }
+            },
         };
-
-        let symbol_ref = format!("{}::{}", record.crate_name, record.name);
         let agg = resolved.entry(symbol_ref).or_insert_with(|| AggResolved {
-            kind: record.kind.clone(),
+            kind,
             local_names: BTreeSet::new(),
             files: BTreeSet::new(),
             occurrences: 0,
@@ -315,7 +332,7 @@ pub fn analyze_imports(root: &Path, catalog: &Catalog) -> ImportsReport {
 
 /// Per-symbol aggregation for resolved imports.
 struct AggResolved {
-    kind: ItemKind,
+    kind: Option<ItemKind>,
     local_names: BTreeSet<String>,
     files: BTreeSet<String>,
     occurrences: usize,
@@ -325,6 +342,41 @@ struct AggResolved {
 struct AggUnresolved {
     local_name: String,
     files: BTreeSet<String>,
+}
+
+/// Resolve an import leaf through the crate's re-export table: find a
+/// re-export bound to `local`, take its origin's defining segment, and look
+/// for that item in the re-exporting crate first (the common intra-crate
+/// rename) then across the whole catalog (the cross-crate re-export case).
+fn resolve_via_reexport<'a>(
+    catalog: &'a Catalog,
+    package: &str,
+    local: &str,
+) -> Option<Resolution<'a>> {
+    let record = catalog.crates.get(package)?;
+    let reexport = record.reexports.iter().find(|r| r.name == local)?;
+    let target = reexport.origin.rsplit("::").next()?.to_string();
+    let in_crate = record.items.iter().find(|item| item.name == target);
+    let resolution = in_crate.map(Resolution::InCatalog).or_else(|| {
+        catalog
+            .crates
+            .values()
+            .flat_map(|c| c.items.iter())
+            .find(|item| item.name == target)
+            .map(Resolution::InCatalog)
+    });
+    // An external origin crate (outside the cataloged workspace) still
+    // resolves — at the re-export site.
+    Some(resolution.unwrap_or(Resolution::ExternalReexport))
+}
+
+/// The outcome of re-export resolution.
+enum Resolution<'a> {
+    /// The defining item lives in the catalog.
+    InCatalog(&'a crate::catalog::ItemRecord),
+    /// The origin crate is external to the workspace catalog; the re-export
+    /// site is the anchor.
+    ExternalReexport,
 }
 
 /// Is `name` a public module of `package` (by module-path leaf)?

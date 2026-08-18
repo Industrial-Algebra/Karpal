@@ -38,7 +38,7 @@ pub struct ItemSummary {
     /// Fully-qualified module path.
     pub module_path: String,
     /// Item kind (`"trait"` / `"function"` / `"struct"` / `"enum"` /
-    /// `"type_alias"` / `"macro"`). This string flows into
+    /// `"type_alias"` / `"macro"` / `"const"`). This string flows into
     /// `KarpalPayload::Search.results[].kind` — it is the value set's spec.
     pub kind: String,
 }
@@ -51,6 +51,7 @@ impl ItemSummary {
             ItemKind::Trait(_) => "trait",
             ItemKind::Function(_) => "function",
             ItemKind::Struct(_) => "struct",
+            ItemKind::Const(_) => "const",
             ItemKind::Enum(_) => "enum",
             ItemKind::TypeAlias(_) => "type_alias",
             ItemKind::Macro(_) => "macro",
@@ -61,6 +62,43 @@ impl ItemSummary {
             module_path: module_path.to_string(),
             kind: kind_str.to_string(),
         }
+    }
+}
+
+/// A minimal projection of an overlay concept for command output.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConceptSummary {
+    /// Stable concept id.
+    pub id: String,
+    /// Display name.
+    pub name: String,
+    /// One-line summary.
+    pub summary: String,
+    /// Anchoring catalog references (`<crate>::<item>`).
+    pub symbol_refs: Vec<String>,
+    /// Stability tier (`"stable"` / `"experimental"` / `"research"`).
+    pub stability: String,
+}
+
+impl ConceptSummary {
+    /// Project an overlay [`ConceptRecord`](crate::overlay::ConceptRecord).
+    #[must_use]
+    pub fn from_record(record: &crate::overlay::ConceptRecord) -> Self {
+        Self {
+            id: record.id.clone(),
+            name: record.name.clone(),
+            summary: record.summary.clone(),
+            symbol_refs: record.symbol_refs.clone(),
+            stability: stability_str(record.stability).to_string(),
+        }
+    }
+}
+
+fn stability_str(tier: crate::overlay::StabilityTier) -> &'static str {
+    match tier {
+        crate::overlay::StabilityTier::Stable => "stable",
+        crate::overlay::StabilityTier::Experimental => "experimental",
+        crate::overlay::StabilityTier::Research => "research",
     }
 }
 
@@ -80,6 +118,37 @@ pub enum KarpalPayload {
         /// Matching items.
         results: Vec<ItemSummary>,
     },
+    /// `karpal detail` — one catalog item joined with overlay concepts and
+    /// the implementation graph.
+    Detail {
+        /// The item.
+        item: ItemSummary,
+        /// Doc comment, when catalogued.
+        docs: Option<String>,
+        /// Types implementing the item (when it is a trait).
+        implementors: Vec<String>,
+        /// Overlay concepts anchored to this item.
+        concepts: Vec<ConceptSummary>,
+    },
+    /// `karpal concepts` — curated overlay concepts matching a query.
+    Concepts {
+        /// The query as received (empty matches everything).
+        query: String,
+        /// Matching concepts.
+        results: Vec<ConceptSummary>,
+    },
+    /// `karpal imports` — which catalog symbols (and hence which concepts)
+    /// a workspace actually consumes.
+    Imports {
+        /// Distinct resolved catalog symbols.
+        resolved: usize,
+        /// Imports of catalog crates matching no item (drift signal).
+        unresolved: usize,
+        /// Glob imports of catalog crates.
+        globs: usize,
+        /// The curated concepts in use.
+        concepts: Vec<ConceptSummary>,
+    },
 }
 
 /// Custom human render for [`KarpalPayload`]: a query echo plus one line per
@@ -96,6 +165,52 @@ fn render_search(payload: &KarpalPayload) -> String {
                     item.name, item.kind, item.module_path
                 ));
             }
+            out
+        }
+        KarpalPayload::Detail {
+            item,
+            docs,
+            implementors,
+            concepts,
+        } => {
+            let mut out = format!("{} ({}) — {}\n", item.name, item.kind, item.module_path);
+            if let Some(docs) = docs {
+                out.push_str(&format!("  docs: {}\n", docs.lines().next().unwrap_or("")));
+            }
+            if !implementors.is_empty() {
+                out.push_str(&format!(
+                    "  implemented by {} type(s), e.g. {}\n",
+                    implementors.len(),
+                    implementors.first().map(String::as_str).unwrap_or_default()
+                ));
+            }
+            if !concepts.is_empty() {
+                let ids: Vec<&str> = concepts.iter().map(|c| c.id.as_str()).collect();
+                out.push_str(&format!("  concepts: {}\n", ids.join(", ")));
+            }
+            out
+        }
+        KarpalPayload::Concepts { query, results } => {
+            let mut out = format!("karpal concepts \"{query}\": {} match(es)\n", results.len());
+            for concept in results {
+                out.push_str(&format!(
+                    "  {} [{}] — {}\n",
+                    concept.id, concept.stability, concept.summary
+                ));
+            }
+            out
+        }
+        KarpalPayload::Imports {
+            resolved,
+            unresolved,
+            globs,
+            concepts,
+        } => {
+            let mut out = format!(
+                "karpal imports: {resolved} resolved, {unresolved} unresolved, {globs} glob(s)\n"
+            );
+            let ids: Vec<&str> = concepts.iter().map(|c| c.id.as_str()).collect();
+            out.push_str(&format!("  concepts in use: {}\n", ids.join(", ")));
             out
         }
     }

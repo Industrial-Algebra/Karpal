@@ -19,9 +19,9 @@ use syn::{Attribute, ItemEnum, ItemFn, ItemStruct, ItemTrait, ItemType, TraitIte
 use walkdir::WalkDir;
 
 use crate::catalog::{
-    Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
-    MacroFlavor, MacroRecord, MethodRecord, ModuleRecord, StructRecord, TraitRecord,
-    TypeAliasRecord,
+    Catalog, ConstRecord, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind,
+    ItemRecord, MacroFlavor, MacroRecord, MethodRecord, ModuleRecord, ReexportRecord, StructRecord,
+    TraitRecord, TypeAliasRecord,
 };
 
 /// Extract a structural catalog from a workspace root.
@@ -84,6 +84,7 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
     let mut modules = Vec::new();
     let mut items = Vec::new();
     let mut impls = Vec::new();
+    let mut reexports = Vec::new();
     for source in rust_sources(&src_dir) {
         let module_path = match module_path_for(&src_dir, &source, &crate_root) {
             Some(path) => path,
@@ -108,6 +109,11 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
                         impls.push(implementation);
                     }
                 }
+                syn::Item::Use(use_item) => {
+                    if is_public(&use_item.vis) {
+                        collect_reexports(&use_item.tree, &mut reexports);
+                    }
+                }
                 other => {
                     if let Some(record) = extract_item(other, &meta.name, &module_path) {
                         items.push(record);
@@ -127,7 +133,10 @@ fn extract_crate(cargo_toml: &Path) -> Option<CrateRecord> {
             .cmp(&b.trait_name)
             .then_with(|| a.implementor.cmp(&b.implementor))
     });
+    reexports.sort_by(|a, b| a.name.cmp(&b.name).then_with(|| a.origin.cmp(&b.origin)));
+    reexports.dedup_by(|a, b| a.name == b.name && a.origin == b.origin);
     Some(CrateRecord {
+        reexports,
         name: meta.name,
         version: meta.version,
         description: meta.description,
@@ -235,6 +244,64 @@ fn rust_sources(src_dir: &Path) -> Vec<PathBuf> {
         .collect();
     sources.sort();
     sources
+}
+
+/// Collect `pub use` re-export leaves (renames included). Glob leaves and
+/// `std`/`core`/`alloc` origins are skipped — they are noise for catalog
+/// resolution.
+fn collect_reexports(tree: &syn::UseTree, out: &mut Vec<ReexportRecord>) {
+    let mut segments: Vec<String> = Vec::new();
+    flatten_reexport(tree, &mut segments, out);
+}
+
+fn flatten_reexport(
+    tree: &syn::UseTree,
+    segments: &mut Vec<String>,
+    out: &mut Vec<ReexportRecord>,
+) {
+    match tree {
+        syn::UseTree::Path(path) => {
+            segments.push(path.ident.to_string());
+            flatten_reexport(&path.tree, segments, out);
+        }
+        syn::UseTree::Name(name) => {
+            push_reexport(segments, &name.ident.to_string(), None, out);
+        }
+        syn::UseTree::Rename(rename) => {
+            push_reexport(
+                segments,
+                &rename.ident.to_string(),
+                Some(&rename.rename.to_string()),
+                out,
+            );
+        }
+        syn::UseTree::Glob(_) => {}
+        syn::UseTree::Group(group) => {
+            for inner in &group.items {
+                flatten_reexport(inner, segments, out);
+            }
+        }
+    }
+}
+
+fn push_reexport(
+    segments: &[String],
+    ident: &str,
+    rename: Option<&str>,
+    out: &mut Vec<ReexportRecord>,
+) {
+    if matches!(
+        segments.first().map(String::as_str),
+        Some("std") | Some("core") | Some("alloc")
+    ) {
+        return;
+    }
+    let origin = format!("{}::{ident}", segments.join("::"));
+    out.push(ReexportRecord {
+        name: rename.unwrap_or(ident).to_string(),
+        origin,
+    });
+    let _ = segments;
 }
 
 /// Compute the fully-qualified module path for a source file.
@@ -388,11 +455,17 @@ fn extract_item(item: &syn::Item, crate_name: &str, module_path: &str) -> Option
         ),
         syn::Item::Fn(f) if is_public(&f.vis) => {
             let name = f.sig.ident.to_string();
-            let kind = match proc_macro_record(&f.attrs) {
-                Some(record) => ItemKind::Macro(record),
-                None => ItemKind::Function(extract_function(f)),
-            };
-            (name, kind, &f.attrs)
+            match proc_macro_record(&f.attrs) {
+                // A derive macro's importable name is the *derive* name (the
+                // fn name never leaves the proc-macro crate), so that is the
+                // catalogued public-surface name.
+                Some(record) if record.flavor == MacroFlavor::Derive => {
+                    let derive_name = record.derives.clone().unwrap_or_else(|| name.clone());
+                    (derive_name, ItemKind::Macro(record), &f.attrs)
+                }
+                Some(record) => (name, ItemKind::Macro(record), &f.attrs),
+                None => (name, ItemKind::Function(extract_function(f)), &f.attrs),
+            }
         }
         syn::Item::Struct(s) if is_public(&s.vis) => (
             s.ident.to_string(),
@@ -403,6 +476,13 @@ fn extract_item(item: &syn::Item, crate_name: &str, module_path: &str) -> Option
             e.ident.to_string(),
             ItemKind::Enum(extract_enum(e)),
             &e.attrs,
+        ),
+        syn::Item::Const(c) if is_public(&c.vis) => (
+            c.ident.to_string(),
+            ItemKind::Const(ConstRecord {
+                ty: Some(quote::ToTokens::to_token_stream(&c.ty).to_string()),
+            }),
+            &c.attrs,
         ),
         syn::Item::Type(t) if is_public(&t.vis) => (
             t.ident.to_string(),

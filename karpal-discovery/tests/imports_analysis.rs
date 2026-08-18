@@ -80,7 +80,7 @@ fn simple_use_resolves() {
     assert_eq!(r.files, 1);
     assert!(matches!(
         r.kind,
-        karpal_discovery::catalog::ItemKind::Trait { .. }
+        Some(karpal_discovery::catalog::ItemKind::Trait { .. })
     ));
 }
 

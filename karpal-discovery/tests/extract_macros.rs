@@ -115,7 +115,9 @@ fn attribute_proc_macro_is_catalogued() {
 #[test]
 fn derive_proc_macro_carries_trait_and_helpers() {
     let (_dir, catalog) = fixture_catalog();
-    let record = macro_record(&catalog, "derive_thing");
+    // Derive macros are catalogued under the importable *derive* name —
+    // the fn name (`derive_thing`) never leaves the proc-macro crate.
+    let record = macro_record(&catalog, "Derivable");
     assert_eq!(record.flavor, MacroFlavor::Derive);
     assert_eq!(record.derives.as_deref(), Some("Derivable"));
     assert_eq!(record.helper_attributes, vec!["helper"]);
@@ -143,8 +145,9 @@ fn workspace_root() -> PathBuf {
 fn workspace_derive_macros_are_catalogued() {
     let catalog = extract_workspace(&workspace_root());
     // karpal-proof-derive: `#[proc_macro_derive(VerifySemigroup, attributes(verify))]`
-    // on `pub fn derive_verify_semigroup`.
-    let record = macro_record(&catalog, "derive_verify_semigroup");
+    // on `pub fn derive_verify_semigroup` — catalogued under the importable
+    // derive name.
+    let record = macro_record(&catalog, "VerifySemigroup");
     assert_eq!(record.flavor, MacroFlavor::Derive);
     assert_eq!(record.derives.as_deref(), Some("VerifySemigroup"));
     assert_eq!(record.helper_attributes, vec!["verify"]);

@@ -19,6 +19,7 @@ fn sample_catalog() -> Catalog {
         impls: Vec::new(),
         modules: Vec::new(),
         items: Vec::new(),
+        reexports: Vec::new(),
     };
     krate.items.push(ItemRecord {
         name: "Functor".to_string(),

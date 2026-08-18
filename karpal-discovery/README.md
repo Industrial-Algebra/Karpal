@@ -47,9 +47,13 @@ stability/cost tiers — embedded via `include_str!` and validated against the
 catalog), plus **imported-symbol analysis** (`analyze_imports` →
 `ImportsReport`: resolved symbols with per-file counts, unresolved
 catalog-crate imports as a drift signal, globs by path — joined against the
-overlay to answer "which concepts does this project actually use?"). Later
-slices add recommended probes and cost refinement, plus the category-theoretic
-planner, algebraic probes, and the command surface.
+overlay to answer "which concepts does this project actually use?"). The
+`karpal` binary is a conforming Lonis `SubprocessProvider` (ADR-0006:
+`--mode json manifest` / `tools list` / `tools describe` / `call`) hosting
+four tools — `karpal.search`, `karpal.detail` (item + overlay + impl graph),
+`karpal.concepts` (overlay browse), `karpal.imports` (imported-symbol
+analysis). Later slices add the category-theoretic planner, algebraic probes,
+and hardening.
 
 ## Status
 

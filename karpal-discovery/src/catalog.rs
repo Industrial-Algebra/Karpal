@@ -92,8 +92,19 @@ pub struct CrateRecord {
     pub impls: Vec<ImplRecord>,
     /// Public modules reachable from the crate root.
     pub modules: Vec<ModuleRecord>,
+    /// `pub use` re-export leaves (including renames), sorted by name. Glob
+    /// and `std`/`core`/`alloc` re-exports are skipped.
+    #[serde(default)]
+    pub reexports: Vec<ReexportRecord>,
     /// Public top-level items declared in this crate.
     pub items: Vec<ItemRecord>,
+}
+
+/// A public const item.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ConstRecord {
+    /// The const's type, rendered as written, when parseable.
+    pub ty: Option<String>,
 }
 
 /// One trait implementation (`impl Trait for Type`).
@@ -103,6 +114,17 @@ pub struct ImplRecord {
     pub implementor: String,
     /// The implemented trait's name (last path segment).
     pub trait_name: String,
+}
+
+/// One `pub use` re-export leaf: the locally-bound name (a rename when
+/// `as` was used) and the origin path as written.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ReexportRecord {
+    /// The name bound locally (post-rename).
+    pub name: String,
+    /// The re-exported path as written (e.g. `self::MonteCarloVerifier`,
+    /// `karpal_proof_derive::VerifySemigroup`).
+    pub origin: String,
 }
 
 /// A public module path within a crate.
@@ -147,6 +169,8 @@ pub enum ItemKind {
     Function(FunctionRecord),
     /// A public struct.
     Struct(StructRecord),
+    /// A public const.
+    Const(ConstRecord),
     /// A public enum.
     Enum(EnumRecord),
     /// A public type alias.
