@@ -58,8 +58,10 @@ aggregation, `BoundedLattice` Pareto ranking, and `Free`-monad plan
 construction with catamorphic normalization), and the probe tools
 `karpal.probe_list` / `karpal.probe_describe` / `karpal.probe_run` (five
 algebraic probes dogfooding `karpal-proof`, `karpal-schubert-types`,
-`karpal-recursion`, and `karpal-diagram`). The remaining slice is
-hardening.
+`karpal-recursion`, and `karpal-diagram`). Hardening: output-contract
+golden tests pin the wire surface, `karpal --index-compat` speaks the
+legacy `karpal-index` JSON shapes over the new catalog, and a publish-order
+drift gate keeps `publish.yml` covering every workspace member.
 
 ## Status
 

@@ -171,5 +171,29 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      # NEW in 0.9.0: the discovery vertical. karpal-index rides the same
+      # version bump (it stays published for legacy invocations until
+      # deprecation); karpal-discovery publishes after all of its workspace
+      # dependencies (core, algebra, free, proof, recursion, diagram,
+      # schubert-types — all earlier in this order). Its `lonis` feature
+      # and the `karpal` bin are optional, so the default-feature publish
+      # ships the library only.
+      - name: Publish karpal-index
+        continue-on-error: true
+        run: cargo publish -p karpal-index
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index
+        run: sleep 30
+
+      - name: Publish karpal-discovery
+        run: cargo publish -p karpal-discovery
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
       - name: Trigger Netlify docs deploy
         run: curl -s -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}"

@@ -1,0 +1,1 @@
+{"name":"karpal:probe_run","description":"Run one probe by id and report its checks (deterministic, in-process).","input_schema":"karpal.probe_run.input/v1","output_schema":"karpal.probe_run.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

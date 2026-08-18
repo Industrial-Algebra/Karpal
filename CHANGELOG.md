@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] — Unreleased
+
+### Added
+
+- **Phase 19: `karpal-discovery` — the agent-first discovery runtime** (the second Lonis vertical). A new std-only crate expanding the discovery substrate, with the `karpal` binary (gated on the `lonis` feature) as a conforming Lonis `SubprocessProvider`:
+  - **19-A — Structural catalog** (`extract_workspace` → `Catalog`): crates, modules, public items (traits with supertraits/methods, functions with signatures, structs, enums, type aliases, macros — declarative and the three proc-macro flavors under their importable names — consts), `pub use` re-exports (renames included), and the trait implementation graph (`implementors_of`). Deterministic, content-hashable.
+  - **19-B — Semantic overlay** (`load_concept_overlay` → `ConceptOverlay`): 83 curated mathematical concepts across every workspace crate (names, aliases, problem shapes, `generalizes`/`composes_with`/`alternative_to`/`dual_of` relations, stability and cost tiers), embedded via `include_str!` and validated against the catalog — CI rejects overlays referencing missing symbols (drift gate).
+  - **19-C — Project inspector** (`inspect_workspace` → `ProjectSnapshot`): workspace/package metadata, dependencies with registry/path/git/workspace source discrimination, features, targets (explicit + conventional auto-discovery), inferred platform constraints (no_std mode), and resolved dependencies from `Cargo.lock`. Read-only; no `cargo` spawn.
+  - **Imported-symbol analysis** (`analyze_imports` → `ImportsReport`): resolves a project's `use` statements against the catalog (leaf-tolerant, re-export-aware), reporting resolved symbols with per-file counts, unresolved catalog-crate imports as a drift signal, and globs — joined to the overlay via `concepts_used`.
+  - **19-D/E — Provider surface & discovery commands**: `karpal --mode json manifest | tools list | tools describe | call` (ADR-0006 v0), hosting `karpal.search`, `karpal.detail`, `karpal.concepts`, `karpal.imports`.
+  - **19-F — Category-theoretic planner** (`recommend` + `plan`): dogfoods the library at runtime — `karpal-core` `Semigroup`/`Monoid` score aggregation, `karpal-algebra` `BoundedLattice` Pareto ranking, `karpal-free` `Free`-monad plan construction with catamorphic normalization. Exposed as `karpal.recommend` / `karpal.plan`.
+  - **19-G — Probe registry** (`probe_catalog` / `run_probe`): five bounded, read-only, deterministic probes dogfooding `karpal-core` (functor/monad laws), `karpal-proof` (law checkers), `karpal-schubert-types` (structured emptiness: Positive vs StructuralZero), `karpal-recursion` (ana/cata/hylo agreement), and `karpal-diagram` (coherence witnesses). Exposed as `karpal.probe_list` / `karpal.probe_describe` / `karpal.probe_run`.
+  - **19-H — Hardening**: output-contract golden tests (provider JSON byte-pinned; block payloads golden with normalized provenance), `karpal-index` compatibility mode (`karpal --index-compat search|detail|crates|hierarchy [--json]`, the legacy JSON shapes over the new catalog), and a publish-order drift gate (every workspace member must appear in `publish.yml`).
+- **Lonis 0.1.0 registry deps** — the `lonis` feature (and the `karpal` binary) are publishable: `lonis-schema` 0.1 + `lonis-core` 0.1 as crates.io dependencies, replacing pre-publication git pins. The wire block validates against the curated `block-v1.json` envelope schema in CI.
+
+### Migration
+
+- `karpal-index` (published at 0.8.0) remains in place; the `karpal` binary's `--index-compat` mode preserves its JSON contract over the new catalog (documented divergences: `path` carries the module path without `:line`, `summary` is the first doc sentence, `subtraits` is empty — parity with the legacy indexer). Deprecation follows after consumers migrate.
+
 ## [0.8.0] — 2026-07-22
 
 ### Added

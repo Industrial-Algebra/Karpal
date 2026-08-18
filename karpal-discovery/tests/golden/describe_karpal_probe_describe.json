@@ -1,0 +1,1 @@
+{"name":"karpal:probe_describe","description":"Describe one probe: what it demonstrates and which crates it dogfoods.","input_schema":"karpal.probe_describe.input/v1","output_schema":"karpal.probe_describe.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

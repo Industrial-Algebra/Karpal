@@ -1,0 +1,1 @@
+{"name":"karpal:concepts","description":"Browse curated mathematical concepts (names, aliases, problem shapes) from the embedded overlay.","input_schema":"karpal.concepts.input/v1","output_schema":"karpal.concepts.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}
