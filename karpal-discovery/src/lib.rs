@@ -17,9 +17,12 @@
 //! auto-discovered), inferred platform constraints (the no_std linkage mode),
 //! and resolved dependencies from `Cargo.lock`. A curated concept overlay
 //! ([`load_concept_overlay`]) layers mathematical concept names and
-//! relationships over the catalog (embedded, validated against it). Later
-//! slices expand the overlay and add the category-theoretic planner, algebraic
-//! probes, and command surface arrive with Lonis [`Block`] integration.
+//! relationships over the catalog (embedded, validated against it).
+//! Imported-symbol analysis ([`analyze_imports`]) then resolves a target
+//! project's `use` statements against the catalog — which symbols (and hence
+//! which curated concepts, via [`ImportsReport::concepts_used`]) a project
+//! actually consumes. Later slices add the category-theoretic planner,
+//! algebraic probes, and the command surface with Lonis [`Block`] integration.
 //!
 //! ## Architecture note
 //!
@@ -42,6 +45,7 @@
 
 pub mod catalog;
 pub mod extract;
+pub mod imports;
 pub mod inspect;
 pub mod overlay;
 #[cfg(feature = "lonis")]
@@ -52,6 +56,7 @@ pub use catalog::{
     MacroFlavor, MacroRecord, MethodRecord, ModuleRecord, StructRecord, TraitRecord,
     TypeAliasRecord,
 };
+pub use imports::{GlobImport, ImportsReport, ResolvedImport, UnresolvedImport, analyze_imports};
 pub use inspect::{
     CrateSnapshot, DepKind, DepSource, LibTarget, LockfileSnapshot, NamedTarget, PackageMeta,
     PlatformConstraints, ProjectSnapshot, ResolvedPackage, StdMode, TargetsRecord, WorkspaceMeta,
