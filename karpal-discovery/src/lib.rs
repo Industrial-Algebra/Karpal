@@ -57,6 +57,7 @@ pub mod overlay;
 #[cfg(feature = "lonis")]
 pub mod payload;
 pub mod planner;
+pub mod probes;
 
 pub use catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
@@ -77,3 +78,4 @@ pub use planner::{
     CandidatePlan, PlanStep, PlanStepF, RankedConcept, Recommendation, Score, StepAction,
     build_plan, plan, recommend,
 };
+pub use probes::{ProbeDescriptor, ProbeOutcome, ProbeStatus, probe_catalog, run_probe};

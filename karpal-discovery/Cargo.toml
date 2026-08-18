@@ -30,6 +30,12 @@ required-features = ["lonis"]
 karpal-core = { version = "0.8.0", path = "../karpal-core" }
 karpal-algebra = { version = "0.8.0", path = "../karpal-algebra" }
 karpal-free = { version = "0.8.0", path = "../karpal-free" }
+# Probe substrates (Phase 19-G): law checkers, recursion schemes, coherence
+# witnesses, and Schubert intersections — each probe runs real library code.
+karpal-proof = { version = "0.8.0", path = "../karpal-proof" }
+karpal-recursion = { version = "0.8.0", path = "../karpal-recursion" }
+karpal-diagram = { version = "0.8.0", path = "../karpal-diagram" }
+karpal-schubert-types = { version = "0.8.0", path = "../karpal-schubert-types" }
 syn = { version = "3", features = ["full", "visit", "extra-traits", "parsing"] }
 quote = "1"
 serde = { version = "1", features = ["derive"] }
