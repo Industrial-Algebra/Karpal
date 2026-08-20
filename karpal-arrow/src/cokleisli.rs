@@ -11,7 +11,7 @@ use karpal_core::hkt::{HKT, HKT2};
 /// `P<A, B> = Box<dyn Fn(W::Of<A>) -> B>`.
 ///
 /// Composition requires `W::Of<A>: Clone`, which can't be expressed generically
-/// with GATs. Use the [`impl_cokleisli`] macro to generate impls for specific comonads.
+/// with GATs. Use the `impl_cokleisli!` macro (defined below) to generate impls for specific comonads.
 pub struct CokleisliF<W: HKT>(PhantomData<W>);
 
 impl<W: HKT> HKT2 for CokleisliF<W> {

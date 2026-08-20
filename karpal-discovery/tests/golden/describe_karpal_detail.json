@@ -1,0 +1,1 @@
+{"name":"karpal:detail","description":"One catalog item with docs, implementors, and anchored overlay concepts.","input_schema":"karpal.detail.input/v1","output_schema":"karpal.detail.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

@@ -1,0 +1,292 @@
+{
+  "entries": [
+    {
+      "concept_id": "monad",
+      "evidence": [
+        "match: id (exact)",
+        "match: name (exact)",
+        "match: math concept",
+        "relation: composes_with free-monad ↔ monad",
+        "relation: composes_with codensity-monad ↔ monad",
+        "relation: composes_with monad-transformers ↔ monad",
+        "relation: dual_of comonad ↔ monad"
+      ],
+      "name": "Monad",
+      "relevance": 14,
+      "stability": "stable",
+      "weight": 21
+    },
+    {
+      "concept_id": "comonad-transformers",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: alias",
+        "match: math concept",
+        "relation: composes_with comonad ↔ comonad-transformers"
+      ],
+      "name": "Comonad transformers",
+      "relevance": 12,
+      "stability": "stable",
+      "weight": 15
+    },
+    {
+      "concept_id": "freer-monad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: alias",
+        "match: math concept",
+        "relation: alternative_to free-monad ↔ freer-monad"
+      ],
+      "name": "Freer monad",
+      "relevance": 12,
+      "stability": "stable",
+      "weight": 15
+    },
+    {
+      "concept_id": "comonad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "relation: composes_with comonad-transformers ↔ comonad",
+        "relation: composes_with cofree-comonad ↔ comonad",
+        "relation: dual_of monad ↔ comonad"
+      ],
+      "name": "Comonad",
+      "relevance": 11,
+      "stability": "stable",
+      "weight": 18
+    },
+    {
+      "concept_id": "free-monad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "relation: composes_with monad ↔ free-monad",
+        "relation: dual_of cofree-comonad ↔ free-monad",
+        "relation: alternative_to freer-monad ↔ free-monad"
+      ],
+      "name": "Free monad",
+      "relevance": 11,
+      "stability": "stable",
+      "weight": 18
+    },
+    {
+      "concept_id": "cofree-comonad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "relation: composes_with comonad ↔ cofree-comonad",
+        "relation: dual_of free-monad ↔ cofree-comonad"
+      ],
+      "name": "Cofree comonad",
+      "relevance": 10,
+      "stability": "stable",
+      "weight": 15
+    },
+    {
+      "concept_id": "monad-transformers",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "relation: composes_with monad ↔ monad-transformers",
+        "relation: composes_with state-transformer ↔ monad-transformers"
+      ],
+      "name": "MonadTrans",
+      "relevance": 10,
+      "stability": "stable",
+      "weight": 15
+    },
+    {
+      "concept_id": "codensity-monad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "relation: composes_with monad ↔ codensity-monad"
+      ],
+      "name": "Codensity monad",
+      "relevance": 9,
+      "stability": "stable",
+      "weight": 12
+    },
+    {
+      "concept_id": "ffunctor",
+      "evidence": [
+        "match: name",
+        "match: alias",
+        "match: math concept"
+      ],
+      "name": "FFunctor / FMonad",
+      "relevance": 8,
+      "stability": "stable",
+      "weight": 9
+    },
+    {
+      "concept_id": "state-transformer",
+      "evidence": [
+        "match: alias",
+        "match: math concept",
+        "relation: composes_with monad-transformers ↔ state-transformer"
+      ],
+      "name": "StateT",
+      "relevance": 6,
+      "stability": "stable",
+      "weight": 9
+    },
+    {
+      "concept_id": "arrow-apply",
+      "evidence": [
+        "match: math concept",
+        "relation: alternative_to monad ↔ arrow-apply"
+      ],
+      "name": "ArrowApply",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "chain",
+      "evidence": [
+        "match: math concept",
+        "relation: generalizes monad ↔ chain"
+      ],
+      "name": "Chain",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "conclude",
+      "evidence": [
+        "match: math concept",
+        "relation: dual_of monad ↔ conclude"
+      ],
+      "name": "Conclude",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "except-transformer",
+      "evidence": [
+        "match: math concept",
+        "relation: composes_with monad-transformers ↔ except-transformer"
+      ],
+      "name": "ExceptT",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "extend",
+      "evidence": [
+        "match: math concept",
+        "relation: generalizes comonad ↔ extend"
+      ],
+      "name": "Extend",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "reader-transformer",
+      "evidence": [
+        "match: math concept",
+        "relation: composes_with monad-transformers ↔ reader-transformer"
+      ],
+      "name": "ReaderT",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "writer-transformer",
+      "evidence": [
+        "match: math concept",
+        "relation: composes_with monad-transformers ↔ writer-transformer"
+      ],
+      "name": "WriterT",
+      "relevance": 3,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "adjunction",
+      "evidence": [
+        "relation: composes_with monad ↔ adjunction",
+        "relation: composes_with comonad ↔ adjunction"
+      ],
+      "name": "Adjunction",
+      "relevance": 2,
+      "stability": "stable",
+      "weight": 6
+    },
+    {
+      "concept_id": "alternative",
+      "evidence": [
+        "match: math concept"
+      ],
+      "name": "Alternative",
+      "relevance": 2,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "decide",
+      "evidence": [
+        "match: math concept"
+      ],
+      "name": "Decide",
+      "relevance": 2,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "applicative",
+      "evidence": [
+        "relation: generalizes monad ↔ applicative"
+      ],
+      "name": "Applicative",
+      "relevance": 1,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "free-applicative",
+      "evidence": [
+        "relation: alternative_to free-monad ↔ free-applicative"
+      ],
+      "name": "Free applicative",
+      "relevance": 1,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "functor",
+      "evidence": [
+        "relation: composes_with ffunctor ↔ functor"
+      ],
+      "name": "Functor",
+      "relevance": 1,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "kan-extension",
+      "evidence": [
+        "relation: composes_with codensity-monad ↔ kan-extension"
+      ],
+      "name": "Kan extensions",
+      "relevance": 1,
+      "stability": "stable",
+      "weight": 3
+    }
+  ],
+  "goal": "monad"
+}

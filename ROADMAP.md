@@ -532,22 +532,42 @@ See integration documents:
 - [Schubert verification integration](../../Schubert/docs/verification-integration.md)
 - [Borsalino verification integration](../../Borsalino/docs/verification-integration.md)
 
-### Phase 19 — `karpal-discovery`: Agent-First Discovery Runtime (pre-1.0)
+### Phase 19 — `karpal-discovery`: Agent-First Discovery Runtime (0.9.0 target)
 
 **Package**: `karpal-discovery` (expands the existing `karpal-index`)
 **Installed binary**: `karpal`
-**Reference design**: [amari-discovery 0.24.0](https://github.com/Industrial-Algebra/Amari/blob/develop/docs/plans/2026-07-09-amari-discovery-design.md) — protocol parity is the goal
+**Architecture**: the **second Lonis vertical**. [Lonis](https://github.com/Industrial-Algebra/Lonis) is the horizontal AI-tool harness carrying the general `Block` contract (ANIMA_ECOSYSTEM_DOCTRINE §2.7); [amari-discovery](https://github.com/Industrial-Algebra/Amari/tree/develop/amari-discovery) 0.24.x is vertical #1 (the reference implementation); karpal-discovery is vertical #2. It is **not a fork** — it emits lonis `Block`s, not a bespoke protocol.
 
-`karpal-index` today is a 2-file source scanner with four commands (`search`,
+`karpal-index` today is a string-scanning indexer with four commands (`search`,
 `detail`, `crates`, `hierarchy`) and `--json` output. Phase 19 expands it into a
 full agent-first discovery runtime with three layers — **Discover**, **Plan**,
-and **Experiment** — reaching parity with `amari-discovery`.
+and **Experiment** — built on the Lonis harness and dogfooding Karpal's own
+category theory. **Phase 19 is complete** (PRs #132–#155): the `syn`-based
+structural catalog (all item kinds, re-exports, impl graph), the curated
+semantic overlay (83 concepts, drift-gated), the project inspector,
+imported-symbol analysis, the category-theoretic planner (dogfooding
+`Semigroup`/`Monoid`, `BoundedLattice`, and `Free`), the algebraic probe
+registry, and hardening (output-contract goldens, `karpal-index` compat,
+publish-order gate) — with the analysis substrate **lonis-independent** and
+only the output layer gated on the (now crates.io) lonis deps. See
+[`docs/plans/2026-08-10-karpal-discovery-catalog-slice1.md`](docs/plans/2026-08-10-karpal-discovery-catalog-slice1.md).
 
-The existing `karpal-index` binary is a Cargo dependency of the IA-MCP server
-and is published on crates.io at 0.8.0. The expansion migrates it to the
-`karpal-discovery` package owning a `karpal` command, retiring the placeholder
-`karpal-index` name. A compatibility re-export keeps existing invocations
-working during the transition.
+The work splits cleanly along the Lonis boundary:
+
+- **Lonis-independent (proceed now):** the catalog generator, semantic
+  overlays, and project inspection — intermediate domain data with minimal
+  rework risk.
+- **Lonis-gated:** the output layer (discover/recommend/plan/probe emitting
+  `Block`s), the `karpal` command via lonis `Tool`/`Capabilities`, the
+  category-theoretic planner, and the algebraic probes. These land once Lonis
+  delivers its `Block` contract + `Tool`/`Capabilities` reconciliation (Lonis
+  handoff 2026-08-10, work items #1–#2).
+
+karpal-discovery remains the **0.9.0** target: Phase 17 (karpal-e2e) needs a
+realized discovery runtime to be fully exercised. The existing `karpal-index`
+binary (an IA-MCP dependency, published at 0.8.0) stays in place until the
+`karpal-discovery` package owns the `karpal` command and a compatibility
+re-export preserves existing invocations.
 
 #### The dogfooding angle
 
@@ -587,20 +607,21 @@ ceilings, determinism behavior, and provenance — exactly as in amari-discovery
 
 GPU / Borsalino probes are deferred (they belong to Phase 18's ecosystem work).
 
-#### Versioned protocol
+#### Protocol — lonis `Block`s, not a bespoke protocol
 
-A versioned, serializable protocol (`karpal.discovery/v1`) with typed
-request/response envelopes, provenance (tool/catalog/project/input hashes,
-deterministic seed), and stable exit codes. Human, `--json`, and `--ndjson`
-outputs all derive from the same typed response objects. This mirrors
-amari-discovery's protocol exactly so that a future federation layer can treat
-both tools uniformly.
+karpal-discovery emits structured output through the **lonis `Block` contract**
+(§2.7: envelope, attribution, bounded, versioned, replayable, render-parity)
+and registers its tools via lonis-schema's `Tool` / `Capabilities`. There is
+**no separate `karpal.discovery/v1`** — federation is uniform because every
+vertical (Amari, Karpal, later Schubert/Orlando) emits the same lonis `Block`
+shapes through the same harness. Human, `--json`, and `--ndjson` outputs derive
+from a single typed `Block`, exactly as amari-discovery's render-parity
+discipline.
 
-Core types: `Capabilities`, `ProjectSnapshot`, `GoalSpec`, `CapabilityRecord`,
-`Evidence`, `Recommendation`, `CandidatePlan`, `PlanStep`, `ProbeDescriptor`,
-`ProbeRequest`, `ProbeResult`, `DiscoveryError`, `DiscoveryOutcome`.
-
-Stable capability IDs: `karpal:<crate>:<module>:<capability>`.
+karpal-specific value types (`ProjectSnapshot`, `CapabilityRecord`,
+`GoalSpec`, `Recommendation`, `CandidatePlan`, `PlanStep`, `ProbeDescriptor`,
+…) ride as the `payload` of `Block`s tagged with karpal capability kinds. Stable
+capability IDs keep the shape `karpal:<crate>:<module>:<capability>`.
 
 #### Dynamic capabilities
 
@@ -613,6 +634,13 @@ ceilings, host/target info, feature gates, optional AI-adapter state, and a
 stable exit-code map.
 
 #### Hybrid catalog
+
+**Status:** complete. The structural generator covers every item kind
+(traits, functions, structs, enums, type aliases, macros under their
+importable names, consts), `pub use` re-exports with renames, and the
+implementation graph (PRs #132, #137, #143, #150). The curated overlay ships
+83 concepts with problem shapes and relations, embedded and drift-gated
+against the catalog (PRs #146, #147).
 
 A **generated structural index** (CI-generated from every workspace package
 except `karpal-discovery` itself: crates, features, dependency graph, public
@@ -645,16 +673,16 @@ concrete external-process transport. The tool is fully useful offline.
 
 #### Sub-phases
 
-| Sub-phase | Description | Dependencies |
-|-----------|-------------|--------------|
-| **A — Protocol & capabilities** | Versioned protocol, provenance, `DiscoveryError`, dynamic `capabilities` command, human/JSON/NDJSON renderers, stable exit codes | — |
-| **B — Hybrid catalog** | Structural catalog generator (syn-based, extending current `indexer.rs`), curated semantic overlays, validation, deterministic hashing, CI drift enforcement | A |
-| **C — Discovery commands** | Progressive `discover search/detail/graph/example` over the catalog (supersedes current search/detail/crates/hierarchy) | B |
-| **D — Project inspection** | Bounded read-only Cargo/Rust inspector, `ProjectSnapshot`, `inspect` command, no-mutation guarantees | A |
-| **E — Category-theoretic planner** | Yoneda-based candidate recall, capability-graph expansion, lattice/Pareto ranking, `Free`-monad plan normalization, `recommend` + `plan` commands | B, C, D |
-| **F — Probe registry & algebraic probes** | Typed `ProbeRegistry`, cooperative + process isolation, representative law/coherence/intersection/recursion/optic/arrow/verify probes, `probe list/describe/run` commands | B, E |
-| **G — Agent contract & shell** | Schema command, NDJSON across all command families, agent-contract golden tests, interactive `shell`, optional AI-adapter validation contract | C, E, F |
-| **H — Hardening & packaging** | Traversal/parser/provenance hardening, output-contract golden tests, token/latency budgets, `karpal-index` → `karpal-discovery` migration, publish-order verification | All prior |
+| Sub-phase | Description | Dependencies | Lonis? |
+|-----------|-------------|--------------|--------|
+| **A — Hybrid catalog (structural)** | syn-based catalog generator: crates, modules, traits ✅ (PR #132); then functions, types, macros, cfg gates, impl-graph | — | independent |
+| **B — Semantic overlays** | Curated concept names, problem shapes, composition relationships, alternatives, maturity/cost hints; validation against the structural catalog | A | independent |
+| **C — Project inspection** | Bounded read-only Cargo/Rust inspector, `ProjectSnapshot` value type, no-mutation guarantees | — | independent |
+| **D — Protocol & capabilities** | Adopt lonis `Block`/`Envelope`/`Capabilities`; dynamic `capabilities`; human/JSON/NDJSON renderers; stable exit codes | Lonis `Block` contract | **gated** |
+| **E — Discovery commands** | Progressive `discover search/detail/graph/example` over the catalog as lonis tools emitting `Block`s (supersedes search/detail/crates/hierarchy) | A, B, D | **gated** |
+| **F — Category-theoretic planner** | Yoneda-based candidate recall, capability-graph expansion, lattice/Pareto ranking, `Free`-monad plan normalization, `recommend` + `plan` | A, B, C, E | **gated** |
+| **G — Probe registry & algebraic probes** | lonis `Tool` probe adapters, isolation, representative law/coherence/intersection/recursion/optic/arrow/verify probes, `probe list/describe/run` | A, F, Lonis `Tool` model | **gated** |
+| **H — Hardening & packaging** | Traversal/parser/provenance hardening, output-contract golden tests, token/latency budgets, `karpal-index` → `karpal-discovery` migration, publish-order verification | All prior | mixed |
 
 #### Connections to existing phases
 
@@ -665,13 +693,14 @@ concrete external-process transport. The tool is fully useful offline.
 - **Phase 15 (karpal-higher)**: Capability graph is a category enriched over the recommendation lattice — a concrete `EnrichedCategory` instance.
 - **Phase 16 (karpal-topos)**: The recommendation lattice Ω *is* the subobject classifier; goal satisfaction is characteristic-morphism evaluation in a topos.
 - **Phase 17 (karpal-e2e)**: The discovery probes and catalog-integrity tests feed directly into the end-to-end release-readiness gates.
-- **Phase 18 (ecosystem)**: karpal-discovery is the reference implementation for a versioned discovery protocol that amari-discovery, Schubert, and future IA tools can federate through.
+- **Phase 18 (ecosystem)**: karpal-discovery is the second Lonis vertical; Amari, Karpal, and future tools (Schubert, Orlando) federate uniformly through the lonis `Block` contract and harness.
 
 #### Scope notes
 
 **In scope**: full discover/plan/experiment layers; hybrid catalog; Rust/Cargo
-inspection; category-theoretic planner; algebraic probes; versioned protocol;
-human/JSON/NDJSON parity; optional AI contract; interactive shell; hardening.
+inspection; category-theoretic planner; algebraic probes; lonis `Block`
+integration; human/JSON/NDJSON parity; optional AI contract; interactive shell;
+hardening.
 
 **Out of scope (deferred)**: JS/TypeScript inspection (no karpal-wasm exists
 yet); GPU/Borsalino probes (Phase 18); cross-tool federation (post-1.0);

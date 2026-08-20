@@ -1,0 +1,1 @@
+{"name":"karpal:imports","description":"Analyze a workspace's use statements: resolved catalog symbols, drift, and concepts in use.","input_schema":"karpal.imports.input/v1","output_schema":"karpal.imports.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

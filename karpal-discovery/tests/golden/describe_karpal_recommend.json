@@ -1,0 +1,1 @@
+{"name":"karpal:recommend","description":"Recall and Pareto-rank curated concepts for a goal (matches + relation-graph neighbors).","input_schema":"karpal.recommend.input/v1","output_schema":"karpal.recommend.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

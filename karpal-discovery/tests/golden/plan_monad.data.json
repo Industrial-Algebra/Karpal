@@ -1,0 +1,30 @@
+{
+  "goal": "monad",
+  "steps": [
+    {
+      "action": "orient",
+      "note": "frame the goal",
+      "target": "monad"
+    },
+    {
+      "action": "explore",
+      "note": "ranked concept (relevance 14, stability stable)",
+      "target": "monad"
+    },
+    {
+      "action": "explore",
+      "note": "ranked concept (relevance 12, stability stable)",
+      "target": "comonad-transformers"
+    },
+    {
+      "action": "explore",
+      "note": "ranked concept (relevance 12, stability stable)",
+      "target": "freer-monad"
+    },
+    {
+      "action": "verify",
+      "note": "all overlay symbol refs validate against the catalog",
+      "target": "drift gate"
+    }
+  ]
+}

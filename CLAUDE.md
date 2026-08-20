@@ -33,10 +33,15 @@ Two-parameter variant: `trait HKT2 { type P<A, B>; }` for profunctors.
 
 ## Git Workflow (Gitflow)
 
-- Branch prefixes: `feature/`, `chore/`, `fix/`, `refactor/`, `docs/`
-- Feature branches → PR to `develop`
-- Release PRs: `develop` → `main`
-- Never push directly to `main` or `develop`
+See **`AGENTS.md`** for the full branch-and-release discipline (the source of
+truth). Summary of the hard rules:
+
+- Branch prefixes: `feature/`, `chore/`, `fix/`, `docs/`, `release/v*`, `hotfix/*`
+- **Never push directly to `main` or `develop`** — always branch + PR (Rule 1)
+- Feature/fix/chore branches → PR to `develop`
+- Release PRs: `release/v*` → `main`; **always backmerge `main → develop` after** (Rule 2)
+- Release-only commits (CHANGELOG date, version bump) live on `release/*` (Rule 3)
+- Hotfixes (untagged) → PR to `main` for production fixes that mustn't wait or republish crates
 
 ## Pre-commit Hooks
 

@@ -1,0 +1,13 @@
+{
+  "details": [
+    "σ₁·σ₁ in Gr(2,4): Positive, multiplicity 1",
+    "σ₂₂·σ₂₂ in Gr(2,4): StructuralZero, multiplicity 0 — emptiness with a reason",
+    "classic identity: σ₁⁴ in Gr(2,4) counts 2 lines through 4 general lines in P³"
+  ],
+  "dogfoods": [
+    "karpal-schubert-types"
+  ],
+  "id": "schubert-intersection",
+  "status": "passed",
+  "summary": "intersection kinds discriminate: Positive vs StructuralZero (structured emptiness)"
+}

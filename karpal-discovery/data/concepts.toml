@@ -1,0 +1,1494 @@
+# Curated concept overlay for the Karpal workspace (Phase 19-B).
+#
+# This is hand-curated semantic metadata layered over the generated structural
+# catalog (19-A). Every `symbol_ref` must resolve to a real catalog item
+# (`<crate>::<item>`); `overlay::ConceptOverlay::validate` enforces this and is
+# run against the live workspace in CI as a drift gate. A concept with no
+# symbol_refs, or a duplicated id, is also drift.
+#
+# `catalog_version` records the Karpal release the overlay was curated against.
+# Relation direction for `generalizes`: the source specializes the target
+# (mirroring trait supertraits), e.g. `applicative` generalizes `functor`.
+
+catalog_version = "0.9.0-dev"
+
+# ===========================================================================
+# karpal-core — the functor-law hierarchy
+# ===========================================================================
+
+[[concepts]]
+id = "functor"
+name = "Functor"
+summary = "A structure-preserving map between categories; in Rust, a context whose contained values can be transformed via `map`."
+aliases = ["mappable", "mapping"]
+math_concepts = ["functor", "endofunctor"]
+problem_shapes = ["transform values inside a context without leaving it", "map over a structure"]
+symbol_refs = ["karpal-core::Functor"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "invariant"
+name = "Invariant"
+summary = "A type constructor admitting `imap` — a map on the constructor that is neutral in variance, refined by both covariant and contravariant functors."
+aliases = ["imap"]
+math_concepts = ["invariant functor"]
+symbol_refs = ["karpal-core::Invariant"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "apply"
+name = "Apply"
+summary = "A compositional functor: independent effects combine via `ap` without a `pure`."
+aliases = ["ap", "aplicative"]
+math_concepts = ["applicative functor", "apply", "monoidal functor"]
+problem_shapes = ["zip two effects together", "combine independent effects"]
+symbol_refs = ["karpal-core::Apply"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "applicative"
+name = "Applicative"
+summary = "An applicative functor: a functorial context plus `pure` and `ap`, combining independent effects."
+aliases = ["applicative functor"]
+math_concepts = ["applicative functor", "lax monoidal functor"]
+problem_shapes = ["combine several independent effects into one", "apply an effectful function to effectful arguments"]
+symbol_refs = ["karpal-core::Applicative"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "selective"
+name = "Selective"
+summary = "Between applicative and monad: combine effects when control flow is static — effects on unselected branches are skipped, not run."
+aliases = ["selective applicative"]
+math_concepts = ["selective functor"]
+problem_shapes = ["choose between effects with static control flow", "skip unselected effects"]
+symbol_refs = ["karpal-core::Selective"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "chain"
+name = "Chain"
+summary = "Sequential effect composition via `bind`/`and_then`, without `pure`."
+aliases = ["bind", "flat_map"]
+math_concepts = ["monad", "kleisli extension"]
+problem_shapes = ["sequence dependent effects without a pure constructor"]
+symbol_refs = ["karpal-core::Chain"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "monad"
+name = "Monad"
+summary = "An effectful context supporting sequential composition (`bind`/`and_then`) and lifting (`pure`)."
+aliases = ["bind", "flat_map"]
+math_concepts = ["monad", "monad (category theory)"]
+problem_shapes = ["sequence dependent effectful steps", "each step depends on the previous result"]
+symbol_refs = ["karpal-core::Monad"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "extend"
+name = "Extend"
+summary = "Dual of `Apply`: duplicate-and-process — extend a context with a function of its whole neighborhood."
+aliases = ["extend", "cobind precursor"]
+math_concepts = ["comonad", "extend"]
+symbol_refs = ["karpal-core::Extend"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "comonad"
+name = "Comonad"
+summary = "Dual of `Monad`: a context you can `extract` a value from and `duplicate` into layered contexts."
+aliases = ["cokleisli"]
+math_concepts = ["comonad"]
+problem_shapes = ["observe a value together with its neighborhood", "context-dependent computation with extraction"]
+symbol_refs = ["karpal-core::Comonad"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "foldable"
+name = "Foldable"
+summary = "A structure that can be collapsed to a summary value via `fold_left`/`fold_right` and `fold_map`."
+aliases = ["fold", "reduce"]
+math_concepts = ["foldable", "catamorphism"]
+problem_shapes = ["collapse a structure into a summary value", "aggregate a collection"]
+symbol_refs = ["karpal-core::Foldable"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "traversable"
+name = "Traversable"
+summary = "Effectful `map` that preserves shape: commutes two layers (`T<F<A>>` to `F<T<A>>`) over an applicative."
+aliases = ["traverse", "sequence"]
+math_concepts = ["traversable functor"]
+problem_shapes = ["apply an effectful function across a structure preserving shape", "swap effect and structure layers"]
+symbol_refs = ["karpal-core::Traversable"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "alt"
+name = "Alt"
+summary = "A functor with a choice operation `<|>` and no identity — the covariant precursor of `Alternative`."
+aliases = ["alt", "or"]
+math_concepts = ["alternative", "monoid on functor"]
+symbol_refs = ["karpal-core::Alt"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "plus"
+name = "Plus"
+summary = "An `Alt` with an empty element — a monoid on functor application minus applicativity."
+aliases = ["plus"]
+math_concepts = ["alternative", "monoid on functor"]
+symbol_refs = ["karpal-core::Plus"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "alternative"
+name = "Alternative"
+summary = "Applicative plus `Alt`/`Plus`: monoidal choice among effects with identity."
+aliases = ["or-else", "fallback"]
+math_concepts = ["alternative monad", "monoid in the category of applicative functors"]
+problem_shapes = ["fall back between effectful options", "first success among alternatives"]
+symbol_refs = ["karpal-core::Alternative"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "functor-filter"
+name = "FunctorFilter"
+summary = "A functor with `filter`-like pruning (`map_filter`), effectful analogue of `Iterator::filter_map`."
+aliases = ["filterable", "map_filter"]
+math_concepts = ["functor filter", "filterable functor"]
+problem_shapes = ["prune a functorial context by a predicate"]
+symbol_refs = ["karpal-core::FunctorFilter"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "bifunctor"
+name = "Bifunctor"
+summary = "Covariant in two type parameters: `bimap` maps both simultaneously, `first`/`second` map one."
+aliases = ["bimap"]
+math_concepts = ["bifunctor"]
+problem_shapes = ["map over two type parameters independently"]
+symbol_refs = ["karpal-core::Bifunctor"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "contravariant"
+name = "Contravariant"
+summary = "A consumer context whose input side can be transformed via `contramap` — the dual of `Functor`."
+aliases = ["contramap"]
+math_concepts = ["contravariant functor", "presheaf"]
+problem_shapes = ["transform the input side of a consumer"]
+symbol_refs = ["karpal-core::Contravariant"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "divide"
+name = "Divide"
+summary = "Contravariant `Apply`: combine consumers of parts into a consumer of the whole via `divide`."
+aliases = ["divide"]
+math_concepts = ["contravariant applicative", "divide"]
+symbol_refs = ["karpal-core::Divide"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "decide"
+name = "Decide"
+summary = "Contravariant `Chain`: route a consumer over a sum type via `decide` — conquer by choice."
+aliases = ["decide"]
+math_concepts = ["contravariant monad", "decide"]
+symbol_refs = ["karpal-core::Decide"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "divisible"
+name = "Divisible"
+summary = "Contravariant `Applicative`: a contravariant monoidal functor with identity (`conquer`)."
+aliases = ["divisible", "conquer"]
+math_concepts = ["contravariant applicative functor"]
+symbol_refs = ["karpal-core::Divisible"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "conclude"
+name = "Conclude"
+summary = "Contravariant `Monad`: `conclude` builds a consumer from nothing — the bottom of the contravariant hierarchy."
+aliases = ["conclude"]
+math_concepts = ["contravariant monad"]
+symbol_refs = ["karpal-core::Conclude"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "adjunction"
+name = "Adjunction"
+summary = "A pair of functors `L ⊣ R` whose unit/counit witness an isomorphism of hom-sets; generates a monad and a comonad."
+aliases = ["adjoint functors", "unit-counit"]
+math_concepts = ["adjunction", "adjoint functors"]
+problem_shapes = ["relate two layers with a canonical back-and-forth", "state/context duality"]
+symbol_refs = [
+    "karpal-core::Adjunction",
+    "karpal-core::ContravariantAdjunction",
+    "karpal-core::ProfunctorAdjunction",
+]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "natural-transformation"
+name = "NaturalTransformation"
+summary = "A family of component maps between two functors commuting with the functor action."
+aliases = ["nat"]
+math_concepts = ["natural transformation"]
+symbol_refs = ["karpal-core::NaturalTransformation"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "dinatural-transformation"
+name = "DinaturalTransformation"
+summary = "The generalization of naturality for functors of mixed variance; `End` computes the (co)end-style limit of a dinatural family."
+aliases = ["dinatural", "end", "coend"]
+math_concepts = ["dinatural transformation", "end", "coend"]
+symbol_refs = ["karpal-core::DinaturalTransformation", "karpal-core::End"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "semigroup"
+name = "Semigroup"
+summary = "A set equipped with an associative binary operation."
+aliases = ["append", "combine"]
+math_concepts = ["semigroup", "associativity"]
+problem_shapes = ["combine values associatively"]
+symbol_refs = ["karpal-core::Semigroup"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "monoid"
+name = "Monoid"
+summary = "A semigroup with an identity element."
+aliases = ["empty", "identity"]
+math_concepts = ["monoid", "semigroup"]
+problem_shapes = ["combine values with an identity for empty", "merge maps/configs safely"]
+symbol_refs = ["karpal-core::Monoid"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "comonad-transformers"
+name = "Comonad transformers"
+summary = "The classic comonadic contexts: `Env` (read-only environment), `Store` (state + focus), `Traced` (writer-like accumulation)."
+aliases = ["env comonad", "store comonad", "traced comonad", "costate"]
+math_concepts = ["comonad", "product comonad", "cofree comonad components"]
+problem_shapes = ["model focused state with a cursor", "access an environment while observing"]
+symbol_refs = [
+    "karpal-core::ComonadEnv",
+    "karpal-core::ComonadStore",
+    "karpal-core::ComonadTraced",
+]
+stability = "stable"
+cost = "free"
+
+# ===========================================================================
+# karpal-profunctor
+# ===========================================================================
+
+[[concepts]]
+id = "profunctor"
+name = "Profunctor"
+summary = "A bifunctor `C^op × C → D`: `dimap` adapts both the input and output of a computation. Functions are the canonical instance (`FnP`)."
+aliases = ["dimap"]
+math_concepts = ["profunctor", "bifunctor"]
+problem_shapes = ["adapt both input and output of a computation"]
+symbol_refs = ["karpal-profunctor::Profunctor", "karpal-profunctor::FnP"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "strong"
+name = "Strong"
+summary = "A profunctor that can thread extra context through: `first`/`second` carry a pair along."
+aliases = ["first", "second", "strong profunctor"]
+math_concepts = ["strong profunctor", "monoidal category"]
+problem_shapes = ["thread untouched context alongside a computation"]
+symbol_refs = ["karpal-profunctor::Strong"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "choice"
+name = "Choice"
+summary = "A profunctor that can branch over sums: `left`/`right` embed a choice into the input."
+aliases = ["left", "right"]
+math_concepts = ["choice profunctor", "cocartesian category"]
+problem_shapes = ["branch a computation over sum types"]
+symbol_refs = ["karpal-profunctor::Choice"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "traversing"
+name = "Traversing"
+summary = "A strong choice profunctor with `wander`: the profunctor encoding of `Traverse`, lifting into any `Applicative`."
+aliases = ["wander"]
+math_concepts = ["traversing profunctor", "wander"]
+problem_shapes = ["apply a profunctoral computation across a structure"]
+symbol_refs = ["karpal-profunctor::Traversing"]
+stability = "stable"
+cost = "free"
+
+# ===========================================================================
+# karpal-topos — sheaf-theoretic foundations
+# ===========================================================================
+
+[[concepts]]
+id = "small-category"
+name = "SmallCategory"
+summary = "A category whose objects and morphisms are sets; ships concrete instances `ChainCat` (poset chain) and `DiscreteCat` (objects only)."
+aliases = ["category"]
+math_concepts = ["small category", "locally small category"]
+symbol_refs = [
+    "karpal-topos::SmallCategory",
+    "karpal-topos::ChainCat",
+    "karpal-topos::DiscreteCat",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "presheaf"
+name = "Presheaf"
+summary = "A functor `C^op → Set`: an assignment of sets to objects, restriction maps to morphisms; includes constant and initial-segment instances."
+aliases = ["presheaf"]
+math_concepts = ["presheaf", "functor category"]
+symbol_refs = [
+    "karpal-topos::Presheaf",
+    "karpal-topos::ConstantPresheaf",
+    "karpal-topos::InitialSegmentPresheaf",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "representable-functor"
+name = "Representable"
+summary = "A presheaf isomorphic to `Hom(-, a)` for a representing object — the atomic presheaves of the Yoneda lemma."
+aliases = ["representable"]
+math_concepts = ["representable functor", "hom-functor"]
+symbol_refs = ["karpal-topos::Representable"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "sieve"
+name = "Sieve"
+summary = "A collection of morphisms into an object closed under precomposition — the notion of covering family a topology assigns."
+aliases = ["sieve", "covering"]
+math_concepts = ["sieve"]
+symbol_refs = ["karpal-topos::Sieve", "karpal-topos::FiniteSieve"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "grothendieck-topology"
+name = "GrothendieckTopology"
+summary = "Coverage: which sieves count as covers, axiom-checked (`maximality`, `stability`, `transitivity`); equivalent to a Lawvere-Tierney topology `j : Ω → Ω`. Ships `Trivial` and `Dense` instances."
+aliases = ["coverage", "site", "lawvere-tierney"]
+math_concepts = ["grothendieck topology", "lawvere-tierney topology", "site"]
+symbol_refs = [
+    "karpal-topos::GrothendieckTopology",
+    "karpal-topos::LawvereTierneyTopology",
+    "karpal-topos::TrivialTopology",
+    "karpal-topos::DenseTopology",
+    "karpal-topos::axiom_maximality",
+    "karpal-topos::axiom_stability",
+    "karpal-topos::axiom_transitivity",
+    "karpal-topos::lt_axiom_idempotent",
+    "karpal-topos::lt_axiom_meet",
+    "karpal-topos::lt_axiom_top",
+]
+stability = "stable"
+cost = "moderate"
+
+[[concepts]]
+id = "sheaf"
+name = "Sheaf"
+summary = "A presheaf satisfying descent for a topology: locally compatible sections glue uniquely; `is_sheaf_at`/`is_separated_at` are the checks."
+aliases = ["sheaf condition", "descent", "gluing"]
+math_concepts = ["sheaf", "sheafification", "separated presheaf"]
+problem_shapes = ["patch locally-consistent data into a global section"]
+symbol_refs = ["karpal-topos::is_sheaf_at", "karpal-topos::is_separated_at"]
+stability = "stable"
+cost = "moderate"
+
+[[concepts]]
+id = "subobject-classifier"
+name = "Subobject classifier Ω"
+summary = "The object `Ω` of truth values classifying subobjects: `truth_at`/`characteristic_at` witness the pullback square; `Terminal` is the one-point object."
+aliases = ["omega", "truth values", "classifying object"]
+math_concepts = ["subobject classifier", "topos", "characteristic morphism"]
+symbol_refs = [
+    "karpal-topos::Omega",
+    "karpal-topos::TruthValue",
+    "karpal-topos::Terminal",
+    "karpal-topos::truth_at",
+    "karpal-topos::characteristic_at",
+]
+stability = "stable"
+cost = "moderate"
+
+[[concepts]]
+id = "finite-limits"
+name = "Finite limits"
+summary = "Pullback and equalizer computation in the small-category setting: fibers of pairs of morphisms."
+aliases = ["pullback", "equalizer", "fiber"]
+math_concepts = ["finite limit", "pullback", "equalizer"]
+symbol_refs = ["karpal-topos::pullback_fiber", "karpal-topos::equalizer_fiber"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "yoneda-lemma"
+name = "Yoneda lemma"
+summary = "Natural transformations from a representable are determined by one element: `yoneda_apply`/`yoneda_extract` are the isomorphism directions."
+aliases = ["yoneda"]
+math_concepts = ["yoneda lemma", "representable functor"]
+symbol_refs = ["karpal-topos::yoneda_apply", "karpal-topos::yoneda_extract"]
+stability = "stable"
+cost = "low"
+
+# ===========================================================================
+# karpal-free — free constructions and Kan machinery
+# ===========================================================================
+
+[[concepts]]
+id = "free-monad"
+name = "Free monad"
+summary = "The initial monad on a functor: a program-as-data tree awaiting an interpreter — `Free`/`FreeF` fixpoints."
+aliases = ["free", "program-as-data"]
+math_concepts = ["free monad", "initial algebra", "adjunction with forgetful"]
+problem_shapes = ["build a DSL and interpret it", "separate program description from execution"]
+symbol_refs = ["karpal-free::Free", "karpal-free::FreeF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "cofree-comonad"
+name = "Cofree comonad"
+summary = "The terminal comonad on a functor: annotated streams/trees with observation — `Cofree`/`CofreeF` fixpoints. Dual of the free monad."
+aliases = ["cofree"]
+math_concepts = ["cofree comonad", "terminal coalgebra"]
+problem_shapes = ["annotate a structure with observations", "interpreter for machines with context"]
+symbol_refs = ["karpal-free::Cofree", "karpal-free::CofreeF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "free-applicative"
+name = "Free applicative"
+summary = "The initial applicative on a functor: static analysis of independent effects before running them."
+aliases = ["free applicative"]
+math_concepts = ["free applicative functor"]
+problem_shapes = ["inspect independent effects statically before executing"]
+symbol_refs = ["karpal-free::FreeAp", "karpal-free::FreeApF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "free-alternative"
+name = "Free alternative"
+summary = "The initial alternative: choice among free applicative programs with fallback."
+aliases = ["free alternative"]
+math_concepts = ["free alternative"]
+symbol_refs = ["karpal-free::FreeAlt", "karpal-free::FreeAltF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "freer-monad"
+name = "Freer monad"
+summary = "The operational/freer encoding of free monads — program representation decoupled from the generating functor."
+aliases = ["freer", "operational monad"]
+math_concepts = ["freer monad", "operational monad"]
+symbol_refs = ["karpal-free::Freer", "karpal-free::FreerF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "yoneda-embedding"
+name = "Yoneda / Coyoneda"
+summary = "The `Yoneda`/`Coyoneda` functors fuse chains of `map`s into a single function application — asymptotic improvements via the Yoneda lemma."
+aliases = ["yoneda embedding", "coyoneda", "functor fusion"]
+math_concepts = ["yoneda embedding", "yoneda lemma"]
+problem_shapes = ["fuse repeated maps into one pass"]
+symbol_refs = [
+    "karpal-free::Yoneda",
+    "karpal-free::YonedaF",
+    "karpal-free::Coyoneda",
+    "karpal-free::CoyonedaF",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "day-convolution"
+name = "Day convolution"
+summary = "Monoidal structure on endofunctors whose monoids are applicative functors: `Day` pairs applicative contexts in parallel."
+aliases = ["day convolution"]
+math_concepts = ["day convolution", "monoidal functor category"]
+symbol_refs = ["karpal-free::Day", "karpal-free::DayF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "codensity-monad"
+name = "Codensity monad"
+summary = "Right Kan extension of a functor along itself — often smaller than the free monad it improves (e.g.Church-encoded traversals)."
+aliases = ["codensity"]
+math_concepts = ["codensity monad", "right kan extension"]
+symbol_refs = ["karpal-free::Codensity", "karpal-free::CodensityF"]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "kan-extension"
+name = "Kan extensions"
+summary = "Left (`Lan`) and right (`Ran`) extensions: the universal way to move a functor along another — limits, ends, and Yoneda are special cases."
+aliases = ["lan", "ran", "left kan", "right kan"]
+math_concepts = ["kan extension", "density", "codensity"]
+symbol_refs = ["karpal-free::Lan", "karpal-free::LanF", "karpal-free::Ran", "karpal-free::RanMapped"]
+stability = "stable"
+cost = "low"
+
+# ===========================================================================
+# karpal-diagram — monoidal string diagrams
+# ===========================================================================
+
+[[concepts]]
+id = "string-diagram"
+name = "String diagrams"
+summary = "Morphisms drawn as graphs (boxes and wires); `Diagram`/`DiagramKind` are the typed representation."
+aliases = ["diagram", "graphical calculus"]
+math_concepts = ["string diagram", "monoidal category", "graphical language"]
+problem_shapes = ["visualize a computation as a graph", "draw morphism composition"]
+symbol_refs = ["karpal-diagram::Diagram", "karpal-diagram::DiagramKind"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "monoidal-structure"
+name = "Monoidal structure"
+summary = "The monoidal data of a diagrammatic category: `Tensor` (⊗), `Braiding` (σ), `Symmetry` — with or without swap."
+aliases = ["tensor", "braiding", "symmetry"]
+math_concepts = ["monoidal category", "braided monoidal category", "symmetric monoidal category"]
+symbol_refs = ["karpal-diagram::Tensor", "karpal-diagram::Braiding", "karpal-diagram::Symmetry"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "trace"
+name = "Trace"
+summary = "Traced monoidal structure: feedback — feed an output wire back as input."
+aliases = ["feedback", "trace"]
+math_concepts = ["traced monoidal category", "feedback"]
+problem_shapes = ["feed output back into a computation"]
+symbol_refs = ["karpal-diagram::Trace"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "coherence"
+name = "Coherence"
+summary = "The pentagon, triangle, and hexagon identities plus verified certificates: two structurally different monoidal compositions provably denote the same morphism."
+aliases = ["coherence theorem", "pentagon", "hexagon", "triangle identity"]
+math_concepts = ["coherence theorem", "mac lane coherence", "normalization"]
+problem_shapes = ["prove two monoidal compositions are the same morphism"]
+symbol_refs = [
+    "karpal-diagram::PentagonIdentity",
+    "karpal-diagram::HexagonIdentity",
+    "karpal-diagram::TriangleIdentity",
+    "karpal-diagram::CoherenceCertificate",
+    "karpal-diagram::verify_pentagon",
+    "karpal-diagram::verify_hexagon",
+    "karpal-diagram::verify_triangle",
+    "karpal-diagram::coherence_certificates",
+    "karpal-diagram::ByNormalization",
+    "karpal-diagram::ByYanking",
+    "karpal-diagram::prove_yanking",
+    "karpal-diagram::equivalent_proved",
+]
+stability = "stable"
+cost = "moderate"
+
+# ===========================================================================
+# karpal-arrow
+# ===========================================================================
+
+[[concepts]]
+id = "semigroupoid"
+name = "Semigroupoid"
+summary = "Composable arrows without identity — a category minus `id`."
+aliases = ["semigroupoid"]
+math_concepts = ["semigroupoid"]
+symbol_refs = ["karpal-arrow::Semigroupoid"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "category"
+name = "Category"
+summary = "A semigroupoid with identities: composable arrows and `id`, the setting for all morphism-level reasoning."
+aliases = ["category", "identity"]
+math_concepts = ["category"]
+symbol_refs = ["karpal-arrow::Category"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "arrow"
+name = "Arrow"
+summary = "A category with products and a pure embedding: first-class composable computations with routing (`arr`, `first`, composition)."
+aliases = ["arrow"]
+math_concepts = ["arrow", "monoidal category"]
+problem_shapes = ["compose computations as values with explicit routing"]
+symbol_refs = ["karpal-arrow::Arrow"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "arrow-choice"
+name = "ArrowChoice"
+summary = "An arrow that branches over sums: `left`/`right`/`fanin` route tagged inputs."
+aliases = ["arrow choice"]
+math_concepts = ["arrow", "cocartesian structure"]
+symbol_refs = ["karpal-arrow::ArrowChoice"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "arrow-loop"
+name = "ArrowLoop"
+summary = "An arrow with feedback (`loop`): recursive/fixpoint computations in arrowized form."
+aliases = ["arrow loop", "feedback"]
+math_concepts = ["traced monoidal category", "fixpoint"]
+problem_shapes = ["add feedback loops to arrowized computation"]
+symbol_refs = ["karpal-arrow::ArrowLoop"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "arrow-apply"
+name = "ArrowApply"
+summary = "An arrow that can apply arrow-valued inputs (`app`) — categorically equivalent in power to a monad."
+aliases = ["arrow apply", "app"]
+math_concepts = ["arrow", "monad", "exponential"]
+symbol_refs = ["karpal-arrow::ArrowApply"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "arrow-zero"
+name = "ArrowZero"
+summary = "An arrow with a zero morphism — the unit for arrow-level failure."
+aliases = ["arrow zero", "zero arrow"]
+math_concepts = ["arrow", "zero morphism"]
+symbol_refs = ["karpal-arrow::ArrowZero"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "arrow-plus"
+name = "ArrowPlus"
+summary = "An `ArrowZero` with choice (`<+>`) — monoid of arrows for fallback routing."
+aliases = ["arrow plus"]
+math_concepts = ["arrow", "monoid"]
+symbol_refs = ["karpal-arrow::ArrowPlus"]
+stability = "stable"
+cost = "free"
+
+# ===========================================================================
+# karpal-recursion
+# ===========================================================================
+
+[[concepts]]
+id = "recursion-schemes"
+name = "Recursion schemes"
+summary = "Folds and unfolds over recursive types via fixpoints (`Fix`, `Nu`): `cata`, `ana`, `hylo`, `para`, `apo`, `futu`, `histo`, `chrono`, `zygo` — recursion as data-driven structure."
+aliases = ["cata", "ana", "hylo", "fold unfold", "catamorphism", "anamorphism"]
+math_concepts = ["catamorphism", "anamorphism", "hylomorphism", "paramorphism", "apomorphism", "histomorphism", "futumorphism"]
+problem_shapes = ["fold or unfold a recursive type without hand-written recursion", "separate traversal shape from payload logic"]
+symbol_refs = [
+    "karpal-recursion::Fix",
+    "karpal-recursion::FixF",
+    "karpal-recursion::Nu",
+    "karpal-recursion::Either",
+    "karpal-recursion::cata",
+    "karpal-recursion::ana",
+    "karpal-recursion::hylo",
+    "karpal-recursion::para",
+    "karpal-recursion::apo",
+    "karpal-recursion::futu",
+    "karpal-recursion::histo",
+    "karpal-recursion::chrono",
+    "karpal-recursion::zygo",
+]
+stability = "stable"
+cost = "low"
+
+# ===========================================================================
+# karpal-effect
+# ===========================================================================
+
+[[concepts]]
+id = "monad-transformers"
+name = "MonadTrans"
+summary = "Lift a monadic action through a transformer, stacking effects: `MonadTrans` is the `lift` capability."
+aliases = ["transformer", "lift"]
+math_concepts = ["monad transformer"]
+problem_shapes = ["stack multiple effects in one type"]
+symbol_refs = ["karpal-effect::MonadTrans"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "reader-transformer"
+name = "ReaderT"
+summary = "Environment-passing transformer: `ask`/`local` thread a read-only context through underlying effects."
+aliases = ["reader", "environment", "dependency injection"]
+math_concepts = ["reader monad", "exponential modality", "product hom"]
+problem_shapes = ["thread a read-only environment through effects", "dependency injection"]
+symbol_refs = [
+    "karpal-effect::ReaderTF",
+    "karpal-effect::reader_t_ask",
+    "karpal-effect::reader_t_local",
+    "karpal-effect::reader_t_run",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "state-transformer"
+name = "StateT"
+summary = "State-passing transformer: `get`/`put`/`modify` thread mutable state through underlying effects."
+aliases = ["state", "state monad"]
+math_concepts = ["state monad", "adjunction product-exponential"]
+problem_shapes = ["thread mutable state through effects"]
+symbol_refs = [
+    "karpal-effect::StateTF",
+    "karpal-effect::state_t_get",
+    "karpal-effect::state_t_put",
+    "karpal-effect::state_t_modify",
+    "karpal-effect::state_t_run",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "writer-transformer"
+name = "WriterT"
+summary = "Output-accumulating transformer over a monoid: `tell`/`listen`/`pass` combine effects with side output."
+aliases = ["writer", "logging"]
+math_concepts = ["writer monad", "monoid action"]
+problem_shapes = ["accumulate logs or output alongside effects"]
+symbol_refs = [
+    "karpal-effect::WriterTF",
+    "karpal-effect::writer_t_tell",
+    "karpal-effect::writer_t_listen",
+    "karpal-effect::writer_t_pass",
+    "karpal-effect::writer_t_run",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "except-transformer"
+name = "ExceptT"
+summary = "Short-circuiting error transformer: `throw`/`catch` add early-exit failure to underlying effects."
+aliases = ["except", "error", "either"]
+math_concepts = ["either monad", "coproduct", "short-circuit"]
+problem_shapes = ["add short-circuiting error handling to effects"]
+symbol_refs = [
+    "karpal-effect::ExceptTF",
+    "karpal-effect::except_t_throw",
+    "karpal-effect::except_t_catch",
+    "karpal-effect::except_t_run",
+]
+stability = "stable"
+cost = "low"
+
+[[concepts]]
+id = "st-bridges"
+name = "ST bridges"
+summary = "`FunctorSt`/`ApplicativeSt`/`ChainSt` bridge Rust closures (the `Fn` family) into the HKT class hierarchy — the closure-barrier workaround for ownership-bound transformations."
+aliases = ["st", "closure bridge", "hkt for closures"]
+math_concepts = ["closure category", "higher-kinded emulation"]
+symbol_refs = [
+    "karpal-effect::FunctorSt",
+    "karpal-effect::ApplicativeSt",
+    "karpal-effect::ChainSt",
+]
+stability = "research"
+cost = "free"
+
+# ===========================================================================
+# karpal-optics
+# ===========================================================================
+
+[[concepts]]
+id = "optic"
+name = "Optic"
+summary = "Bidirectional focus on a part of a structure: get/put-style access composed profunctorially (lenses, prisms, traversals as specializations)."
+aliases = ["lens", "prism", "traversal", "iso"]
+math_concepts = ["optic", "profunctor optics", "bidirectional transformation"]
+problem_shapes = ["focus on part of a structure for get and put", "bidirectional access to a subpart"]
+symbol_refs = ["karpal-optics::Optic"]
+stability = "stable"
+cost = "low"
+
+# ===========================================================================
+# karpal-higher
+# ===========================================================================
+
+[[concepts]]
+id = "two-category"
+name = "TwoCategory"
+summary = "A category with 2-cells between morphisms — objects, arrows, and transformations between them."
+aliases = ["2-category", "two category"]
+math_concepts = ["2-category", "strict 2-category"]
+symbol_refs = ["karpal-higher::TwoCategory"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "bicategory"
+name = "Bicategory"
+summary = "A weak 2-category: composition associative up to coherent isomorphism — every strict two-category is one."
+aliases = ["bicategory", "weak 2-category"]
+math_concepts = ["bicategory"]
+symbol_refs = ["karpal-higher::Bicategory"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "enriched-category"
+name = "EnrichedCategory"
+summary = "A category whose hom-objects live in a monoidal category rather than Set."
+aliases = ["enriched", "enrichment"]
+math_concepts = ["enriched category"]
+symbol_refs = ["karpal-higher::EnrichedCategory"]
+stability = "experimental"
+cost = "free"
+
+[[concepts]]
+id = "ffunctor"
+name = "FFunctor / FMonad"
+summary = "Functors and monads on the category of endofunctors: `FFunctor` lifts functor-transformers, `FMonad` sequences them."
+aliases = ["ffunctor", "fmonad", "functor of functors"]
+math_concepts = ["functor category", "monad on endofunctors"]
+symbol_refs = ["karpal-higher::FFunctor", "karpal-higher::FMonad"]
+stability = "stable"
+cost = "free"
+
+# ===========================================================================
+# karpal-algebra
+# ===========================================================================
+
+[[concepts]]
+id = "semiring"
+name = "Semiring"
+summary = "A rig: two monoid structures (× distributing over +) without negatives — the algebra of paths, flows, and weighted sums."
+aliases = ["rig"]
+math_concepts = ["semiring", "rig"]
+problem_shapes = ["weighted sums and products", "path algebra"]
+symbol_refs = ["karpal-algebra::Semiring"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "ring"
+name = "Ring"
+summary = "A semiring with additive inverses."
+aliases = ["ring"]
+math_concepts = ["ring"]
+symbol_refs = ["karpal-algebra::Ring"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "field"
+name = "Field"
+summary = "A commutative ring with multiplicative inverses for nonzero elements."
+aliases = ["field"]
+math_concepts = ["field"]
+symbol_refs = ["karpal-algebra::Field"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "group"
+name = "Group"
+summary = "A monoid with inverses: every operation is undoable."
+aliases = ["group", "inverse"]
+math_concepts = ["group"]
+problem_shapes = ["combine values where every step can be undone"]
+symbol_refs = ["karpal-algebra::Group"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "abelian-group"
+name = "AbelianGroup"
+summary = "A group whose operation commutes — the additive backbone of modules and vector spaces."
+aliases = ["abelian", "commutative group"]
+math_concepts = ["abelian group"]
+symbol_refs = ["karpal-algebra::AbelianGroup"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "module"
+name = "Module"
+summary = "An abelian group acted on linearly by a ring — the general linear structure."
+aliases = ["module"]
+math_concepts = ["module"]
+symbol_refs = ["karpal-algebra::Module"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "vector-space"
+name = "VectorSpace"
+summary = "A module over a field: linear combinations, span, basis-flavored reasoning."
+aliases = ["vector space", "linear space"]
+math_concepts = ["vector space"]
+problem_shapes = ["linear algebra over a field"]
+symbol_refs = ["karpal-algebra::VectorSpace"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "lattice"
+name = "Lattice"
+summary = "A poset with binary meet and join — least upper and greatest lower bounds always exist."
+aliases = ["lattice", "meet", "join"]
+math_concepts = ["lattice", "semilattice"]
+problem_shapes = ["compute greatest common bounds", "merge partial orders"]
+symbol_refs = ["karpal-algebra::Lattice"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "bounded-lattice"
+name = "BoundedLattice"
+summary = "A lattice with top and bottom elements."
+aliases = ["bounded lattice", "top", "bottom"]
+math_concepts = ["bounded lattice"]
+symbol_refs = ["karpal-algebra::BoundedLattice"]
+stability = "stable"
+cost = "free"
+
+[[concepts]]
+id = "heyting-algebra"
+name = "HeytingAlgebra"
+summary = "A bounded lattice with implication — the algebra of intuitionistic logic and of the topos truth values Ω."
+aliases = ["heyting", "intuitionistic logic"]
+math_concepts = ["heyting algebra", "intuitionistic logic", "cartesian closed poset"]
+symbol_refs = ["karpal-algebra::HeytingAlgebra"]
+stability = "stable"
+cost = "free"
+
+# ===========================================================================
+# Relations
+# (direction for generalizes: the source specializes the target)
+# ===========================================================================
+
+# --- core hierarchy -------------------------------------------------------
+[[relations]]
+from = "monoid"
+to = "semigroup"
+kind = "generalizes"
+
+[[relations]]
+from = "apply"
+to = "functor"
+kind = "generalizes"
+
+[[relations]]
+from = "applicative"
+to = "apply"
+kind = "generalizes"
+
+[[relations]]
+from = "selective"
+to = "applicative"
+kind = "generalizes"
+
+[[relations]]
+from = "chain"
+to = "apply"
+kind = "generalizes"
+
+[[relations]]
+from = "monad"
+to = "applicative"
+kind = "generalizes"
+
+[[relations]]
+from = "monad"
+to = "chain"
+kind = "generalizes"
+
+[[relations]]
+from = "extend"
+to = "functor"
+kind = "generalizes"
+
+[[relations]]
+from = "comonad"
+to = "extend"
+kind = "generalizes"
+
+[[relations]]
+from = "traversable"
+to = "functor"
+kind = "generalizes"
+
+[[relations]]
+from = "traversable"
+to = "foldable"
+kind = "generalizes"
+
+[[relations]]
+from = "alt"
+to = "functor"
+kind = "generalizes"
+
+[[relations]]
+from = "plus"
+to = "alt"
+kind = "generalizes"
+
+[[relations]]
+from = "alternative"
+to = "applicative"
+kind = "generalizes"
+
+[[relations]]
+from = "alternative"
+to = "plus"
+kind = "generalizes"
+
+[[relations]]
+from = "functor-filter"
+to = "functor"
+kind = "generalizes"
+
+[[relations]]
+from = "divide"
+to = "contravariant"
+kind = "generalizes"
+
+[[relations]]
+from = "decide"
+to = "contravariant"
+kind = "generalizes"
+
+[[relations]]
+from = "divisible"
+to = "divide"
+kind = "generalizes"
+
+[[relations]]
+from = "conclude"
+to = "decide"
+kind = "generalizes"
+
+# --- profunctor hierarchy -------------------------------------------------
+[[relations]]
+from = "strong"
+to = "profunctor"
+kind = "generalizes"
+
+[[relations]]
+from = "choice"
+to = "profunctor"
+kind = "generalizes"
+
+[[relations]]
+from = "traversing"
+to = "strong"
+kind = "generalizes"
+
+[[relations]]
+from = "traversing"
+to = "choice"
+kind = "generalizes"
+
+# --- arrow hierarchy ------------------------------------------------------
+[[relations]]
+from = "category"
+to = "semigroupoid"
+kind = "generalizes"
+
+[[relations]]
+from = "arrow"
+to = "category"
+kind = "generalizes"
+
+[[relations]]
+from = "arrow-choice"
+to = "arrow"
+kind = "generalizes"
+
+[[relations]]
+from = "arrow-loop"
+to = "arrow"
+kind = "generalizes"
+
+[[relations]]
+from = "arrow-apply"
+to = "arrow"
+kind = "generalizes"
+
+[[relations]]
+from = "arrow-zero"
+to = "arrow"
+kind = "generalizes"
+
+[[relations]]
+from = "arrow-plus"
+to = "arrow-zero"
+kind = "generalizes"
+
+# --- topos ----------------------------------------------------------------
+[[relations]]
+from = "sheaf"
+to = "presheaf"
+kind = "generalizes"
+
+# --- algebra hierarchy ----------------------------------------------------
+[[relations]]
+from = "group"
+to = "monoid"
+kind = "generalizes"
+
+[[relations]]
+from = "abelian-group"
+to = "group"
+kind = "generalizes"
+
+[[relations]]
+from = "ring"
+to = "semiring"
+kind = "generalizes"
+
+[[relations]]
+from = "field"
+to = "ring"
+kind = "generalizes"
+
+[[relations]]
+from = "bounded-lattice"
+to = "lattice"
+kind = "generalizes"
+
+[[relations]]
+from = "heyting-algebra"
+to = "bounded-lattice"
+kind = "generalizes"
+
+# --- higher categories ----------------------------------------------------
+[[relations]]
+from = "bicategory"
+to = "two-category"
+kind = "generalizes"
+
+# --- composition ----------------------------------------------------------
+[[relations]]
+from = "adjunction"
+to = "monad"
+kind = "composes_with"
+
+[[relations]]
+from = "adjunction"
+to = "comonad"
+kind = "composes_with"
+
+[[relations]]
+from = "traversable"
+to = "applicative"
+kind = "composes_with"
+
+[[relations]]
+from = "foldable"
+to = "monoid"
+kind = "composes_with"
+
+[[relations]]
+from = "natural-transformation"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "dinatural-transformation"
+to = "natural-transformation"
+kind = "composes_with"
+
+[[relations]]
+from = "invariant"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "bifunctor"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "comonad-transformers"
+to = "comonad"
+kind = "composes_with"
+
+[[relations]]
+from = "traversing"
+to = "traversable"
+kind = "composes_with"
+
+[[relations]]
+from = "free-monad"
+to = "monad"
+kind = "composes_with"
+
+[[relations]]
+from = "cofree-comonad"
+to = "comonad"
+kind = "composes_with"
+
+[[relations]]
+from = "free-applicative"
+to = "applicative"
+kind = "composes_with"
+
+[[relations]]
+from = "free-alternative"
+to = "alternative"
+kind = "composes_with"
+
+[[relations]]
+from = "day-convolution"
+to = "applicative"
+kind = "composes_with"
+
+[[relations]]
+from = "codensity-monad"
+to = "kan-extension"
+kind = "composes_with"
+
+[[relations]]
+from = "codensity-monad"
+to = "monad"
+kind = "composes_with"
+
+[[relations]]
+from = "yoneda-embedding"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "presheaf"
+to = "small-category"
+kind = "composes_with"
+
+[[relations]]
+from = "representable-functor"
+to = "presheaf"
+kind = "composes_with"
+
+[[relations]]
+from = "yoneda-lemma"
+to = "representable-functor"
+kind = "composes_with"
+
+[[relations]]
+from = "grothendieck-topology"
+to = "sieve"
+kind = "composes_with"
+
+[[relations]]
+from = "sheaf"
+to = "grothendieck-topology"
+kind = "composes_with"
+
+[[relations]]
+from = "subobject-classifier"
+to = "finite-limits"
+kind = "composes_with"
+
+[[relations]]
+from = "subobject-classifier"
+to = "heyting-algebra"
+kind = "composes_with"
+
+[[relations]]
+from = "string-diagram"
+to = "monoidal-structure"
+kind = "composes_with"
+
+[[relations]]
+from = "trace"
+to = "monoidal-structure"
+kind = "composes_with"
+
+[[relations]]
+from = "coherence"
+to = "monoidal-structure"
+kind = "composes_with"
+
+[[relations]]
+from = "two-category"
+to = "category"
+kind = "composes_with"
+
+[[relations]]
+from = "enriched-category"
+to = "monoidal-structure"
+kind = "composes_with"
+
+[[relations]]
+from = "ffunctor"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "recursion-schemes"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "monad-transformers"
+to = "monad"
+kind = "composes_with"
+
+[[relations]]
+from = "reader-transformer"
+to = "monad-transformers"
+kind = "composes_with"
+
+[[relations]]
+from = "state-transformer"
+to = "monad-transformers"
+kind = "composes_with"
+
+[[relations]]
+from = "writer-transformer"
+to = "monad-transformers"
+kind = "composes_with"
+
+[[relations]]
+from = "writer-transformer"
+to = "monoid"
+kind = "composes_with"
+
+[[relations]]
+from = "except-transformer"
+to = "monad-transformers"
+kind = "composes_with"
+
+[[relations]]
+from = "st-bridges"
+to = "functor"
+kind = "composes_with"
+
+[[relations]]
+from = "optic"
+to = "profunctor"
+kind = "composes_with"
+
+[[relations]]
+from = "module"
+to = "ring"
+kind = "composes_with"
+
+[[relations]]
+from = "vector-space"
+to = "field"
+kind = "composes_with"
+
+# --- duality --------------------------------------------------------------
+[[relations]]
+from = "contravariant"
+to = "functor"
+kind = "dual_of"
+
+[[relations]]
+from = "comonad"
+to = "monad"
+kind = "dual_of"
+
+[[relations]]
+from = "extend"
+to = "apply"
+kind = "dual_of"
+
+[[relations]]
+from = "cofree-comonad"
+to = "free-monad"
+kind = "dual_of"
+
+[[relations]]
+from = "divide"
+to = "apply"
+kind = "dual_of"
+
+[[relations]]
+from = "divisible"
+to = "applicative"
+kind = "dual_of"
+
+[[relations]]
+from = "decide"
+to = "chain"
+kind = "dual_of"
+
+[[relations]]
+from = "conclude"
+to = "monad"
+kind = "dual_of"
+
+# --- alternatives ---------------------------------------------------------
+[[relations]]
+from = "freer-monad"
+to = "free-monad"
+kind = "alternative_to"
+
+[[relations]]
+from = "arrow-apply"
+to = "monad"
+kind = "alternative_to"
+
+[[relations]]
+from = "free-applicative"
+to = "free-monad"
+kind = "alternative_to"

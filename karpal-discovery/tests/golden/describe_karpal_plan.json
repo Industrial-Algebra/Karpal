@@ -1,0 +1,1 @@
+{"name":"karpal:plan","description":"Plan a goal: orient, explore the top-ranked concepts, verify (built as a Free monad, normalized).","input_schema":"karpal.plan.input/v1","output_schema":"karpal.plan.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

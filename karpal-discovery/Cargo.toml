@@ -1,0 +1,58 @@
+[package]
+name = "karpal-discovery"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Structural catalog generator for the Karpal workspace (Lonis discovery vertical)"
+
+[features]
+# `lonis` enables the typed Lonis output layer (Block<KarpalPayload> via
+# #[derive(BlockPayload)]), the `karpal` wire-protocol binary, and
+# SubprocessTool-hosted integration. Since Lonis 0.1.0 these are crates.io
+# registry deps, so this feature — and the binary — are publishable.
+default = []
+lonis = ["dep:lonis-schema", "dep:lonis-core"]
+
+[[bin]]
+name = "karpal"
+path = "src/main.rs"
+required-features = ["lonis"]
+
+[dependencies]
+# Planner substrate (Phase 19-F): score aggregation via karpal-core's
+# Semigroup/Monoid, Pareto ranking via karpal-algebra's BoundedLattice, plan
+# construction via karpal-free's Free monad — the library dogfoods itself.
+karpal-core = { version = "0.9.0", path = "../karpal-core" }
+karpal-algebra = { version = "0.9.0", path = "../karpal-algebra" }
+karpal-free = { version = "0.9.0", path = "../karpal-free" }
+# Probe substrates (Phase 19-G): law checkers, recursion schemes, coherence
+# witnesses, and Schubert intersections — each probe runs real library code.
+karpal-proof = { version = "0.9.0", path = "../karpal-proof" }
+karpal-recursion = { version = "0.9.0", path = "../karpal-recursion" }
+karpal-diagram = { version = "0.9.0", path = "../karpal-diagram" }
+karpal-schubert-types = { version = "0.9.0", path = "../karpal-schubert-types" }
+syn = { version = "3", features = ["full", "visit", "extra-traits", "parsing"] }
+quote = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "1.1"
+walkdir = "2"
+sha2 = "0.11"
+hex = "0.4"
+# Lonis integration: registry deps since Lonis 0.1.0 (crates.io), replacing
+# the pre-publication git pin at rev 4aa23a6. `lonis-schema` carries
+# #[derive(BlockPayload)] + render_fn (ADR-0004) and curated JSON Schema
+# emission (ADR-0005, including the Extension seam from Lonis #11).
+lonis-schema = { version = "0.1", optional = true, features = ["derive"] }
+lonis-core = { version = "0.1", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+# Envelope-schema validation tests (gated on the `lonis` feature via the
+# test file; the engine itself is cheap to compile for the default suite).
+jsonschema = { version = "0.49", default-features = false }
