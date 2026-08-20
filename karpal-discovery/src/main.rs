@@ -106,6 +106,15 @@ const TOOLS: [ToolSpec; 9] = [
 
 fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
+    // Legacy karpal-index compatibility mode (Phase 19-H migration): the
+    // argv after `--index-compat` follows the karpal-index convention
+    // (`search <q> | detail <name> | crates | hierarchy <trait>` + `--json`,
+    // workspace root = current directory), emitting karpal-index's JSON
+    // shapes over the new catalog.
+    if args.first().map(String::as_str) == Some("--index-compat") {
+        run_index_compat(&args[1..]);
+        return;
+    }
     // v0 provider surface prefix: `--mode json`.
     if args.first().map(String::as_str) == Some("--mode") {
         if args.get(1).map(String::as_str) != Some("json") {
@@ -227,6 +236,285 @@ fn run_describe(name: &str) {
 }
 
 // -- discovery tools (Phase 19-E) --------------------------------------------
+
+// -- karpal-index compatibility mode (Phase 19-H migration) ---------------
+
+/// One item in karpal-index's JSON contract (`ApiItem`), over the new
+/// catalog. Divergences from the legacy binary are documented in the test
+/// module: `path` is the module path (no `:line`), `summary` is the first
+/// doc sentence, `subtraits` is empty (legacy never populated it either).
+#[derive(serde::Serialize)]
+struct ApiItemCompat {
+    name: String,
+    kind: String,
+    crate_name: String,
+    path: String,
+    signature: Option<String>,
+    docs: Option<String>,
+    summary: Option<String>,
+    supertraits: Vec<String>,
+    subtraits: Vec<String>,
+    methods: Vec<String>,
+    implementors: Vec<String>,
+    trait_impls: Vec<String>,
+}
+
+impl ApiItemCompat {
+    fn from_record(
+        record: &karpal_discovery::catalog::ItemRecord,
+        catalog: &karpal_discovery::Catalog,
+    ) -> Self {
+        use karpal_discovery::catalog::ItemKind;
+        let (kind, signature, supertraits, methods) = match &record.kind {
+            ItemKind::Trait(t) => (
+                "trait",
+                None,
+                t.supertraits.clone(),
+                t.methods.iter().map(|m| m.name.clone()).collect(),
+            ),
+            ItemKind::Function(f) => (
+                "function",
+                Some(f.signature.clone()),
+                Vec::new(),
+                Vec::new(),
+            ),
+            ItemKind::Struct(_) => ("struct", None, Vec::new(), Vec::new()),
+            ItemKind::Enum(_) => ("enum", None, Vec::new(), Vec::new()),
+            ItemKind::TypeAlias(_) => ("type_alias", None, Vec::new(), Vec::new()),
+            ItemKind::Macro(_) => ("macro", None, Vec::new(), Vec::new()),
+            ItemKind::Const(_) => ("const", None, Vec::new(), Vec::new()),
+            // ItemKind is non_exhaustive; unknown future kinds degrade
+            // gracefully in the compat surface.
+            _ => ("item", None, Vec::new(), Vec::new()),
+        };
+        let implementors = if matches!(record.kind, ItemKind::Trait(_)) {
+            catalog.implementors_of(&record.name)
+        } else {
+            Vec::new()
+        };
+        // trait_impls: for a type, the traits it implements (workspace-wide).
+        let trait_impls = catalog
+            .crates
+            .values()
+            .flat_map(|c| c.impls.iter())
+            .filter(|i| i.implementor == record.name)
+            .map(|i| i.trait_name.clone())
+            .collect::<Vec<_>>();
+        let summary = record.docs.as_ref().map(|d| first_sentence(d));
+        Self {
+            name: record.name.clone(),
+            kind: kind.to_string(),
+            crate_name: record.crate_name.clone(),
+            path: record.module_path.clone(),
+            signature,
+            docs: record.docs.clone(),
+            summary,
+            supertraits,
+            subtraits: Vec::new(),
+            methods,
+            implementors,
+            trait_impls,
+        }
+    }
+}
+
+/// The first sentence of a doc comment (legacy `summary` semantics).
+fn first_sentence(doc: &str) -> String {
+    let trimmed = doc.trim();
+    match trimmed.find(". ") {
+        Some(idx) => trimmed[..=idx].to_string(),
+        None => trimmed.to_string(),
+    }
+}
+
+/// Run one legacy karpal-index invocation.
+fn run_index_compat(args: &[String]) {
+    let json_mode = args.iter().any(|a| a == "--json");
+    let cmd: Vec<&String> = args.iter().filter(|a| *a != "--json").collect();
+    let workspace = std::env::current_dir().expect("current directory (legacy workspace root)");
+    let catalog = extract(&workspace.to_string_lossy());
+
+    match cmd.first().map(|s| s.as_str()) {
+        Some("search") => {
+            let query = cmd.get(1).map(|s| s.as_str()).unwrap_or("");
+            let mut items: Vec<ApiItemCompat> = all_items(&catalog)
+                .into_iter()
+                .filter(|item| item.name.to_lowercase().contains(&query.to_lowercase()))
+                .collect();
+            items.sort_by(|a, b| a.name.cmp(&b.name));
+            if json_mode {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&items).expect("serialize")
+                );
+                return;
+            }
+            if items.is_empty() {
+                println!("(no results for \"{query}\")");
+                return;
+            }
+            for item in &items {
+                println!(
+                    "{:<30} {:<15} {}",
+                    item.name,
+                    item.kind,
+                    item.summary.as_deref().unwrap_or("")
+                );
+            }
+        }
+        Some("detail") => {
+            let Some(name) = cmd.get(1) else {
+                eprintln!("usage: detail <name>");
+                std::process::exit(1);
+            };
+            match all_items(&catalog)
+                .into_iter()
+                .find(|i| i.name == name.as_str())
+            {
+                Some(item) => {
+                    if json_mode {
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&item).expect("serialize")
+                        );
+                        return;
+                    }
+                    println!("{} [{}]", item.name, item.kind);
+                    println!("  crate: {}", item.crate_name);
+                    println!("  path:  {}", item.path);
+                    if let Some(sig) = &item.signature {
+                        println!("  sig:   {sig}");
+                    }
+                    if let Some(docs) = &item.docs {
+                        println!("  docs:  {docs}");
+                    }
+                    if !item.supertraits.is_empty() {
+                        println!("  supertraits: {}", item.supertraits.join(", "));
+                    }
+                    if !item.methods.is_empty() {
+                        println!("  methods:");
+                        for m in &item.methods {
+                            println!("    - {m}");
+                        }
+                    }
+                    if !item.implementors.is_empty() {
+                        println!("  implementors:");
+                        for i in &item.implementors {
+                            println!("    - {i}");
+                        }
+                    }
+                    if !item.trait_impls.is_empty() {
+                        println!("  trait impls:");
+                        for t in &item.trait_impls {
+                            println!("    - {t}");
+                        }
+                    }
+                }
+                None => {
+                    if json_mode {
+                        println!("null");
+                    } else {
+                        println!("{name}: not found");
+                    }
+                }
+            }
+        }
+        Some("crates") => {
+            #[derive(serde::Serialize)]
+            struct CrateInfo {
+                name: String,
+                items: usize,
+                description: String,
+            }
+            let crates: Vec<CrateInfo> = catalog
+                .crates
+                .values()
+                .map(|c| CrateInfo {
+                    name: c.name.clone(),
+                    items: c.items.len(),
+                    description: c.description.clone().unwrap_or_default(),
+                })
+                .collect();
+            if json_mode {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&crates).expect("serialize")
+                );
+                return;
+            }
+            for c in &crates {
+                println!("{:<25} {:>4} items  {}", c.name, c.items, c.description);
+            }
+        }
+        Some("hierarchy") => {
+            let Some(name) = cmd.get(1) else {
+                eprintln!("usage: hierarchy <trait>");
+                std::process::exit(1);
+            };
+            match all_items(&catalog)
+                .into_iter()
+                .find(|i| i.name == name.as_str())
+            {
+                Some(item) => {
+                    #[derive(serde::Serialize)]
+                    struct Hierarchy {
+                        name: String,
+                        kind: String,
+                        supertraits: Vec<String>,
+                        subtraits: Vec<String>,
+                        implementors: Vec<String>,
+                    }
+                    let h = Hierarchy {
+                        name: item.name.clone(),
+                        kind: item.kind.clone(),
+                        supertraits: item.supertraits.clone(),
+                        subtraits: item.subtraits.clone(),
+                        implementors: item.implementors.clone(),
+                    };
+                    if json_mode {
+                        println!("{}", serde_json::to_string_pretty(&h).expect("serialize"));
+                        return;
+                    }
+                    println!("{} [{}]", h.name, h.kind);
+                    for (label, list) in [
+                        ("supertraits", &h.supertraits),
+                        ("subtraits", &h.subtraits),
+                        ("implementors", &h.implementors),
+                    ] {
+                        if !list.is_empty() {
+                            println!("  {label}:");
+                            for entry in list {
+                                println!("    - {entry}");
+                            }
+                        }
+                    }
+                }
+                None => {
+                    if json_mode {
+                        println!("null");
+                    } else {
+                        println!("{name}: not found");
+                    }
+                }
+            }
+        }
+        _ => {
+            eprintln!("Usage: karpal --index-compat <command> [args] [--json]");
+            eprintln!("Commands: search <query> | detail <name> | crates | hierarchy <trait>");
+            std::process::exit(1);
+        }
+    }
+}
+
+/// Every catalog item, workspace-wide, as compat items.
+fn all_items(catalog: &karpal_discovery::Catalog) -> Vec<ApiItemCompat> {
+    catalog
+        .crates
+        .values()
+        .flat_map(|c| c.items.iter())
+        .map(|item| ApiItemCompat::from_record(item, catalog))
+        .collect()
+}
 
 /// Input for the `search` operation.
 #[derive(Deserialize)]

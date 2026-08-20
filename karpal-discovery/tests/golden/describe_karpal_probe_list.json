@@ -1,0 +1,1 @@
+{"name":"karpal:probe_list","description":"List the registered algebraic probes (bounded, read-only, deterministic dogfood executions).","input_schema":"karpal.probe_list.input/v1","output_schema":"karpal.probe_list.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

@@ -13,7 +13,8 @@
 
 - [インストール](./guide/installation.md)
 - [フィーチャーフラグ](./guide/feature-flags.md)
-- [karpal-index による型の発見](./guide/karpal-index.md)
+- [karpal によるディスカバリ](./guide/karpal-discovery.md)
+- [karpal-index による型の発見 (従来)](./guide/karpal-index.md)
 
 # アーキテクチャ
 
@@ -45,6 +46,7 @@
 - [モノイダル図式](./reference/monoidal-diagrams.md)
 - [シューベルト型](./reference/schubert-types.md)
 - [トポス理論](./reference/topos.md)
+- [ディスカバリランタイム](./reference/discovery.md)
 - [高次圏](./reference/higher-categories.md)
 - [検証 CI ワークフロー](./reference/verification-ci.md)
 - [検証スキーマ](./reference/verification-schemas.md)

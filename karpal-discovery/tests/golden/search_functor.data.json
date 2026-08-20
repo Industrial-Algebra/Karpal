@@ -1,0 +1,89 @@
+{
+  "query": "Functor",
+  "results": [
+    {
+      "crate_name": "karpal-core",
+      "kind": "trait",
+      "module_path": "karpal_core::bifunctor",
+      "name": "Bifunctor"
+    },
+    {
+      "crate_name": "karpal-core",
+      "kind": "trait",
+      "module_path": "karpal_core::functor",
+      "name": "Functor"
+    },
+    {
+      "crate_name": "karpal-core",
+      "kind": "trait",
+      "module_path": "karpal_core::functor_filter",
+      "name": "FunctorFilter"
+    },
+    {
+      "crate_name": "karpal-core",
+      "kind": "trait",
+      "module_path": "karpal_core::adjunction",
+      "name": "ProfunctorAdjunction"
+    },
+    {
+      "crate_name": "karpal-core",
+      "kind": "trait",
+      "module_path": "karpal_core::adjunction",
+      "name": "ProfunctorFunctor"
+    },
+    {
+      "crate_name": "karpal-core",
+      "kind": "struct",
+      "module_path": "karpal_core::adjunction",
+      "name": "ProfunctorIdentityAdj"
+    },
+    {
+      "crate_name": "karpal-core",
+      "kind": "struct",
+      "module_path": "karpal_core::adjunction",
+      "name": "ProfunctorIdentityF"
+    },
+    {
+      "crate_name": "karpal-effect",
+      "kind": "trait",
+      "module_path": "karpal_effect::classes",
+      "name": "FunctorSt"
+    },
+    {
+      "crate_name": "karpal-higher",
+      "kind": "trait",
+      "module_path": "karpal_higher::ffunctor",
+      "name": "FFunctor"
+    },
+    {
+      "crate_name": "karpal-higher",
+      "kind": "struct",
+      "module_path": "karpal_higher::ffunctor",
+      "name": "IdentityFFunctor"
+    },
+    {
+      "crate_name": "karpal-profunctor",
+      "kind": "trait",
+      "module_path": "karpal_profunctor::profunctor",
+      "name": "Profunctor"
+    },
+    {
+      "crate_name": "karpal-proof",
+      "kind": "struct",
+      "module_path": "karpal_proof::property",
+      "name": "FunctorComposition"
+    },
+    {
+      "crate_name": "karpal-proof",
+      "kind": "struct",
+      "module_path": "karpal_proof::property",
+      "name": "FunctorIdentity"
+    },
+    {
+      "crate_name": "karpal-proof",
+      "kind": "struct",
+      "module_path": "karpal_proof::property",
+      "name": "IsLawfulFunctor"
+    }
+  ]
+}

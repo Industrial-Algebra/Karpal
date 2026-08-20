@@ -542,11 +542,14 @@ See integration documents:
 `detail`, `crates`, `hierarchy`) and `--json` output. Phase 19 expands it into a
 full agent-first discovery runtime with three layers — **Discover**, **Plan**,
 and **Experiment** — built on the Lonis harness and dogfooding Karpal's own
-category theory. **Slice 1 has landed** (PR #132): a real `syn` AST catalog
-generator (the `karpal-discovery` library crate) producing a typed,
-deterministic, content-hashable `Catalog` of crates, modules, and traits — with
-**no dependency on the lonis `Block` contract** (that wraps only the output
-layer). See
+category theory. **Phase 19 is complete** (PRs #132–#154): the `syn`-based
+structural catalog (all item kinds, re-exports, impl graph), the curated
+semantic overlay (83 concepts, drift-gated), the project inspector,
+imported-symbol analysis, the category-theoretic planner (dogfooding
+`Semigroup`/`Monoid`, `BoundedLattice`, and `Free`), the algebraic probe
+registry, and hardening (output-contract goldens, `karpal-index` compat,
+publish-order gate) — with the analysis substrate **lonis-independent** and
+only the output layer gated on the (now crates.io) lonis deps. See
 [`docs/plans/2026-08-10-karpal-discovery-catalog-slice1.md`](docs/plans/2026-08-10-karpal-discovery-catalog-slice1.md).
 
 The work splits cleanly along the Lonis boundary:
@@ -632,9 +635,12 @@ stable exit-code map.
 
 #### Hybrid catalog
 
-**Status:** the structural generator for crates, modules, and traits shipped in
-slice 1 (PR #132); functions, types, macros, cfg gates, and the curated overlays
-remain.
+**Status:** complete. The structural generator covers every item kind
+(traits, functions, structs, enums, type aliases, macros under their
+importable names, consts), `pub use` re-exports with renames, and the
+implementation graph (PRs #132, #137, #143, #150). The curated overlay ships
+83 concepts with problem shapes and relations, embedded and drift-gated
+against the catalog (PRs #146, #147).
 
 A **generated structural index** (CI-generated from every workspace package
 except `karpal-discovery` itself: crates, features, dependency graph, public

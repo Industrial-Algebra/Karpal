@@ -1,5 +1,7 @@
 # Type Discovery with karpal-index
 
+> **Successor available:** the `karpal` binary (from `karpal-discovery`, Phase 19) supersedes `karpal-index` — same commands available via `karpal --index-compat`, plus catalog search, concept browsing, the planner, and probes. See [Discovery with karpal](./karpal-discovery.md). `karpal-index` remains published for compatibility.
+
 `karpal-index` is a CLI binary that lets AI agents (and humans) discover Karpal's types and operations through progressive drill-down.
 
 ## Commands

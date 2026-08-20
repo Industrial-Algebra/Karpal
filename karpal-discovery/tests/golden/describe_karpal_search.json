@@ -1,0 +1,1 @@
+{"name":"karpal:search","description":"Search public items (traits, functions, types, macros) across a workspace catalog.","input_schema":"karpal.search.input/v1","output_schema":"karpal.search.output/v1","determinism":"deterministic","side_effects":"read-only","cost":"low"}

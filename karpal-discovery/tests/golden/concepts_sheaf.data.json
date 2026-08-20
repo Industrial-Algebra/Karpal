@@ -1,0 +1,35 @@
+{
+  "query": "sheaf",
+  "results": [
+    {
+      "id": "contravariant",
+      "name": "Contravariant",
+      "stability": "stable",
+      "summary": "A consumer context whose input side can be transformed via `contramap` — the dual of `Functor`.",
+      "symbol_refs": [
+        "karpal-core::Contravariant"
+      ]
+    },
+    {
+      "id": "presheaf",
+      "name": "Presheaf",
+      "stability": "stable",
+      "summary": "A functor `C^op → Set`: an assignment of sets to objects, restriction maps to morphisms; includes constant and initial-segment instances.",
+      "symbol_refs": [
+        "karpal-topos::Presheaf",
+        "karpal-topos::ConstantPresheaf",
+        "karpal-topos::InitialSegmentPresheaf"
+      ]
+    },
+    {
+      "id": "sheaf",
+      "name": "Sheaf",
+      "stability": "stable",
+      "summary": "A presheaf satisfying descent for a topology: locally compatible sections glue uniquely; `is_sheaf_at`/`is_separated_at` are the checks.",
+      "symbol_refs": [
+        "karpal-topos::is_sheaf_at",
+        "karpal-topos::is_separated_at"
+      ]
+    }
+  ]
+}

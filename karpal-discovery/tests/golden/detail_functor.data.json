@@ -1,0 +1,33 @@
+{
+  "concepts": [
+    {
+      "id": "functor",
+      "name": "Functor",
+      "stability": "stable",
+      "summary": "A structure-preserving map between categories; in Rust, a context whose contained values can be transformed via `map`.",
+      "symbol_refs": [
+        "karpal-core::Functor"
+      ]
+    }
+  ],
+  "docs": "Covariant functor: lifts a function `A -> B` into `F<A> -> F<B>`.",
+  "implementors": [
+    "CofreeF",
+    "ComposeF",
+    "EnvF",
+    "FixF",
+    "FreeF",
+    "IdentityF",
+    "NonEmptyVecF",
+    "OptionF",
+    "PlanF",
+    "ResultF",
+    "VecF"
+  ],
+  "item": {
+    "crate_name": "karpal-core",
+    "kind": "trait",
+    "module_path": "karpal_core::functor",
+    "name": "Functor"
+  }
+}
