@@ -13,7 +13,7 @@ pub trait NaturalTransformation<F: HKT, G: HKT> {
     fn transform<A>(fa: F::Of<A>) -> G::Of<A>;
 }
 
-/// Converts Option to Vec (None → [], Some(a) → [a]).
+/// Converts Option to Vec (None → empty, Some(a) → one-element).
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub struct OptionToVec;
 
