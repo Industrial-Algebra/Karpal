@@ -651,7 +651,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-algebra"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -659,7 +659,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-arrow"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -667,14 +667,14 @@ dependencies = [
 
 [[package]]
 name = "karpal-core"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "proptest",
 ]
 
 [[package]]
 name = "karpal-diagram"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-arrow",
  "karpal-proof",
@@ -684,7 +684,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-discovery"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "hex",
  "jsonschema",
@@ -709,7 +709,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-effect"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -717,7 +717,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-free"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -725,7 +725,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-higher"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "karpal-proof",
@@ -734,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-index"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -746,7 +746,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-optics"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "karpal-profunctor",
@@ -755,7 +755,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-profunctor"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -763,7 +763,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-proof"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-algebra",
  "karpal-core",
@@ -773,7 +773,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-proof-derive"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -782,7 +782,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-recursion"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "karpal-free",
@@ -791,7 +791,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-schubert-types"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "amari-enumerative",
  "karpal-algebra",
@@ -802,7 +802,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-std"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-algebra",
  "karpal-arrow",
@@ -821,7 +821,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-topos"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-core",
  "proptest",
@@ -829,7 +829,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-verify"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "amari-flynn",
  "karpal-proof",
@@ -838,7 +838,7 @@ dependencies = [
 
 [[package]]
 name = "karpal-verify-derive"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "karpal-verify",
  "proc-macro2",

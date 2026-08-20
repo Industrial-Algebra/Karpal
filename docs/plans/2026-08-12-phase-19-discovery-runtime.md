@@ -1,6 +1,6 @@
 # Phase 19 — `karpal-discovery`: the Agent-First Discovery Runtime
 
-**Date:** 2026-08-10 → 2026-08-12 · **Status:** complete (PRs #132–#154) ·
+**Date:** 2026-08-10 → 2026-08-12 · **Status:** complete (PRs #132–#155) ·
 **Target:** 0.9.0
 
 The design record for Karpal's second Lonis vertical. This document
@@ -43,7 +43,7 @@ All provider tests drive the real binary through the real host adapter.
 | D/E — provider + commands | #150 | ADR-0006 v0 surface; 4 → 9 tools | one static tool registry as single source of truth; tool names = payload wire kinds (derive-generated, cannot drift) |
 | F — planner | #151 | `recommend` + `plan` | dogfood the typeclasses *honestly* (below) |
 | G — probes | #152 | 5 probes (laws, Schubert, recursion, coherence) | each probe runs real library code and reports demonstrated checks |
-| H — hardening | #154 | goldens, `--index-compat`, publish-order gate, CHANGELOG | byte-golden static JSON; data-golden blocks with normalized provenance |
+| H — hardening | #154/#155 | goldens, `--index-compat`, publish-order gate, CHANGELOG | byte-golden static JSON; data-golden blocks with normalized provenance |
 
 ## Honest dogfooding
 

@@ -542,7 +542,7 @@ See integration documents:
 `detail`, `crates`, `hierarchy`) and `--json` output. Phase 19 expands it into a
 full agent-first discovery runtime with three layers — **Discover**, **Plan**,
 and **Experiment** — built on the Lonis harness and dogfooding Karpal's own
-category theory. **Phase 19 is complete** (PRs #132–#154): the `syn`-based
+category theory. **Phase 19 is complete** (PRs #132–#155): the `syn`-based
 structural catalog (all item kinds, re-exports, impl graph), the curated
 semantic overlay (83 concepts, drift-gated), the project inspector,
 imported-symbol analysis, the category-theoretic planner (dogfooding

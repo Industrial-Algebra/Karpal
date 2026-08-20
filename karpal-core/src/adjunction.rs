@@ -26,8 +26,8 @@ use std::rc::Rc;
 /// - `counit: F(U(B)) -> B` — the universal arrow from F to B
 ///
 /// Laws (triangle identities):
-/// - `counit(F::fmap(fa, unit)) == fa` for all fa: F::Of<A>
-/// - `U::fmap(unit(a), counit) == a` for all a: U::Of<A>
+/// - `counit(F::fmap(fa, unit)) == fa` for all fa: `F::Of<A>`
+/// - `U::fmap(unit(a), counit) == a` for all a: `U::Of<A>`
 ///
 /// Every adjunction F ⊣ U gives rise to:
 /// - A monad on `U . F` (via `unit` as pure, derived join)
