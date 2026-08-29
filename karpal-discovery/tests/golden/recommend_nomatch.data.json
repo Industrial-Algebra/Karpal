@@ -1,0 +1,8 @@
+{
+  "diagnostics": {
+    "nearest": [],
+    "note": "no concept matched the goal with confidence; recall is vocabulary-based — try the domain terms a concept's summary would use, or browse the overlay with karpal.concepts"
+  },
+  "entries": [],
+  "goal": "elephant pajamas waltzing"
+}
