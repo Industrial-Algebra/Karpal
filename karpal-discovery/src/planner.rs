@@ -115,6 +115,13 @@ pub struct Recommendation {
     pub goal: String,
     /// Ranked entries (dominants first, deterministic order).
     pub entries: Vec<RankedConcept>,
+    /// When nothing recalled: the closest concepts by vocabulary overlap
+    /// (bounded to three), so "wrong phrasing" is distinguishable from
+    /// "nothing exists" (Lonis #21 R7).
+    pub nearest: Vec<String>,
+    /// When nothing recalled: an explanatory note pointing at rephrasing
+    /// or browsing (`karpal.concepts`).
+    pub note: Option<String>,
 }
 
 /// Stability-tier weight: stable concepts weigh more at equal relevance.
@@ -147,6 +154,7 @@ const fn stability_str(tier: StabilityTier) -> &'static str {
 #[must_use]
 pub fn recommend(goal: &str, overlay: &ConceptOverlay) -> Recommendation {
     let needle = goal.trim().to_lowercase();
+    let query = crate::recall::query_tokens(&needle);
     let mut recalled: BTreeMap<String, (Score, Vec<String>, &ConceptRecord)> = BTreeMap::new();
 
     if !needle.is_empty() {
@@ -213,6 +221,30 @@ pub fn recommend(goal: &str, overlay: &ConceptOverlay) -> Recommendation {
                     Score::from_parts(2, stability_weight(concept.stability)),
                 );
                 evidence.push("match: problem shape".to_string());
+            }
+            // Token tier (0.9.1): summaries and aliases are the richest
+            // curated text each concept has; plain-language goals recall
+            // via vocabulary overlap beneath the substring tier. The four
+            // documented 0.9.0 near-misses (PR #160) all hit here. Relevance
+            // is graded by matched-token count (capped at 3, substring-tier
+            // confidence): a 3-token vocabulary match must outrank 2-token
+            // matches — Pareto cannot separate equal scores, and alphabetical
+            // order would otherwise decide.
+            let token_hits = crate::recall::text_matches(
+                &query,
+                &format!("{} {}", concept.summary, concept.aliases.join(" ")),
+            );
+            if token_hits > 0 {
+                let relevance = token_hits.min(3) as u32;
+                score = Semigroup::combine(
+                    score,
+                    Score::from_parts(relevance, stability_weight(concept.stability)),
+                );
+                evidence.push(if token_hits == 1 {
+                    "match: summary/alias token (1 query token)".to_string()
+                } else {
+                    format!("match: summary/alias token ({token_hits} query tokens)")
+                });
             }
             if score.relevance > 0 {
                 recalled.insert(concept.id.clone(), (score, evidence, concept));
@@ -284,9 +316,53 @@ pub fn recommend(goal: &str, overlay: &ConceptOverlay) -> Recommendation {
             .then_with(|| a.0.concept_id.cmp(&b.0.concept_id))
     });
 
+    let ranked_entries: Vec<RankedConcept> = ranked.into_iter().map(|(entry, _)| entry).collect();
+
+    // Zero-result diagnostics (0.9.1, Lonis #21 R7): a silent empty list —
+    // or a lone single-token noise hit — cannot distinguish "nothing exists"
+    // from "wrong phrasing". In the live run, grep outperformed the tool for
+    // exactly this reason. Say what happened and offer the nearest vocabulary
+    // whenever nothing recalled with substring-tier confidence (≥ 2).
+    let weak = ranked_entries.is_empty()
+        || ranked_entries
+            .iter()
+            .map(|e| e.score.relevance)
+            .max()
+            .is_some_and(|best| best <= 1);
+    let (nearest, note) = if weak && !needle.is_empty() {
+        let mut near: Vec<(usize, &ConceptRecord)> = overlay
+            .concepts
+            .iter()
+            .map(|c| {
+                (
+                    crate::recall::text_matches(
+                        &query,
+                        &format!("{} {}", c.summary, c.aliases.join(" ")),
+                    ),
+                    c,
+                )
+            })
+            .filter(|(hits, _)| *hits >= 1)
+            .collect();
+        near.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.id.cmp(&b.1.id)));
+        (
+            near.into_iter().take(3).map(|(_, c)| c.id.clone()).collect(),
+            Some(
+                "no concept matched the goal with confidence; recall is vocabulary-based — try the \
+                 domain terms a concept's summary would use, or browse the overlay with \
+                 karpal.concepts"
+                    .to_string(),
+            ),
+        )
+    } else {
+        (Vec::new(), None)
+    };
+
     Recommendation {
         goal: goal.to_string(),
-        entries: ranked.into_iter().map(|(entry, _)| entry).collect(),
+        entries: ranked_entries,
+        nearest,
+        note,
     }
 }
 

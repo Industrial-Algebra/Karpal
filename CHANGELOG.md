@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] — Unreleased
+
+### Fixed
+
+- **`karpal.recommend` recall beyond canonical phrases** — the 0.9.0 matcher only matched the *whole* goal as a substring of five curated fields and never consulted the `summary` field; the four documented near-miss queries from the Knopper practitioner run (PR #160) all returned zero. A **token tier** now indexes summaries and aliases: tokenization with a light symmetric stemmer (plurals, `-ing`/`-ed`, prefix matching), graded by distinct matched-query-token count (capped at substring-tier relevance 3). All four documented queries now rank their target concept **first** ("bidirectional focus on a part of a structure, get and put" → `optic`; "state and a focus position" → `comonad-transformers`; "least upper bound join" → `lattice`; "commuting two layers" → `traversable`).
+
+### Added
+
+- **Zero-result diagnostics for `karpal.recommend`** (Lonis #21 R7): when nothing recalls with confidence, the payload carries a `diagnostics` object — an explanatory note distinguishing "wrong phrasing" from "nothing exists", plus the nearest concepts by vocabulary overlap — instead of a silent empty list.
+- **`catalog_version` drift gate** — the overlay's `catalog_version` must equal the workspace version (was decoratively stamped `0.9.0-dev`); the version-bump PR that forgets to restamp fails CI.
+
+### Changed
+
+- Provider/blocks goldens for `karpal.recommend` and `karpal.plan` regenerated: token-tier evidence and the always-present `diagnostics` field (`null` on confident matches) are deliberate contract changes.
+
+### Documentation
+
+- Root README's workspace table now lists all nineteen crates (was missing `karpal-topos`, `karpal-index`, `karpal-discovery` — both release flagships were absent).
+- `karpal-topos` rustdoc no longer describes 16C/16D as future sub-phases (complete since 0.8.0).
+- mdBook (EN + JA): guide and reference pages document the token tier and diagnostics.
+
 ## [0.9.0] — 2026-08-20
 
 ### Added

@@ -102,6 +102,19 @@ fn stability_str(tier: crate::overlay::StabilityTier) -> &'static str {
     }
 }
 
+/// Zero-result diagnostics for `karpal.recommend` (0.9.1, Lonis #21 R7):
+/// when nothing recalls with confidence, the payload explains itself
+/// instead of returning a silent empty list — "nothing exists" and
+/// "wrong phrasing" become distinguishable.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecommendDiagnostics {
+    /// Explanatory note pointing at rephrasing or browsing
+    /// (`karpal.concepts`).
+    pub note: String,
+    /// Closest concepts by vocabulary overlap (bounded to three).
+    pub nearest: Vec<String>,
+}
+
 /// One ranked entry in a `karpal.recommend` payload.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RankedEntry {
@@ -182,6 +195,11 @@ pub enum KarpalPayload {
         goal: String,
         /// Ranked entries.
         entries: Vec<RankedEntry>,
+        /// Present only when nothing recalled with confidence: the
+        /// zero-result diagnostics (note + nearest vocabulary), so "wrong
+        /// phrasing" is distinguishable from "nothing exists"
+        /// (0.9.1, Lonis #21 R7).
+        diagnostics: Option<RecommendDiagnostics>,
     },
     /// `karpal.plan` — a candidate plan (orient / explore / verify) for a
     /// goal, derived from a fresh recommendation.
@@ -272,7 +290,11 @@ fn render_search(payload: &KarpalPayload) -> String {
             }
             out
         }
-        KarpalPayload::Recommend { goal, entries } => {
+        KarpalPayload::Recommend {
+            goal,
+            entries,
+            diagnostics,
+        } => {
             let mut out = format!(
                 "karpal recommend \"{goal}\": {} candidate(s)\n",
                 entries.len()
@@ -285,6 +307,12 @@ fn render_search(payload: &KarpalPayload) -> String {
                     entry.relevance,
                     entry.evidence.join("; ")
                 ));
+            }
+            if let Some(diag) = diagnostics {
+                out.push_str(&format!("  note: {}\n", diag.note));
+                if !diag.nearest.is_empty() {
+                    out.push_str(&format!("  nearest: {}\n", diag.nearest.join(", ")));
+                }
             }
             out
         }

@@ -10,7 +10,7 @@
 # Relation direction for `generalizes`: the source specializes the target
 # (mirroring trait supertraits), e.g. `applicative` generalizes `functor`.
 
-catalog_version = "0.9.0-dev"
+catalog_version = "0.9.0"
 
 # ===========================================================================
 # karpal-core — the functor-law hierarchy

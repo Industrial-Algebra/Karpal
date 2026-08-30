@@ -15,8 +15,8 @@
 //! - [`Sieve`] / [`FiniteSieve`] — precomposition-closed families of morphisms
 //! - Yoneda lemma as a computable bijection
 //!
-//! Future sub-phases (16C, 16D) will add the subobject classifier, finite
-//! limits, Grothendieck topologies, and sheaves.
+//! - The subobject classifier `Ω`, finite limits, Grothendieck topologies,
+//!   and sheaves (16C/16D, complete since 0.8.0)
 //!
 //! # Encoding notes
 //!

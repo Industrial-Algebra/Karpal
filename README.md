@@ -31,6 +31,9 @@ WriterT, ReaderT, StateT), and `do_!`/`ado_!` notation macros — all with
 | [`karpal-schubert-types`](karpal-schubert-types/) | Schubert intersection type system: `SchubertType`, `Intersection`, `SchubertProven<M,T>`, `compose_checks()`, external verification (Phase 14 A–C) |
 | [`karpal-higher`](karpal-higher/) | 2-categories, enriched categories, bicategories, FFunctor/FMonad, coherence witnesses, verification integration |
 | [`karpal-std`](karpal-std/) | Standard prelude re-exports |
+| [`karpal-topos`](karpal-topos/) | Small categories, presheaves, sieves, Yoneda as a computable bijection, subobject classifier Ω, finite limits, Grothendieck topologies, sheaves — the structured-emptiness stack (Phase 16, 0.8.0) |
+| [`karpal-index`](karpal-index/) | Legacy CLI discovery binary (string-scanning indexer); superseded by `karpal-discovery`, kept for compatibility |
+| [`karpal-discovery`](karpal-discovery/) | Agent-first discovery runtime: typed `syn` catalog, curated 83-concept overlay (drift-gated), project inspector, import analysis, category-theoretic planner (`Semigroup`/`Monoid` scoring, `BoundedLattice` Pareto ranking, `Free`-monad plans), algebraic probes — with the `karpal` binary as a conforming Lonis provider (Phase 19, 0.9.0) |
 
 `karpal-core`, `karpal-profunctor`, `karpal-arrow`, `karpal-free`,
 `karpal-recursion`, `karpal-algebra`, `karpal-effect`, `karpal-proof`,

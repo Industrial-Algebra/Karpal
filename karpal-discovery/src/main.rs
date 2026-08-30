@@ -29,6 +29,7 @@ use serde_json::Value;
 
 use karpal_discovery::payload::{
     ConceptSummary, ItemSummary, KarpalPayload, PlanStepWire, ProbeInfo, RankedEntry,
+    RecommendDiagnostics,
 };
 use lonis_schema::{Attribution, Block, ToolError};
 
@@ -588,6 +589,10 @@ fn run_recommend(input: Value) {
                 evidence: e.evidence.clone(),
             })
             .collect(),
+        diagnostics: recommendation.note.map(|note| RecommendDiagnostics {
+            note,
+            nearest: recommendation.nearest,
+        }),
     });
 }
 
