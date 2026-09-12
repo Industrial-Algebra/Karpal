@@ -143,7 +143,7 @@ fn karpal_lockfile_resolves_workspace_members_and_registry_deps() {
         .packages
         .get("karpal-core")
         .expect("karpal-core resolved");
-    assert_eq!(core.version, "0.9.0");
+    assert_eq!(core.version, "0.9.1");
     assert!(core.source.is_none());
     // A registry dep for contrast.
     let serde = lock.packages.get("serde").expect("serde resolved");
