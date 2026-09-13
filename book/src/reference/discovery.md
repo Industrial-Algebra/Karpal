@@ -74,6 +74,8 @@ Concepts are joined by directed `ConceptRelation`s: `generalizes` (mirroring ver
 
 Recall seeds from direct text matches across all curated fields, then expands along the relation graph one hop in both directions; every entry carries its evidence (`match: problem shape`, `relation: dual_of comonad ↔ monad`). A goal phrased as a *problem* — "sequence dependent effectful steps" — recalls `monad` and plans around it.
 
+Since 0.9.1 a **token tier** beneath the substring tier indexes the concepts' summaries and aliases: plain-language goals ("least upper bound join" → `lattice`, "commuting two layers" → `traversable`) recall through vocabulary overlap with a light stemmer, graded by matched-token count. And when nothing recalls with confidence, the payload explains itself — a `diagnostics` note distinguishing "wrong phrasing" from "nothing exists", plus the nearest concepts by vocabulary.
+
 **An honesty note on the topos:** `karpal-topos`'s `SmallCategory`/`Presheaf`/Yoneda machinery is type-level (GATs over static types); forcing 83 runtime concepts through it would be decorative. The runtime capability category *is* the overlay's relation graph. A deeper Yoneda-based recall story is deferred until the topos crate is battle-tested — candidate 1.0 material.
 
 ## The Probes (19-G)

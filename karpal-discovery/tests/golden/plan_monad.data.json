@@ -8,18 +8,18 @@
     },
     {
       "action": "explore",
-      "note": "ranked concept (relevance 14, stability stable)",
+      "note": "ranked concept (relevance 16, stability stable)",
       "target": "monad"
     },
     {
       "action": "explore",
-      "note": "ranked concept (relevance 12, stability stable)",
-      "target": "comonad-transformers"
+      "note": "ranked concept (relevance 13, stability stable)",
+      "target": "freer-monad"
     },
     {
       "action": "explore",
       "note": "ranked concept (relevance 12, stability stable)",
-      "target": "freer-monad"
+      "target": "comonad"
     },
     {
       "action": "verify",

@@ -12,7 +12,7 @@ fn sample_catalog() -> Catalog {
     let mut catalog = Catalog::new();
     let mut krate = CrateRecord {
         name: "karpal-core".to_string(),
-        version: Some("0.9.0".to_string()),
+        version: Some("0.9.1".to_string()),
         description: Some("core".to_string()),
         features: BTreeMap::new(),
         dependencies: BTreeMap::new(),

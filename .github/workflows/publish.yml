@@ -141,15 +141,6 @@ jobs:
       - name: Wait for crates.io index
         run: sleep 30
 
-      - name: Publish karpal-schubert-types (already published, skip if exists)
-        continue-on-error: true
-        run: cargo publish -p karpal-schubert-types
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-
-      - name: Wait for crates.io index
-        run: sleep 30
-
       - name: Publish karpal-higher
         run: cargo publish -p karpal-higher
         env:
@@ -194,6 +185,29 @@ jobs:
         run: cargo publish -p karpal-discovery
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      # Anti-masking: continue-on-error steps above make republish idempotent
+      # but also swallow genuine failures (a misordered crate failed green in
+      # the 0.9.0 run and only a redundant duplicate step saved the release).
+      # This step fails the run loudly if any workspace crate is not at the
+      # released version on crates.io.
+      - name: Verify all crates published at the released version
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          CRATES=$(sed -n 's/^members = \[\(.*\)\]/\1/p' Cargo.toml | tr -d '"' | tr ',' ' ')
+          echo "Expecting all of: $CRATES at $VERSION"
+          for crate in $CRATES; do
+            sleep 5
+            max=$(curl -sf -H 'User-Agent: karpal-publish-verify (justin@industrialalgebra.com)' \
+              "https://crates.io/api/v1/crates/$crate" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["crate"]["max_version"])' \
+              2>/dev/null || echo ABSENT)
+            if [ "$max" != "$VERSION" ]; then
+              echo "::error::$crate is at $max on crates.io, expected $VERSION"
+              exit 1
+            fi
+            echo "ok $crate $max"
+          done
 
       - name: Trigger Netlify docs deploy
         run: curl -s -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}"

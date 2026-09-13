@@ -94,7 +94,7 @@ Analyzes a workspace's `use` statements against its own catalog: resolved symbol
 {"goal": "sequence dependent effectful steps"}
 ```
 
-The planner's recall layer: direct matches seed candidates and the relation graph expands them; ranking is Pareto dominance over (relevance, weight). Ask for the problem, get the concept — `monad`, ranked first, with evidence:
+The planner's recall layer: direct matches seed candidates and the relation graph expands them; ranking is Pareto dominance over (relevance, weight). Plain-language goals work — the summaries and aliases are indexed token-by-token (0.9.1), so "least upper bound join" recalls `lattice`. Ask for the problem, get the concept — `monad`, ranked first, with evidence:
 
 ```json
 {

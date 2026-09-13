@@ -255,3 +255,97 @@ fn embedded_overlay_supports_recommend_and_plan() {
     let plan = planner::plan("sequence dependent effectful steps", &rec);
     assert!(plan.steps.iter().any(|s| s.target == "monad"));
 }
+
+/// The four documented near-miss queries from the Knopper practitioner
+/// run (PR #160, `docs/dev/discovery-feedback-2026-08-22-knopper.md`):
+/// each is plain language over words the concepts' own summaries contain,
+/// and each returned zero under 0.9.0's whole-phrase substring recall.
+/// 0.9.1 acceptance: token-level recall over summaries + aliases.
+#[test]
+fn plain_language_goals_recall_via_summaries() {
+    let overlay = karpal_discovery::load_concept_overlay();
+    for (goal, expected) in [
+        (
+            "bidirectional focus on a part of a structure, get and put",
+            "optic",
+        ),
+        ("state and a focus position", "comonad-transformers"),
+        ("least upper bound join", "lattice"),
+        ("commuting two layers", "traversable"),
+    ] {
+        let rec = planner::recommend(goal, &overlay);
+        let top3: Vec<&str> = rec
+            .entries
+            .iter()
+            .map(|e| e.concept_id.as_str())
+            .take(3)
+            .collect();
+        assert!(
+            top3.contains(&expected),
+            "goal {goal:?} should recall {expected} in the top 3; got {top3:?}"
+        );
+    }
+}
+
+/// The strongest of the documented queries should rank their target first.
+#[test]
+fn vocabulary_goals_rank_their_target_first() {
+    let overlay = karpal_discovery::load_concept_overlay();
+    for (goal, expected) in [
+        ("least upper bound join", "lattice"),
+        ("commuting two layers", "traversable"),
+    ] {
+        let rec = planner::recommend(goal, &overlay);
+        assert_eq!(
+            rec.entries.first().map(|e| e.concept_id.as_str()),
+            Some(expected),
+            "goal {goal:?} should rank {expected} first; got {:?}",
+            rec.entries
+                .iter()
+                .map(|e| e.concept_id.clone())
+                .take(3)
+                .collect::<Vec<_>>()
+        );
+        assert!(
+            rec.entries
+                .iter()
+                .any(|e| e.evidence.iter().any(|ev| ev.contains("token"))),
+            "goal {goal:?} should carry token-level evidence"
+        );
+    }
+}
+
+/// R7-lite: a zero-recall goal must explain itself — distinguish "nothing
+/// exists" from "wrong phrasing" instead of returning a silent empty list
+/// (in the live run, grep outperformed the tool for exactly this reason).
+/// Uses the synthetic fixture overlay so the zero case is guaranteed
+/// (single-token noise in the 83-concept overlay can recall at relevance 1,
+/// which ranks last and is acceptable).
+#[test]
+fn zero_result_recommend_explains_itself() {
+    let overlay = fixture_overlay();
+    let rec = planner::recommend("elephant pajamas waltzing", &overlay);
+    assert!(
+        rec.entries.is_empty(),
+        "absent-vocabulary goal recalls nothing"
+    );
+    let note = rec.note.as_deref().unwrap_or_else(|| {
+        panic!("zero-result recommend must carry an explanatory note; got {rec:?}")
+    });
+    assert!(note.contains("karpal.concepts"), "note points at browsing");
+    assert!(rec.nearest.is_empty(), "no vocabulary overlap → no nearest");
+}
+
+/// Weak-recall diagnostics: a goal that only single-token noise can touch
+/// (relevance ≤ 1) is effectively a miss — it must explain itself and offer
+/// the nearest vocabulary, not just list the noise.
+#[test]
+fn zero_result_recommend_offers_nearest_vocabulary() {
+    let overlay = karpal_discovery::load_concept_overlay();
+    let rec = planner::recommend("elephant pajamas commuting", &overlay);
+    assert!(rec.note.is_some(), "weak-recall goal must explain itself");
+    assert!(
+        !rec.nearest.is_empty(),
+        "weak-recall goal offers nearest vocabulary"
+    );
+}

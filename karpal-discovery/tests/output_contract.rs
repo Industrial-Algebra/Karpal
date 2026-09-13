@@ -193,6 +193,29 @@ fn recommend_block_payload_is_golden() {
 }
 
 #[test]
+fn recommend_weak_recall_diagnostics_are_golden() {
+    // 0.9.1 contract (Lonis #21 R7): when nothing recalls with confidence,
+    // the payload explains itself (note + nearest vocabulary) instead of
+    // returning a silent empty list.
+    let (out, err, ok) = run(
+        &["call", "karpal.recommend"],
+        r#"{"goal": "elephant pajamas waltzing"}"#,
+    );
+    assert!(ok, "stderr: {err}");
+    let data = payload_data(&out, "karpal.recommend");
+    assert!(
+        serde_json::from_str::<serde_json::Value>(&data)
+            .expect("recommend payload JSON")
+            .get("diagnostics")
+            .and_then(|d| d.get("note"))
+            .is_some(),
+        "weak recall carries diagnostics.note"
+    );
+    assert_golden("recommend_nomatch.data.json", &data);
+    check_regen();
+}
+
+#[test]
 fn plan_block_payload_is_golden() {
     let (out, err, ok) = run(&["call", "karpal.plan"], r#"{"goal": "monad"}"#);
     assert!(ok, "stderr: {err}");

@@ -1,4 +1,5 @@
 {
+  "diagnostics": null,
   "entries": [
     {
       "concept_id": "monad",
@@ -9,10 +10,59 @@
         "relation: composes_with free-monad ↔ monad",
         "relation: composes_with codensity-monad ↔ monad",
         "relation: composes_with monad-transformers ↔ monad",
-        "relation: dual_of comonad ↔ monad"
+        "relation: dual_of comonad ↔ monad",
+        "relation: dual_of conclude ↔ monad",
+        "relation: alternative_to arrow-apply ↔ monad"
       ],
       "name": "Monad",
-      "relevance": 14,
+      "relevance": 16,
+      "stability": "stable",
+      "weight": 27
+    },
+    {
+      "concept_id": "freer-monad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: alias",
+        "match: math concept",
+        "match: summary/alias token (1 query token)",
+        "relation: alternative_to free-monad ↔ freer-monad"
+      ],
+      "name": "Freer monad",
+      "relevance": 13,
+      "stability": "stable",
+      "weight": 18
+    },
+    {
+      "concept_id": "comonad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "match: summary/alias token (1 query token)",
+        "relation: composes_with comonad-transformers ↔ comonad",
+        "relation: composes_with cofree-comonad ↔ comonad",
+        "relation: dual_of monad ↔ comonad"
+      ],
+      "name": "Comonad",
+      "relevance": 12,
+      "stability": "stable",
+      "weight": 21
+    },
+    {
+      "concept_id": "free-monad",
+      "evidence": [
+        "match: id",
+        "match: name",
+        "match: math concept",
+        "match: summary/alias token (1 query token)",
+        "relation: composes_with monad ↔ free-monad",
+        "relation: dual_of cofree-comonad ↔ free-monad",
+        "relation: alternative_to freer-monad ↔ free-monad"
+      ],
+      "name": "Free monad",
+      "relevance": 12,
       "stability": "stable",
       "weight": 21
     },
@@ -31,62 +81,19 @@
       "weight": 15
     },
     {
-      "concept_id": "freer-monad",
-      "evidence": [
-        "match: id",
-        "match: name",
-        "match: alias",
-        "match: math concept",
-        "relation: alternative_to free-monad ↔ freer-monad"
-      ],
-      "name": "Freer monad",
-      "relevance": 12,
-      "stability": "stable",
-      "weight": 15
-    },
-    {
-      "concept_id": "comonad",
-      "evidence": [
-        "match: id",
-        "match: name",
-        "match: math concept",
-        "relation: composes_with comonad-transformers ↔ comonad",
-        "relation: composes_with cofree-comonad ↔ comonad",
-        "relation: dual_of monad ↔ comonad"
-      ],
-      "name": "Comonad",
-      "relevance": 11,
-      "stability": "stable",
-      "weight": 18
-    },
-    {
-      "concept_id": "free-monad",
-      "evidence": [
-        "match: id",
-        "match: name",
-        "match: math concept",
-        "relation: composes_with monad ↔ free-monad",
-        "relation: dual_of cofree-comonad ↔ free-monad",
-        "relation: alternative_to freer-monad ↔ free-monad"
-      ],
-      "name": "Free monad",
-      "relevance": 11,
-      "stability": "stable",
-      "weight": 18
-    },
-    {
       "concept_id": "cofree-comonad",
       "evidence": [
         "match: id",
         "match: name",
         "match: math concept",
+        "match: summary/alias token (1 query token)",
         "relation: composes_with comonad ↔ cofree-comonad",
         "relation: dual_of free-monad ↔ cofree-comonad"
       ],
       "name": "Cofree comonad",
-      "relevance": 10,
+      "relevance": 11,
       "stability": "stable",
-      "weight": 15
+      "weight": 18
     },
     {
       "concept_id": "monad-transformers",
@@ -94,13 +101,14 @@
         "match: id",
         "match: name",
         "match: math concept",
+        "match: summary/alias token (1 query token)",
         "relation: composes_with monad ↔ monad-transformers",
         "relation: composes_with state-transformer ↔ monad-transformers"
       ],
       "name": "MonadTrans",
-      "relevance": 10,
+      "relevance": 11,
       "stability": "stable",
-      "weight": 15
+      "weight": 18
     },
     {
       "concept_id": "codensity-monad",
@@ -108,47 +116,75 @@
         "match: id",
         "match: name",
         "match: math concept",
+        "match: summary/alias token (1 query token)",
         "relation: composes_with monad ↔ codensity-monad"
       ],
       "name": "Codensity monad",
-      "relevance": 9,
+      "relevance": 10,
       "stability": "stable",
-      "weight": 12
+      "weight": 15
     },
     {
       "concept_id": "ffunctor",
       "evidence": [
         "match: name",
         "match: alias",
-        "match: math concept"
+        "match: math concept",
+        "match: summary/alias token (1 query token)"
       ],
       "name": "FFunctor / FMonad",
-      "relevance": 8,
+      "relevance": 9,
       "stability": "stable",
-      "weight": 9
+      "weight": 12
     },
     {
       "concept_id": "state-transformer",
       "evidence": [
         "match: alias",
         "match: math concept",
+        "match: summary/alias token (1 query token)",
         "relation: composes_with monad-transformers ↔ state-transformer"
       ],
       "name": "StateT",
-      "relevance": 6,
+      "relevance": 7,
       "stability": "stable",
-      "weight": 9
+      "weight": 12
     },
     {
       "concept_id": "arrow-apply",
       "evidence": [
         "match: math concept",
+        "match: summary/alias token (1 query token)",
         "relation: alternative_to monad ↔ arrow-apply"
       ],
       "name": "ArrowApply",
+      "relevance": 4,
+      "stability": "stable",
+      "weight": 9
+    },
+    {
+      "concept_id": "conclude",
+      "evidence": [
+        "match: math concept",
+        "match: summary/alias token (1 query token)",
+        "relation: dual_of monad ↔ conclude"
+      ],
+      "name": "Conclude",
+      "relevance": 4,
+      "stability": "stable",
+      "weight": 9
+    },
+    {
+      "concept_id": "adjunction",
+      "evidence": [
+        "match: summary/alias token (1 query token)",
+        "relation: composes_with monad ↔ adjunction",
+        "relation: composes_with comonad ↔ adjunction"
+      ],
+      "name": "Adjunction",
       "relevance": 3,
       "stability": "stable",
-      "weight": 6
+      "weight": 9
     },
     {
       "concept_id": "chain",
@@ -162,12 +198,12 @@
       "weight": 6
     },
     {
-      "concept_id": "conclude",
+      "concept_id": "decide",
       "evidence": [
         "match: math concept",
-        "relation: dual_of monad ↔ conclude"
+        "relation: generalizes conclude ↔ decide"
       ],
-      "name": "Conclude",
+      "name": "Decide",
       "relevance": 3,
       "stability": "stable",
       "weight": 6
@@ -217,17 +253,6 @@
       "weight": 6
     },
     {
-      "concept_id": "adjunction",
-      "evidence": [
-        "relation: composes_with monad ↔ adjunction",
-        "relation: composes_with comonad ↔ adjunction"
-      ],
-      "name": "Adjunction",
-      "relevance": 2,
-      "stability": "stable",
-      "weight": 6
-    },
-    {
       "concept_id": "alternative",
       "evidence": [
         "match: math concept"
@@ -238,21 +263,21 @@
       "weight": 3
     },
     {
-      "concept_id": "decide",
-      "evidence": [
-        "match: math concept"
-      ],
-      "name": "Decide",
-      "relevance": 2,
-      "stability": "stable",
-      "weight": 3
-    },
-    {
       "concept_id": "applicative",
       "evidence": [
         "relation: generalizes monad ↔ applicative"
       ],
       "name": "Applicative",
+      "relevance": 1,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "arrow",
+      "evidence": [
+        "relation: generalizes arrow-apply ↔ arrow"
+      ],
+      "name": "Arrow",
       "relevance": 1,
       "stability": "stable",
       "weight": 3
@@ -283,6 +308,16 @@
         "relation: composes_with codensity-monad ↔ kan-extension"
       ],
       "name": "Kan extensions",
+      "relevance": 1,
+      "stability": "stable",
+      "weight": 3
+    },
+    {
+      "concept_id": "selective",
+      "evidence": [
+        "match: summary/alias token (1 query token)"
+      ],
+      "name": "Selective",
       "relevance": 1,
       "stability": "stable",
       "weight": 3

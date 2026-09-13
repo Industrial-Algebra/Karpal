@@ -186,3 +186,19 @@ fn every_symbol_ref_is_qualified() {
         }
     }
 }
+
+/// The overlay's `catalog_version` records the Karpal release it was
+/// curated against — it must track the workspace version exactly (the
+/// Rabbit Hole found it stamped `0.9.0-dev` while the workspace was at
+/// 0.9.0: the one field named "version" was decorative). The bump PR
+/// that forgets to restamp fails here.
+#[test]
+fn catalog_version_tracks_the_workspace_version() {
+    let overlay = karpal_discovery::load_concept_overlay();
+    assert_eq!(
+        overlay.catalog_version,
+        env!("CARGO_PKG_VERSION"),
+        "overlay catalog_version must equal the crate (workspace) version — \
+         restamp data/concepts.toml on every version bump"
+    );
+}

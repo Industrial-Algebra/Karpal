@@ -58,6 +58,7 @@ pub mod overlay;
 pub mod payload;
 pub mod planner;
 pub mod probes;
+pub mod recall;
 
 pub use catalog::{
     Catalog, CrateRecord, EnumRecord, FunctionRecord, ImplRecord, ItemKind, ItemRecord,
