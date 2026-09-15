@@ -49,7 +49,7 @@ hex = "0.4"
 # #[derive(BlockPayload)] + render_fn (ADR-0004) and curated JSON Schema
 # emission (ADR-0005, including the Extension seam from Lonis #11).
 lonis-schema = { version = "0.1", optional = true, features = ["derive"] }
-lonis-core = { version = "0.1", optional = true }
+lonis-core = { version = "0.2", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
