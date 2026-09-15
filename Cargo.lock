@@ -582,7 +582,7 @@ dependencies = [
  "karpal-recursion",
  "karpal-schubert-types",
  "lonis-core",
- "lonis-schema",
+ "lonis-schema 0.2.0",
  "quote",
  "serde",
  "serde_json",
@@ -777,20 +777,29 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "170ae06b3a55e1f5ef5e7c776ba4b0a0e112fd2fbc1e026a9c18b97d9898128a"
 dependencies = [
- "lonis-schema",
+ "lonis-schema 0.1.0",
  "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "lonis-derive"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfba28f208d1c88b6f7c9d8c6bb025d677b96513608149d88e7426fc0ae81cb5"
+checksum = "129a4844c9472d54f794568e74477144b6f21ffc933acb8621d468ecaa7b4a17"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "lonis-identity"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb8ebaf6456ca3007da1eb6ce6983c62851dbe093296040c53c492afb1d0571f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -799,7 +808,21 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb2e1f05d351aa29b5c4d428457124b859761a306d0bc38638712c6f351b8628"
 dependencies = [
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror",
+ "time",
+]
+
+[[package]]
+name = "lonis-schema"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc72124c853f19004713af8aeb86a96cae9f8ef25029f46bdddb716908ed4072"
+dependencies = [
  "lonis-derive",
+ "lonis-identity",
  "serde",
  "serde_json",
  "sha2 0.10.9",
