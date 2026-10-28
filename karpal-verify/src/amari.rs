@@ -135,7 +135,7 @@ where
     F: Fn() -> bool,
 {
     let verifier = MonteCarloVerifier::new(bound.samples);
-    let status = verifier.verify_probability_bound(&predicate, bound.probability);
+    let status = verifier.verify_violation_bound(&predicate, bound.probability);
     let (estimate, lower, upper) = verifier.estimate_probability(predicate);
 
     StatisticalVerification {

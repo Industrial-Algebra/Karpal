@@ -20,4 +20,4 @@ amari = ["std", "dep:amari-flynn"]
 [dependencies]
 karpal-proof = { version = "0.9.1", path = "../karpal-proof", default-features = false }
 karpal-verify-derive = { version = "0.9.1", path = "../karpal-verify-derive", optional = true }
-amari-flynn = { version = "0.24.0", optional = true }
+amari-flynn = { git = "https://github.com/Industrial-Algebra/Amari.git", rev = "73043766ac91c42e252572163bd64bbada57276e", optional = true }

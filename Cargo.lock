@@ -61,10 +61,10 @@ dependencies = [
 [[package]]
 name = "amari-flynn"
 version = "0.24.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b876c80e0f59882c2023223fc9f6e955640cfef38c4f6252b810d1190e3511e7"
+source = "git+https://github.com/Industrial-Algebra/Amari.git?rev=73043766ac91c42e252572163bd64bbada57276e#73043766ac91c42e252572163bd64bbada57276e"
 dependencies = [
  "amari-flynn-macros",
+ "libm",
  "rand 0.10.1",
  "rand_distr",
 ]
@@ -72,8 +72,7 @@ dependencies = [
 [[package]]
 name = "amari-flynn-macros"
 version = "0.24.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cf51ad6af8902e80f887869fa84a39a10672eeff3025c13bbf00f2cf8263823"
+source = "git+https://github.com/Industrial-Algebra/Amari.git?rev=73043766ac91c42e252572163bd64bbada57276e#73043766ac91c42e252572163bd64bbada57276e"
 dependencies = [
  "proc-macro2",
  "quote",
